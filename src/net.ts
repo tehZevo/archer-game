@@ -26,7 +26,10 @@ function connect(channel: number): void {
   peers.clear();
   net.channel = channel;
   net.floor = game.floor.number;
-  room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL }, roomId(net.floor, channel));
+  // identity: 'none' gives each tab its own userId; the default persists one
+  // per browser, so two tabs in a profile would share a slot and overwrite
+  // each other's positions.
+  room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL, identity: 'none' }, roomId(net.floor, channel));
   pos = room.makeUserState<Ghost>('pos', { x: player.x, y: player.y, face: player.face });
   pos.onChange((val, meta) => {
     if (meta.self) return;
