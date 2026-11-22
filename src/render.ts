@@ -3,6 +3,7 @@ import { WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { SPR, blockTile } from './sprites';
+import { peers } from './net';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
@@ -107,6 +108,21 @@ function drawMob(m: Mob): void {
   }
 }
 
+/** Remote archers from other players: the same sprite, translucent. */
+function drawGhosts(): void {
+  const s = SPR.player;
+  for (const g of peers.values()) {
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    const x = Math.round(g.x - s.w / 2);
+    const y = Math.round(g.y + 24 - s.h); // ghosts use the same 16x24 box
+    ctx.translate(x + s.w / 2, y);
+    ctx.scale(g.face, 1);
+    ctx.drawImage(s.c, -s.w / 2, 0);
+    ctx.restore();
+  }
+}
+
 function drawPlayer(): void {
   const s = SPR.player;
   ctx.save();
@@ -179,6 +195,7 @@ export function render(): void {
   drawPortal(game.floor.portal);
   game.mobs.forEach(drawMob);
   game.shots.forEach(drawShot);
+  drawGhosts();
   drawPlayer();
   game.fx.forEach(drawFx);
   game.dmgNums.forEach(drawDmg);

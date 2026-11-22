@@ -7,6 +7,7 @@ import { render, resize } from './render';
 import { bindMenuClicks, buildPanel, syncPanel } from './hud';
 import { cv } from './canvas';
 import { buildTouch } from './touch';
+import { sync } from './net';
 
 declare global {
   interface Window {
@@ -25,6 +26,7 @@ function frame(now: number): void {
   let steps = 0;
   // fixed 30 Hz physics; rAF renders as fast as the display allows
   while (game.acc >= P.STEP) { update(P.STEP); game.acc -= P.STEP; steps++; }
+  sync(); // publish our position to the current channel
   // only consume the input latch once a physics step has acted on it, otherwise
   // key taps arriving between two 30Hz steps vanish
   if (steps) clearPressed();
