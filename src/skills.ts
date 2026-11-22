@@ -34,7 +34,8 @@ export function cast(key: SkillKey): void {
   if (player.useT > 0 && !linked) return;
 
   const airborne = !player.onGround && !player.climb;
-  if (linked && player.climb) return;
+  // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
+  if (player.climb && kind !== 'C' && kind !== 'D') return;
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
 
