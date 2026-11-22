@@ -1,9 +1,14 @@
 import { MOB_TYPES, WORLD, TILE } from './config';
+import { net, roomId } from './net';
+import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
 import type { Climbable, Floor, MobType, Platform, Portal, Spawn } from './types';
 
-const rand = (a: number, b: number): number => a + Math.random() * (b - a);
+// One stream per floor generation, seeded from the room name so every player
+// in a channel gets the same layout (reseeded at the top of generateFloor).
+let rng = seeded(hashStr(roomId(1, net.channel)));
+const rand = (a: number, b: number): number => a + rng() * (b - a);
 const randInt = (a: number, b: number): number => Math.floor(rand(a, b + 1));
 /** Snap a coordinate to the tile grid. */
 const snap = (v: number): number => Math.round(v / TILE) * TILE;
@@ -123,6 +128,7 @@ function mobForFloor(n: number): MobType {
  * Every 10th floor is a town (no enemies, portal returns to floor 1).
  */
 export function generateFloor(n: number): Floor {
+  rng = seeded(hashStr(roomId(n, net.channel)));
   const town = n % 10 === 0;
   const groundH = 8 * TILE;
   const groundY = snap(WORLD.h - groundH);
@@ -149,7 +155,7 @@ export function generateFloor(n: number): Floor {
     for (;;) {
       const kind = SHAPES[randInt(0, SHAPES.length - 1)];
       const width = randInt(6, 24); // 6-24 tiles wide (the map is 20)
-      shape = makeShape(kind, 0, y, width, Math.random() < 0.5);
+      shape = makeShape(kind, 0, y, width, rand(0, 1) < 0.5);
       // The walkable summit: flat tiles on the block's highest row (slope
       // tiles share that row's y but their surface is lower).
       const top = shape.tiles.reduce((m, t) => Math.min(m, t.y), Infinity);
@@ -193,9 +199,9 @@ export function generateFloor(n: number): Floor {
     const pool = flatLanding.length ? flatLanding : tops;
     const top = pool[randInt(0, pool.length - 1)];
     const climb: Climbable = { x: top.x + TILE / 2, y1: top.y, y2: landing(top).y };
-    if (Math.random() < 0.5) ropes.push(climb); else ladders.push(climb);
+    if (rand(0, 1) < 0.5) ropes.push(climb); else ladders.push(climb);
 
-    if (!town && Math.random() < 0.6) {
+    if (!town && rand(0, 1) < 0.6) {
       // a spawn zone on this platform's on-screen flat top tiles; long tops hold 2
       const spots = shape.tiles
         .filter((t) => !t.inner && !t.slope && t.x >= 0 && t.x + TILE <= WORLD.w)

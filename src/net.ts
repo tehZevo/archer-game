@@ -10,7 +10,7 @@ export const MAX_PER_CHANNEL = 20;
 
 // One room per floor; players spread across numbered channels.
 const APP_ID = 'tehZevo/archer-game';
-const roomId = (floor: number, channel: number) => `eurekaland-f${floor}-c${channel}`;
+export const roomId = (floor: number, channel: number) => `eurekaland-f${floor}-c${channel}`;
 
 /** Live map of everyone in the current channel (excluding us). */
 export const peers = new Map<string, Ghost>();

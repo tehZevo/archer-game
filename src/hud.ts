@@ -1,4 +1,4 @@
-import { SKILL_BAR } from './config';
+import { areaFor, SKILL_BAR } from './config';
 import { critChance } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
@@ -23,7 +23,9 @@ function drawHUD(): void {
 
   // top-left: level + floor
   text(ctx, `Lv.${player.level}`, pad, pad, 1, '#dbe6f5', 'left');
-  text(ctx, `Floor ${game.floor.number}${game.floor.town ? ' · Town' : ''}`, pad, pad + 9, 1, '#8ea3c2', 'left');
+  const area = areaFor(game.floor.number);
+  text(ctx, game.floor.town ? `${area} · Town` : `${area} · Floor ${game.floor.number}`,
+    pad, pad + 9, 1, '#8ea3c2', 'left');
   if (player.ap || player.sp) {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
     text(ctx, `${pts} - ESC`, pad, pad + 18, 1, '#ffd166', 'left');
