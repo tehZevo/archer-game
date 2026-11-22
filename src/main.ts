@@ -7,17 +7,18 @@ import { render, resize } from './render';
 import { bindMenuClicks, buildPanel, syncPanel } from './hud';
 import { cv } from './canvas';
 import { buildTouch } from './touch';
-import { sync } from './net';
+import * as net from './net';
+const { sync } = net;
 
 declare global {
   interface Window {
     game: typeof game
-    merc: { gainExp: typeof gainExp; spendSp: typeof spendSp; rank: typeof rank; gotoFloor: typeof gotoFloor }
+    merc: { gainExp: typeof gainExp; spendSp: typeof spendSp; rank: typeof rank; gotoFloor: typeof gotoFloor; net: typeof net }
   }
 }
 /** Handy for console poking and automated checks. */
 window.game = game;
-window.merc = { gainExp, spendSp, rank, gotoFloor };
+window.merc = { gainExp, spendSp, rank, gotoFloor, net };
 
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - game.last) / 1000);
