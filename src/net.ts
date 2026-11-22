@@ -45,9 +45,16 @@ function connect(channel: number): void {
   net.joined = true;
 }
 
-/** Publish our position; call every frame. Cheap: Trystero coalesces writes. */
+/** Network update rate: 10/s is plenty smooth for ghosts, for now. */
+const SEND_MS = 100;
+let lastSent = 0;
+
+/** Publish our position; call every frame, sends at ~10 Hz. */
 export function sync(): void {
   // changing floors moves us to that floor's rooms, keeping the channel number
   if (!room || game.floor.number !== net.floor) connect(net.channel);
+  const now = performance.now();
+  if (now - lastSent < SEND_MS) return;
+  lastSent = now;
   pos?.set({ x: Math.round(player.x), y: Math.round(player.y), face: player.face });
 }
