@@ -37,6 +37,14 @@ export const P = {
    All geometry snaps to a TILE-pixel grid so the world is tile based. */
 export const WORLD = { w: 320, h: 2400 };
 
+/* ---------------- areas ---------------- */
+/* The tower is divided into named regions, one per town block: floors 1-9
+   (capped by the town on 10) are the Beach, floors 11-19 the Forest, and so
+   on, cycling every 10 floors. */
+export const AREAS = ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky'] as const;
+/** The region a floor belongs to; the town at 10 tops its block's area. */
+export const areaFor = (n: number): string => AREAS[Math.floor((n - 1) / 10) % AREAS.length];
+
 /** Camera deadzone, as fractions of the view: the player (centre x, feet y)
  *  moves freely inside this box; outside it the camera eases toward the
  *  position that puts the player back on the box edge. */
