@@ -38,6 +38,8 @@ export function cast(key: SkillKey): void {
   if (player.climb && kind !== 'C' && kind !== 'D') return;
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
+  // Sky Toss is a ground launcher: no mid-air use.
+  if (kind === 'Q' && !player.onGround) return;
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
