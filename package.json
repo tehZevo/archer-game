@@ -1,0 +1,17 @@
+{
+  "name": "mercedes-elf-queen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --minify",
+    "test": "esbuild test/smoke.ts --bundle --outfile=.tmp/smoke.cjs --platform=node --target=node18 && node .tmp/smoke.cjs && esbuild test/mechanics.ts --bundle --outfile=.tmp/mechanics.cjs --platform=node --target=node18 --log-level=warning && node .tmp/mechanics.cjs",
+    "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --watch=forever",
+    "start": "python3 -m http.server 8000 --bind 0.0.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.0"
+  }
+}

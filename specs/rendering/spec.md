@@ -1,0 +1,28 @@
+# Rendering — Pixel Perfect, 16×16 Sprites
+
+The game renders pixel perfect: every visible element is a 16×16 (or 16-multiple) sprite drawn at integer coordinates on a fixed 240×180 base-resolution canvas, upscaled by CSS with `image-rendering: pixelated` (nearest-neighbour). No element ever samples across a pixel boundary.
+
+## Sprites
+
+- All sprites are authored on a 16×16 grid (the tile unit), built procedurally once at boot as tiny canvases with 1px blocks and drawn with `drawImage`.
+- Tiles (grass/dirt, slope tops) are 16×16; each slope tile is one half of a 2:1 ramp, a full 16×16 cell whose surface rises half a tile.
+- Ropes and ladders are 16×16 sprites tiled vertically between their endpoints; the sprite is centred on its tile (x at the tile centre, snapped to the 16px grid).
+- The player is 16×24; mobs are sized to the grid (e.g. snail 17×14, hog 26×21) and drawn centred on integer positions. Every body's collision box matches its sprite.
+
+## Attack effects
+
+Skill effects follow the style of classic MMOs' Archer effects, as original pixel art: short multi-frame animations of glowing light (white-hot core, cyan/teal halo, soft outer glow) drawn additively. Twin Shot flashes at the bow with crescent swooshes and whips twin tracer streaks out to each enemy it hits (no flying projectile); arrows are thin glowing streaks that fly straight out horizontally (never rotated) and stop at the enemy they hit; hits flash a spiky starburst that collapses into an expanding oval shockwave and sparkle dust (bigger, green on crits); Sky Toss erupts a spiral horn of light from the ground under each target with dust at its base; Sky Assault strikes as white-blue crescent swooshes; Skyfall Volley rains a volley of yellow-green arrows down onto launched enemies with gold impacts; Shell Barrage fires slower green bolts that burst green on hit; Glide opens green portal rings behind the player; a killed enemy vanishes in a soft dust puff; a level-up raises a gold pillar of light with rings and sparkles that follows the player. There are no free-floating particle/confetti effects: every effect is one of these baked animations. Damage numbers use the pixel font. Effects are pixel-snapped like everything else.
+
+## Coordinates
+
+- World geometry snaps to the 16px tile grid, so platform/slope destinations are integers.
+- The camera translates by rounded pixels; entity draw positions round to integers.
+- Partial tiles (block edges) crop the source and destination by the same integer amount, so tiles are never resampled.
+- Pixel-font text always starts on a whole pixel (centred text never lands on a half pixel).
+- 1px UI strokes use the +0.5 offset convention so lines land on whole pixels.
+
+## Draw order
+
+Sky gradient → floor platforms → ropes/ladders → portal → mobs (with HP bars) → arrows → player → effects → floating damage numbers → HUD overlay.
+
+HUD numbers (HP, MP, EXP) are compact: plain below 1000, then shortened with K/M (e.g. 1.2K), rounded down so a bar never reads full early.

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Archer</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1220; --panel:#131c2e; --line:#2b3a55;
+    --teal:#4fd8c4; --gold:#ffd166; --txt:#dbe6f5; --dim:#8ea3c2;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:radial-gradient(1200px 700px at 50% 0%,#16233c,#070c16 70%);color:var(--txt);
+    font:7px/1.5 "Silkscreen",monospace;-webkit-font-smoothing:none;overflow:hidden}
+  #app{display:flex;gap:14px;padding:14px;height:100%}
+  #stage{position:relative;flex:1;min-width:0;display:flex;align-items:center;justify-content:center}
+  /* Largest 4:3 box that fits the window (fractional scale, nearest-neighbour). */
+  canvas{display:block;aspect-ratio:4/3;width:min(100%,calc((100dvh - 28px) * 4 / 3));height:auto;border-radius:12px;background:#0a1322;
+    box-shadow:0 20px 60px #0009,0 0 0 1px var(--line);
+    image-rendering:pixelated;image-rendering:crisp-edges}
+  #side{width:320px;flex:0 0 320px;overflow:auto;padding-right:4px}
+  .card{background:linear-gradient(#16223a,#111a2c);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  h1{margin:0 0 6px;font-size:16px;letter-spacing:.4px;color:var(--teal)}
+  h2{margin:0 0 10px;font-size:8px;letter-spacing:1.6px;text-transform:uppercase;color:var(--dim)}
+  .kv{display:flex;justify-content:space-between;gap:8px;font-size:8px}
+  .kv span:last-child{color:var(--gold);font-variant-numeric:tabular-nums}
+  .skill{display:grid;grid-template-columns:30px 1fr;gap:9px;align-items:start;padding:9px 6px;border-radius:9px}
+  .skill:hover{background:#1c2942}
+  .skill.locked{opacity:.5}
+  .skill.flash{background:#2a4a66;transition:background .25s}
+  .key{width:28px;height:28px;display:grid;place-items:center;border-radius:7px;
+    background:linear-gradient(#3a4f74,#243350);border:1px solid #4c6691;font-weight:700;color:#fff;font-size:8px}
+  .sbody{min-width:0}
+  .nm{font-weight:600;font-size:8px}
+  .ds{color:var(--dim);font-size:8px;line-height:1.8}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
+  .rl{font-size:8px;color:var(--gold);font-variant-numeric:tabular-nums}
+  .up{width:24px;height:22px;border-radius:6px;border:1px solid #4c6691;flex:0 0 24px;
+    background:linear-gradient(#3a4f74,#243350);color:#fff;font-weight:700;font-size:8px;line-height:1;cursor:pointer}
+  .up:hover:not(:disabled){background:#3a5a86}
+  .up:disabled{opacity:.35;cursor:default}
+  .tag{display:inline-block;font-size:8px;letter-spacing:.8px;text-transform:uppercase;
+    padding:2px 6px;border-radius:20px;background:#1e3a4a;color:var(--teal);margin-left:6px;vertical-align:1px}
+  .bar{height:12px;border-radius:7px;background:#0a1120;border:1px solid var(--line);overflow:hidden}
+  .bar>i{display:block;height:100%;transition:width .08s linear}
+  .hp>i{background:linear-gradient(#7ef29a,#2fa85f)}
+  .mp>i{background:linear-gradient(#7ecbff,#2b74c9)}
+  .xp>i{background:linear-gradient(#ffe08a,#e0a52b)}
+  #log{font-size:8px;color:var(--dim);max-height:120px;overflow:hidden;line-height:1.8}
+  #log div{padding:3px 0;border-bottom:1px solid #1b2740}
+  #log b{color:var(--gold)}
+  .note{font-size:8px;color:var(--dim);line-height:1.8}
+  .note b{color:var(--txt)}
+  ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#2b3a55;border-radius:8px}
+  /* Touch controls: on-screen D-pad + skill buttons, overlaid at the bottom. */
+  #touch{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;
+    align-items:flex-end;padding:10px 14px;pointer-events:none;z-index:10}
+  .tgroup{display:flex;gap:8px;pointer-events:auto}
+  .tgroup.skills{display:grid;grid-template-columns:repeat(3,auto);grid-template-rows:repeat(2,auto);gap:8px}
+  .dpad{display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,38px);
+    gap:3px;pointer-events:auto}
+  .dpad .up{grid-column:2;grid-row:1}
+  .dpad .left{grid-column:1;grid-row:2}
+  .dpad .right{grid-column:3;grid-row:2}
+  .dpad .down{grid-column:2;grid-row:3}
+  .tbtn{width:38px;height:38px;border-radius:10px;background:linear-gradient(#3a4f74,#243350);
+    border:1px solid #4c6691;color:#fff;display:grid;place-items:center;font-size:10px;
+    user-select:none;-webkit-user-select:none;touch-action:none}
+  .tbtn.skill{width:46px;height:46px;background:linear-gradient(#2a4a66,#182338);border-color:#39506f;color:#ffd166}
+  .tbtn:active{background:#3a5a86}
+  @media (pointer:coarse){
+    #app{padding:0;gap:0}
+    canvas{width:min(100vw,calc(100dvh * 4 / 3));border-radius:0;box-shadow:none}
+    #touch{padding:8px 10px}
+    .tbtn{width:42px;height:42px}
+    .tbtn.skill{width:50px;height:50px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"><canvas id="c" width="480" height="360"></canvas></div>
+</div>
+
+<script>
+// Load the bundle with a cache-busting timestamp so each reload gets the latest build.
+document.write('<script src="dist/bundle.js?t=' + Date.now() + '"><\/script>');
+</script>
+<script>
+// Live-reload: poll the bundle's Last-Modified header; reload when esbuild rebuilds.
+(function () {
+  let last = null;
+  async function check() {
+    try {
+      const r = await fetch('dist/bundle.js?ts=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+      const lm = r.headers.get('Last-Modified');
+      if (last && lm && lm !== last) { location.reload(); return; }
+      last = lm;
+    } catch (e) {}
+  }
+  setInterval(check, 800);
+})();
+</script>
+</body>
+</html>
