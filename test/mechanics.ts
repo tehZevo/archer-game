@@ -6,8 +6,8 @@
 let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
-import { MOB_TYPES, P } from '../src/config';
-import { game, gotoFloor, player, spawnMob } from '../src/state';
+import { FX_DUR, MOB_TYPES, P } from '../src/config';
+import { game, gotoFloor, mobLevel, player, spawnMob } from '../src/state';
 import { clearPressed, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
@@ -442,6 +442,57 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
 
 // --- HUD: compact numbers ---
 check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345, 1234567].map(fmtNum).join(' ') === '999 1K 1.2K 12.3K 1.2M');
+
+// --- every effect a skill spawns fits its animation (a longer lifetime once crashed the renderer) ---
+{
+  const bad: string[] = [];
+  for (const key of ['Z', 'Q', 'W', 'E', 'R', 'D'] as const) {
+    arena(60, 200);
+    for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['S', 'BS', 'VS', 'AB'].includes(k) ? 0 : 1;
+    dummy(240); dummy(280);
+    game.fx = [];
+    cast(key); step(1);
+    for (let i = 0; i < 20; i++) {
+      game.fx.filter((f) => f.t > FX_DUR[f.type] + 1e-9).forEach((f) => bad.push(`${key}:${f.type} ${f.t.toFixed(2)}>${FX_DUR[f.type]}`));
+      step(1);
+    }
+  }
+  check('no skill effect outlives its animation', bad.length === 0, [...new Set(bad)].join(', '));
+}
+
+// --- EXP comes from the mob's level (the floor), not the player's ---
+{
+  const expAt = (floor: number, level: number): number => {
+    arena(level); gotoFloor(floor); game.mobs = [];
+    spawnMob({ x: 100, y: ground().y, t: 1 } as never, MOB_TYPES[0]);
+    return game.mobs[0].exp;
+  };
+  check('mob EXP ignores the player level', expAt(3, 1) === expAt(3, 40));
+  check('mobs on higher floors are worth more EXP', expAt(8, 5) > expAt(2, 5));
+  check('mob level is the floor for now', mobLevel(7) === 7);
+  arena(5); const m = dummy(140, 1); const before = game.dmgNums.length;
+  killMob(m);
+  check('a kill shows no floating EXP number', game.dmgNums.length === before);
+}
+
+// --- every gap between platforms is the same 2-3 tiles of headroom, ground to first included ---
+{
+  const bad: string[] = [];
+  for (const n of [1, 2, 3, 4]) {
+    gotoFloor(n);
+    const blocks = new Map<number, { top: number; bot: number }>();
+    for (const p of game.floor.platforms) if (p.block) {
+      const b = blocks.get(p.block) ?? { top: Infinity, bot: -Infinity };
+      b.top = Math.min(b.top, p.y); b.bot = Math.max(b.bot, p.y + p.h); blocks.set(p.block, b);
+    }
+    const bs = [...blocks.entries()].sort((a, b) => a[0] - b[0]).map(([, b]) => b);
+    bs.forEach((b, i) => {
+      const clear = ((i ? bs[i - 1].top : ground().y) - b.bot) / 16;
+      if (clear < 2 || clear > 3) bad.push(`floor ${n} gap ${i}: ${clear}`);
+    });
+  }
+  check('platform gaps are all 2-3 tiles, the first one too', bad.length === 0, bad.join(', '));
+}
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

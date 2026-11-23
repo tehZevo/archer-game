@@ -125,7 +125,7 @@ function mobForFloor(n: number): MobType {
  * connected to the next by a rope/ladder that runs from the top surface of the
  * lower platform to the top surface of the upper one. Enemies stand on the
  * ground and on platforms; a portal on the summit leads to the next floor.
- * Every 10th floor is a town (no enemies, portal returns to floor 1).
+ * Every 10th floor is a town (no enemies; its portal leads on up).
  */
 export function generateFloor(n: number): Floor {
   rng = seeded(hashStr(roomId(n, net.channel)));
@@ -140,7 +140,7 @@ export function generateFloor(n: number): Floor {
   const spawns: Spawn[] = [];
 
   const COUNT = 7;          // platforms per floor (was 14: floors are half as tall)
-  const step = 5 * TILE;     // base vertical spacing between platforms (+0-1 tile)
+  const step = 3 * TILE;     // summit to the next block's base (+0-1 tile): 2-3 tiles of headroom
   const startY = groundY - step;
 
   let prev: Platform = ground;
@@ -216,7 +216,10 @@ export function generateFloor(n: number): Floor {
     }
     prev = top;
     summitTop = top;
-    y -= step + TILE * randInt(0, 1); // stays on the 16px grid
+    // the next block sits a fixed gap above this one's summit (not its base), so
+    // a tall block doesn't squeeze the gap above it and every gap matches the
+    // ground-to-first one
+    y = minY - step - TILE * randInt(0, 1); // stays on the 16px grid
   }
 
   // The ground slab is one zone holding up to 4 enemies.

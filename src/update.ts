@@ -159,7 +159,7 @@ export function update(dt: number): void {
   const onPortal = player.onGround && Math.abs(player.x - p.x) < p.w / 2 + 10 && feet >= p.y - 4 && feet <= p.y + 8;
   if (onPortal && pressed('up')) {
     sfx.portal();
-    gotoFloor(game.floor.town ? 1 : game.floor.number + 1);
+    gotoFloor(game.floor.number + 1);
     return;
   }
 

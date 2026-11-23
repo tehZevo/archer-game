@@ -40,9 +40,6 @@ export function killMob(m: Mob): void {
   localKill(); // shared with the instance: speeds up other players' waves
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);
-  game.dmgNums.push({
-    x: m.x, y: m.y - 26, v: m.exp, t: 1.1, crit: false, vy: -110, col: '#8fd6ff',
-  });
 }
 
 /**

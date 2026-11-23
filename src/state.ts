@@ -83,6 +83,10 @@ export const game = {
   view: { w: 1280, h: 720, sx: 1, sy: 1 },
 };
 
+/** A mob's level, which sets the EXP it's worth. For now it is simply the
+ *  floor number; later it can come from the mob type and area. */
+export const mobLevel = (floor: number): number => Math.max(1, floor);
+
 export function spawnMob(s: Spawn, type: MobType): void {
   // Mobs scale with the player so the tower stays relevant up to Lv.100.
   const scale = 1 + (player.level - 1) * 0.12;
@@ -96,7 +100,7 @@ export function spawnMob(s: Spawn, type: MobType): void {
     type, name: type.n, hp, hpMax: hp, spd: type.spd,
     dmg: Math.round(type.dmg * (1 + (player.level - 1) * 0.06)),
     fly: !!type.fly, col: type.col,
-    exp: Math.round(expToNext(player.level) * MOB_EXP_SHARE[type.n]),
+    exp: Math.round(expToNext(mobLevel(game.floor.number)) * MOB_EXP_SHARE[type.n]),
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, anim: Math.random() * 6,
     spawn: s,
   });

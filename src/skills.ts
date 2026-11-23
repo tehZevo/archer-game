@@ -231,7 +231,7 @@ export function cast(key: SkillKey): void {
         .sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx))
         .slice(0, r.targets);
       game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
-      game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.2, face, sx: P.PIERCE_RANGE / 64 });
+      game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: P.PIERCE_RANGE / 64 });
       tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
         if (game.mobs.includes(m)) damage(m, r.dmg);
       }));
