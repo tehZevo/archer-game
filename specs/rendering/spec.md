@@ -25,4 +25,6 @@ Skill effects follow the style of classic MMOs' Archer effects, as original pixe
 
 Sky gradient → floor platforms → ropes/ladders → portal → mobs (with HP bars) → arrows → player → effects → floating damage numbers → HUD overlay.
 
+The skill bar shows a distinct pixel icon for each slot's active skill, so taking an upgrade changes the slot's icon; every skill, upgrade and passive has its own icon.
+
 HUD numbers (HP, MP, EXP) are compact: plain below 1000, then shortened with K/M (e.g. 1.2K), rounded down so a bar never reads full early.

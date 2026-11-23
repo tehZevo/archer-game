@@ -2,7 +2,7 @@
 
 Floors sit inside named regions, one per town block (floors 1-9 = Beach, 11-19 = Forest, cycling every 10 floors); the HUD shows the region with the floor number ("Beach · Floor 3", "Beach · Town" on the town floor).
 
-A floor is a single screen-wide tower level: a full-width ground slab at the bottom and 7 floating platforms stacked to the summit (about 5-6 tiles apart), each joined to the next by a rope or ladder, with a portal on top that advances to the next floor. Every 10th floor is a town (no enemies; its portal returns to floor 1).
+A floor is a single screen-wide tower level: a full-width ground slab at the bottom and 7 floating platforms stacked to the summit, each with 2-3 tiles of headroom above whatever is below it (the gap from the ground to the first platform matches the rest), each joined to the next by a rope or ladder, with a portal on top that advances to the next floor. Every 10th floor is a town (no enemies); its portal leads on to the next floor like any other.
 
 All geometry is tile based on a 16px grid. A platform is a solid, contiguous block built from a per-column height profile: dirt tiles inside, a grass-capped tile on top of each column, and slope tiles where the surface changes height. All slopes are 2:1 (there are no 1:1 slopes): two tiles side by side that together rise one tile, the lower half rising 0–8px and the upper half 8–16px.
 
