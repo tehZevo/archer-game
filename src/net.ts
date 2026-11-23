@@ -3,6 +3,7 @@ import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
+import { cleanName, myName } from './presence';
 
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
@@ -33,6 +34,10 @@ export function parseCode(s: string): string {
 
 /** Live map of everyone in the current channel (excluding us): buffered motion for playback. */
 export const peers = new Map<string, GhostTrack>();
+/** Display names of the players in `peers`, by peer id. */
+export const names = new Map<string, string>();
+/** Players in this channel or instance, you included. */
+export const playerCount = (): number => peers.size + 1;
 export const net = {
   channel: 1, floor: 0, joined: false,
   /** Private instance code ('' = public channels). */
@@ -57,6 +62,7 @@ function receive(id: string, p: Packet): void {
 function connect(channel: number): void {
   room?.leave();
   peers.clear();
+  names.clear();
   resetBoost();
   net.channel = channel;
   net.floor = game.floor.number;
@@ -70,6 +76,13 @@ function connect(channel: number): void {
     if (meta.removed || !val) peers.delete(meta.userId);
     else receive(meta.userId, val);
   });
+  // names travel in their own user state: set once, not with every motion packet
+  const who = room.makeUserState<{ n: string }>('who', { n: myName() });
+  who.onChange((val, meta) => {
+    if (meta.self) return;
+    if (meta.removed || !val) names.delete(meta.userId);
+    else names.set(meta.userId, cleanName(val.n));
+  });
   // A full room (we joined it empty) means everyone is in it: hop to the next.
   // (Private instances have nowhere to spill to: the 21st player just sees nobody.)
   room.onError((err) => {
@@ -82,8 +95,10 @@ function connect(channel: number): void {
   room.onPeerJoin((ctx) => {
     const got = pos?.getAll()[ctx.userId];
     if (got) receive(ctx.userId, got);
+    const n = who.getAll()[ctx.userId]?.n;
+    if (n) names.set(ctx.userId, cleanName(n));
   });
-  room.onPeerLeave((ctx) => peers.delete(ctx.userId));
+  room.onPeerLeave((ctx) => { peers.delete(ctx.userId); names.delete(ctx.userId); });
   net.joined = true;
 }
 
