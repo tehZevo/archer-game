@@ -191,73 +191,6 @@ function ladderSprite(): Sprite {
   return s;
 }
 
-/* ---------------- skill icons (16x16 glyphs) ---------------- */
-
-/** A right-pointing arrow drawn at (ox,oy), ~13x8. */
-function arrowR(s: Sprite, ox: number, oy: number): void {
-  px(s, ox + 2, oy + 3, '#cfd8e6', 8, 2);   // shaft
-  px(s, ox + 10, oy + 2, '#8fd6ff', 3, 4);  // head
-  px(s, ox + 1, oy + 2, '#ffd166', 2, 4);   // fletching
-}
-
-/** Twin Shot: twin arrows. */
-function iconDualShot(): Sprite {
-  const s = make(16, 16);
-  arrowR(s, 1, 1);
-  arrowR(s, 1, 8);
-  return s;
-}
-
-/** Sky Toss: upward launcher arrow. */
-function iconRising(): Sprite {
-  const s = make(16, 16);
-  px(s, 7, 4, '#cfd8e6', 2, 10);
-  px(s, 4, 1, '#8fd6ff', 8, 4);
-  px(s, 6, 0, '#8fd6ff', 4, 2);
-  px(s, 5, 13, '#ffd166', 6, 2);
-  return s;
-}
-
-/** Skyfall Volley: rear (left) arrow. */
-function iconParting(): Sprite {
-  const s = make(16, 16);
-  px(s, 6, 7, '#cfd8e6', 8, 2);
-  px(s, 3, 5, '#8fd6ff', 3, 6);
-  px(s, 13, 5, '#ffd166', 2, 6);
-  return s;
-}
-
-/** Sky Assault: three arrows in a volley. */
-function iconBarrage(): Sprite {
-  const s = make(16, 16);
-  for (const ox of [1, 6, 11]) {
-    px(s, ox + 1, 4, '#cfd8e6', 2, 9);
-    px(s, ox, 1, '#8fd6ff', 4, 4);
-    px(s, ox, 13, '#ffd166', 4, 2);
-  }
-  return s;
-}
-
-/** Piercing Dash: an arrowhead with speed lines trailing it. */
-function iconDash(): Sprite {
-  const s = make(16, 16);
-  px(s, 1, 4, '#5d708f', 6, 1); px(s, 0, 7, '#8fa2b8', 8, 2); px(s, 1, 11, '#5d708f', 6, 1);
-  px(s, 8, 4, '#cfd8e6', 3, 8);
-  px(s, 11, 5, '#8fd6ff', 2, 6); px(s, 13, 6, '#8fd6ff', 2, 4); px(s, 15, 7, '#8fd6ff', 1, 2);
-  return s;
-}
-
-/** Piercing Arrow: one long arrow through a ring. */
-function iconPierce(): Sprite {
-  const s = make(16, 16);
-  px(s, 5, 3, '#ffd166', 6, 1); px(s, 5, 12, '#ffd166', 6, 1);
-  px(s, 4, 4, '#ffd166', 1, 8); px(s, 11, 4, '#ffd166', 1, 8);
-  px(s, 1, 7, '#cfd8e6', 12, 2);
-  px(s, 13, 6, '#8fd6ff', 2, 4); px(s, 15, 7, '#8fd6ff', 1, 2);
-  px(s, 0, 6, '#ffd166', 2, 4);
-  return s;
-}
-
 export const SPR = {
   slopeFootR: slopeFootSprite(1),
   slopeFootL: slopeFootSprite(-1),
@@ -268,14 +201,6 @@ export const SPR = {
   portal: portalSprite(),
   rope: ropeSprite(),
   ladder: ladderSprite(),
-  icon: {
-    Z: iconDualShot(),
-    Q: iconRising(),
-    W: iconParting(),
-    AB: iconBarrage(),
-    E: iconDash(),
-    R: iconPierce(),
-  } as Record<string, Sprite>,
   mob: {
     'Garden Snail': snailSprite(),
     'Boar': pigSprite(),
