@@ -67,7 +67,7 @@ let posted = '';
 export function canConnect(): boolean {
   if (typeof globalThis.crypto?.subtle?.generateKey === 'function') return true;
   if (!net.offline) {
-    net.offline = 'NEEDS HTTPS'; // short: the HUD line sits beside the minimap
+    net.offline = 'NEEDS HTTPS'; // for the console/netStatus; the screen just says local only
     console.warn('[net] multiplayer is off: WebCrypto (crypto.subtle) is only available on HTTPS or localhost pages');
   }
   return false;

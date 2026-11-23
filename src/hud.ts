@@ -36,7 +36,7 @@ function drawHUD(): void {
   let ly = pad + 18;
   // where you are and who's with you: the channel (or private code) and the player count
   if (net.offline) {
-    text(ctx, `Local only - ${net.offline}`, pad, ly, 1, '#ff9f6b', 'left');
+    text(ctx, 'Local only', pad, ly, 1, '#ff9f6b', 'left'); // the reason is in the console
     ly += 9;
   } else if (net.joined) {
     const n = playerCount();

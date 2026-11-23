@@ -23,7 +23,7 @@ export function drawMenu(): void {
   ctx.fillStyle = '#070c16c8'; ctx.fillRect(0, 0, w, h);
   text(ctx, 'THE ARCHER', w / 2, 10, 2, GOLD, 'center');
   // without multiplayer (no WebCrypto on this page) say so up front
-  if (net.offline) text(ctx, `LOCAL ONLY - ${net.offline}`, w / 2, 28, 1, '#ff9f6b', 'center');
+  if (net.offline) text(ctx, 'LOCAL ONLY - NO MULTIPLAYER', w / 2, 28, 1, '#ff9f6b', 'center');
   else text(ctx, 'CLIMB THE TOWER', w / 2, 28, 1, DIM, 'center');
   text(ctx, hasSave() ? `LV ${player.level} · FLOOR ${menu.floor}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
 
