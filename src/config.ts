@@ -28,6 +28,7 @@ export const P = {
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   ACCEL: 1600,         // groundedAccelForce
   RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (~70px slide)
+  RUSH_STRIKE_DELAY: 0.12, // s into the slide before Sky Toss strikes
   FRICTION: 700,       // ground friction when no input (a short slide)
   AIR_BRAKE: 400,      // px/s^2: in the air, holding against your motion only slows you (never reverses)
 } as const;
