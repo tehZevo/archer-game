@@ -47,6 +47,42 @@ export const net = {
 };
 
 type Room = ReturnType<typeof joinRoom>;
+
+/* ---------------- lobby ----------------
+   One small room shared by everyone (menu or playing): each player posts
+   the public floor + channel they're on, so the menu can show how busy
+   each channel is. Nobody appears as a ghost here; it's counts only. */
+const LOBBY = 'eurekaland-lobby';
+export const LOBBY_MAX = 100;
+interface At { f: number; c: number }
+let lobby: Room | null = null;
+let lobbyAt: UserState<At> | null = null;
+let posted = '';
+
+export function joinLobby(): void {
+  if (lobby) return;
+  try {
+    lobby = joinRoom({ appId: APP_ID, maxUsers: LOBBY_MAX, identity: 'none' }, LOBBY);
+    lobbyAt = lobby.makeUserState<At>('at', { f: 0, c: 0 });
+  } catch { lobby = null; lobbyAt = null; }
+}
+
+/** Players on each public channel of a floor, as the lobby reports them. */
+export function lobbyCounts(floor: number): Map<number, number> {
+  const m = new Map<number, number>();
+  for (const v of Object.values(lobbyAt?.getAll() ?? {})) {
+    if (!v || v.f !== floor || !(v.c > 0) || v.c > 99) continue;
+    m.set(v.c, (m.get(v.c) ?? 0) + 1);
+  }
+  return m;
+}
+
+/** Post where we are (public channels only; a private instance posts nothing). */
+function postLobby(): void {
+  const at: At = net.started && !net.code ? { f: net.floor, c: net.channel } : { f: 0, c: 0 };
+  const key = `${at.f}:${at.c}`;
+  if (key !== posted && lobbyAt) { posted = key; lobbyAt.set(at); }
+}
 let room: Room | null = null;
 // Trystero's signed per-user store: we own it, peers read it.
 let pos: UserState<Packet> | null = null;
@@ -125,6 +161,7 @@ export function sync(): void {
   // changing floors moves us to that floor's rooms, keeping the channel number
   if (!net.started) return;
   if (!room || game.floor.number !== net.floor) connect(net.channel);
+  postLobby();
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);
   if (p) pos?.set(p);
   const k = takeBatch(performance.now());

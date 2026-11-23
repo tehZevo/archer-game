@@ -3,6 +3,8 @@ import { critChance } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { net, playerCount } from './net';
+import { menu } from './menu';
+import { drawMenu } from './menudraw';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, spendSp, STAT_INFO, STAT_KEYS } from './progress';
@@ -21,6 +23,7 @@ function bar(x: number, y: number, w: number, label: string, value: string, pct:
 
 function drawHUD(): void {
   const { w, h } = game.view;
+  if (menu.open) { drawMenu(); return; } // the title menu replaces the HUD
   const pad = 6;
 
   // top-left: level + floor

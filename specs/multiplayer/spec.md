@@ -12,10 +12,14 @@ Other players appear as ghosts on the same floor and channel, each washed in the
 
 ## Main menu and private instances
 
-- The game opens on a title menu over the frozen world, and nothing goes online until the player picks how to play.
-- **Play** joins the public channels.
-- **Private instance:** "Create new code" makes a random 5-letter code (no I or O). Entering a code and pressing Join plays in that instance: one room per floor, shared by everyone with the code, with its own seeded layouts. The code goes into the URL (`#CODE`), so the page link is the invite; opening it prefills the code, and Enter joins.
-- Under the floor name the HUD shows where you are and how many players are there: "Ch.1 · 3 players", or "Private CODE · 2 players" in a private instance.
+- The game opens on a title menu drawn in the game itself (on the canvas, pixel font, over the frozen world), not as page elements on top. It shows your level and the floor you'll resume on. Arrows move, Z or Enter selects; on touch, tap a row to select it and tap again to use it.
+- Nothing appears in any channel until the player picks how to play. While the menu is open the game joins a small lobby room that only shares head-counts (which public floor and channel each player is on), so the menu can show how busy each channel is.
+- **Play** joins the public channels on Auto: the busiest channel on your floor that still has room (so players meet up), or channel 1 if nobody is around.
+- **Channel** picks a public channel by hand (left/right, or tap the row's ends): Auto, then channels 1-3 and one beyond the busiest, each with its player count (e.g. "CH 2 3/20"). Selecting it plays there.
+- **Private code:** "New private code" makes a random 5-letter code (no I or O). Typing a code and pressing Enter plays in that instance: one room per floor, shared by everyone with the code, with its own seeded layouts. The code goes into the URL (`#CODE`), so the page link is the invite; opening it prefills the code, and Enter joins. A wrong-length code is refused with a note.
+- **Name** shows your name and lets you type a new one (letters and digits, up to 9); an empty name gets a random one.
+- **Reset progress** (only with a save) asks once more before erasing.
+- Typing goes through a hidden text field so phones open their keyboard.
 
 ## Shared spawn boost
 
