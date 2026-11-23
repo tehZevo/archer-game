@@ -1,4 +1,5 @@
 import { net, newCode, parseCode, CODE_LEN } from './net';
+import { clearSave, hasSave, saving } from './save';
 
 /* ============================================================
    MAIN MENU
@@ -26,6 +27,7 @@ export function buildMenu(start: () => void): void {
       </div>
       <button class="mbtn" data-act="create">Create new code</button>
       <div class="mnote">Share the code (or this page's link) so friends land in the same instance.</div>
+      ${hasSave() ? '<button class="mbtn mreset" data-act="reset">Reset progress</button>' : ''}
     </div>`;
   stage.appendChild(el);
 
@@ -52,6 +54,9 @@ export function buildMenu(start: () => void): void {
     const act = (e.target as HTMLElement).closest('[data-act]')?.getAttribute('data-act');
     if (act === 'play') go('');
     if (act === 'join') join();
+    if (act === 'reset' && confirm('Erase your saved progress and start over at Lv.1?')) {
+      saving.enabled = false; clearSave(); location.reload();
+    }
     if (act === 'create') { input.value = newCode(); note.textContent = `Code ${input.value}: share it, then Join.`; }
   });
   input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z]/g, ''); });
