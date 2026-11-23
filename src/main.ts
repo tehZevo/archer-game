@@ -9,7 +9,8 @@ import { cv } from './canvas';
 import { buildTouch } from './touch';
 import * as net from './net';
 import * as boost from './boost';
-import { buildMenu, menu } from './menu';
+import { initMenu, menu } from './menu';
+import { bindMenu } from './menudom';
 import { load, save, tickSave } from './save';
 const { sync } = net;
 
@@ -54,7 +55,7 @@ const resumeFloor = load();
 addEventListener('visibilitychange', () => { if (document.hidden && !menu.open) save(); });
 addEventListener('pagehide', () => { if (!menu.open) save(); });
 
-buildMenu(() => {
+initMenu(() => {
   // generate the saved floor from the chosen instance's seed, then go online
   gotoFloor(resumeFloor);
   net.net.started = true;
@@ -62,5 +63,8 @@ buildMenu(() => {
     ? `Private instance <b>${net.net.code}</b>. Share the code to play together.`
     : 'Welcome to <b>Eurekaland</b>. Climb the tower, chain skills for Fervor.');
   bannerMsg('Archer', 'Elven Bow · Arrow keys to move');
-});
+}, resumeFloor);
+bindMenu(cv);
+// the lobby only shares channel head-counts, so the menu can show them
+net.joinLobby();
 requestAnimationFrame(frame);

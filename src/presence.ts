@@ -37,6 +37,13 @@ export function myName(): string {
   return mine;
 }
 
+/** Change this player's name (cleaned; an empty name gets a random one). */
+export function setMyName(s: string): string {
+  mine = cleanName(s) || randomName();
+  try { localStorage.setItem(KEY, mine); } catch { /* no storage */ }
+  return mine;
+}
+
 /** Bright tints that stand apart from the archer's teal and gold. */
 const TINTS = ['#ff7a9c', '#9f8cff', '#ffa04d', '#5fd3ff', '#b6f05a', '#ff6bd5', '#ffe05a', '#6bffc0'];
 /** A stable tint for a peer id (the same player keeps their colour). */

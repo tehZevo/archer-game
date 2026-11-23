@@ -20,6 +20,7 @@ import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { net, newCode, parseCode, roomId } from '../src/net';
+import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
@@ -532,6 +533,70 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   queueShot(st, { t: NaN, x: 0, y: 0, f: 1, l: 1 } as never, 0);
   for (let i = 0; i < 100; i++) queueShot(undefined, { t: 0, x: 0, y: 0, f: 1, l: 1 }, 0);
   check('bad or flooding shot messages are capped', dueShots(1e9).length <= 80);
+}
+
+// --- canvas main menu: navigation, channels, codes, names, reset ---
+{
+  const mem = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, String(v)); },
+    removeItem: (k: string) => { mem.delete(k); },
+  };
+  let started = 0;
+  const open = (): void => { initMenu(() => { started++; }, 3); };
+  clearSave(); open();
+  check('menu rows: play, channel, code, new code, name (no reset without a save)', items().join(',') === 'play,channel,code,create,name');
+  menuKey('up');
+  check('menu selection wraps around', items()[menu.sel] === 'name');
+
+  // channel picker
+  check('auto picks the busiest channel with room', autoChannel(new Map([[1, 20], [2, 5], [3, 7]])) === 3);
+  check('auto falls back to channel 1 when nobody is around', autoChannel(new Map()) === 1);
+  check('channel list offers auto, 1-3 and one past the busiest', channelChoices(new Map([[5, 2]])).join(',') === '0,1,2,3,4,5,6');
+  open(); menuKey('down'); menuKey('right'); menuKey('right');
+  check('left/right on the channel row picks a channel', menu.channel === 2);
+  menuKey('enter');
+  check('playing from the channel row joins that public channel', started === 1 && !menu.open && net.channel === 2 && net.code === '');
+
+  // private code: type, then join
+  open(); menu.sel = items().indexOf('code');
+  menuKey('enter');
+  check('Enter on the code row starts typing', menu.edit === 'code');
+  menuText('ab1c');
+  menuKey('enter');
+  check('a short code is refused with a note', menu.open && menu.note.length > 0 && menu.edit === 'code');
+  menuText('abcdez');
+  check('the code field keeps 5 letters, upper-cased', menu.code === 'ABCDE');
+  menuKey('enter');
+  check('a full code joins that private instance', !menu.open && net.code === 'ABCDE' && started === 2);
+
+  // new code fills the field and jumps to it
+  open(); menu.sel = items().indexOf('create'); activate();
+  check('new code fills the code row', menu.code.length === 5 && items()[menu.sel] === 'code');
+
+  // name
+  open(); menu.sel = items().indexOf('name'); activate(); menuText('robin hood!'); menuKey('enter');
+  check('renaming saves a cleaned name', menu.name === 'ROBINHOOD' && localStorage.getItem('archer-game:name') === 'ROBINHOOD');
+
+  // taps: first selects, second uses; the channel row's thirds step the channel
+  open();
+  const rowY = (id: string): number => MENU_TOP + items().indexOf(id as never) * MENU_ROW + 3;
+  menuTap(MENU_X + MENU_W / 2, rowY('channel'));
+  check('a tap selects a row without using it', items()[menu.sel] === 'channel' && menu.open);
+  menuTap(MENU_X + MENU_W - 4, rowY('channel'));
+  check('tapping the right of the channel row steps it', menu.channel === 1);
+  menuTap(MENU_X + 4, rowY('name'));
+  check('a tap on a text row starts typing', menu.edit === 'name');
+
+  // reset asks twice
+  save(); open();
+  check('reset shows once there is a save', items().includes('reset'));
+  menu.sel = items().indexOf('reset'); activate();
+  check('reset asks to confirm first', menu.confirmReset && hasSave());
+  menuKey('up');
+  check('moving away cancels the reset', !menu.confirmReset);
+  menu.open = false; net.code = ''; net.channel = 1;
+  delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
