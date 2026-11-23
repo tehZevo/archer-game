@@ -4,7 +4,7 @@ import { ctx } from './canvas';
 import { game, player } from './state';
 import { net } from './net';
 import { boost, waveRate } from './boost';
-import { SPR } from './sprites';
+import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
 import { text } from './font';
@@ -58,7 +58,7 @@ function drawHUD(): void {
     const linked = player.combo > 0 && (k === 'W');
     const cd = player.cd[k] || 0, frac = s.cd ? cd / s.cd : 0;
     ctx.globalAlpha = learned ? 1 : 0.4;
-    ctx.drawImage(SPR.icon[k].c, x, by, 16, 16);
+    ctx.drawImage(skillIcon(s.key), x, by, 16, 16);
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#0009'; ctx.fillRect(x, by, 7, 7);
     text(ctx, slot.label, x + 1, by + 1, 1, learned ? '#ffd166' : '#4a5c7a', 'left');

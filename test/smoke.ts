@@ -5,6 +5,8 @@ import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
 import { game, player, gainExp, gotoFloor } from '../src/state';
 import { setKey, clearPressed } from '../src/input';
 import { update } from '../src/update';
+import { ICON_GLYPHS } from '../src/icons';
+import { SKILLS } from '../src/config';
 import { rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
 
 let failures = 0;
@@ -142,5 +144,15 @@ setKey('up', false);
 gotoFloor(10);
 check('floor 10 is a town', game.floor.town === true && game.mobs.length === 0);
 
+// every skill (bases, upgrades, passives) has its own 14x14 icon glyph
+{
+  const keys = Object.keys(SKILLS) as (keyof typeof ICON_GLYPHS)[];
+  check('every skill has an icon', keys.every((k) => ICON_GLYPHS[k]));
+  check('icon glyphs are 14x14', Object.values(ICON_GLYPHS).every((g) => g.length === 14 && g.every((r) => r.length === 14)));
+  const flat = Object.values(ICON_GLYPHS).map((g) => g.join(''));
+  check('icons are all distinct', new Set(flat).size === flat.length);
+}
+
 console.log(failures === 0 ? '\nAll tests passed.' : `\n${failures} test(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
+
