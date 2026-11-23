@@ -27,4 +27,6 @@ Sky gradient → floor platforms → ropes/ladders → portal → mobs (with HP 
 
 The skill bar shows a distinct pixel icon for each slot's active skill, so taking an upgrade changes the slot's icon; every skill, upgrade and passive has its own icon.
 
+A minimap in the top-right corner, under the skill bar, shows the whole floor at 1:10: platform tops (the ground as a band), ropes and ladders, the portal, enemies as red dots, other players in their own tint, you in gold, and a faint box for the part of the floor on screen. It's hidden behind the main menu and the pause menu.
+
 HUD numbers (HP, MP, EXP) are compact: plain below 1000, then shortened with K/M (e.g. 1.2K), rounded down so a bar never reads full early.
