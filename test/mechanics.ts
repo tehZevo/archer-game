@@ -260,6 +260,34 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('movement skills are never offered for ranks', !skillRows().some((r) => (r.key === 'C' || r.key === 'D') && r.action));
 }
 
+// --- branching upgrades: one branch per slot locks out the other ---
+{
+  arena(30);
+  player.ranks.Z = 2; player.sp = 2;
+  const offered = skillRows().map((r) => r.key);
+  check('Z offers both branches (Shell Barrage, Backstep Shot)', offered.includes('S') && offered.includes('BS'));
+  spendSkill('BS');
+  check('taking Backstep Shot binds it to Z and keeps the rank', activeSkill('Z').key === 'BS' && rank('Z').level === 2);
+  check('the rival branch is locked out', !skillRows().some((r) => r.key === 'S') && !spendSkill('S') && player.ranks.S === 0);
+}
+{
+  arena(30); player.ranks.BS = 1;
+  const m = dummy(140);
+  const x0 = player.x;
+  tap('z'); step(10);
+  check('Backstep Shot hops backward while hitting ahead', player.x < x0 - 8 && m.hp < 1e6 && player.face === 1, `dx ${(player.x - x0).toFixed(1)}`);
+}
+{
+  arena(20); player.ranks.VS = 1; player.ranks.W = 1;
+  const m = dummy(140);
+  const x0 = player.x, y0 = player.y;
+  tap('q'); step(6);
+  check('Vault Shot leaps up and backward', player.y < y0 - 20 && player.x < x0, `dy ${(y0 - player.y).toFixed(1)} dx ${(player.x - x0).toFixed(1)}`);
+  check('Vault Shot launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
+  const hp0 = m.hp; step(6); tap('w'); step(15);
+  check('Vault Shot opens the link window for W', m.hp < hp0);
+}
+
 // --- HUD: compact numbers ---
 check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345, 1234567].map(fmtNum).join(' ') === '999 1K 1.2K 12.3K 1.2M');
 
