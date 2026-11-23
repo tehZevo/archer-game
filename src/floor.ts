@@ -127,6 +127,10 @@ function mobForFloor(n: number): MobType {
  * ground and on platforms; a portal on the summit leads to the next floor.
  * Every 10th floor is a town (no enemies; its portal leads on up).
  */
+/** Enemies in a platform's group, by its walkable tiles: 4 on the
+ *  shortest tops (6 tiles or fewer), one more per 2 tiles, up to 8. */
+export const groupSize = (tiles: number): number => Math.max(4, Math.min(8, 4 + Math.floor((tiles - 6) / 2)));
+
 export function generateFloor(n: number): Floor {
   rng = seeded(hashStr(roomId(n, net.channel)));
   const town = n % 10 === 0;
@@ -139,7 +143,7 @@ export function generateFloor(n: number): Floor {
   const ladders: Climbable[] = [];
   const spawns: Spawn[] = [];
 
-  const COUNT = 7;          // platforms per floor (was 14: floors are half as tall)
+  const COUNT = 4;          // platforms per floor (was 14, then 7: floors halved twice)
   const step = 3 * TILE;     // summit to the next block's base (+0-1 tile): 2-3 tiles of headroom
   const startY = groundY - step;
 
@@ -154,7 +158,7 @@ export function generateFloor(n: number): Floor {
     let shape: Shape, minY: number, x: number;
     for (;;) {
       const kind = SHAPES[randInt(0, SHAPES.length - 1)];
-      const width = randInt(6, 24); // 6-24 tiles wide (the map is 20)
+      const width = randInt(12, 24); // 12-24 tiles wide (the map is 20)
       shape = makeShape(kind, 0, y, width, rand(0, 1) < 0.5);
       // The walkable summit: flat tiles on the block's highest row (slope
       // tiles share that row's y but their surface is lower).
@@ -201,8 +205,9 @@ export function generateFloor(n: number): Floor {
     const climb: Climbable = { x: top.x + TILE / 2, y1: top.y, y2: landing(top).y };
     if (rand(0, 1) < 0.5) ropes.push(climb); else ladders.push(climb);
 
-    if (!town && rand(0, 1) < 0.6) {
-      // a spawn zone on this platform's on-screen flat top tiles; long tops hold 2
+    if (!town && rand(0, 1) < 0.85) {
+      // most platforms hold a group: 4 enemies on the shortest tops, up to 8
+      // on the longest, spread over the on-screen flat top tiles
       const spots = shape.tiles
         .filter((t) => !t.inner && !t.slope && t.x >= 0 && t.x + TILE <= WORLD.w)
         .map((t) => ({ x: t.x + TILE / 2, y: t.y }));
@@ -210,7 +215,7 @@ export function generateFloor(n: number): Floor {
         const xs = spots.map((s) => s.x);
         spawns.push({
           x: Math.round(top.x + top.w / 2), y: top.y, t: mobForFloor(n).lvl, spots,
-          cap: spots.length >= 10 ? 2 : 1, minX: Math.min(...xs), maxX: Math.max(...xs),
+          cap: groupSize(spots.length), minX: Math.min(...xs), maxX: Math.max(...xs), block: i + 1,
         });
       }
     }

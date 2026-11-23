@@ -1,4 +1,4 @@
-import { CAM, P, SKILL_ORDER, WORLD } from './config';
+import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
 import { cameraTarget, gainExp, game, gotoFloor, player, spawnWave } from './state';
 import { held, pressed } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
@@ -8,7 +8,7 @@ import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progre
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
-import type { PauseMenu } from './types';
+import type { Mob, PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
   // Esc pause menu: freezes the game; arrows move, Z/Enter spends AP or SP
@@ -200,6 +200,14 @@ export function update(dt: number): void {
   updateCamera(dt);
 }
 
+/** How far a mob's centre may go: its platform's walkable extent (tile
+ *  edges), inside the map. */
+export function mobBounds(m: Mob): [number, number] {
+  const lo = Math.max(m.w / 2, m.home - m.range - TILE / 2);
+  const hi = Math.min(WORLD.w - m.w / 2, m.home + m.range + TILE / 2);
+  return [lo, hi];
+}
+
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
     if (m.hitFlash > 0) m.hitFlash -= dt;
@@ -240,8 +248,11 @@ function updateMobs(dt: number): void {
       const prevFeet = m.y + m.h;
       m.vy = Math.min(m.vy + P.GRAVITY * dt, P.TERMINAL);
       m.y += (old + m.vy) * 0.5 * dt;
-      // swept landing; also follows slopes up/down by STICK px
-      const s = m.vy < 0 ? null : surfaceBetween(m.x, m.w, prevFeet - STICK, m.y + m.h + STICK);
+      // swept landing; also follows slopes up/down by STICK px. A mob only
+      // ever lands on its own platform (it passes through any other), so a
+      // launch can't knock it onto a different one.
+      const home = (p: Platform): boolean => p.block === m.spawn?.block;
+      const s = m.vy < 0 ? null : surfaceBetween(m.x, m.w, prevFeet - STICK, m.y + m.h + STICK, null, home);
       if (s) {
         m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; m.airTime = Math.min(m.airTime, 0.35);
       }
@@ -250,7 +261,9 @@ function updateMobs(dt: number): void {
       m.y = clamp(m.y, 0, WORLD.h - m.h);
     }
     m.x += m.vx * dt;
-    m.x = clamp(m.x, m.w / 2, WORLD.w - m.w / 2);
+    // never off the edge of its own platform (knockback, pushes and chases included)
+    const [lo, hi] = mobBounds(m);
+    if (m.x < lo || m.x > hi) { m.x = clamp(m.x, lo, hi); m.vx = 0; }
   }
 }
 

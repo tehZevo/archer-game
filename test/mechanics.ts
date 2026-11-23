@@ -12,7 +12,7 @@ import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomNa
 import { clearPressed, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
-import { makeShape, SHAPES } from '../src/floor';
+import { groupSize, makeShape, SHAPES } from '../src/floor';
 import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
@@ -441,7 +441,10 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
     gotoFloor(n);
     const blocks = new Set(game.floor.platforms.filter((p) => p.block !== undefined).map((p) => p.block)).size;
     const span = game.floor.platforms[0].y - game.floor.portal.y;
-    check(`floor ${n}: 7 platforms, about half the old climb`, blocks === 7 && span > 450 && span < 760 && game.floor.portal.y > 60, `blocks ${blocks} span ${span}`);
+    check(`floor ${n}: 4 platforms, about half the last climb`, blocks === 4 && span > 250 && span < 450 && game.floor.portal.y > 60, `blocks ${blocks} span ${span}`);
+    const narrow = [...new Set(game.floor.platforms.filter((p) => p.block !== undefined).map((p) => p.block))]
+      .filter((b) => new Set(game.floor.platforms.filter((p) => p.block === b).map((p) => p.x)).size < 12);
+    check(`floor ${n}: every platform is at least 12 tiles wide`, narrow.length === 0, `narrow blocks ${narrow.join(',')}`);
   }
 }
 
@@ -616,6 +619,30 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('moving away cancels the reset', !menu.confirmReset);
   menu.open = false; net.code = ''; net.channel = 1;
   delete (globalThis as { localStorage?: unknown }).localStorage;
+}
+
+// --- spawns come in groups of 4-8; enemies never leave their own platform ---
+{
+  check('group size: 4 on short tops, up to 8 on long ones', groupSize(4) === 4 && groupSize(6) === 4 && groupSize(10) === 6 && groupSize(14) === 8 && groupSize(30) === 8);
+  let zones = 0, groups = 0;
+  for (const n of [1, 2, 3, 4]) {
+    gotoFloor(n);
+    const plats = game.floor.spawns.filter((z) => z.block !== undefined);
+    zones += plats.length; groups += plats.filter((z) => (z.cap ?? 1) >= 4 && (z.cap ?? 1) <= 8).length;
+  }
+  check('platform spawn zones hold groups of 4-8', zones > 0 && groups === zones, `${groups}/${zones}`);
+
+  // launch every enemy hard sideways and up; none may end up anywhere but its own platform
+  release(); gotoFloor(2); player.invuln = 999; player.x = 4;
+  for (const m of game.mobs) { m.vx = (m.x < 160 ? -1 : 1) * 900; m.vy = -600; m.airTime = 1.1; }
+  step(90);
+  const strays = game.mobs.filter((m) => {
+    const z = m.spawn!;
+    const plat = game.floor.platforms.find((p) => !p.inner && m.x >= p.x && m.x < p.x + p.w && Math.abs(p.y - (m.y + m.h)) < 6);
+    const offEdge = m.x < (z.minX ?? 0) - 16 || m.x > (z.maxX ?? 320) + 16;
+    return offEdge || !m.fly && (!plat || plat.block !== z.block);
+  });
+  check('knocked enemies stay on their own platform', strays.length === 0, `${strays.length}/${game.mobs.length} strayed`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
