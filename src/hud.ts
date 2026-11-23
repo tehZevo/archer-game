@@ -2,7 +2,7 @@ import { areaFor, SKILL_BAR } from './config';
 import { critChance } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { net } from './net';
+import { net, playerCount } from './net';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, spendSp, STAT_INFO, STAT_KEYS } from './progress';
@@ -30,7 +30,13 @@ function drawHUD(): void {
     pad, pad + 9, 1, '#8ea3c2', 'left');
   // a private instance shows its code on its own line (shifting the points line down)
   let ly = pad + 18;
-  if (net.code) { text(ctx, `Private ${net.code}`, pad, ly, 1, '#4fd8c4', 'left'); ly += 9; }
+  // where you are and who's with you: the channel (or private code) and the player count
+  if (net.joined) {
+    const n = playerCount();
+    const where = net.code ? `Private ${net.code}` : `Ch.${net.channel}`;
+    text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
+    ly += 9;
+  }
   // other players' kills are speeding up our waves
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
   if (player.ap || player.sp) {

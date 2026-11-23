@@ -3,7 +3,8 @@ import { FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { SPR, blockTile } from './sprites';
-import { localPose, peers } from './net';
+import { localPose, names, peers } from './net';
+import { ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
 import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './archer';
 import { NB } from './nb';
@@ -113,10 +114,11 @@ function drawMob(m: Mob): void {
 const ARCHER = bakeArcher();
 
 /** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s). */
-function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number): void {
+function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string): void {
   // Climbing steps hand over hand with distance climbed, not time, so it
   // holds still while hanging on the rope.
-  const img = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t, since);
+  const frame = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t, since);
+  const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));
@@ -125,12 +127,40 @@ function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number
   ctx.restore();
 }
 
-/** Remote archers from other players: translucent, played back smoothly. */
+// scratch canvas for tinting a ghost's frame
+const tintCv = document.createElement('canvas');
+tintCv.width = ARCHER_W; tintCv.height = ARCHER_H;
+const tintCtx = tintCv.getContext('2d') as CanvasRenderingContext2D;
+/** The frame washed with a colour (only where the frame has pixels). */
+function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
+  tintCtx.globalCompositeOperation = 'source-over';
+  tintCtx.globalAlpha = 1;
+  tintCtx.clearRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.drawImage(img, 0, 0);
+  tintCtx.globalCompositeOperation = 'source-atop';
+  tintCtx.globalAlpha = 0.45;
+  tintCtx.fillStyle = col;
+  tintCtx.fillRect(0, 0, ARCHER_W, ARCHER_H);
+  return tintCv;
+}
+
+/** Other players: tinted in their own colour with a name tag, played back
+ *  smoothly, their skill effects replayed from their poses. */
 function drawGhosts(): void {
   const now = performance.now();
-  for (const tr of peers.values()) {
+  for (const [id, tr] of peers) {
     const g = view(tr, now);
-    if (g) drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000, 0.55, g.since); // ghosts use the same 16x24 box
+    if (!g) continue;
+    const col = tintFor(id);
+    game.fx.push(...ghostFx(tr, g));
+    drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, col); // ghosts use the same 16x24 box
+    const name = names.get(id);
+    if (name) {
+      const nx = Math.round(g.x), ny = Math.round(g.y) - 10;
+      // 1px dark outline so the tag reads over any background
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) text(ctx, name, nx + dx, ny + dy, 1, '#0d1424', 'center');
+      text(ctx, name, nx, ny, 1, col, 'center');
+    }
   }
 }
 

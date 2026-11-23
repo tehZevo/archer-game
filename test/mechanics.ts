@@ -7,7 +7,8 @@ let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
 import { FX_DUR, MOB_TYPES, P } from '../src/config';
-import { game, gotoFloor, mobLevel, player, spawnMob } from '../src/state';
+import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
+import { cleanName, ghostFx, NAME_MAX, randomName, tintFor } from '../src/presence';
 import { clearPressed, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
@@ -492,6 +493,32 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     });
   }
   check('platform gaps are all 2-3 tiles, the first one too', bad.length === 0, bad.join(', '));
+}
+
+// --- presence: names, tints, spawn spread, ghost skill effects ---
+{
+  const ns = Array.from({ length: 50 }, () => randomName());
+  check('random names fit the tag and the pixel font', ns.every((n) => n.length >= 5 && n.length <= NAME_MAX && /^[A-Z0-9]+$/.test(n)));
+  check('names from peers are cleaned', cleanName('  hi there!!<b> ') === 'HITHEREB' && cleanName(null) === '' && cleanName('x'.repeat(40)).length === NAME_MAX);
+  check('a peer keeps the same tint', tintFor('abc123') === tintFor('abc123'));
+  check('peers get different tints', new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(tintFor)).size >= 4);
+
+  const xs = Array.from({ length: 12 }, () => { gotoFloor(1); return player.x; });
+  const mid = ground().x + ground().w / 2 - player.w / 2;
+  check('arrivals are spread around the middle', new Set(xs).size > 6 && xs.every((x) => Math.abs(x - mid) <= SPAWN_SPREAD));
+
+  const tr = newTrack();
+  const at = (pose: 'shoot' | 'rush' | 'idle', since: number) => ghostFx(tr, { x: 100, y: 50, face: 1, pose, since });
+  const drawing = at('shoot', 0.02).length;
+  const release = at('shoot', P.Z_WINDUP + 0.01).map((f) => f.type).sort().join(',');
+  const after = at('shoot', P.Z_WINDUP + 0.1).length;
+  at('idle', 0);
+  const again = at('shoot', P.Z_WINDUP + 0.02).length;
+  const rush = at('rush', 0).map((f) => f.type).join(',');
+  check('a ghost shot shows nothing while drawing the bow', drawing === 0);
+  check('a ghost shot fires muzzle and tracer once, on release', release === 'muzzle,tracer' && after === 0);
+  check('the next ghost shot fires again', again === 2);
+  check('a ghost Sky Toss shows its horn of light', rush === 'rush');
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

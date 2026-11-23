@@ -115,6 +115,9 @@ export function spawnWave(): void {
 }
 
 /** Replace the current floor with a freshly generated one and populate mobs. */
+/** How far either side of the ground's centre a player can arrive, px. */
+export const SPAWN_SPREAD = 64;
+
 export function gotoFloor(n: number): void {
   game.floor = generateFloor(n);
   game.mobs.length = 0;
@@ -127,8 +130,10 @@ export function gotoFloor(n: number): void {
   // Drop the player onto the ground slab. The portal sits on the summit
   // platform, so use the ground's own centre — the portal's x can fall in a
   // gap between the ground's tiles on narrower worlds.
+  // Spread arrivals around the middle so players arriving together don't
+  // stand on the same pixel (a ghost hidden exactly behind you is invisible).
   const ground = game.floor.platforms[0];
-  player.x = ground.x + ground.w / 2 - player.w / 2;
+  player.x = ground.x + ground.w / 2 - player.w / 2 + Math.round((Math.random() * 2 - 1) * SPAWN_SPREAD);
   player.y = ground.y - player.h;
   player.vx = 0; player.vy = 0;
   player.onGround = true; player.plat = ground;
