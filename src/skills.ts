@@ -1,4 +1,4 @@
-import { LINKED_SKILLS, P } from './config';
+import { LINKED_SKILLS, P, WORLD } from './config';
 import { game, later, player } from './state';
 import { held } from './input';
 import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
@@ -39,7 +39,7 @@ export function cast(key: SkillKey): void {
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
   // Sky Toss is a ground launcher: no mid-air use.
-  if (kind === 'Q' && !player.onGround) return;
+  if ((kind === 'Q' || kind === 'VS' || kind === 'E') && !player.onGround) return;
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
@@ -142,6 +142,95 @@ export function cast(key: SkillKey): void {
         later(P.RUSH_STRIKE_DELAY, strike);
       }
       player.combo = 1.1; player.comboT = 1.1;
+      break;
+    }
+
+    case 'BS': {
+      // Backstep Shot: hop backward (still facing forward) while the closest
+      // enemies ahead take every hit, like Twin Shot
+      player.cast = 'shoot'; player.castT = 0.24; player.castTotal = 0.24;
+      sfx.shoot();
+      const face = player.face;
+      const tg = hitbox(player.x + face * 64, player.y + player.h / 2, 128, 56)
+        .sort((a, b) => Math.abs(a.x - player.x) - Math.abs(b.x - player.x))
+        .slice(0, r.targets);
+      if (player.onGround) {
+        player.onGround = false;
+        player.vx = -face * P.BACKSTEP_VX;
+        player.vy = -P.BACKSTEP_VY;
+      }
+      const mx = player.x + face * 8, my = player.y + 13;
+      game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
+      game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: -face });
+      for (let h = 0; h < r.hits; h++) {
+        later(h * 0.08, () => {
+          const live = tg.filter((m) => game.mobs.includes(m));
+          const sx = player.x + face * 8, sy = player.y + 13;
+          for (const m of live) {
+            game.fx.push({ type: 'tracer', x: sx, y: sy, t: 0.14, face, sx: Math.max(12, Math.abs(m.x - sx)) / 64 });
+          }
+          live.forEach((m) => damage(m, r.dmg));
+        });
+      }
+      break;
+    }
+
+    case 'VS': {
+      // Vault Shot: leap backward into the air while launching the enemies
+      // ahead, opening the link window for an airborne W
+      player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
+      sfx.jump();
+      const face = player.face;
+      const cx = player.x + face * 40;
+      const tg = hitbox(cx, player.y + player.h / 2, 96, 64).slice(0, r.targets);
+      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
+        .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
+      tg.forEach((m) => damage(m, r.dmg, { launch: true }));
+      player.onGround = false;
+      player.vx = -face * P.VAULT_VX;
+      player.vy = -P.VAULT_VY;
+      game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: -face });
+      player.combo = 1.4; player.comboT = 1.4;
+      break;
+    }
+
+    case 'E': {
+      // Piercing Dash: burst forward along the ground straight through enemies
+      // (briefly invulnerable), striking everything along the path as you pass it
+      player.cast = 'rush'; player.castT = 0.26; player.castTotal = 0.26;
+      sfx.glide();
+      const face = player.face;
+      const x0 = player.x;
+      const dist = (P.DASH_V * P.DASH_V) / (2 * P.FRICTION);
+      const x1 = Math.max(player.w / 2, Math.min(WORLD.w - player.w / 2, x0 + face * dist));
+      const tg = hitbox((x0 + x1) / 2, player.y + player.h / 2, Math.abs(x1 - x0) + 16, 40)
+        .sort((a, b) => Math.abs(a.x - x0) - Math.abs(b.x - x0))
+        .slice(0, r.targets);
+      player.vx = face * P.DASH_V;
+      player.invuln = Math.max(player.invuln, P.DASH_INVULN);
+      game.fx.push({ type: 'spirit', x: x0, y: player.y + player.h / 2, t: 0.3, face: -face });
+      // each enemy is struck roughly when the dash reaches it
+      tg.forEach((m) => later(Math.min(0.24, Math.abs(m.x - x0) / P.DASH_V), () => {
+        if (game.mobs.includes(m)) damage(m, r.dmg);
+      }));
+      break;
+    }
+
+    case 'R': {
+      // Piercing Arrow: one heavy arrow down the line ahead; every enemy it
+      // passes through takes the full hit, nearest first
+      player.cast = 'shoot'; player.castT = 0.36; player.castTotal = 0.36;
+      sfx.shoot();
+      const face = player.face;
+      const mx = player.x + face * 8, my = player.y + 13;
+      const tg = hitbox(player.x + face * P.PIERCE_RANGE / 2, my, P.PIERCE_RANGE, 28)
+        .sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx))
+        .slice(0, r.targets);
+      game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
+      game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.2, face, sx: P.PIERCE_RANGE / 64 });
+      tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
+        if (game.mobs.includes(m)) damage(m, r.dmg);
+      }));
       break;
     }
 

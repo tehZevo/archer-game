@@ -29,6 +29,13 @@ export const P = {
   ACCEL: 1600,         // groundedAccelForce
   RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (~70px slide)
   RUSH_STRIKE_DELAY: 0.12, // s into the slide before Sky Toss strikes
+  BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
+  BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
+  VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
+  DASH_V: 340,         // Piercing Dash start speed; friction stops it (v²/2·FRICTION ≈ 83px)
+  DASH_INVULN: 0.35,   // s of invulnerability while dashing through enemies
+  PIERCE_RANGE: 260,   // Piercing Arrow reach, px
+  VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
   FRICTION: 700,       // ground friction when no input (a short slide)
   AIR_BRAKE: 400,      // px/s^2: in the air, holding against your motion only slows you (never reverses)
 } as const;
@@ -72,12 +79,25 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 1, minLevel: 5, maxLevel: 3,
        cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 8, targetsMax: 8,
        desc: 'Airborne-only volley after Sky Toss' },
+  E: { key: 'E', name: 'Piercing Dash', tag: 'Dash', job: 1, minLevel: 10, maxLevel: 3,
+       cd: 3.0, mp1: 5, mpMax: 7, dmg1: 220, dmgMax: 320, targets1: 6, targetsMax: 10,
+       desc: 'Dash along the ground, striking everything you pass' },
+  R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
+       cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,
+       desc: 'A heavy arrow that pierces every enemy in a line' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 1, minLevel: 15, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6,
        desc: 'After Sky Toss: leap up to launched enemies' },
   S: { key: 'S', name: 'Shell Barrage', tag: 'Burst', job: 1, minLevel: 30, maxLevel: 3,
        cd: 0.42, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
+  // Branch upgrades: each competes with the other upgrade on the same slot.
+  BS: { key: 'BS', name: 'Backstep Shot', tag: 'Reposition', job: 1, minLevel: 30, maxLevel: 3,
+       cd: 0.55, mp1: 3, mpMax: 4, dmg1: 150, dmgMax: 205, hits1: 2, hitsMax: 3, targets1: 2, targetsMax: 3,
+       desc: 'Hop backward while firing forward' },
+  VS: { key: 'VS', name: 'Vault Shot', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
+       cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
+       desc: 'Leap back into the air, launching enemies ahead' },
   // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
   SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.07, bonusMax: 0.21,
@@ -90,18 +110,17 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         desc: 'Each Fervor stack gives more damage' },
 };
 
-export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'Q', 'W']; // E/S are slot upgrades, not their own keys
+export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key
 
 /** The buttons shown in the on-canvas skill bar. Z is the main attack slot:
  *  Twin Shot early, upgraded to Shell Barrage at Lv.30. */
-/** Attack keys Z (main), Q, W, E, R. Slots upgrade in place (Z → Stunning
- *  Strikes, W → Sky Assault); E and R are empty slots for future skills. */
+/** Attack keys Z (main), Q, W, E, R. Slots upgrade in place (see UPGRADES in progress.ts). */
 export const SKILL_BAR: { label: string; skill: SkillKey | null }[] = [
   { label: 'Z', skill: 'Z' },
   { label: 'Q', skill: 'Q' },
   { label: 'W', skill: 'W' },
-  { label: 'E', skill: null },
-  { label: 'R', skill: null },
+  { label: 'E', skill: 'E' },
+  { label: 'R', skill: 'R' },
 ];
 
 /** Skills that consume the Sky Toss link window and stack Fervor. */
