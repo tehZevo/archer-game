@@ -260,7 +260,9 @@ export function cast(key: SkillKey): void {
       const air = barrageTargets();
       const top = air.length ? Math.min(...air.map((m) => m.y)) : player.y - 40;
       const from = player.y + player.h / 2;
-      player.y = Math.max(0, Math.min(player.y, top - player.h - 4)); // feet just above the highest
+      // rise toward the highest launched enemy, but only P.BARRAGE_RISE of the way
+      const peak = Math.min(player.y, top - player.h - 4);
+      player.y = Math.max(0, player.y - (player.y - peak) * P.BARRAGE_RISE);
       player.vx = 0; player.vy = 0; player.onGround = false;
       game.fx.push({ type: 'swoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
       player.hangT = P.BARRAGE_HANG; player.hangHits = r.hits; player.hangHitT = 0;

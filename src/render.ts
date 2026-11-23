@@ -5,7 +5,7 @@ import { game, player } from './state';
 import { SPR, blockTile } from './sprites';
 import { localPose, peers } from './net';
 import { view, type Pose } from './ghost';
-import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher } from './archer';
+import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './archer';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
@@ -114,7 +114,9 @@ const ARCHER = bakeArcher();
 
 /** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s). */
 function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1): void {
-  const img = archerFrame(ARCHER, pose, t);
+  // Climbing steps hand over hand with distance climbed, not time, so it
+  // holds still while hanging on the rope.
+  const img = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t);
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));

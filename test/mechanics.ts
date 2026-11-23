@@ -13,12 +13,12 @@ import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { makeShape, SHAPES } from '../src/floor';
 import { killMob } from '../src/combat';
-import { cast } from '../src/skills';
+import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { net, newCode, parseCode, roomId } from '../src/net';
-import { GRIDS, POSE_FPS } from '../src/archer';
+import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
 
@@ -205,6 +205,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const x0 = player.x, y0 = player.y, hp0 = m.hp;
+  const air = barrageTargets(), top = air.length ? Math.min(...air.map((a) => a.y)) : y0 - 40;
   tap('w');
   const up = y0 - player.y;
   let hover = 0;
@@ -212,6 +213,8 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Assault warps straight up without moving sideways', up > 0 && player.x === x0, `up ${up.toFixed(1)} dx ${(player.x - x0).toFixed(2)}`);
   check('Sky Assault hovers about half a second, then lands', hover >= 12 && hover <= 18 && player.onGround, `hover ${hover} frames`);
   check('Sky Assault hits', m.hp < hp0);
+  const peak = y0 - Math.min(y0, top - player.h - 4);
+  check('Sky Assault rises 75% of the way to the launched enemy', Math.abs(up - peak * P.BARRAGE_RISE) < 1, `up ${up.toFixed(1)} full ${peak.toFixed(1)}`);
 }
 
 {
@@ -363,6 +366,35 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- archer sprite sheet ---
 check('every archer frame is 16x24', Object.values(GRIDS).every((fs) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === 16))));
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
+
+// --- bug: fast ground moves sank into slopes ---
+{
+  // Sky Toss's slide (~10px/frame) outran the 4px ground stick on 2:1 ramps
+  // and the player dropped into the slope. Cast it up and down every ramp tile.
+  let tries = 0, sank = 0;
+  gotoFloor(1);
+  const tiles = game.floor.platforms.filter((p) => !p.inner && p.slope);
+  for (const p of tiles) for (const face of [1, -1] as const) {
+    arena(1); game.floor.spawns = [];
+    const walk = game.floor.platforms.filter((q) => !q.inner);
+    player.x = p.x + p.w / 2; player.y = surfaceYAt(p, player.x) - player.h; player.plat = p; player.face = face;
+    step(1); if (!player.onGround) continue;
+    tries++; tap('q');
+    for (let i = 0; i < 20; i++) {
+      step(1);
+      const feet = player.y + player.h;
+      if (walk.some((q) => player.x >= q.x && player.x < q.x + q.w && feet > surfaceYAt(q, player.x) + 3 && feet < surfaceYAt(q, player.x) + 14)) { sank++; break; }
+    }
+  }
+  check('Sky Toss never sinks into a slope', tries > 20 && sank === 0, `${sank}/${tries}`);
+}
+
+// --- bug: the climb animation played while hanging still ---
+{
+  const frames = { ...GRIDS, climb: [['a'], ['b']] } as never;
+  const f = (feet: number): unknown => archerFrame(frames, 'climb', climbPhase(feet));
+  check('climb frame holds while still, steps while climbing', f(100) === f(100) && f(100) === f(103) && f(100) !== f(108));
+}
 
 // --- HUD: compact numbers ---
 check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345, 1234567].map(fmtNum).join(' ') === '999 1K 1.2K 12.3K 1.2M');
