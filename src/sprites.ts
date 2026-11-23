@@ -23,29 +23,6 @@ function px(s: Sprite, gx: number, gy: number, col: string, gw = 1, gh = 1): voi
   s.x.fillRect(gx, gy, gw, gh);
 }
 
-/** A 16x24 elven archer facing right. */
-function playerSprite(): Sprite {
-  const s = make(16, 24);
-  // hair
-  px(s, 3, 1, '#f6dc8a', 9, 8);
-  px(s, 2, 3, '#f6dc8a', 2, 12);
-  // face
-  px(s, 6, 4, '#f2d0a9', 6, 5);
-  px(s, 10, 5, '#2b3a4a', 1, 1); // eye
-  // body (teal dress)
-  px(s, 4, 9, '#2fbfa4', 8, 8);
-  px(s, 4, 13, '#1f9d86', 8, 2);
-  // arm + dual bow
-  px(s, 11, 11, '#e8c39a', 3, 2);
-  px(s, 13, 8, '#cfd8e6', 2, 8);
-  px(s, 13, 9, '#8fd6ff', 2, 2);
-  px(s, 13, 13, '#8fd6ff', 2, 2);
-  // legs
-  px(s, 5, 17, '#e8c39a', 2, 6);
-  px(s, 9, 17, '#e8c39a', 2, 6);
-  return s;
-}
-
 function snailSprite(): Sprite {
   const s = make(17, 14);
   px(s, 2, 4, '#5fb8f0', 13, 9);
@@ -262,7 +239,6 @@ function iconBarrage(): Sprite {
 }
 
 export const SPR = {
-  player: playerSprite(),
   slopeFootR: slopeFootSprite(1),
   slopeFootL: slopeFootSprite(-1),
   slopeL0: slopeSprite(-1, 0),

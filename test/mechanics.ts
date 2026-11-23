@@ -16,6 +16,8 @@ import { killMob } from '../src/combat';
 import { cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { GRIDS, POSE_FPS } from '../src/archer';
+import { POSES } from '../src/ghost';
 import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
 
@@ -271,6 +273,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('ghost pose plays back with the motion', view(tr, 600)!.pose === 'walk' && view(tr, 2000)!.pose === 'jump');
   check('send interval is fewer than 10 updates/s', SEND_MS > 100);
 }
+
+// --- archer sprite sheet ---
+check('every archer frame is 16x24', Object.values(GRIDS).every((fs) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === 16))));
+check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
 
 // --- HUD: compact numbers ---
 check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345, 1234567].map(fmtNum).join(' ') === '999 1K 1.2K 12.3K 1.2M');
