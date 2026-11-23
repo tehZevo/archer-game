@@ -16,9 +16,10 @@ function surfacesAt(x: number, w: number, ignoreBlock: number | null = null): Pl
 }
 
 /** The topmost surface in [yTop, yBot] under a body at x (y grows downward). */
-export function surfaceBetween(x: number, w: number, yTop: number, yBot: number, ignoreBlock: number | null = null): Platform | null {
+export function surfaceBetween(x: number, w: number, yTop: number, yBot: number, ignoreBlock: number | null = null, only?: (p: Platform) => boolean): Platform | null {
   let best: Platform | null = null, bestY = Infinity;
   for (const p of surfacesAt(x, w, ignoreBlock)) {
+    if (only && !only(p)) continue;
     const sy = surfaceYAt(p, x);
     if (sy >= yTop && sy <= yBot && sy < bestY) { best = p; bestY = sy; }
   }

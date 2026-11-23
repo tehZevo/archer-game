@@ -110,6 +110,8 @@ export interface Spawn {
   /** Patrol bounds (the platform's walkable extent). */
   minX?: number;
   maxX?: number;
+  /** The platform block the zone sits on (undefined = the ground). */
+  block?: number;
 }
 
 export interface Mob {
