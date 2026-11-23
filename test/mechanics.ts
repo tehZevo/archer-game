@@ -24,7 +24,7 @@ function check(name: string, cond: boolean, detail = ''): void {
   if (!cond) failures++;
   console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}${!cond && detail ? ` (${detail})` : ''}`);
 }
-const KEYS = ['left', 'right', 'up', 'down', 'c', 'd', 'z', 'q', 'w', 'escape'];
+const KEYS = ['left', 'right', 'up', 'down', 'c', 'd', 'z', 'q', 'w', 'e', 'r', 'escape'];
 const release = (): void => { KEYS.forEach((k) => setKey(k, false)); clearPressed(); };
 const step = (n = 1): void => { for (let i = 0; i < n; i++) { update(P.STEP); clearPressed(); } };
 const tap = (k: string): void => { setKey(k, false); setKey(k, true); step(1); setKey(k, false); };
@@ -309,6 +309,24 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Vault Shot launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
   const hp0 = m.hp; step(6); tap('w'); step(15);
   check('Vault Shot opens the link window for W', m.hp < hp0);
+}
+
+// --- E / R ---
+{
+  arena(10); player.ranks.E = 1;
+  const a = dummy(130), b = dummy(160);
+  const x0 = player.x;
+  tap('e'); step(15);
+  check('Piercing Dash carries you forward through enemies', player.x - x0 > 50, `dx ${(player.x - x0).toFixed(1)}`);
+  check('Piercing Dash strikes every enemy on the path', a.hp < 1e6 && b.hp < 1e6);
+}
+{
+  arena(25); player.ranks.R = 1;
+  const a = dummy(130), b = dummy(250);
+  tap('r'); step(15);
+  check('Piercing Arrow hits every enemy in the line', a.hp < 1e6 && b.hp < 1e6);
+  const hp = a.hp; player.useT = 0; tap('r'); step(5);
+  check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
 }
 
 // --- HUD: compact numbers ---

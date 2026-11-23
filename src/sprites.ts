@@ -261,6 +261,26 @@ function iconBarrage(): Sprite {
   return s;
 }
 
+/** Piercing Dash: an arrowhead with speed lines trailing it. */
+function iconDash(): Sprite {
+  const s = make(16, 16);
+  px(s, 1, 4, '#5d708f', 6, 1); px(s, 0, 7, '#8fa2b8', 8, 2); px(s, 1, 11, '#5d708f', 6, 1);
+  px(s, 8, 4, '#cfd8e6', 3, 8);
+  px(s, 11, 5, '#8fd6ff', 2, 6); px(s, 13, 6, '#8fd6ff', 2, 4); px(s, 15, 7, '#8fd6ff', 1, 2);
+  return s;
+}
+
+/** Piercing Arrow: one long arrow through a ring. */
+function iconPierce(): Sprite {
+  const s = make(16, 16);
+  px(s, 5, 3, '#ffd166', 6, 1); px(s, 5, 12, '#ffd166', 6, 1);
+  px(s, 4, 4, '#ffd166', 1, 8); px(s, 11, 4, '#ffd166', 1, 8);
+  px(s, 1, 7, '#cfd8e6', 12, 2);
+  px(s, 13, 6, '#8fd6ff', 2, 4); px(s, 15, 7, '#8fd6ff', 1, 2);
+  px(s, 0, 6, '#ffd166', 2, 4);
+  return s;
+}
+
 export const SPR = {
   player: playerSprite(),
   slopeFootR: slopeFootSprite(1),
@@ -277,6 +297,8 @@ export const SPR = {
     Q: iconRising(),
     W: iconParting(),
     AB: iconBarrage(),
+    E: iconDash(),
+    R: iconPierce(),
   } as Record<string, Sprite>,
   mob: {
     'Garden Snail': snailSprite(),
