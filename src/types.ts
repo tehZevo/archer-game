@@ -173,6 +173,10 @@ export interface Player extends Body {
   /** A link skill pressed during Sky Toss, fired once Sky Toss finishes. */
   queued: SkillKey | null;
   /** Sky Assault: seconds left hovering (no gravity) while striking airborne enemies. */
+  /** Sky Toss slide: seconds left (0 = not rushing). The strike lands when it ends. */
+  rushT: number;
+  /** Enemies the slide is pushing along, at their distance ahead of the player. */
+  rushCarry: { m: Mob; off: number }[];
   hangT: number;
   /** Sky Assault strikes left, time to the next one, and per-strike damage / targets. */
   hangHits: number;
