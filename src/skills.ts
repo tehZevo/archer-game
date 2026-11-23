@@ -121,18 +121,26 @@ export function cast(key: SkillKey): void {
     case 'Q': {
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
+      // Down + Q fires in place; otherwise slide forward first, then strike
+      // around where the slide carried you.
       const inPlace = held('down');
-      const cx = inPlace ? player.x : player.x + player.face * 48;
-      const tg = hitbox(cx, player.y + player.h / 2, 96, 64).slice(0, r.targets);
-      // a horn of light erupts under each target (or ahead, if none)
-      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
-        .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
-      tg.forEach((m) => {
-        damage(m, r.dmg, { launch: true });
-        if (!inPlace) m.vx = player.face * 240;
-      });
-      // A short slide forward along the ground (no hop); friction stops it.
-      if (!inPlace) player.vx = player.face * P.RUSH_SLIDE_V;
+      const face = player.face;
+      const strike = (): void => {
+        const cx = inPlace ? player.x : player.x + face * 24;
+        const tg = hitbox(cx, player.y + player.h / 2, 96, 64).slice(0, r.targets);
+        // a horn of light erupts under each target (or ahead, if none)
+        (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
+          .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
+        tg.forEach((m) => {
+          damage(m, r.dmg, { launch: true });
+          if (!inPlace) m.vx = face * 240;
+        });
+      };
+      if (inPlace) strike();
+      else {
+        player.vx = face * P.RUSH_SLIDE_V;
+        later(P.RUSH_STRIKE_DELAY, strike);
+      }
       player.combo = 1.1; player.comboT = 1.1;
       break;
     }

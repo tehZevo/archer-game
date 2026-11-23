@@ -210,6 +210,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Assault hits', m.hp < hp0);
 }
 
+{
+  // Sky Toss: slide forward first, the strike lands after the slide has started
+  arena(1);
+  const m = dummy(150);
+  const x0 = player.x;
+  tap('q');
+  check('Sky Toss slides forward before striking', player.x > x0 && m.hp === 1e6);
+  step(8);
+  check('Sky Toss strikes after the slide', m.hp < 1e6 && player.x - x0 > 20, `dx ${(player.x - x0).toFixed(1)}`);
+}
+
 // --- enemies: waves never exceed a zone's cap; mobs stay on their platform ---
 {
   let over = 0;

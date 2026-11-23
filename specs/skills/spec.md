@@ -3,7 +3,7 @@
 The attack keys are Z (main), Q, W, E and R, plus movement keys. Some slots upgrade in place when a stronger skill unlocks:
 
 - **Z:** Twin Shot (Lv.1) hits the two closest enemies in range ahead twice each, instantly (no projectile); it can be upgraded to Shell Barrage from Lv.30, which shares its cooldown.
-- **Q:** Sky Toss (known from the start) slides the player a short way along the ground and launches enemies airborne (Down + Q launches them in place).
+- **Q:** Sky Toss (known from the start) slides the player forward first, then strikes where the slide carried them, launching enemies airborne (Down + Q strikes in place, no slide).
 - **W:** the link skill. Skyfall Volley (pickable from Lv.5) fires arrows at the launched enemies; it can be upgraded to Sky Assault from Lv.15, which warps the player straight up above the launched enemies (no horizontal movement), hovers there for about half a second striking every enemy still in the air, then drops with normal gravity.
 - **E, R:** empty for now, reserved for future skills.
 - **C:** Jump keeps running momentum. **D:** Glide is the air move.
