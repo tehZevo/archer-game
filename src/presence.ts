@@ -1,5 +1,4 @@
-import { P } from './config';
-import type { GhostTrack, GhostView } from './ghost';
+import { INTERP_MS, type GhostTrack, type GhostView } from './ghost';
 import type { Fx } from './types';
 
 /* ============================================================
@@ -53,10 +52,11 @@ interface Run { pose: string; since: number; fired: boolean }
 const runs = new WeakMap<GhostTrack, Run>();
 
 /**
- * Effects to spawn for a ghost this frame. Each pose run fires its effect
- * once: a shot at the release (after the draw), Sky Toss's horn of light and
- * Sky Assault's swoosh as they begin. A run is new when the pose changes or
- * its age drops back (the same pose started again).
+ * Effects to spawn for a ghost this frame, from its pose. Each pose run fires
+ * once: Sky Toss's horn of light and Sky Assault's swoosh as they begin. A
+ * run is new when the pose changes or its age drops back (the same pose
+ * started again). Shots don't come from the pose (back-to-back shots merge
+ * into one long pose): each one arrives as its own message (see queueShot).
  */
 export function ghostFx(tr: GhostTrack, g: GhostView): Fx[] {
   const prev = runs.get(tr);
@@ -68,12 +68,7 @@ export function ghostFx(tr: GhostTrack, g: GhostView): Fx[] {
   if (run.fired) return [];
 
   const out: Fx[] = [];
-  if (g.pose === 'shoot') {
-    if (g.since < P.Z_WINDUP) return out; // still drawing the bow
-    const mx = g.x + g.face * 8, my = g.y + 13;
-    out.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face: g.face });
-    out.push({ type: 'tracer', x: mx, y: my, t: 0.14, face: g.face, sx: 96 / 64 });
-  } else if (g.pose === 'rush') {
+  if (g.pose === 'rush') {
     out.push({ type: 'rush', x: g.x + g.face * 24, y: g.y + 24, t: 0.4 });
   } else if (g.pose === 'barrage') {
     out.push({ type: 'swoosh', x: g.x, y: g.y + 12, t: 0.2, face: g.face });
@@ -81,3 +76,37 @@ export function ghostFx(tr: GhostTrack, g: GhostView): Fx[] {
   run.fired = true; // poses without an effect are done too
   return out;
 }
+
+/* ---------------- ghost shots ---------------- */
+
+/** One released shot, as sent: sender's clock (ms), muzzle point, facing, tracer length (px). */
+export interface ShotMsg { t: number; x: number; y: number; f: number; l: number }
+
+/** Shots waiting for the ghost's playback to reach them (local clock, ms). */
+const pending: { due: number; fx: Fx[] }[] = [];
+const MAX_PENDING = 40; // a flood from one peer can't pile up effects
+
+/** Schedule a peer's shot to show when their ghost (played back INTERP_MS
+ *  behind, on their clock + offset) reaches the moment it was fired. */
+export function queueShot(tr: GhostTrack | undefined, s: ShotMsg, now: number): void {
+  if (!s || ![s.t, s.x, s.y, s.l].every(Number.isFinite) || pending.length >= MAX_PENDING) return;
+  const face = s.f < 0 ? -1 : 1;
+  const len = Math.max(12, Math.min(320, s.l));
+  const due = tr && Number.isFinite(tr.offset) ? s.t + tr.offset + INTERP_MS : now;
+  pending.push({ due, fx: [
+    { type: 'muzzle', x: s.x, y: s.y, t: 0.18, face },
+    { type: 'tracer', x: s.x, y: s.y, t: 0.14, face, sx: len / 64 },
+  ] });
+}
+
+/** Effects of queued shots whose moment has come. */
+export function dueShots(now: number): Fx[] {
+  const out: Fx[] = [];
+  for (let i = pending.length - 1; i >= 0; i--) {
+    if (pending[i].due <= now) { out.push(...pending[i].fx); pending.splice(i, 1); }
+  }
+  return out;
+}
+
+/** Forget queued shots (changing rooms). */
+export const clearShots = (): void => { pending.length = 0; };

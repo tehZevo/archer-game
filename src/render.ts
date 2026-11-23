@@ -4,7 +4,7 @@ import { ctx } from './canvas';
 import { game, player } from './state';
 import { SPR, blockTile } from './sprites';
 import { localPose, names, peers } from './net';
-import { ghostFx, tintFor } from './presence';
+import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
 import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './archer';
 import { NB } from './nb';
@@ -148,6 +148,7 @@ function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
  *  smoothly, their skill effects replayed from their poses. */
 function drawGhosts(): void {
   const now = performance.now();
+  game.fx.push(...dueShots(now));
   for (const [id, tr] of peers) {
     const g = view(tr, now);
     if (!g) continue;

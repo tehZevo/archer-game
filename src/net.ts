@@ -3,7 +3,7 @@ import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
-import { cleanName, myName } from './presence';
+import { cleanName, clearShots, myName, queueShot, type ShotMsg } from './presence';
 
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
@@ -51,6 +51,7 @@ let room: Room | null = null;
 // Trystero's signed per-user store: we own it, peers read it.
 let pos: UserState<Packet> | null = null;
 let sendKills: ((n: number) => Promise<void>) | null = null;
+let sendShot: ((s: ShotMsg) => Promise<void>) | null = null;
 const rec = new Recorder();
 
 function receive(id: string, p: Packet): void {
@@ -63,6 +64,7 @@ function connect(channel: number): void {
   room?.leave();
   peers.clear();
   names.clear();
+  clearShots();
   resetBoost();
   net.channel = channel;
   net.floor = game.floor.number;
@@ -92,6 +94,10 @@ function connect(channel: number): void {
   const kills = room.makeAction<number>('kills');
   kills.onMessage((n) => remoteKills(n));
   sendKills = kills.send;
+  // every released shot is its own message, so back-to-back shots all show
+  const shots = room.makeAction<ShotMsg>('shot');
+  shots.onMessage((s, ctx) => queueShot(peers.get(ctx.userId), s, performance.now()));
+  sendShot = shots.send;
   room.onPeerJoin((ctx) => {
     const got = pos?.getAll()[ctx.userId];
     if (got) receive(ctx.userId, got);
@@ -100,6 +106,12 @@ function connect(channel: number): void {
   });
   room.onPeerLeave((ctx) => { peers.delete(ctx.userId); names.delete(ctx.userId); });
   net.joined = true;
+}
+
+/** Tell the channel we released a shot (muzzle at x,y; tracer len px). */
+export function netShot(x: number, y: number, face: number, len: number): void {
+  if (!net.started || !peers.size) return;
+  sendShot?.({ t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len) }).catch(() => {});
 }
 
 /** The pose peers should see: an active skill animation wins over movement. */
