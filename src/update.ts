@@ -241,7 +241,7 @@ function updateMobs(dt: number): void {
       }
     } else {
       // hover at a fixed height; the float is purely visual (see drawMob)
-      m.y = clamp(m.y, 60, 800 - m.h);
+      m.y = clamp(m.y, 0, WORLD.h - m.h);
     }
     m.x += m.vx * dt;
     m.x = clamp(m.x, m.w / 2, WORLD.w - m.w / 2);

@@ -400,6 +400,22 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
   check('climb frame holds while still, steps while climbing', f(100) === f(100) && f(100) === f(103) && f(100) !== f(108));
 }
 
+// --- floor layout + jump height ---
+{
+  arena(1);
+  let apex = 0;
+  const y0 = player.y;
+  tap('c');
+  for (let i = 0; i < 40; i++) { step(1); apex = Math.max(apex, y0 - player.y); }
+  check('a jump rises about 35px (25% lower than 46.5)', apex > 32 && apex < 38, `apex ${apex.toFixed(1)}`);
+  for (const n of [1, 2, 3]) {
+    gotoFloor(n);
+    const blocks = new Set(game.floor.platforms.filter((p) => p.block !== undefined).map((p) => p.block)).size;
+    const span = game.floor.platforms[0].y - game.floor.portal.y;
+    check(`floor ${n}: 7 platforms, about half the old climb`, blocks === 7 && span > 450 && span < 760 && game.floor.portal.y > 60, `blocks ${blocks} span ${span}`);
+  }
+}
+
 // --- HUD: compact numbers ---
 check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345, 1234567].map(fmtNum).join(' ') === '999 1K 1.2K 12.3K 1.2M');
 
