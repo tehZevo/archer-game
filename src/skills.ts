@@ -55,28 +55,32 @@ export function cast(key: SkillKey): void {
 
   switch (kind) {
     case 'Z': {
-      player.cast = 'shoot'; player.castT = 0.24; player.castTotal = 0.24;
-      sfx.shoot();
-      // no projectile: the closest enemies in range each take every hit,
-      // the first instantly and the rest in a quick burst
-      const tg = hitbox(player.x + player.face * 64, player.y + player.h / 2, 128, 56)
+      // Twin Shot: draw the bow (a short windup), release a volley that whips
+      // out to the closest enemies (no projectile), then follow through.
+      player.cast = 'shoot'; player.castT = P.Z_CAST; player.castTotal = P.Z_CAST;
+      const face = player.face;
+      const tg = hitbox(player.x + face * 64, player.y + player.h / 2, 128, 56)
         .sort((a, b) => Math.abs(a.x - player.x) - Math.abs(b.x - player.x))
         .slice(0, r.targets);
-      const mx = player.x + player.face * 8, my = player.y + 13, face = player.face;
-      game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
-      for (let h = 0; h < r.hits; h++) {
-        const hit = (): void => {
-          const live = tg.filter((m) => game.mobs.includes(m));
-          // a tracer whips out to each target (or across the range on a whiff)
-          const ends = live.length ? live.map((m) => m.x) : h === 0 ? [mx + face * 96] : [];
-          for (const ex of ends) {
-            const len = Math.max(12, Math.abs(ex - mx));
-            game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: len / 64 });
-          }
-          live.forEach((m) => damage(m, r.dmg));
-        };
-        if (h === 0) hit(); else later(h * 0.08, hit);
-      }
+      later(P.Z_WINDUP, () => {
+        sfx.shoot();
+        const mx = player.x + face * 8, my = player.y + 13;
+        game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
+        if (player.onGround) player.vx -= face * 40; // recoil nudge
+        for (let h = 0; h < r.hits; h++) {
+          const hit = (): void => {
+            const live = tg.filter((m) => game.mobs.includes(m));
+            // a tracer whips out to each target (or across the range on a whiff)
+            const ends = live.length ? live.map((m) => m.x) : h === 0 ? [mx + face * 96] : [];
+            for (const ex of ends) {
+              const len = Math.max(12, Math.abs(ex - mx));
+              game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: len / 64 });
+            }
+            live.forEach((m) => damage(m, r.dmg));
+          };
+          if (h === 0) hit(); else later(h * 0.08, hit);
+        }
+      });
       break;
     }
 

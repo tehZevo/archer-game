@@ -113,10 +113,10 @@ function drawMob(m: Mob): void {
 const ARCHER = bakeArcher();
 
 /** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s). */
-function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1): void {
+function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number): void {
   // Climbing steps hand over hand with distance climbed, not time, so it
   // holds still while hanging on the rope.
-  const img = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t);
+  const img = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t, since);
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));
@@ -130,13 +130,13 @@ function drawGhosts(): void {
   const now = performance.now();
   for (const tr of peers.values()) {
     const g = view(tr, now);
-    if (g) drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000, 0.55); // ghosts use the same 16x24 box
+    if (g) drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000, 0.55, g.since); // ghosts use the same 16x24 box
   }
 }
 
 function drawPlayer(): void {
   drawArcher(player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
-    player.invuln > 0 ? 0.8 : 1);
+    player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
 }
 
 function drawShot(s: Shot): void {

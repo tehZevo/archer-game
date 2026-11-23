@@ -26,6 +26,8 @@ export const P = {
   BARRAGE_RISE: 0.75,  // fraction of the way up to the highest launched enemy Sky Assault warps
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
+  Z_WINDUP: 0.10,      // s Twin Shot draws the bow before the arrows fly
+  Z_CAST: 0.42,        // s for the whole Twin Shot animation (draw, release, follow-through)
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   ACCEL: 1600,         // groundedAccelForce
   RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (~70px slide)

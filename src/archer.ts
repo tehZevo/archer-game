@@ -1,3 +1,4 @@
+import { P } from './config';
 /* ============================================================
    ARCHER SPRITE SHEET
    16x24 frames authored as character grids (facing right) and
@@ -73,6 +74,26 @@ const SHOOT_BODY = [
   '....ooTTTTo...o.',
 ];
 
+// Twin Shot windup: string drawn back to the chin, arrow nocked across the bow.
+const DRAW_BODY = [
+  '..oCcctttssssowo',
+  '..oCccTttxx..w.o',
+  '..oCccgggsxxxxxa',
+  '...oCcTttxx..w.o',
+  '...oCcTttto..owo',
+  '....ooTTTTo...o.',
+];
+
+// Follow-through: string relaxed and straight, bow arm still out front.
+const FOLLOW_BODY = [
+  '..oCcctttssssow.',
+  '..oCccTttto...xw',
+  '..oCccggggg...xw',
+  '...oCcTttto...xw',
+  '...oCcTttto...w.',
+  '....ooTTTTo.....',
+];
+
 // Sky Toss: crouched low, leaning into the slide.
 const RUSH_BODY = [
   '..oCcctttttssow.',
@@ -116,7 +137,8 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   walk: WALK_LEGS.map((legs) => withRows(IDLE, 18, legs)),
   jump: [withRows(IDLE, 18, JUMP_LEGS)],
   climb: CLIMB,
-  shoot: [withRows(IDLE, 12, SHOOT_BODY)],
+  // draw → release → follow-through, picked by time since the shot (shootFrame)
+  shoot: [withRows(IDLE, 12, DRAW_BODY), withRows(IDLE, 12, SHOOT_BODY), withRows(IDLE, 12, FOLLOW_BODY)],
   rush: [['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY]],
   barrage: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, JUMP_LEGS)],
 };
@@ -156,8 +178,15 @@ export function bakeArcher(): Record<ArcherPose, HTMLCanvasElement[]> {
 const CLIMB_STEP = 8;
 export const climbPhase = (feet: number): number => Math.floor(feet / CLIMB_STEP) / POSE_FPS.climb;
 
-/** Pick the frame of a pose at cycle time t (seconds). */
-export function archerFrame(frames: Record<ArcherPose, HTMLCanvasElement[]>, pose: ArcherPose, t: number): HTMLCanvasElement {
+/** Shoot frame for seconds since the shot began: draw during the windup,
+ *  release for a moment, then follow through. */
+export const shootFrame = (since: number): number =>
+  since < P.Z_WINDUP ? 0 : since < P.Z_WINDUP + 0.12 ? 1 : 2;
+
+/** Pick the frame of a pose at cycle time t (seconds); a shot plays its
+ *  draw/release/follow sequence by time since it began instead. */
+export function archerFrame(frames: Record<ArcherPose, HTMLCanvasElement[]>, pose: ArcherPose, t: number, since?: number): HTMLCanvasElement {
   const f = frames[pose] ?? frames.idle;
+  if (pose === 'shoot' && since !== undefined) return f[Math.min(f.length - 1, shootFrame(since))];
   return f[Math.floor(t * POSE_FPS[pose]) % f.length];
 }
