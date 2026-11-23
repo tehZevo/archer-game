@@ -3,7 +3,8 @@ import { WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { SPR, blockTile } from './sprites';
-import { peers } from './net';
+import { localPose, peers } from './net';
+import { view, type Pose } from './ghost';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
@@ -108,32 +109,43 @@ function drawMob(m: Mob): void {
   }
 }
 
-/** Remote archers from other players: the same sprite, translucent. */
-function drawGhosts(): void {
+/**
+ * Draw an archer (the local player or a ghost) standing with feet at
+ * (x, feet), posed procedurally: a walk bob, a jump stretch, a lean on
+ * Sky Toss, a recoil when shooting. `t` drives the cycles (seconds).
+ */
+function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1): void {
   const s = SPR.player;
-  for (const g of peers.values()) {
-    ctx.save();
-    ctx.globalAlpha = 0.55;
-    const x = Math.round(g.x - s.w / 2);
-    const y = Math.round(g.y + 24 - s.h); // ghosts use the same 16x24 box
-    ctx.translate(x + s.w / 2, y);
-    ctx.scale(g.face, 1);
-    ctx.drawImage(s.c, -s.w / 2, 0);
-    ctx.restore();
+  let dx = 0, dy = 0, sx = 1, sy = 1;
+  switch (pose) {
+    case 'walk': dy = Math.floor(t * 2) % 2 ? -1 : 0; break;          // two-step bob
+    case 'idle': dy = Math.floor(t * 0.8) % 2 ? -1 : 0; break;         // slow breathing
+    case 'jump': sx = 0.92; sy = 1.08; break;                          // stretch in the air
+    case 'climb': dx = Math.floor(t * 3) % 2 ? 1 : -1; break;          // hand-over-hand sway
+    case 'shoot': dx = -face; break;                                    // bow recoil
+    case 'rush': dx = face * 2; sx = 1.08; sy = 0.92; break;           // low forward lean
+    case 'barrage': sx = 0.95; sy = 1.05; dy = Math.floor(t * 12) % 2 ? -1 : 0; break; // jittery hover
+  }
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(Math.round(x + dx), Math.round(feet + dy));
+  ctx.scale(face * sx, sy);
+  ctx.drawImage(s.c, -s.w / 2, -s.h);
+  ctx.restore();
+}
+
+/** Remote archers from other players: the same sprite, translucent, played back smoothly. */
+function drawGhosts(): void {
+  const now = performance.now();
+  for (const tr of peers.values()) {
+    const g = view(tr, now);
+    if (g) drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000 * (g.pose === 'walk' ? 4.5 : 1), 0.55); // ghosts use the same 16x24 box
   }
 }
 
 function drawPlayer(): void {
-  const s = SPR.player;
-  ctx.save();
-  if (player.invuln > 0) ctx.globalAlpha = 0.8;
-  const w = s.w, h = s.h;
-  const x = Math.round(player.x - w / 2);
-  const y = Math.round(player.y + player.h - h);
-  ctx.translate(x + w / 2, y);
-  ctx.scale(player.face, 1);
-  ctx.drawImage(s.c, -w / 2, 0);
-  ctx.restore();
+  drawArcher(player.x, player.y + player.h, player.face, localPose(), player.animState === 'walk' ? player.anim / 2 : player.anim / 4,
+    player.invuln > 0 ? 0.8 : 1);
 }
 
 function drawShot(s: Shot): void {
