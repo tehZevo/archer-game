@@ -1,4 +1,4 @@
-import { LINKED_SKILLS, P, WORLD } from './config';
+import { LINKED_SKILLS, P } from './config';
 import { game, later, player } from './state';
 import { held } from './input';
 import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
@@ -39,7 +39,9 @@ export function cast(key: SkillKey): void {
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
   // Sky Toss is a ground launcher: no mid-air use.
-  if ((kind === 'Q' || kind === 'VS' || kind === 'E') && !player.onGround) return;
+  if ((kind === 'Q' || kind === 'VS') && !player.onGround) return;
+  // Plunging Volley fires down from the air: no ground use.
+  if (kind === 'E' && !airborne) return;
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
@@ -199,24 +201,27 @@ export function cast(key: SkillKey): void {
     }
 
     case 'E': {
-      // Piercing Dash: burst forward along the ground straight through enemies
-      // (briefly invulnerable), striking everything along the path as you pass it
-      player.cast = 'rush'; player.castT = 0.26; player.castTotal = 0.26;
-      sfx.glide();
-      const face = player.face;
-      const x0 = player.x;
-      const dist = (P.DASH_V * P.DASH_V) / (2 * P.FRICTION);
-      const x1 = Math.max(player.w / 2, Math.min(WORLD.w - player.w / 2, x0 + face * dist));
-      const tg = hitbox((x0 + x1) / 2, player.y + player.h / 2, Math.abs(x1 - x0) + 16, 40)
-        .sort((a, b) => Math.abs(a.x - x0) - Math.abs(b.x - x0))
+      // Plunging Volley: mid-air only. Check the fall for a moment and rain
+      // arrows straight down into a column beneath you, hitting every enemy
+      // in it (nearest first), then drop.
+      player.cast = 'barrage'; player.castT = P.PLUNGE_STALL; player.castTotal = P.PLUNGE_STALL;
+      sfx.shoot();
+      const feet = player.y + player.h;
+      const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
+        .filter((m) => m.y + m.h > feet) // beneath you, not beside you
+        .sort((a, b) => a.y - b.y)
         .slice(0, r.targets);
-      player.vx = face * P.DASH_V;
-      player.invuln = Math.max(player.invuln, P.DASH_INVULN);
-      game.fx.push({ type: 'spirit', x: x0, y: player.y + player.h / 2, t: 0.3, face: -face });
-      // each enemy is struck roughly when the dash reaches it
-      tg.forEach((m) => later(Math.min(0.24, Math.abs(m.x - x0) / P.DASH_V), () => {
-        if (game.mobs.includes(m)) damage(m, r.dmg);
-      }));
+      // the hover: no strikes of its own (hangHits 0), just a pause in the fall
+      player.vx = 0; player.vy = 0;
+      player.hangT = P.PLUNGE_STALL; player.hangHits = 0;
+      // the volley rains onto each target, or onto the ground below if none
+      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x, feet + 40]])
+        .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
+      for (let h = 0; h < r.hits; h++) {
+        later(0.08 + h * 0.08, () => {
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit' }));
+        });
+      }
       break;
     }
 

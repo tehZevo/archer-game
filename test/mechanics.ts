@@ -326,11 +326,18 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- E / R ---
 {
   arena(10); player.ranks.E = 1;
-  const a = dummy(130), b = dummy(160);
-  const x0 = player.x;
-  tap('e'); step(15);
-  check('Piercing Dash carries you forward through enemies', player.x - x0 > 50, `dx ${(player.x - x0).toFixed(1)}`);
-  check('Piercing Dash strikes every enemy on the path', a.hp < 1e6 && b.hp < 1e6);
+  const under = dummy(100), beside = dummy(170);
+  tap('e');
+  check('Plunging Volley does nothing on the ground', player.cd.E === 0 && under.hp === 1e6);
+  // jump, then fire at the top of the jump
+  tap('c'); step(8);
+  const yTop = player.y; tap('e'); step(1);
+  check('Plunging Volley checks your fall', Math.abs(player.y - yTop) < 2 && player.vy === 0);
+  step(10);
+  check('Plunging Volley hits the enemy beneath you', under.hp < 1e6);
+  check('Plunging Volley leaves enemies off to the side alone', beside.hp === 1e6);
+  step(30);
+  check('after the volley you drop back down', player.onGround);
 }
 {
   arena(25); player.ranks.R = 1;

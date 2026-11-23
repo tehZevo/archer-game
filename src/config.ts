@@ -35,8 +35,9 @@ export const P = {
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
-  DASH_V: 340,         // Piercing Dash start speed; friction stops it (v²/2·FRICTION ≈ 83px)
-  DASH_INVULN: 0.35,   // s of invulnerability while dashing through enemies
+  PLUNGE_W: 56,        // Plunging Volley: width of the column it rains into, px
+  PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
+  PLUNGE_STALL: 0.3,   // s the volley checks your fall (you hang, then drop)
   PIERCE_RANGE: 260,   // Piercing Arrow reach, px
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
   FRICTION: 700,       // ground friction when no input (a short slide)
@@ -82,9 +83,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 1, minLevel: 5, maxLevel: 3,
        cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 8, targetsMax: 8,
        desc: 'Airborne-only volley after Sky Toss' },
-  E: { key: 'E', name: 'Piercing Dash', tag: 'Dash', job: 1, minLevel: 10, maxLevel: 3,
-       cd: 3.0, mp1: 5, mpMax: 7, dmg1: 220, dmgMax: 320, targets1: 6, targetsMax: 10,
-       desc: 'Dash along the ground, striking everything you pass' },
+  E: { key: 'E', name: 'Plunging Volley', tag: 'Aerial', job: 1, minLevel: 10, maxLevel: 3,
+       cd: 3.0, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
+       desc: 'Mid-air only: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
        cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,
        desc: 'A heavy arrow that pierces every enemy in a line' },
