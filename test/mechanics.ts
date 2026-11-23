@@ -16,6 +16,7 @@ import { killMob } from '../src/combat';
 import { cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { net, newCode, parseCode, roomId } from '../src/net';
 import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
 
@@ -270,6 +271,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('ghost motion is smooth between samples (no 100ms steps)', steps.every((x, i) => i === 0 || (x > steps[i - 1] && x - steps[i - 1] < 2)));
   check('ghost pose plays back with the motion', view(tr, 600)!.pose === 'walk' && view(tr, 2000)!.pose === 'jump');
   check('send interval is fewer than 10 updates/s', SEND_MS > 100);
+}
+
+// --- private instances ---
+{
+  const c = newCode();
+  check('instance codes are 5 letters without I or O', /^[A-HJ-NP-Z]{5}$/.test(c), c);
+  check('typed codes are normalised; wrong lengths rejected', parseCode(' abc-de ') === 'ABCDE' && parseCode('ABCD') === '' && parseCode('ABCDEF') === '');
+  check('public rooms are per floor + channel', roomId(3, 2, '') === 'eurekaland-f3-c2');
+  check('a private instance is its own room per floor', roomId(3, 2, 'ABCDE') === 'eurekaland-f3-pABCDE' && roomId(3, 7, 'ABCDE') === roomId(3, 2, 'ABCDE'));
+  check('the network stays offline until the menu starts the game', net.started === false);
 }
 
 // --- HUD: compact numbers ---

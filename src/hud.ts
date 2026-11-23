@@ -2,6 +2,7 @@ import { areaFor, SKILL_BAR } from './config';
 import { critChance } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
+import { net } from './net';
 import { SPR } from './sprites';
 import { activeSkill, isLearned, rank, skillRows, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
@@ -26,9 +27,12 @@ function drawHUD(): void {
   const area = areaFor(game.floor.number);
   text(ctx, game.floor.town ? `${area} · Town` : `${area} · Floor ${game.floor.number}`,
     pad, pad + 9, 1, '#8ea3c2', 'left');
+  // a private instance shows its code on its own line (shifting the points line down)
+  let ly = pad + 18;
+  if (net.code) { text(ctx, `Private ${net.code}`, pad, ly, 1, '#4fd8c4', 'left'); ly += 9; }
   if (player.ap || player.sp) {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
-    text(ctx, `${pts} - ESC`, pad, pad + 18, 1, '#ffd166', 'left');
+    text(ctx, `${pts} - ESC`, pad, ly, 1, '#ffd166', 'left');
   }
 
   // skill bar (top-right): Z, Q, W, E, R as 16x16 icons, no panel background

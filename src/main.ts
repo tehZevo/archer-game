@@ -8,6 +8,7 @@ import { bindMenuClicks, buildPanel, syncPanel } from './hud';
 import { cv } from './canvas';
 import { buildTouch } from './touch';
 import * as net from './net';
+import { buildMenu, menu } from './menu';
 const { sync } = net;
 
 declare global {
@@ -25,9 +26,11 @@ function frame(now: number): void {
   game.last = now;
   game.acc += dt;
   let steps = 0;
-  // fixed 30 Hz physics; rAF renders as fast as the display allows
+  // fixed 30 Hz physics; rAF renders as fast as the display allows.
+  // The world stays frozen behind the main menu.
+  if (menu.open) game.acc = 0;
   while (game.acc >= P.STEP) { update(P.STEP); game.acc -= P.STEP; steps++; }
-  sync(); // publish our position to the current channel
+  sync(); // publish our position to the current channel (once started)
   // only consume the input latch once a physics step has acted on it, otherwise
   // key taps arriving between two 30Hz steps vanish
   if (steps) clearPressed();
@@ -42,6 +45,13 @@ bindMenuClicks(cv);
 resize();
 gotoFloor(1);
 addEventListener('resize', resize);
-logMsg('Welcome to <b>Eurekaland</b>. Climb the tower, chain skills for Fervor.');
-bannerMsg('Archer', 'Elven Bow · Arrow keys to move');
+buildMenu(() => {
+  // regenerate floor 1 from the chosen instance's seed, then go online
+  gotoFloor(1);
+  net.net.started = true;
+  logMsg(net.net.code
+    ? `Private instance <b>${net.net.code}</b>. Share the code to play together.`
+    : 'Welcome to <b>Eurekaland</b>. Climb the tower, chain skills for Fervor.');
+  bannerMsg('Archer', 'Elven Bow · Arrow keys to move');
+});
 requestAnimationFrame(frame);
