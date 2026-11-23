@@ -16,6 +16,7 @@ import { killMob } from '../src/combat';
 import { cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { net, newCode, parseCode, roomId } from '../src/net';
 import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
 
@@ -327,6 +328,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Piercing Arrow hits every enemy in the line', a.hp < 1e6 && b.hp < 1e6);
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
   check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
+}
+
+// --- private instances ---
+{
+  const c = newCode();
+  check('instance codes are 5 letters without I or O', /^[A-HJ-NP-Z]{5}$/.test(c), c);
+  check('typed codes are normalised; wrong lengths rejected', parseCode(' abc-de ') === 'ABCDE' && parseCode('ABCD') === '' && parseCode('ABCDEF') === '');
+  check('public rooms are per floor + channel', roomId(3, 2, '') === 'eurekaland-f3-c2');
+  check('a private instance is its own room per floor', roomId(3, 2, 'ABCDE') === 'eurekaland-f3-pABCDE' && roomId(3, 7, 'ABCDE') === roomId(3, 2, 'ABCDE'));
+  check('the network stays offline until the menu starts the game', net.started === false);
 }
 
 // --- HUD: compact numbers ---
