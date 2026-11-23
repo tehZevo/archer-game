@@ -44,6 +44,8 @@ export const net = {
   code: '',
   /** Nothing connects until the player starts from the main menu. */
   started: false,
+  /** Why multiplayer is off, if it is ('' = fine). */
+  offline: '',
 };
 
 type Room = ReturnType<typeof joinRoom>;
@@ -59,8 +61,20 @@ let lobby: Room | null = null;
 let lobbyAt: UserState<At> | null = null;
 let posted = '';
 
+/** Trystero signs every player's identity with WebCrypto, which browsers
+ *  only offer on secure pages (HTTPS or localhost). On plain HTTP (e.g. a LAN
+ *  address) joining would fail, so stay offline and say why. */
+export function canConnect(): boolean {
+  if (typeof globalThis.crypto?.subtle?.generateKey === 'function') return true;
+  if (!net.offline) {
+    net.offline = 'NEEDS HTTPS'; // short: the HUD line sits beside the minimap
+    console.warn('[net] multiplayer is off: WebCrypto (crypto.subtle) is only available on HTTPS or localhost pages');
+  }
+  return false;
+}
+
 export function joinLobby(): void {
-  if (lobby) return;
+  if (lobby || !canConnect()) return;
   try {
     lobby = joinRoom({ appId: APP_ID, maxUsers: LOBBY_MAX, identity: 'none' }, LOBBY);
     lobbyAt = lobby.makeUserState<At>('at', { f: 0, c: 0 });
@@ -162,7 +176,7 @@ export function netShot(x: number, y: number, face: number, len: number): void {
 /** A snapshot of the connection, for the console: `archer.netStatus()`. */
 export function netStatus(): Record<string, unknown> {
   return {
-    started: net.started, room: room ? roomId(net.floor, net.channel) : null,
+    started: net.started, offline: net.offline, room: room ? roomId(net.floor, net.channel) : null,
     connectedPeers: room ? Object.keys(room.getPeers()).length : 0,
     ghosts: peers.size, names: [...names.values()],
     lobbyPeers: lobby ? Object.keys(lobby.getPeers()).length : 0,
@@ -179,7 +193,7 @@ export function localPose(): Pose {
 /** Record our motion; call every frame. Sends a few samples per packet, ~3x a second (see ghost.ts). */
 export function sync(): void {
   // changing floors moves us to that floor's rooms, keeping the channel number
-  if (!net.started) return;
+  if (!net.started || !canConnect()) return;
   if (!room || game.floor.number !== net.floor) connect(net.channel);
   postLobby();
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);

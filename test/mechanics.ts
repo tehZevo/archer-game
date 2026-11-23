@@ -21,7 +21,7 @@ import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/pr
 import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
-import { net, newCode, parseCode, roomId } from '../src/net';
+import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
@@ -655,6 +655,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const [x0, y0] = toMini(0, 0), [x1, y1] = toMini(WORLD.w - 1, WORLD.h - 1);
   check('minimap covers the whole floor', x0 === r.x && y0 === r.y && x1 < r.x + r.w && y1 < r.y + r.h);
   check('minimap is 1:10', MINI_SCALE === 0.1 && r.w === Math.ceil(WORLD.w / 10));
+}
+
+// --- multiplayer stays offline (and says why) without WebCrypto ---
+{
+  const c = globalThis.crypto;
+  Object.defineProperty(globalThis, 'crypto', { value: {}, configurable: true });
+  net.offline = '';
+  const ok = canConnect();
+  check('no WebCrypto (plain HTTP page): multiplayer stays off with a reason', !ok && net.offline.includes('HTTPS'));
+  Object.defineProperty(globalThis, 'crypto', { value: c, configurable: true });
+  net.offline = '';
+  check('with WebCrypto, multiplayer can connect', canConnect() && net.offline === '');
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
