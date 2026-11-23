@@ -143,6 +143,12 @@ setKey('up', false);
 // --- 12. every 10th floor is a town ---
 gotoFloor(10);
 check('floor 10 is a town', game.floor.town === true && game.mobs.length === 0);
+player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
+player.onGround = true;
+setKey('up', true);
+step(1);
+check('town portal leads on to floor 11', game.floor.number === 11);
+setKey('up', false);
 
 // every skill (bases, upgrades, passives) has its own 14x14 icon glyph
 {

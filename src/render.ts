@@ -1,5 +1,5 @@
 import { FX } from './fxsprites';
-import { WORLD } from './config';
+import { FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { SPR, blockTile } from './sprites';
@@ -154,7 +154,8 @@ function drawShot(s: Shot): void {
 /** Draw the frame of a baked effect animation for progress k (0..1), additively. */
 function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 1): void {
   const A = FX()[name];
-  const f = Math.min(A.frames.length - 1, Math.floor(k * A.frames.length));
+  // clamped both ways: an effect living longer than its animation holds the first frame
+  const f = Math.max(0, Math.min(A.frames.length - 1, Math.floor(k * A.frames.length)));
   const img = face < 0 ? A.flipped[f] : A.frames[f];
   const ox = (face < 0 ? img.width - A.ox : A.ox) * sx;
   ctx.save();
@@ -163,11 +164,6 @@ function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 
   ctx.restore();
 }
 
-const FX_DUR: Record<Fx['type'], number> = {
-  tracer: 0.14, death: 0.35, levelUp: 0.9,
-  muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
-  rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
-};
 
 function drawFx(f: Fx): void {
   drawAnim(f.type, f.x, f.y, 1 - f.t / FX_DUR[f.type], f.face ?? 1, f.sx ?? 1);
