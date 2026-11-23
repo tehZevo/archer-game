@@ -8,7 +8,7 @@ Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 **
 
 import { FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
-import { cleanName, ghostFx, NAME_MAX, randomName, tintFor } from '../src/presence';
+import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { clearPressed, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
@@ -516,16 +516,22 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
   const tr = newTrack();
   const at = (pose: 'shoot' | 'rush' | 'idle', since: number) => ghostFx(tr, { x: 100, y: 50, face: 1, pose, since });
-  const drawing = at('shoot', 0.02).length;
-  const release = at('shoot', P.Z_WINDUP + 0.01).map((f) => f.type).sort().join(',');
-  const after = at('shoot', P.Z_WINDUP + 0.1).length;
+  check('a ghost shoot pose alone spawns nothing (shots come as messages)', at('shoot', 0.3).length === 0);
   at('idle', 0);
-  const again = at('shoot', P.Z_WINDUP + 0.02).length;
-  const rush = at('rush', 0).map((f) => f.type).join(',');
-  check('a ghost shot shows nothing while drawing the bow', drawing === 0);
-  check('a ghost shot fires muzzle and tracer once, on release', release === 'muzzle,tracer' && after === 0);
-  check('the next ghost shot fires again', again === 2);
-  check('a ghost Sky Toss shows its horn of light', rush === 'rush');
+  check('a ghost Sky Toss shows its horn of light', at('rush', 0).map((f) => f.type).join(',') === 'rush');
+
+  // shots: each arrives as a message and shows when the ghost's playback reaches it
+  clearShots();
+  const st = newTrack(); st.offset = 1000; // their clock runs 1000ms behind ours
+  queueShot(st, { t: 5000, x: 80, y: 40, f: 1, l: 64 }, 6000);
+  queueShot(st, { t: 5100, x: 80, y: 40, f: 1, l: 64 }, 6100); // back to back
+  const due0 = 5000 + 1000 + INTERP_MS;
+  check('a ghost shot waits for the playback to reach it', dueShots(due0 - 1).length === 0);
+  check('a ghost shot shows muzzle and tracer on time', dueShots(due0).map((f) => f.type).sort().join(',') === 'muzzle,tracer');
+  check('back-to-back ghost shots each show', dueShots(due0 + 100).length === 2);
+  queueShot(st, { t: NaN, x: 0, y: 0, f: 1, l: 1 } as never, 0);
+  for (let i = 0; i < 100; i++) queueShot(undefined, { t: 0, x: 0, y: 0, f: 1, l: 1 }, 0);
+  check('bad or flooding shot messages are capped', dueShots(1e9).length <= 80);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

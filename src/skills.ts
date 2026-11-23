@@ -4,6 +4,7 @@ import { held } from './input';
 import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
 import { surfaceAt } from './physics';
 import { sfx } from './audio';
+import { netShot } from './net';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey } from './types';
 
@@ -68,6 +69,9 @@ export function cast(key: SkillKey): void {
         sfx.shoot();
         const mx = player.x + face * 8, my = player.y + 13;
         game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
+        // other players see the shot reach the first target (or whiff across the range)
+        const near = tg.filter((m) => game.mobs.includes(m))[0];
+        netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96);
         if (player.onGround) player.vx -= face * 40; // recoil nudge
         for (let h = 0; h < r.hits; h++) {
           const hit = (): void => {
@@ -237,6 +241,7 @@ export function cast(key: SkillKey): void {
         .slice(0, r.targets);
       game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
       game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: P.PIERCE_RANGE / 64 });
+      netShot(mx, my, face, P.PIERCE_RANGE);
       tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
         if (game.mobs.includes(m)) damage(m, r.dmg);
       }));
