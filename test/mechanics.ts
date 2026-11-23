@@ -16,6 +16,7 @@ import { killMob } from '../src/combat';
 import { cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { net, newCode, parseCode, roomId } from '../src/net';
 import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
@@ -338,6 +339,24 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('public rooms are per floor + channel', roomId(3, 2, '') === 'eurekaland-f3-c2');
   check('a private instance is its own room per floor', roomId(3, 2, 'ABCDE') === 'eurekaland-f3-pABCDE' && roomId(3, 7, 'ABCDE') === roomId(3, 2, 'ABCDE'));
   check('the network stays offline until the menu starts the game', net.started === false);
+}
+
+// --- shared spawn boost ---
+{
+  arena(1); resetBoost();
+  game.floor.spawns = [{ x: 150, y: ground().y, t: 1, cap: 9 } as never];
+  const m = dummy(150, 1); killMob(m);
+  check('local kills are batched for sending', takeBatch(0) === 1 && takeBatch(10) === 0);
+  remoteKills(2);
+  check('remote kills speed up waves', Math.abs(waveRate() - (1 + 2 * BOOST.PER_KILL)) < 1e-9);
+  remoteKills(999); remoteKills('junk');
+  check('boost is capped, and a flood counts as one capped batch', boost.level === BOOST.MAX);
+  // with a full boost, waves come twice as often
+  game.mobs = []; game.waveT = 0;
+  step(Math.ceil((P.WAVE_EVERY / 2 + 0.5) / P.STEP)); // the boost decays a little meanwhile
+  check('a full boost brings the next wave in about half the time', game.mobs.length > 0);
+  step(Math.ceil(30 / P.STEP));
+  check('the boost decays back to normal', boost.level === 0 && waveRate() === 1);
 }
 
 // --- HUD: compact numbers ---

@@ -8,18 +8,19 @@ import { bindMenuClicks, buildPanel, syncPanel } from './hud';
 import { cv } from './canvas';
 import { buildTouch } from './touch';
 import * as net from './net';
+import * as boost from './boost';
 import { buildMenu, menu } from './menu';
 const { sync } = net;
 
 declare global {
   interface Window {
     game: typeof game
-    archer: { gainExp: typeof gainExp; spendSp: typeof spendSp; rank: typeof rank; gotoFloor: typeof gotoFloor; net: typeof net }
+    archer: { gainExp: typeof gainExp; spendSp: typeof spendSp; rank: typeof rank; gotoFloor: typeof gotoFloor; net: typeof net; boost: typeof boost }
   }
 }
 /** Handy for console poking and automated checks. */
 window.game = game;
-window.archer = { gainExp, spendSp, rank, gotoFloor, net };
+window.archer = { gainExp, spendSp, rank, gotoFloor, net, boost };
 
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - game.last) / 1000);

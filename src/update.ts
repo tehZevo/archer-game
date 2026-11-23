@@ -6,6 +6,7 @@ import { damage, revive } from './combat';
 import { barrageTargets, cast } from './skills';
 import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { sfx } from './audio';
+import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import type { PauseMenu } from './types';
 
@@ -35,7 +36,9 @@ export function update(dt: number): void {
   if (pressed(']')) { gotoFloor(game.floor.number + 1); return; }
 
   // enemy waves run on the fixed step so headless tests stay deterministic
-  game.waveT += dt;
+  // other players' kills in this instance make waves come faster
+  decayBoost(dt);
+  game.waveT += dt * waveRate();
   if (game.waveT >= P.WAVE_EVERY) { game.waveT = 0; spawnWave(); }
 
   if (player.castT > 0) player.castT -= dt; else player.cast = null;
