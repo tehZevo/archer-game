@@ -10,6 +10,7 @@ import { buildTouch } from './touch';
 import * as net from './net';
 import * as boost from './boost';
 import { buildMenu, menu } from './menu';
+import { load, save, tickSave } from './save';
 const { sync } = net;
 
 declare global {
@@ -31,6 +32,7 @@ function frame(now: number): void {
   // The world stays frozen behind the main menu.
   if (menu.open) game.acc = 0;
   while (game.acc >= P.STEP) { update(P.STEP); game.acc -= P.STEP; steps++; }
+  if (!menu.open) tickSave(dt); // autosave every few seconds while playing
   sync(); // publish our position to the current channel (once started)
   // only consume the input latch once a physics step has acted on it, otherwise
   // key taps arriving between two 30Hz steps vanish
@@ -46,9 +48,15 @@ bindMenuClicks(cv);
 resize();
 gotoFloor(1);
 addEventListener('resize', resize);
+// saved progress loads at boot (the HUD behind the menu shows it); the floor resumes on Play
+const resumeFloor = load();
+// save when the tab is hidden or closed (mobile browsers may never fire unload)
+addEventListener('visibilitychange', () => { if (document.hidden && !menu.open) save(); });
+addEventListener('pagehide', () => { if (!menu.open) save(); });
+
 buildMenu(() => {
-  // regenerate floor 1 from the chosen instance's seed, then go online
-  gotoFloor(1);
+  // generate the saved floor from the chosen instance's seed, then go online
+  gotoFloor(resumeFloor);
   net.net.started = true;
   logMsg(net.net.code
     ? `Private instance <b>${net.net.code}</b>. Share the code to play together.`

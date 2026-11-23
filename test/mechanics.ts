@@ -16,6 +16,7 @@ import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { net, newCode, parseCode, roomId } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
@@ -414,6 +415,29 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
     const span = game.floor.platforms[0].y - game.floor.portal.y;
     check(`floor ${n}: 7 platforms, about half the old climb`, blocks === 7 && span > 450 && span < 760 && game.floor.portal.y > 60, `blocks ${blocks} span ${span}`);
   }
+}
+
+// --- save / load ---
+{
+  // a tiny in-memory localStorage for the headless run
+  const mem: Record<string, string> = {};
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
+  };
+  arena(35); gotoFloor(4);
+  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.BS = 3; player.ranks.E = 2;
+  save();
+  const want = JSON.stringify(snapshot());
+  arena(1); player.ap = 0; player.sp = 0; player.ranks.BS = 0; player.ranks.E = 0;
+  const floor = load();
+  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 4 }) === want && floor === 4);
+  check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
+  check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply('junk') === null);
+  apply({ v: 1, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, floor: 0 });
+  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.S + player.ranks.BS === 1);
+  clearSave();
+  check('reset forgets the save', !hasSave() && load() === 1);
+  delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
 // --- HUD: compact numbers ---
