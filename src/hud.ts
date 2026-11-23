@@ -5,6 +5,7 @@ import { game, player } from './state';
 import { net, playerCount } from './net';
 import { menu } from './menu';
 import { drawMenu } from './menudraw';
+import { drawMinimap } from './minimapdraw';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, spendSp, STAT_INFO, STAT_KEYS } from './progress';
@@ -81,6 +82,7 @@ function drawHUD(): void {
     }
   });
   ctx.restore();
+  drawMinimap(); // under the skill bar
 
   // bars across the bottom: HP | MP | EXP
   const bw = 74, bgap = 3, y = h - 14;

@@ -13,6 +13,8 @@ import { clearPressed, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { groupSize, makeShape, SHAPES } from '../src/floor';
+import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
+import { WORLD } from '../src/config';
 import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
@@ -643,6 +645,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     return offEdge || !m.fly && (!plat || plat.block !== z.block);
   });
   check('knocked enemies stay on their own platform', strays.length === 0, `${strays.length}/${game.mobs.length} strayed`);
+}
+
+// --- minimap: the whole floor at 1:10, in the top-right under the skill bar ---
+{
+  game.view.w = 240; game.view.h = 180;
+  const r = miniRect();
+  check('minimap fits on screen under the skill bar', r.x >= 0 && r.x + r.w <= 240 && r.y >= 24 && r.y + r.h < 180 - 16, JSON.stringify(r));
+  const [x0, y0] = toMini(0, 0), [x1, y1] = toMini(WORLD.w - 1, WORLD.h - 1);
+  check('minimap covers the whole floor', x0 === r.x && y0 === r.y && x1 < r.x + r.w && y1 < r.y + r.h);
+  check('minimap is 1:10', MINI_SCALE === 0.1 && r.w === Math.ceil(WORLD.w / 10));
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
