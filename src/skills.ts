@@ -49,8 +49,8 @@ export function cast(key: SkillKey): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
-    player.ignis = Math.min(5, player.ignis + 1);
-    player.ignisT = 9;
+    player.fervor = Math.min(5, player.fervor + 1);
+    player.fervorT = 9;
   }
 
   switch (kind) {

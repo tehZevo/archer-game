@@ -195,8 +195,8 @@ export interface Player extends Body {
   anim: number;
   animState: 'idle' | 'walk' | 'jump' | 'climb';
   /** Fervor stacks from linked skills. */
-  ignis: number;
-  ignisT: number;
+  fervor: number;
+  fervorT: number;
   superStance: number;
   /** >0 while the Sky Toss link window is open. */
   combo: number;

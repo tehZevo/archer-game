@@ -42,7 +42,7 @@ function arena(level = 1, x = 100): void {
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.useT = 0; player.cast = null; player.castT = 0; player.combo = 0; player.queued = null; player.hangT = 0;
-  player.ignis = 0; player.combatT = 0; player.regenT = 0; player.invuln = 999;
+  player.fervor = 0; player.combatT = 0; player.regenT = 0; player.invuln = 999;
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
   game.pause = null;
 }

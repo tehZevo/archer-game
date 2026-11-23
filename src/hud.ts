@@ -234,8 +234,8 @@ export function syncPanel(): void {
   bar('expb', player.exp / player.expNext);
   set('sp', String(player.sp));
   set('kills', String(game.kills));
-  set('ignis', `${player.ignis} stacks${player.ignis ? ` (+${player.ignis * 8}%)` : ''}`);
-  bar('ignisb', player.ignis / 5);
+  set('fervor', `${player.fervor} stacks${player.fervor ? ` (+${player.fervor * 8}%)` : ''}`);
+  bar('fervorb', player.fervor / 5);
 
   SKILL_BAR.forEach(({ skill: k }) => {
     if (!k) return;
