@@ -11,7 +11,7 @@ export const P = {
   GRAVITY: 1040,       // px/s^2 (lowered from 2000)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
-  JUMP_V: 311.0,       // √(2·g·46.5): keeps the doubled ~46.5px jump height at 1040 gravity
+  JUMP_V: 269.3,       // √(2·g·34.9): a ~35px jump (25% lower than the old 46.5px) at 1040 gravity
   JUMP_H: 81.25,       // halved from 162.5
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
@@ -46,7 +46,7 @@ export const P = {
 /* ---------------- world / map ----------------
    The tower is taller than it is wide: a vertical climb of floors.
    All geometry snaps to a TILE-pixel grid so the world is tile based. */
-export const WORLD = { w: 320, h: 2400 };
+export const WORLD = { w: 320, h: 1200 };
 
 /* ---------------- areas ---------------- */
 /* The tower is divided into named regions, one per town block: floors 1-9

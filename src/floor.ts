@@ -121,7 +121,7 @@ function mobForFloor(n: number): MobType {
 
 /**
  * Build a single tile-based floor of the tower: a ground slab at the bottom and
- * 10 platforms of varying shape/size/thickness scattered up the map, each
+ * 7 platforms of varying shape/size/thickness scattered up the map, each
  * connected to the next by a rope/ladder that runs from the top surface of the
  * lower platform to the top surface of the upper one. Enemies stand on the
  * ground and on platforms; a portal on the summit leads to the next floor.
@@ -139,8 +139,8 @@ export function generateFloor(n: number): Floor {
   const ladders: Climbable[] = [];
   const spawns: Spawn[] = [];
 
-  const COUNT = 14;
-  const step = 6 * TILE;
+  const COUNT = 7;          // platforms per floor (was 14: floors are half as tall)
+  const step = 5 * TILE;     // base vertical spacing between platforms (+0-1 tile)
   const startY = groundY - step;
 
   let prev: Platform = ground;
