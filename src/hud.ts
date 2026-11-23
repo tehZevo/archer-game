@@ -127,9 +127,24 @@ function drawPause(): void {
   let desc = '';
   if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
   else if (rows[m.row]) desc = rows[m.row].action || `${rows[m.row].name}: mastered`;
-  desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, '');
-  text(ctx, desc.length > 38 ? desc.slice(0, 37) + '.' : desc, w / 2, h - 22, 1, dim, 'center');
-  text(ctx, 'ARROWS MOVE  Z SPEND  ESC RESUME', w / 2, h - 10, 1, '#5d708f', 'center');
+  desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();
+  // long descriptions (e.g. a branch upgrade's lock-out note) wrap to two lines
+  const lines = wrap(desc, 32).slice(0, 2);
+  // a second line takes the help footer's place (the rows above leave no room)
+  lines.forEach((ln, i) => text(ctx, ln, w / 2, h - 22 + i * 12, 1, dim, 'center'));
+  if (lines.length < 2) text(ctx, 'ARROWS MOVE  Z SPEND  ESC RESUME', w / 2, h - 10, 1, '#5d708f', 'center');
+}
+
+/** Greedy word wrap to lines of at most n characters. */
+function wrap(s: string, n: number): string[] {
+  const out: string[] = [];
+  let cur = '';
+  for (const word of s.split(' ')) {
+    if (cur && cur.length + 1 + word.length > n) { out.push(cur); cur = word; }
+    else cur = cur ? cur + ' ' + word : word;
+  }
+  if (cur) out.push(cur.length > n ? cur.slice(0, n - 1) + '.' : cur);
+  return out;
 }
 
 /** Tap/click on a pause-menu row selects it; tapping the selected row spends. */

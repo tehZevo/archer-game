@@ -139,10 +139,19 @@ export const isLearned = (key: SkillKey): boolean => (player.ranks[activeSkill(k
  * and is upgraded to Shell Barrage (a strict upgrade) once it unlocks.
  */
 export function activeSkill(key: SkillKey): SkillDef {
-  if (key === 'Z' && player.ranks.S > 0) return SKILLS.S;
-  if (key === 'W' && player.ranks.AB > 0) return SKILLS.AB; // Skyfall Volley → Sky Assault
-  return SKILLS[key];
+  const up = upgradesOf(key).find((u) => player.ranks[u] > 0);
+  return SKILLS[up ?? key];
 }
+
+/** The upgrade branches available on a slot (e.g. Z → Shell Barrage or Backstep Shot). */
+export const upgradesOf = (base: SkillKey): SkillKey[] =>
+  (Object.keys(UPGRADES) as SkillKey[]).filter((u) => UPGRADES[u] === base);
+
+/** True once another branch on the same slot has been taken: this one is locked out. */
+export const branchLocked = (key: SkillKey): boolean => {
+  const base = UPGRADES[key];
+  return !!base && upgradesOf(base).some((u) => u !== key && player.ranks[u] > 0);
+};
 
 /** Spend one SP on the skill in a bar slot (its upgrade, if taken). */
 export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).key);
@@ -153,8 +162,9 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
    takes a slot upgrade (Twin Shot -> Shell Barrage, Skyfall Volley ->
    Sky Assault), or raises a learned skill's rank. */
 export const SKILL_PICK_EVERY = 5;
-/** Slot upgrades: the upgrade replaces the base skill on its key. */
-const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', AB: 'W' };
+/** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
+ *  several upgrades is a branch: taking one locks the others out for good. */
+const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q' };
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {
@@ -174,18 +184,26 @@ export function skillRows(): SkillRow[] {
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
     const s = SKILLS[k], have = player.ranks[k] || 0, base = UPGRADES[k];
     const upgradedAway = Object.entries(UPGRADES).some(([u, b]) => b === k && player.ranks[u as SkillKey] > 0);
-    if (upgradedAway) continue;
+    if (upgradedAway || branchLocked(k)) continue;
     const slot = s.passive ? '' : base ?? k;
     if (have === 0) {
       if (s.minLevel > player.level || (base && !(player.ranks[base] > 0))) continue;
       rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel,
-        action: base ? `Upgrade ${SKILLS[base].name}: ${s.desc}` : `Learn: ${s.desc}` });
+        action: !base ? `Learn: ${s.desc}`
+          : rivals(k) ? `${s.desc}. Locks ${rivals(k)}`
+          : `Upgrade ${SKILLS[base].name}: ${s.desc}` });
     } else {
       rows.push({ key: k, slot, name: s.name, rank: have, max: s.maxLevel,
         action: have < s.maxLevel ? `Rank ${have + 1}: ${s.desc}` : '' });
     }
   }
   return rows;
+}
+
+/** The sibling branches taking this upgrade would lock out ('' if none). */
+function rivals(k: SkillKey): string {
+  const others = upgradesOf(UPGRADES[k] as SkillKey).filter((u) => u !== k);
+  return others.map((u) => SKILLS[u].name).join(', ');
 }
 
 /** Spend one SP on a skill row: learn, upgrade (keeping the base's rank), or rank up. */
