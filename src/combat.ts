@@ -7,14 +7,14 @@ import type { DamageOpts, Mob } from './types';
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
 /** Fervor's per-stack bonus grows with the passive's rank. */
-export const ignisMult = (): number => 1 + (0.08 + passiveBonus('IR')) * game.player.ignis;
+export const fervorMult = (): number => 1 + (0.08 + passiveBonus('IR')) * game.player.fervor;
 /** Base 15% crit, raised by LUK and the Precision passive. */
 export const critChance = (): number => 0.15 + game.player.stats.luk * 0.004 + passiveBonus('SA');
 /** Built-in damage bonus, raised by the Power Surge passive. */
 export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
 
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
-  let dmg = game.player.war * mult * passiveDmg() * ignisMult() * rand(0.92, 1.08);
+  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
   if (crit) dmg *= 1.5;
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Sky Toss airborne bonus
@@ -82,7 +82,7 @@ export function revive(): void {
   game.player.vx = game.player.vy = 0;
   game.player.onGround = true; game.player.plat = ground;
   game.player.climb = null; game.player.climbRush = false;
-  game.player.ignis = 0;
+  game.player.fervor = 0;
   game.player.combo = 0;
   logMsg('You were knocked out. <b>Revived at the village gate.</b>');
 }

@@ -46,7 +46,7 @@ export const player: Player = {
   cast: null, castT: 0, castTotal: 0,
   invuln: 0,
   anim: 0, animState: 'idle',
-  ignis: 0, ignisT: 0,
+  fervor: 0, fervorT: 0,
   superStance: 0,
   combo: 0, comboT: 0,
   level: 1,

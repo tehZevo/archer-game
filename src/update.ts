@@ -52,7 +52,7 @@ export function update(dt: number): void {
   if (player.useT > 0) player.useT -= dt;
   const locked = player.useT > 0; // skill use time: no movement input
   if (player.comboT > 0) { player.comboT -= dt; if (player.comboT <= 0) player.combo = 0; }
-  if (player.ignisT > 0) { player.ignisT -= dt; if (player.ignisT <= 0) player.ignis = 0; }
+  if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 
   // rope / ladder — v83 rules: holding Up catches a climbable whose bottom is

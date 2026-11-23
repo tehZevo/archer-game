@@ -25,7 +25,7 @@ function reset(): void {
   player.onGround = true; player.climb = null;
   player.hp = player.hpMax; player.mp = player.mpMax;
   player.cast = null; player.castT = 0; player.castTotal = 0;
-  player.combo = 0; player.comboT = 0; player.ignis = 0; player.ignisT = 0;
+  player.combo = 0; player.comboT = 0; player.fervor = 0; player.fervorT = 0;
   player.level = 1; player.exp = 0; player.expNext = expToNext(1); player.sp = 0;
   game.pause = null; player.ap = 0;
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
