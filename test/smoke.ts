@@ -72,7 +72,7 @@ setKey('d', false);
 // --- 6. Twin Shot: fires and spends MP, sets cd ---
 reset();
 setKey('z', true);
-step(1);
+step(1 + Math.ceil(P.Z_WINDUP / P.STEP)); // the arrows fly after the bow-draw windup
 check('Twin Shot fires (muzzle flash, no projectile)', game.fx.some((f) => f.type === 'muzzle') && game.shots.length === 0);
 check('Twin Shot sets cd', player.cd.Z > 0);
 setKey('z', false);
@@ -85,7 +85,7 @@ const before = game.kills;
 const expBefore = player.exp;
 player.x = mob.x; player.y = mob.y;
 setKey('z', true);
-step(1); // the first hit is instant
+step(1 + Math.ceil(P.Z_WINDUP / P.STEP)); // the first hit lands on release, after the windup
 check('killing a mob increments kills', game.kills > before);
 check('killing a mob awards exp', player.exp >= expBefore);
 

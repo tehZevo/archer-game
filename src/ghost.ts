@@ -42,7 +42,7 @@ export interface GhostTrack {
 }
 
 /** What to draw for a ghost right now. */
-export interface GhostView { x: number; y: number; face: number; pose: Pose }
+export interface GhostView { x: number; y: number; face: number; pose: Pose; /** s since this pose began */ since: number }
 
 export const newTrack = (): GhostTrack => ({ pts: [], face: 1, offset: Infinity });
 
@@ -68,19 +68,27 @@ export function view(tr: GhostTrack, now: number): GhostView | null {
   let i = pts.length - 1;
   while (i > 0 && pts[i - 1].t > t) i--;
   const b = pts[i];
+  // when did the pose shown now begin? (walk back over samples with the same pose)
+  const since = (k: number): number => {
+    let j = k;
+    while (j > 0 && pts[j - 1].pose === pts[k].pose) j--;
+    return Math.max(0, t - pts[j].t) / 1000;
+  };
   if (t >= b.t) {
     // past the newest sample: coast on velocity a little, then hold
     const dt = Math.min(t - b.t, MAX_EXTRAP_MS) / 1000;
-    return { x: b.x + b.vx * dt, y: b.y + b.vy * dt, face: tr.face, pose: POSES[b.pose] ?? 'idle' };
+    return { x: b.x + b.vx * dt, y: b.y + b.vy * dt, face: tr.face, pose: POSES[b.pose] ?? 'idle', since: since(i) };
   }
-  if (i === 0) return { x: b.x, y: b.y, face: tr.face, pose: POSES[b.pose] ?? 'idle' };
+  if (i === 0) return { x: b.x, y: b.y, face: tr.face, pose: POSES[b.pose] ?? 'idle', since: 0 };
   const a = pts[i - 1];
   const k = (t - a.t) / (b.t - a.t || 1);
+  const shown = k < 0.5 ? i - 1 : i;
   return {
     x: a.x + (b.x - a.x) * k,
     y: a.y + (b.y - a.y) * k,
     face: tr.face,
-    pose: POSES[(k < 0.5 ? a : b).pose] ?? 'idle',
+    pose: POSES[pts[shown].pose] ?? 'idle',
+    since: since(shown),
   };
 }
 

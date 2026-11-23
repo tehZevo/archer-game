@@ -142,15 +142,19 @@ function dummy(x: number, hp = 1e6): Mob {
   check('down-jump + Glide never falls through from above', through === 0, `${through}/${trials}`);
 }
 
-// --- combat: Twin Shot hits the 2 closest enemies twice, instantly ---
+// --- combat: Twin Shot draws, then hits the 2 closest enemies twice ---
 {
   arena();
   const far = dummy(190), near = dummy(130), mid = dummy(160);
   tap('z');
+  const duringDraw = near.hp === 1e6 && mid.hp === 1e6;
+  step(Math.ceil(P.Z_WINDUP / P.STEP));
   const firstHit = near.hp < 1e6 && mid.hp < 1e6;
   const one = 1e6 - near.hp;
   step(5);
-  check('Twin Shot: first hit lands instantly', firstHit);
+  check('Twin Shot: nothing lands during the bow-draw windup', duringDraw);
+  check('Twin Shot: first hit lands on release', firstHit);
+  check('Twin Shot: the whole animation is longer than before (0.24s)', P.Z_CAST > 0.35);
   check('Twin Shot: closest two take both hits, the third none', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 && far.hp === 1e6);
 }
 
