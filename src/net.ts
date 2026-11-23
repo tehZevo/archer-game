@@ -1,6 +1,7 @@
 import { joinRoom } from 'trystero';
 import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
+import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
 
 /** Players per channel; a full channel spills into the next one. */
@@ -44,6 +45,7 @@ type Room = ReturnType<typeof joinRoom>;
 let room: Room | null = null;
 // Trystero's signed per-user store: we own it, peers read it.
 let pos: UserState<Packet> | null = null;
+let sendKills: ((n: number) => Promise<void>) | null = null;
 const rec = new Recorder();
 
 function receive(id: string, p: Packet): void {
@@ -55,6 +57,7 @@ function receive(id: string, p: Packet): void {
 function connect(channel: number): void {
   room?.leave();
   peers.clear();
+  resetBoost();
   net.channel = channel;
   net.floor = game.floor.number;
   // identity: 'none' gives each tab its own userId; the default persists one
@@ -72,6 +75,10 @@ function connect(channel: number): void {
   room.onError((err) => {
     if (err.code === 'room-full' && !net.code && !Object.keys(room!.getPeers()).length) connect(channel + 1);
   });
+  // kills are broadcast in batches; each peer's waves speed up (see boost.ts)
+  const kills = room.makeAction<number>('kills');
+  kills.onMessage((n) => remoteKills(n));
+  sendKills = kills.send;
   room.onPeerJoin((ctx) => {
     const got = pos?.getAll()[ctx.userId];
     if (got) receive(ctx.userId, got);
@@ -93,4 +100,6 @@ export function sync(): void {
   if (!room || game.floor.number !== net.floor) connect(net.channel);
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);
   if (p) pos?.set(p);
+  const k = takeBatch(performance.now());
+  if (k && peers.size) sendKills?.(k).catch(() => {});
 }
