@@ -16,6 +16,7 @@ import { killMob } from '../src/combat';
 import { cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
 
 let failures = 0;
@@ -258,6 +259,28 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   spendSkill('S');
   check('upgrading Twin Shot to Shell Barrage keeps rank 3', activeSkill('Z').key === 'S' && rank('Z').level === 3);
   check('movement skills are never offered for ranks', !skillRows().some((r) => (r.key === 'C' || r.key === 'D') && r.action));
+}
+
+// --- ghosts: few rich packets, smooth playback ---
+{
+  // sender walks right at 60 px/s for 2s, recording every frame (60 fps); its clock is 5000ms ahead
+  const rec = new Recorder(), tr = newTrack(), skew = 5000, latency = 80;
+  const packets: Packet[] = [];
+  for (let f = 0; f <= 120; f++) {
+    const t = f * (1000 / 60);
+    const p = rec.tick(t + skew, 100 + t * 0.06, 200, 60, 0, f > 60 ? 'jump' : 'walk', 1);
+    if (p) { packets.push(p); ingest(tr, p, t + latency); }
+  }
+  const rate = packets.length / 2;
+  check('ghost packets go out ~3x a second, several samples each', rate >= 3 && rate <= 4 && packets.slice(1).every((p) => p.s.length >= 2), `${rate}/s`);
+  // playback at local time 1500ms shows where the sender was INTERP_MS + latency earlier
+  const at = (t: number): number => view(tr, t)!.x;
+  const expect = 100 + (1500 - INTERP_MS - latency) * 0.06;
+  check('ghost playback lags by the interpolation delay', Math.abs(at(1500) - expect) < 3, `x ${at(1500).toFixed(1)} want ~${expect.toFixed(1)}`);
+  const steps = [0, 1, 2, 3, 4].map((i) => at(1400 + i * 16));
+  check('ghost motion is smooth between samples (no 100ms steps)', steps.every((x, i) => i === 0 || (x > steps[i - 1] && x - steps[i - 1] < 2)));
+  check('ghost pose plays back with the motion', view(tr, 600)!.pose === 'walk' && view(tr, 2000)!.pose === 'jump');
+  check('send interval is fewer than 10 updates/s', SEND_MS > 100);
 }
 
 // --- HUD: compact numbers ---
