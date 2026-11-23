@@ -31,7 +31,8 @@ export const P = {
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   ACCEL: 1600,         // groundedAccelForce
   RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (~70px slide)
-  RUSH_STRIKE_DELAY: 0.12, // s into the slide before Sky Toss strikes
+  RUSH_MAX: 0.32,     // s the Sky Toss slide lasts at most; the strike lands as it ends
+  RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s

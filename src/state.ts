@@ -37,6 +37,7 @@ export const player: Player = {
   climbRush: false,
   useT: 0,
   queued: null,
+  rushT: 0, rushCarry: [],
   hangT: 0, hangHits: 0, hangHitT: 0, hangDmg: 0, hangTargets: 0,
   regenT: 0,
   combatT: 0,
@@ -144,6 +145,7 @@ export function gotoFloor(n: number): void {
   player.useT = 0;
   player.queued = null;
   player.hangT = 0; player.hangHits = 0;
+  player.rushT = 0; player.rushCarry = [];
 }
 
 /** Where the camera wants to be: the nearest position that puts the player

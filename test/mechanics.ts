@@ -225,14 +225,33 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 
 {
-  // Sky Toss: slide forward first, the strike lands after the slide has started
+  // Sky Toss: slide forward pushing enemies along; the strike and launch land as the slide ends
   arena(1);
-  const m = dummy(150);
+  const m = dummy(130);
   const x0 = player.x;
   tap('q');
-  check('Sky Toss slides forward before striking', player.x > x0 && m.hp === 1e6);
-  step(8);
-  check('Sky Toss strikes after the slide', m.hp < 1e6 && player.x - x0 > 20, `dx ${(player.x - x0).toFixed(1)}`);
+  let launchedEarly = false, mx = m.x, carried = false;
+  for (let i = 0; i < 9 && player.rushT > 0; i++) {
+    step(1);
+    if (m.airTime > 0 && player.rushT > 0) launchedEarly = true;
+    if (m.x > mx + 1) carried = true;
+    mx = m.x;
+  }
+  check('Sky Toss slides forward', player.x - x0 > 30, `dx ${(player.x - x0).toFixed(1)}`);
+  check('Sky Toss pushes the enemies it runs into along with you', carried && m.x > 130);
+  check('Sky Toss launches nothing until the slide ends', !launchedEarly);
+  step(2);
+  check('Sky Toss strikes and launches as the slide ends', m.hp < 1e6 && m.airTime > 0);
+}
+{
+  // Sky Toss stops at the edge of the platform instead of sliding off it
+  arena(1);
+  const g = ground(), w0 = g.w;
+  g.w = 140; player.x = 120;
+  tap('q'); step(14);
+  const x = player.x, on = player.onGround;
+  g.w = w0;
+  check('Sky Toss stops at a platform edge', on && x <= 140, `x ${x.toFixed(1)}`);
 }
 
 // --- enemies: waves never exceed a zone's cap; mobs stay on their platform ---

@@ -18,6 +18,32 @@ export function barrageTargets() {
  * box on each tick, exactly like classic MMOs' attack frames. Damage, MP cost,
  * hit count and target count all scale with the skill's SP rank.
  */
+/** The pending Sky Toss strike, fired when the slide ends. */
+let rushStrike: (() => void) | null = null;
+
+/**
+ * Sky Toss slide, on the fixed step (after the player moves): pick up the
+ * enemies the slide runs into and push them along in front, and land the
+ * strike when the slide ends (time up, slowed down, or left the ground).
+ */
+export function updateRush(dt: number): void {
+  if (player.rushT <= 0) return;
+  player.rushT -= dt;
+  const face = Math.sign(player.vx) || player.face;
+  for (const m of hitbox(player.x + face * P.RUSH_GRAB / 2, player.y + player.h / 2, P.RUSH_GRAB, 40)) {
+    if (!player.rushCarry.some((c) => c.m === m)) player.rushCarry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
+  }
+  player.rushCarry = player.rushCarry.filter((c) => game.mobs.includes(c.m));
+  for (const c of player.rushCarry) { c.m.x = player.x + face * c.off; c.m.vx = 0; }
+  if (player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
+}
+
+/** End a Sky Toss slide now and land its strike. */
+export function endRush(): void {
+  player.rushT = 0;
+  rushStrike?.();
+}
+
 export function cast(key: SkillKey): void {
   const s = activeSkill(key);
   if (!isLearned(key)) return;
@@ -131,25 +157,32 @@ export function cast(key: SkillKey): void {
     case 'Q': {
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
-      // Down + Q fires in place; otherwise slide forward first, then strike
-      // around where the slide carried you.
+      // Down + Q strikes in place. Otherwise slide forward, scooping up the
+      // enemies in the way and pushing them along; the strike (and the launch)
+      // lands when the slide ends: out of time, slowed, or at a platform edge
+      // (see updateRush).
       const inPlace = held('down');
       const face = player.face;
-      const strike = (): void => {
+      rushStrike = (): void => {
+        rushStrike = null;
+        const carried = player.rushCarry.map((c) => c.m);
+        player.rushCarry = [];
         const cx = inPlace ? player.x : player.x + face * 24;
-        const tg = hitbox(cx, player.y + player.h / 2, 96, 64).slice(0, r.targets);
+        const near = hitbox(cx, player.y + player.h / 2, 96, 64).filter((m) => !carried.includes(m));
+        const tg = [...carried, ...near].filter((m) => game.mobs.includes(m)).slice(0, r.targets);
         // a horn of light erupts under each target (or ahead, if none)
         (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
           .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
         tg.forEach((m) => {
           damage(m, r.dmg, { launch: true });
-          if (!inPlace) m.vx = face * 240;
+          if (!inPlace) m.vx = face * 80; // a little follow-through drift
         });
       };
-      if (inPlace) strike();
+      if (inPlace) rushStrike();
       else {
         player.vx = face * P.RUSH_SLIDE_V;
-        later(P.RUSH_STRIKE_DELAY, strike);
+        player.rushT = P.RUSH_MAX;
+        player.rushCarry = [];
       }
       player.combo = 1.1; player.comboT = 1.1;
       break;

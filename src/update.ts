@@ -3,7 +3,7 @@ import { cameraTarget, gainExp, game, gotoFloor, player, spawnWave } from './sta
 import { held, pressed } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, revive } from './combat';
-import { barrageTargets, cast } from './skills';
+import { barrageTargets, cast, updateRush } from './skills';
 import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
@@ -127,6 +127,11 @@ export function update(dt: number): void {
       }
 
 
+      // Sky Toss never slides you off a platform: stop at the edge instead
+      if (player.rushT > 0 && player.onGround) {
+        const feetNow = player.y + player.h, nx = player.x + player.vx * dt;
+        if (!surfaceBetween(nx, 1, feetNow - 12, feetNow + 12)) player.vx = 0;
+      }
       const prevFeet = player.y + player.h, prevX = player.x;
       integrate(player, dt);
       // clamp to the world before colliding, so the ground test uses the final x
@@ -164,6 +169,7 @@ export function update(dt: number): void {
   }
 
   updateMobs(dt);
+  updateRush(dt); // after the mobs move, so the ones being pushed stay in front
 
   // arrows: fly, and apply their hit on arrival
   for (let i = game.shots.length - 1; i >= 0; i--) {
