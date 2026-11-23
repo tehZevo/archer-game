@@ -18,7 +18,8 @@ import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/pr
 import { fmtNum } from '../src/util';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { net, newCode, parseCode, roomId } from '../src/net';
-import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
+import { GRIDS, POSE_FPS } from '../src/archer';
+import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, Platform } from '../src/types';
 
 let failures = 0;
@@ -358,6 +359,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(Math.ceil(30 / P.STEP));
   check('the boost decays back to normal', boost.level === 0 && waveRate() === 1);
 }
+
+// --- archer sprite sheet ---
+check('every archer frame is 16x24', Object.values(GRIDS).every((fs) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === 16))));
+check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
 
 // --- HUD: compact numbers ---
 check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345, 1234567].map(fmtNum).join(' ') === '999 1K 1.2K 12.3K 1.2M');
