@@ -17,12 +17,12 @@ const { sync } = net;
 declare global {
   interface Window {
     game: typeof game
-    archer: { gainExp: typeof gainExp; spendSp: typeof spendSp; rank: typeof rank; gotoFloor: typeof gotoFloor; net: typeof net; boost: typeof boost }
+    archer: { gainExp: typeof gainExp; spendSp: typeof spendSp; rank: typeof rank; gotoFloor: typeof gotoFloor; net: typeof net; boost: typeof boost; netStatus: typeof net.netStatus }
   }
 }
 /** Handy for console poking and automated checks. */
 window.game = game;
-window.archer = { gainExp, spendSp, rank, gotoFloor, net, boost };
+window.archer = { gainExp, spendSp, rank, gotoFloor, net, boost, netStatus: net.netStatus };
 
 function frame(now: number): void {
   const dt = Math.min(0.1, (now - game.last) / 1000);

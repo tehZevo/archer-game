@@ -44,6 +44,8 @@ export const net = {
   code: '',
   /** Nothing connects until the player starts from the main menu. */
   started: false,
+  /** Why multiplayer is off, if it is ('' = fine). */
+  offline: '',
 };
 
 type Room = ReturnType<typeof joinRoom>;
@@ -59,12 +61,27 @@ let lobby: Room | null = null;
 let lobbyAt: UserState<At> | null = null;
 let posted = '';
 
+/** Trystero signs every player's identity with WebCrypto, which browsers
+ *  only offer on secure pages (HTTPS or localhost). On plain HTTP (e.g. a LAN
+ *  address) joining would fail, so stay offline and say why. */
+export function canConnect(): boolean {
+  if (typeof globalThis.crypto?.subtle?.generateKey === 'function') return true;
+  if (!net.offline) {
+    net.offline = 'NEEDS HTTPS'; // for the console/netStatus; the screen just says local only
+    console.warn('[net] multiplayer is off: WebCrypto (crypto.subtle) is only available on HTTPS or localhost pages');
+  }
+  return false;
+}
+
 export function joinLobby(): void {
-  if (lobby) return;
+  if (lobby || !canConnect()) return;
   try {
     lobby = joinRoom({ appId: APP_ID, maxUsers: LOBBY_MAX, identity: 'none' }, LOBBY);
     lobbyAt = lobby.makeUserState<At>('at', { f: 0, c: 0 });
-  } catch { lobby = null; lobbyAt = null; }
+    lobby.onError((err) => console.warn('[net] lobby error:', err.code, err.message, err));
+    lobby.onPeerJoin((ctx) => log('lobby peer joined', ctx.userId.slice(0, 8)));
+    log('joined the lobby');
+  } catch (e) { console.warn('[net] lobby failed', e); lobby = null; lobbyAt = null; }
 }
 
 /** Players on each public channel of a floor, as the lobby reports them. */
@@ -90,9 +107,12 @@ let sendKills: ((n: number) => Promise<void>) | null = null;
 let sendShot: ((s: ShotMsg) => Promise<void>) | null = null;
 const rec = new Recorder();
 
+/** Network log lines go to the console, prefixed so they're easy to filter. */
+const log = (...a: unknown[]): void => { if (typeof console !== 'undefined') console.info('[net]', ...a); };
+
 function receive(id: string, p: Packet): void {
   let tr = peers.get(id);
-  if (!tr) peers.set(id, (tr = newTrack()));
+  if (!tr) { peers.set(id, (tr = newTrack())); log('first position from', id.slice(0, 8)); }
   ingest(tr, p, performance.now());
 }
 
@@ -108,6 +128,7 @@ function connect(channel: number): void {
   // per browser, so two tabs in a profile would share a slot and overwrite
   // each other's positions.
   room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL, identity: 'none' }, roomId(net.floor, channel));
+  log('joining', roomId(net.floor, channel));
   pos = room.makeUserState<Packet>('pos', { t: Math.round(performance.now()), f: player.face, s: [[0, Math.round(player.x), Math.round(player.y), 0, 0, 0]] });
   pos.onChange((val, meta) => {
     if (meta.self) return;
@@ -124,6 +145,7 @@ function connect(channel: number): void {
   // A full room (we joined it empty) means everyone is in it: hop to the next.
   // (Private instances have nowhere to spill to: the 21st player just sees nobody.)
   room.onError((err) => {
+    console.warn('[net] room error:', err.code, err.message, err);
     if (err.code === 'room-full' && !net.code && !Object.keys(room!.getPeers()).length) connect(channel + 1);
   });
   // kills are broadcast in batches; each peer's waves speed up (see boost.ts)
@@ -135,12 +157,13 @@ function connect(channel: number): void {
   shots.onMessage((s, ctx) => queueShot(peers.get(ctx.userId), s, performance.now()));
   sendShot = shots.send;
   room.onPeerJoin((ctx) => {
+    log('peer joined', ctx.userId.slice(0, 8), 'has position:', !!pos?.getAll()[ctx.userId]);
     const got = pos?.getAll()[ctx.userId];
     if (got) receive(ctx.userId, got);
     const n = who.getAll()[ctx.userId]?.n;
     if (n) names.set(ctx.userId, cleanName(n));
   });
-  room.onPeerLeave((ctx) => { peers.delete(ctx.userId); names.delete(ctx.userId); });
+  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); });
   net.joined = true;
 }
 
@@ -148,6 +171,17 @@ function connect(channel: number): void {
 export function netShot(x: number, y: number, face: number, len: number): void {
   if (!net.started || !peers.size) return;
   sendShot?.({ t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len) }).catch(() => {});
+}
+
+/** A snapshot of the connection, for the console: `archer.netStatus()`. */
+export function netStatus(): Record<string, unknown> {
+  return {
+    started: net.started, offline: net.offline, room: room ? roomId(net.floor, net.channel) : null,
+    connectedPeers: room ? Object.keys(room.getPeers()).length : 0,
+    ghosts: peers.size, names: [...names.values()],
+    lobbyPeers: lobby ? Object.keys(lobby.getPeers()).length : 0,
+    lobbyCounts: Object.fromEntries(lobbyCounts(net.floor || 1)),
+  };
 }
 
 /** The pose peers should see: an active skill animation wins over movement. */
@@ -159,7 +193,7 @@ export function localPose(): Pose {
 /** Record our motion; call every frame. Sends a few samples per packet, ~3x a second (see ghost.ts). */
 export function sync(): void {
   // changing floors moves us to that floor's rooms, keeping the channel number
-  if (!net.started) return;
+  if (!net.started || !canConnect()) return;
   if (!room || game.floor.number !== net.floor) connect(net.channel);
   postLobby();
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);

@@ -2,7 +2,7 @@ import { ctx } from './canvas';
 import { game, player } from './state';
 import { text } from './font';
 import { autoChannel, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
-import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL } from './net';
+import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
 
 /* The main menu, drawn on the canvas over the frozen world. */
@@ -22,7 +22,9 @@ export function drawMenu(): void {
   const { w, h } = game.view;
   ctx.fillStyle = '#070c16c8'; ctx.fillRect(0, 0, w, h);
   text(ctx, 'THE ARCHER', w / 2, 10, 2, GOLD, 'center');
-  text(ctx, 'CLIMB THE TOWER', w / 2, 28, 1, DIM, 'center');
+  // without multiplayer (no WebCrypto on this page) say so up front
+  if (net.offline) text(ctx, 'LOCAL ONLY - NO MULTIPLAYER', w / 2, 28, 1, '#ff9f6b', 'center');
+  else text(ctx, 'CLIMB THE TOWER', w / 2, 28, 1, DIM, 'center');
   text(ctx, hasSave() ? `LV ${player.level} · FLOOR ${menu.floor}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
 
   const blink = Math.floor(performance.now() / 400) % 2 === 0;
@@ -44,7 +46,8 @@ export function drawMenu(): void {
         const n = counts.get(c) ?? 0;
         const label = menu.channel ? `CH ${c}` : `AUTO: CH ${c}`;
         text(ctx, 'CHANNEL', L, y, 1, DIM, 'left');
-        text(ctx, `< ${label} ${n}/${MAX_PER_CHANNEL} >`, R, y, 1, HI, 'right');
+        if (net.offline) text(ctx, 'LOCAL ONLY', R, y, 1, DIM, 'right');
+        else text(ctx, `< ${label} ${n}/${MAX_PER_CHANNEL} >`, R, y, 1, HI, 'right');
         break;
       }
       case 'code': {

@@ -35,7 +35,10 @@ function drawHUD(): void {
   // a private instance shows its code on its own line (shifting the points line down)
   let ly = pad + 18;
   // where you are and who's with you: the channel (or private code) and the player count
-  if (net.joined) {
+  if (net.offline) {
+    text(ctx, 'Local only', pad, ly, 1, '#ff9f6b', 'left'); // the reason is in the console
+    ly += 9;
+  } else if (net.joined) {
     const n = playerCount();
     const where = net.code ? `Private ${net.code}` : `Ch.${net.channel}`;
     text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
