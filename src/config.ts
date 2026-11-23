@@ -23,6 +23,7 @@ export const P = {
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.5,   // s Sky Assault hovers (striking) before falling
+  BARRAGE_RISE: 0.75,  // fraction of the way up to the highest launched enemy Sky Assault warps
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)

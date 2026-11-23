@@ -83,12 +83,17 @@ export function collideGround(
       }
     }
   }
-  // A grounded body also follows the surface up/down by STICK px.
+  // A grounded body also follows the surface up/down by STICK px. On a slope
+  // the reach grows with horizontal speed (a 2:1 slope moves the surface half
+  // as far as x), so a fast slide or dash (Sky Toss, ~10px/frame) stays on the
+  // ramp instead of sinking into it.
   if (!surf && o.onGround && o.vy >= 0) {
     let bestY = Infinity;
+    const slopeReach = Math.max(STICK, Math.abs(o.x - prevX) * 0.5 + 1);
     for (const p of surfacesAt(o.x, o.w, ignore)) {
-      const sy = surfaceYAt(p, o.x);
-      if (sy >= feet - STICK && sy <= feet + STICK && sy < bestY) { surf = p; bestY = sy; }
+      // (also onto the flat tile a ramp tops out at, or runs down onto)
+      const sy = surfaceYAt(p, o.x), reach = p.slope || o.plat?.slope ? slopeReach : STICK;
+      if (sy >= feet - reach && sy <= feet + reach && sy < bestY) { surf = p; bestY = sy; }
     }
   }
   if (surf) {

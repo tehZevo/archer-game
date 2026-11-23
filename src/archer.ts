@@ -151,6 +151,11 @@ export function bakeArcher(): Record<ArcherPose, HTMLCanvasElement[]> {
   return out;
 }
 
+/** Climb frame time from height: one hand-over-hand step every CLIMB_STEP px,
+ *  so the climb only animates while actually moving up or down. */
+const CLIMB_STEP = 8;
+export const climbPhase = (feet: number): number => Math.floor(feet / CLIMB_STEP) / POSE_FPS.climb;
+
 /** Pick the frame of a pose at cycle time t (seconds). */
 export function archerFrame(frames: Record<ArcherPose, HTMLCanvasElement[]>, pose: ArcherPose, t: number): HTMLCanvasElement {
   const f = frames[pose] ?? frames.idle;
