@@ -2,7 +2,7 @@ import { hash, TOP_Y, type Paint, type Tileset } from '../tilekit';
 
 /* ============================================================
    NATURE TILESETS: the early, earthly areas.
-   Swamp, Mountain, Sky, Meadow, Riverbank, Hills.
+   Tide Pools, Swamp, Mountain, Sky, Meadow, Riverbank, Hills.
    (Pieces and sizes: see tileset.ts / tilekit.ts.)
    ============================================================ */
 
@@ -373,6 +373,63 @@ const hills: Tileset = {
   },
 };
 
+/* ---------------- Tide Pools: wet slate, algae, anemones, starfish, kelp ---------------- */
+const tidePools: Tileset = {
+  name: 'Tide Pools',
+  sky: ['#3a7aa8', '#6aa6c8', '#2e6a92'],
+  fill(x, y, v) {
+    // layered slate: blue-grey bands broken into blocks, with barnacle specks
+    const band = (y + (x >> 3) * 2 + v) % 6;
+    let col = band < 3 ? '#4e5e6e' : '#56687a';
+    if (band === 0 && hash(x, y, v + 60) < 0.7) col = '#3e4c5a';
+    if (hash(x, y, v + 61) < 0.04) col = '#d8dcd0'; // a barnacle
+    // a little pool of trapped water in the rock
+    if (v === 1 && y >= 8 && y <= 10 && x >= 5 && x <= 10 && !(y === 8 && (x === 5 || x === 10)))
+      col = y === 8 ? '#9ad4e8' : '#4a9ac0';
+    if (v === 2 && x >= 10 && x <= 11 && y >= 4 && y <= 5) col = '#e8eee4'; // a white shell
+    return col;
+  },
+  surface(x, d, v) {
+    if (d === 0) return '#8ad07a';
+    if (d === 1) return '#5aa85e';
+    // dark wet rock, with algae straggling down
+    if (d === 2) return (x + v) % 4 === 0 ? '#5aa85e' : '#3a4856';
+    if (d === 3) return '#3a4856';
+    return null;
+  },
+  edge: { outer: '#1e2a36', inner: '#3a4856', surfOuter: '#2e6a3a', surfInner: '#4a8e4e', style: 'round', r: 3 },
+  top(p, v) {
+    const y = TOP_Y;
+    if (v === 1) { // a pink anemone: a stubby body and waving tendrils
+      p(8, y - 2, '#c85a7a', 4, 2);
+      for (const [x, h] of [[7, 3], [8, 4], [9, 5], [10, 4], [11, 4], [12, 3]]) { p(x, y - 2 - h, '#f08aa8', 1, h); p(x, y - 2 - h, '#ffc8d8'); }
+    } else if (v === 2) { // an orange starfish
+      p(12, y - 2, '#f08a3a', 5, 1); p(14, y - 4, '#f08a3a', 1, 3); p(13, y - 1, '#f08a3a'); p(15, y - 1, '#f08a3a'); p(14, y - 2, '#ffc070');
+    } else if (v === 3) { // a mussel cluster
+      for (const [x, yy] of [[4, 2], [6, 3], [7, 2], [9, 2]]) { p(x, y - yy, '#2a2e4a', 2, yy); p(x, y - yy, '#5a6088'); }
+    }
+  },
+  bottom(p, v) {
+    // strands of kelp, each ending in a drop of seawater
+    for (let i = 0; i <= v; i++) {
+      const x = 2 + Math.floor(hash(i, v, 62) * 12), len = 3 + Math.floor(hash(v, i, 63) * 6);
+      p(x, 0, '#2e7a4a', 1, len); p(x + 1, 1, '#2e7a4a', 1, len - 2); p(x, len, '#6ab87a');
+      if (i === 0 && v > 1) p(x, len + 2, '#9ad4e8');
+    }
+  },
+  rope(p) { // a knotted net cord, blue and weathered
+    p(6, 0, '#4a7a98', 4, 16); p(6, 0, '#7ab0cc', 1, 16); p(9, 0, '#2e5a76', 1, 16);
+    for (const y of [2, 10]) { p(5, y, '#4a7a98', 6, 2); p(5, y, '#7ab0cc', 6, 1); }
+  },
+  ladder(p) { // bleached driftwood rails with rope lashings
+    p(3, 0, '#b8b0a0', 2, 16); p(11, 0, '#b8b0a0', 2, 16);
+    p(3, 0, '#d8d0c0', 1, 16); p(11, 0, '#d8d0c0', 1, 16);
+    p(5, 7, '#a89e8a', 6, 2); p(5, 7, '#c8c0ae', 6, 1);
+    p(3, 6, '#4a7a98', 2, 1); p(11, 9, '#4a7a98', 2, 1);
+  },
+};
+
 export const NATURE: Record<string, Tileset> = {
   Swamp: swamp, Mountain: mountain, Sky: sky, Meadow: meadow, Riverbank: riverbank, Hills: hills,
+  'Tide Pools': tidePools,
 };

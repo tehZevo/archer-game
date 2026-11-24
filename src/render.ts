@@ -6,7 +6,7 @@ import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
-import { areaFor } from './world';
+import { areaName } from './world';
 import { localPose, names, net, peers } from './net';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
@@ -40,7 +40,7 @@ export function resize(): void {
 /** `?area=Cave` previews an area's tileset on any floor (e.g. one not on the map yet). */
 const previewArea = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('area') : null;
 /** The tileset of the floor being drawn. */
-const tileset = (): Tileset => tilesetFor(previewArea ?? areaFor(game.floor.number, net.route));
+const tileset = (): Tileset => tilesetFor(previewArea ?? areaName(net.area));
 
 function drawBackground(ts: Tileset): void {
   const { w, h } = game.view;

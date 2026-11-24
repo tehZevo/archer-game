@@ -26,7 +26,7 @@ export function drawMenu(): void {
   // without multiplayer (no WebCrypto on this page) say so up front
   if (net.offline) text(ctx, 'LOCAL ONLY - NO MULTIPLAYER', w / 2, 28, 1, '#ff9f6b', 'center');
   else text(ctx, 'CLIMB THE TOWER', w / 2, 28, 1, DIM, 'center');
-  text(ctx, hasSave() ? `LV ${player.level} · ${placeName(menu.floor, net.route).toUpperCase()}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
+  text(ctx, hasSave() ? `LV ${player.level} · ${placeName(menu.floor, net.area).toUpperCase()}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
 
   const blink = Math.floor(performance.now() / 400) % 2 === 0;
   const counts = lobbyCounts(menu.floor);

@@ -172,14 +172,14 @@ export function update(dt: number): void {
   player.anim += dt * (player.animState === 'walk' ? 9 : 4);
 
   // standing on a portal and pressing Up warps to where it leads (the next
-  // floor; a town's also lead down, and its two up portals to two routes)
+  // floor; a town's also lead down, and its up portals into the areas above)
   const feet = player.y + player.h;
   const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
   // Up beside a town NPC talks to them (before the portals: they never overlap)
   if (talk()) return;
   if (p && pressed('up')) {
     sfx.portal();
-    gotoFloor(p.to, p.route);
+    gotoFloor(p.to, p.area);
     return;
   }
 
@@ -299,7 +299,7 @@ export function devInput(dt: number): void {
   if (repeated('up', dt)) dev.sel = (dev.sel + n - 1) % n;
   if (repeated('down', dt)) dev.sel = (dev.sel + 1) % n;
   if (pressed('escape')) dev.open = false;
-  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; gotoFloor(devStops()[dev.sel].stage); }
+  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; const s = devStops()[dev.sel]; gotoFloor(s.stage, s.area); }
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {
