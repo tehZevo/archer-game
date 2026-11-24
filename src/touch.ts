@@ -1,4 +1,5 @@
 import { setKey } from './input';
+import { openChat } from './chatdom';
 
 /** A touch control: a label and the input id it drives. */
 interface Pad { id: string; label: string; }
@@ -23,13 +24,17 @@ const SKILLS: Pad[] = [
   { id: 'a', label: 'A' },
   { id: 's', label: 'S' },
   { id: 'escape', label: 'II' },
+  { id: 'chat', label: '…' },
 ];
 
 function pad(p: Pad, cls: string): HTMLElement {
   const el = document.createElement('div');
   el.className = 'tbtn ' + cls;
   el.textContent = p.label;
-  const down = (e: Event) => { e.preventDefault(); setKey(p.id, true); };
+  // the chat button opens the chat line (focus must happen in the tap itself for the phone keyboard)
+  const down = p.id === 'chat'
+    ? (e: Event) => { e.preventDefault(); openChat(); }
+    : (e: Event) => { e.preventDefault(); setKey(p.id, true); };
   const up = (e: Event) => { e.preventDefault(); setKey(p.id, false); };
   el.addEventListener('touchstart', down, { passive: false });
   el.addEventListener('touchend', up);

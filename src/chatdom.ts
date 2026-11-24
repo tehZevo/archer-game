@@ -11,6 +11,12 @@ import { chat, CHAT_MAX } from './chat';
    <input> (so phones get a keyboard, and paste/backspace work) and
    the game sees none of those keys. Enter sends, Esc cancels.
    ============================================================ */
+let opener: (() => void) | null = null;
+/** Open the chat line (the touch chat button; call inside the tap's own handler so phones show a keyboard). */
+export function openChat(): void {
+  if (!menu.open && !game.pause && !shop.open && !dev.open && !chat.typing) opener?.();
+}
+
 export function bindChat(canvas: HTMLCanvasElement): void {
   const input = document.createElement('input');
   input.setAttribute('autocomplete', 'off');
@@ -21,6 +27,7 @@ export function bindChat(canvas: HTMLCanvasElement): void {
   canvas.parentElement!.appendChild(input);
 
   const open = (): void => { chat.typing = true; chat.draft = ''; input.value = ''; input.focus(); };
+  opener = open;
   const close = (): void => { chat.typing = false; chat.draft = ''; input.blur(); };
 
   input.addEventListener('input', () => { chat.draft = input.value.slice(0, CHAT_MAX); });
