@@ -47,6 +47,10 @@ const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
   return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
 };
 
+/** Towns are the save points: you resume on the latest town at or below
+ *  your floor (floor 1 before the first town). */
+export const lastTown = (n: number): number => (n >= 10 ? n - (n % 10) : 1);
+
 /** Apply a save to the player; returns the floor to resume on, or null if the save is unusable. */
 export function apply(d: unknown): number | null {
   if (!d || typeof d !== 'object' || (d as SaveData).v !== VERSION) return null;
@@ -68,7 +72,7 @@ export function apply(d: unknown): number | null {
   player.job = jobForLevel(player.level);
   recalcStats();
   player.hp = player.hpMax; player.mp = player.mpMax;
-  return int(s.floor, 1, 9999, 1);
+  return lastTown(int(s.floor, 1, 9999, 1));
 }
 
 /** Off after a reset, so the page-hide save can't write the old progress back. */

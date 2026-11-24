@@ -83,7 +83,12 @@ function drawLadder(l: Climbable): void {
 function drawPortal(p: Portal): void {
   const s = SPR.portal;
   const bob = Math.sin(performance.now() / 300) * 2;
+  const down = p.to < game.floor.number;
+  // a way down glows a different colour
+  if (down) ctx.filter = 'hue-rotate(150deg)';
   ctx.drawImage(s.c, Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
+  if (down) ctx.filter = 'none';
+  if (p.label) text(ctx, p.label, Math.round(p.x), Math.round(p.y - s.h - 9), 1, down ? '#8fe3c4' : '#e6d6ff', 'center');
 }
 
 function drawMob(m: Mob): void {
@@ -222,7 +227,7 @@ export function render(): void {
   game.floor.platforms.forEach(drawPlatform);
   game.floor.ropes.forEach(drawRope);
   game.floor.ladders.forEach(drawLadder);
-  drawPortal(game.floor.portal);
+  game.floor.portals.forEach(drawPortal);
   game.mobs.forEach(drawMob);
   game.shots.forEach(drawShot);
   drawGhosts();

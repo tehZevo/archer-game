@@ -125,7 +125,7 @@ function mobForFloor(n: number): MobType {
  * connected to the next by a rope/ladder that runs from the top surface of the
  * lower platform to the top surface of the upper one. Enemies stand on the
  * ground and on platforms; a portal on the summit leads to the next floor.
- * Every 10th floor is a town (no enemies; its portal leads on up).
+ * Every 10th floor is a town instead: a designed layout (see townFloor).
  */
 /** Enemies in a platform's group, by its walkable tiles: 4 on the
  *  shortest tops (6 tiles or fewer), one more per 2 tiles, up to 8. */
@@ -138,10 +138,9 @@ const MIN_H = 180;           // never shorter than the view
 
 export function generateFloor(n: number): Floor {
   rng = seeded(hashStr(roomId(n, net.channel)));
-  const town = n % 10 === 0;
-  const groundH = 4 * TILE; // a slab, not a wall (it was 8 tiles, mostly unseen)
-  const groundY = snap(GEN_H - groundH);
-  const ground: Platform = { x: 0, y: groundY, w: WORLD.w, h: groundH, ground: true };
+  if (n % 10 === 0) return trim(townFloor(n));
+  const ground = groundSlab();
+  const groundY = ground.y;
 
   const platforms: Platform[] = [ground];
   const ropes: Climbable[] = [];
@@ -210,7 +209,7 @@ export function generateFloor(n: number): Floor {
     const climb: Climbable = { x: top.x + TILE / 2, y1: top.y, y2: landing(top).y };
     if (rand(0, 1) < 0.5) ropes.push(climb); else ladders.push(climb);
 
-    if (!town && rand(0, 1) < 0.85) {
+    if (rand(0, 1) < 0.85) {
       // most platforms hold a group: 4 enemies on the shortest tops, up to 8
       // on the longest, spread over the on-screen flat top tiles
       const spots = shape.tiles
@@ -233,24 +232,65 @@ export function generateFloor(n: number): Floor {
   }
 
   // The ground slab is one zone holding up to 4 enemies.
-  if (!town) {
+  {
     const spots: { x: number; y: number }[] = [];
     for (let x = 48; x <= WORLD.w - 48; x += TILE) spots.push({ x, y: ground.y });
     spawns.push({ x: WORLD.w / 2, y: ground.y, t: mobForFloor(n).lvl, spots, cap: 4, minX: 24, maxX: WORLD.w - 24 });
   }
 
   // The exit portal sits centred on the highest platform's walkable top tile.
-  const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56 };
+  const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: n + 1 };
 
-  // Trim the sky: shift everything up so the summit's portal sits a couple of
-  // tiles under the top of the world, and size this floor to fit (never
-  // shorter than the view). Whole tiles, so the 16px grid stays put.
-  const top = Math.min(portal.y - portal.h, ...platforms.map((p) => p.y)) - SKY_MARGIN;
+  return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H });
+}
+
+/** The full-width ground slab every floor stands on: 4 tiles, not a wall
+ *  (it was 8, mostly unseen). */
+function groundSlab(): Platform {
+  const h = 4 * TILE;
+  return { x: 0, y: snap(GEN_H - h), w: WORLD.w, h, ground: true };
+}
+
+/**
+ * A town (every 10th floor): one designed layout, not random, and no enemies.
+ * Two ways up from the ends of the ground, each to its own route of the
+ * floors above (left = route 0, right = route 1); on a floating plaza deck
+ * in the middle (ladder on its left, rope on its right) a way back down to
+ * the floor below. Players arrive under the deck, between the up portals.
+ */
+export function townFloor(n: number): Floor {
+  const ground = groundSlab();
+  const deckW = 8, deckX = (WORLD.w - deckW * TILE) / 2;
+  // a 3-tile block whose bottom leaves 2 tiles (32px) of headroom over the ground
+  const deck = makeShape('flat', deckX, ground.y - 3 * TILE, deckW);
+  deck.tiles.forEach((t) => { t.block = 1; });
+  const deckTop = Math.min(...deck.tiles.map((t) => t.y));
+  const P = (x: number, y: number, to: number, label: string, route?: number): Portal =>
+    ({ x, y, w: 40, h: 56, to, label, ...(route === undefined ? {} : { route }) });
+  const upL = P(2 * TILE, ground.y, n + 1, `UP ${n + 1} A`, 0);
+  const upR = P(WORLD.w - 2 * TILE, ground.y, n + 1, `UP ${n + 1} B`, 1);
+  const down = P(WORLD.w / 2, deckTop, n - 1, `DOWN ${n - 1}`);
+  return {
+    number: n, town: true, h: GEN_H,
+    platforms: [ground, ...deck.tiles],
+    ladders: [{ x: deckX + TILE / 2, y1: deckTop, y2: ground.y }],
+    ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
+    spawns: [],
+    portal: upL, portals: [upL, upR, down],
+  };
+}
+
+/** Trim the sky: shift everything up so the highest portal sits a couple of
+ *  tiles under the top of the world, and size the floor to fit (never
+ *  shorter than the view). Whole tiles, so the 16px grid stays put. */
+function trim(f: Floor): Floor {
+  const { platforms, ropes, ladders, spawns, portals } = f;
+  const top = Math.min(...portals.map((p) => p.y - p.h), ...platforms.map((p) => p.y)) - SKY_MARGIN;
   const shift = Math.max(0, Math.min(Math.floor(top / TILE) * TILE, GEN_H - MIN_H));
   for (const p of platforms) p.y -= shift;
   for (const c of [...ropes, ...ladders]) { c.y1 -= shift; c.y2 -= shift; }
   for (const s of spawns) { s.y -= shift; s.spots?.forEach((q) => { q.y -= shift; }); }
-  portal.y -= shift;
-
-  return { number: n, platforms, ropes, ladders, spawns, portal, town, h: GEN_H - shift };
+  for (const p of portals) p.y -= shift;
+  f.h = GEN_H - shift;
+  return f;
 }

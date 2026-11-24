@@ -1,5 +1,6 @@
 import { CAM, MOB_EXP_SHARE, MOB_TYPES, SKILLS, SKILL_ORDER, WORLD } from './config';
 import { generateFloor } from './floor';
+import { net } from './net';
 import { expToNext, jobForLevel, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
 import type {
@@ -119,7 +120,8 @@ export function spawnWave(): void {
 /** How far either side of the ground's centre a player can arrive, px. */
 export const SPAWN_SPREAD = 64;
 
-export function gotoFloor(n: number): void {
+export function gotoFloor(n: number, route?: number): void {
+  if (route !== undefined) net.route = route; // picked at a town: the floors above follow it
   game.floor = generateFloor(n);
   WORLD.h = game.floor.h;
   game.mobs.length = 0;

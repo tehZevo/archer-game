@@ -287,6 +287,12 @@ export interface Portal {
   y: number;
   w: number;
   h: number;
+  /** Floor it leads to. */
+  to: number;
+  /** Route the destination floor is on (towns branch into two); unset keeps yours. */
+  route?: number;
+  /** Shown above it (towns: where each portal goes). */
+  label?: string;
 }
 
 /** A procedurally generated floor: its layout, enemies and exit portal. */
@@ -296,7 +302,10 @@ export interface Floor {
   ropes: Climbable[];
   ladders: Climbable[];
   spawns: Spawn[];
+  /** The way on up (on a town, the left one). */
   portal: Portal;
+  /** Every portal on the floor, `portal` included (towns have three). */
+  portals: Portal[];
   town: boolean;
   /** World height for this floor: its content plus a little sky (WORLD.h while on it). */
   h: number;
