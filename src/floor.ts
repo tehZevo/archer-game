@@ -117,7 +117,7 @@ export function makeShape(kind: string, x: number, baseY: number, width = 6, mir
 /** The enemies an area can field: its own set, or the general pool for areas without one yet. */
 export function areaMobs(area: string): MobType[] {
   const own = MOB_TYPES.filter((m) => m.areas?.includes(area));
-  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.areas);
+  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.areas || m.areas.includes('*'));
 }
 
 /** A floor's two enemy types, picked from its area's set (same for everyone
