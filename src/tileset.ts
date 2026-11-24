@@ -18,6 +18,7 @@
    ============================================================ */
 
 import { hash, TOP_Y, type Paint, type Tileset } from './tilekit';
+import { MYSTIC } from './tilesets/mystic';
 import { NATURE } from './tilesets/nature';
 
 export * from './tilekit';
@@ -283,7 +284,7 @@ const clockwork: Tileset = {
 
 export const TILESETS: Record<string, Tileset> = {
   Classic: classic, Beach: beach, Forest: forest, Cave: cave, 'Clockwork Spire': clockwork,
-  ...NATURE,
+  ...NATURE, ...MYSTIC,
 };
 /** The tileset an area is drawn with (areas without their own yet use Classic). */
 export const tilesetFor = (area: string): Tileset => TILESETS[area] ?? classic;
