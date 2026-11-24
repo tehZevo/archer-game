@@ -1,7 +1,7 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { text } from './font';
-import { autoChannel, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
+import { autoChannel, disabled, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
 
@@ -36,7 +36,10 @@ export function drawMenu(): void {
       ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(MENU_X + 0.5, y - 2.5, MENU_W - 1, MENU_ROW - 2);
     }
     const L = MENU_X + 5, R = MENU_X + MENU_W - 5;
-    const caret = (on: boolean): string => (on && blink ? '_' : '');
+    // the caret blinks between '_' and a space of the same width, so the
+    // right-aligned text beside it never shifts
+    const caret = (on: boolean): string => (on ? (blink ? '_' : ' ') : '');
+    if (disabled(it)) ctx.globalAlpha = 0.35;
     switch (it) {
       case 'play':
         text(ctx, 'PLAY', w / 2, y, 1, GOLD, 'center');
@@ -70,6 +73,7 @@ export function drawMenu(): void {
         text(ctx, menu.confirmReset ? 'SURE? Z AGAIN TO ERASE' : 'RESET PROGRESS', w / 2, y, 1, RED, 'center');
         break;
     }
+    ctx.globalAlpha = 1;
   });
   const note = menu.note || HINT[items()[menu.sel]];
   text(ctx, note, w / 2, h - 22, 1, menu.note ? GOLD : DIM, 'center');
