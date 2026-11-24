@@ -26,6 +26,7 @@ import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../sr
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
+import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -956,6 +957,35 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   delete (globalThis as { localStorage?: unknown }).localStorage;
 
   check('the caret blinks between same-width glyphs, so text never shifts', textWidth('AB_') === textWidth('AB '));
+}
+
+{
+  // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
+  check('every area on the map has a tileset (Classic until it gets its own)', ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky'].every((a) => !!tilesetFor(a)));
+  check('Beach, Forest, Cave and Clockwork Spire have their own tilesets',
+    ['Beach', 'Forest', 'Cave', 'Clockwork Spire'].every((a) => tilesetFor(a).name === a) && tilesetFor('Swamp').name === 'Classic');
+  const hex = /^#[0-9a-f]{6}$/;
+  let bad = '';
+  for (const ts of Object.values(TILESETS)) {
+    for (let v = 0; v < 4; v++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+      if (!hex.test(ts.fill(x, y, v))) bad ||= `${ts.name} fill ${x},${y},${v}`;
+      const c = ts.surface(x, y, v);
+      if (c !== null && !hex.test(c)) bad ||= `${ts.name} surface ${x},${y},${v}`;
+    }
+    if (!ts.surface(0, 0, 0)) bad ||= `${ts.name} has no surface`;
+    // decorations and climbables stay inside their sprites
+    const inside = (name: string, w: number, h: number) => (x: number, y: number, c: string, pw = 1, ph = 1) => {
+      if (x < 0 || y < 0 || x + pw > w || y + ph > h || !hex.test(c)) bad ||= `${ts.name} ${name} paints ${x},${y} ${pw}x${ph} ${c}`;
+    };
+    for (let v = 0; v < 4; v++) for (const w of [false, true]) for (const e of [false, true]) ts.top?.(inside('top', TOP_W, TOP_H), v, w, e);
+    for (let v = 0; v < 4; v++) ts.bottom?.(inside('bottom', 16, BOT_H), v);
+    ts.rope(inside('rope', 16, 16)); ts.ladder(inside('ladder', 16, 16));
+  }
+  check('tileset pieces paint valid colours inside their sprites', bad === '', bad);
+  const vs = new Set<number>();
+  for (let i = 0; i < 64; i++) vs.add(variantAt(i, 3));
+  check('tile variants are 0-3, all used, and fixed per position', [...vs].every((v) => v >= 0 && v < 4) && vs.size === 4 && variantAt(5, 7) === variantAt(5, 7));
+  check('decorations pick variants apart from the fill', [...Array(32).keys()].some((i) => variantAt(i, 0) !== variantAt(i, 0, 1)) && hash(1, 2) !== hash(2, 1));
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
