@@ -242,9 +242,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const m = dummy(130);
   const x0 = player.x;
   tap('q');
-  let launchedEarly = false, mx = m.x, carried = false;
+  let launchedEarly = false, mx = m.x, carried = false, hits = 0, hp = m.hp;
   for (let i = 0; i < 9 && player.rushT > 0; i++) {
     step(1);
+    if (m.hp < hp) { hits++; hp = m.hp; }
     if (m.airTime > 0 && player.rushT > 0) launchedEarly = true;
     if (m.x > mx + 1) carried = true;
     mx = m.x;
@@ -252,6 +253,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Toss slides forward', player.x - x0 > 30, `dx ${(player.x - x0).toFixed(1)}`);
   check('Sky Toss pushes the enemies it runs into along with you', carried && m.x > 130);
   check('Sky Toss launches nothing until the slide ends', !launchedEarly);
+  check('the Sky Toss charge hits each enemy it scoops up, once', hits === 1, `${hits} hits during the slide`);
   step(2);
   check('Sky Toss strikes and launches as the slide ends', m.hp < 1e6 && m.airTime > 0);
 }

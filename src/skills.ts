@@ -34,7 +34,9 @@ export function updateRush(dt: number): void {
   const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
   for (const m of hitbox(grabX, player.y + player.h / 2, P.RUSH_GRAB + P.RUSH_GRAB_BACK, 40)) {
     if (player.rushCarry.length >= rank('Q').targets) break; // carry only as many as it hits
-    if (!player.rushCarry.some((c) => c.m === m)) player.rushCarry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
+    if (player.rushCarry.some((c) => c.m === m)) continue;
+    player.rushCarry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
+    damage(m, rank('Q').dmg * P.RUSH_HIT); // the charge itself hits, once per enemy (this can kill it)
   }
   player.rushCarry = player.rushCarry.filter((c) => game.mobs.includes(c.m));
   for (const c of player.rushCarry) {
