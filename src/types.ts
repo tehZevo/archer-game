@@ -296,6 +296,9 @@ export interface Portal {
   label?: string;
 }
 
+/** A town NPC: stands at (x, y = the surface under their feet). */
+export interface Npc { x: number; y: number; kind: 'shop'; name: string }
+
 /** A procedurally generated floor: its layout, enemies and exit portal. */
 export interface Floor {
   number: number;
@@ -307,6 +310,8 @@ export interface Floor {
   portal: Portal;
   /** Every portal on the floor, `portal` included (towns have three). */
   portals: Portal[];
+  /** People to talk to (towns): stand beside one and press Up. */
+  npcs?: Npc[];
   town: boolean;
   /** World height for this floor: its content plus a little sky (WORLD.h while on it). */
   h: number;

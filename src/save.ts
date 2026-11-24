@@ -1,3 +1,4 @@
+import { CARRY_MAX, wallet } from './economy';
 import { SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
 import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
@@ -26,6 +27,9 @@ export interface SaveData {
   stats: Record<string, number>;
   ranks: Record<string, number>;
   floor: number;
+  /** Coins and potions (absent in older saves: start empty). */
+  coins?: number;
+  potions?: { hp: number; mp: number };
 }
 
 /** localStorage when available (absent in headless tests unless stubbed). */
@@ -39,6 +43,7 @@ export function snapshot(): SaveData {
     level: player.level, exp: Math.floor(player.exp), ap: player.ap, sp: player.sp,
     stats: { ...player.stats }, ranks: { ...player.ranks },
     floor: game.floor.number,
+    coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
   };
 }
 
@@ -72,6 +77,9 @@ export function apply(d: unknown): number | null {
   player.job = jobForLevel(player.level);
   recalcStats();
   player.hp = player.hpMax; player.mp = player.mpMax;
+  wallet.coins = int(s.coins, 0, 1e9, 0);
+  wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, 0);
+  wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, 0);
   return lastTown(int(s.floor, 1, 9999, 1));
 }
 

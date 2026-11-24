@@ -8,9 +8,12 @@ import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progre
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
+import { shop, shopInput, talk, updateEconomy } from './economy';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
+  // the shop window holds the world still while you browse (Esc closes it)
+  if (shop.open) { shopInput(); return; }
   // Esc pause menu: freezes the game; arrows move, Z/Enter spends AP or SP
   if (pressed('escape')) game.pause = game.pause ? null : { col: 0, row: 0 };
   if (game.pause) { pauseInput(game.pause); return; }
@@ -162,6 +165,8 @@ export function update(dt: number): void {
   // floor; a town's also lead down, and its two up portals to two routes)
   const feet = player.y + player.h;
   const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
+  // Up beside a town NPC talks to them (before the portals: they never overlap)
+  if (talk()) return;
   if (p && pressed('up')) {
     sfx.portal();
     gotoFloor(p.to, p.route);
@@ -169,6 +174,7 @@ export function update(dt: number): void {
   }
 
   updateMobs(dt);
+  updateEconomy(dt); // coin piles fall and fade; X picks up, A/S drink
   updateRush(dt); // after the mobs move, so the ones being pushed stay in front
 
   // arrows: fly, and apply their hit on arrival

@@ -277,6 +277,8 @@ export function townFloor(n: number): Floor {
     ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
     spawns: [],
     portal: upL, portals: [upL, upR, down],
+    // the shopkeeper keeps a stall on the deck, left of the way down
+    npcs: [{ x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' }],
   };
 }
 
@@ -291,6 +293,7 @@ function trim(f: Floor): Floor {
   for (const c of [...ropes, ...ladders]) { c.y1 -= shift; c.y2 -= shift; }
   for (const s of spawns) { s.y -= shift; s.spots?.forEach((q) => { q.y -= shift; }); }
   for (const p of portals) p.y -= shift;
+  for (const n of f.npcs ?? []) n.y -= shift;
   f.h = GEN_H - shift;
   return f;
 }
