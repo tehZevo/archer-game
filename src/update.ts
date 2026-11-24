@@ -9,11 +9,15 @@ import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, updateEconomy } from './economy';
+import { dev, devStops } from './dev';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
   // the shop window holds the world still while you browse (Esc closes it)
   if (shop.open) { shopInput(); return; }
+  // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
+  if (dev.on && pressed('`')) dev.open = !dev.open;
+  if (dev.open) { devInput(dt); return; }
   // Esc pause menu: freezes the game; arrows move, Z/Enter spends AP or SP
   if (pressed('escape')) game.pause = game.pause ? null : { col: 0, row: 0 };
   if (game.pause) { pauseInput(game.pause, dt); return; }
@@ -35,9 +39,9 @@ export function update(dt: number): void {
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
   // holding Jump keeps jumping: re-jump on every landing
   if (!pressed('c') && held('c') && player.onGround && !player.climb) cast('C');
-  // debug: [ levels up, ] warps to the next floor
-  if (pressed('[')) gainExp(player.expNext - player.exp);
-  if (pressed(']')) { gotoFloor(game.floor.number + 1); return; }
+  // dev keys (?dev only): [ levels up, ] warps to the next floor
+  if (dev.on && pressed('[')) gainExp(player.expNext - player.exp);
+  if (dev.on && pressed(']')) { gotoFloor(game.floor.number + 1); return; }
 
   // enemy waves run on the fixed step so headless tests stay deterministic
   // other players' kills in this instance make waves come faster
@@ -281,6 +285,15 @@ function updateCamera(dt: number): void {
   const k = Math.min(1, CAM.LERP * dt);
   game.cam.x += (t.x - game.cam.x) * k;
   game.cam.y += (t.y - game.cam.y) * k;
+}
+
+/** Dev menu: Up/Down picks a stop, Z/Enter warps there, Esc or ` closes. */
+export function devInput(dt: number): void {
+  const n = devStops().length;
+  if (repeated('up', dt)) dev.sel = (dev.sel + n - 1) % n;
+  if (repeated('down', dt)) dev.sel = (dev.sel + 1) % n;
+  if (pressed('escape')) dev.open = false;
+  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; gotoFloor(devStops()[dev.sel].stage); }
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {

@@ -28,6 +28,8 @@ import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
+import { dev, devStops } from '../src/dev';
+import { devInput } from '../src/update';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -1001,6 +1003,27 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   for (let i = 0; i < 64; i++) vs.add(variantAt(i, 3));
   check('tile variants are 0-3, all used, and fixed per position', [...vs].every((v) => v >= 0 && v < 4) && vs.size === 4 && variantAt(5, 7) === variantAt(5, 7));
   check('decorations pick variants apart from the fill', [...Array(32).keys()].some((i) => variantAt(i, 0) !== variantAt(i, 0, 1)) && hash(1, 2) !== hash(2, 1));
+}
+
+{
+  // dev mode (?dev): its own rooms, the warp menu, and the [ ] keys
+  check('dev mode is off without ?dev', dev.on === false);
+  const before = roomId(5, 1);
+  setKey('[', true); step(1); setKey('[', false);
+  const lv = player.level, fl = game.floor.number;
+  setKey(']', true); step(1); setKey(']', false); step(1);
+  check('[ and ] do nothing without ?dev', player.level === lv && game.floor.number === fl);
+  dev.on = true;
+  check('dev rooms get their own ids', roomId(5, 1) === before + '-dev' && roomId(5, 0, 'ABCDE').endsWith('-dev'));
+  setKey(']', true); step(1); setKey(']', false); step(1);
+  check('] warps up a floor in dev mode', game.floor.number === fl + 1);
+  setKey('`', true); step(1); setKey('`', false); step(1);
+  check('` opens the dev menu', dev.open);
+  const stops = devStops();
+  check('the dev menu lists the start and the towns', stops[0].stage === 1 && stops.slice(1).every((s) => isTown(s.stage)) && stops[1].name === TOWN_NAMES[0]);
+  dev.sel = 2; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
+  check('picking a town warps there and closes the menu', game.floor.number === stops[2].stage && game.floor.town && !dev.open);
+  dev.on = false;
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
