@@ -1,5 +1,5 @@
-import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
-import { cameraTarget, gainExp, game, gotoFloor, player, spawnWave } from './state';
+import { CAM, P, SKILL_ORDER, WORLD } from './config';
+import { cameraTarget, gainExp, game, gotoFloor, mobBounds, player, spawnWave } from './state';
 import { held, pressed } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, revive } from './combat';
@@ -8,7 +8,7 @@ import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progre
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
-import type { Mob, PauseMenu, Platform } from './types';
+import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
   // Esc pause menu: freezes the game; arrows move, Z/Enter spends AP or SP
@@ -200,14 +200,6 @@ export function update(dt: number): void {
   updateCamera(dt);
 }
 
-/** How far a mob's centre may go: its platform's walkable extent (tile
- *  edges), inside the map. */
-export function mobBounds(m: Mob): [number, number] {
-  const lo = Math.max(m.w / 2, m.home - m.range - TILE / 2);
-  const hi = Math.min(WORLD.w - m.w / 2, m.home + m.range + TILE / 2);
-  return [lo, hi];
-}
-
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
     if (m.hitFlash > 0) m.hitFlash -= dt;
@@ -216,14 +208,22 @@ function updateMobs(dt: number): void {
     else if (m.airTime > 0) { m.airTime -= dt; m.vx *= 0.9; }
     else {
       const d = player.x - m.x;
-      // mobs only chase the player after being attacked
-      if (m.aggro && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
+      const [lo, hi] = mobBounds(m);
+      // mobs only chase the player after being attacked, and only while the
+      // player is over their own platform: past its end they'd just stand
+      // pressed against the edge, so they go back to patrolling
+      const reachable = player.x >= lo - 8 && player.x <= hi + 8;
+      if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
         m.dir = Math.sign(d) || 1;
         m.vx += clamp(d * 4 - m.vx, -2400 * dt, 2400 * dt) * 0.5;
         m.vx = clamp(m.vx, -m.spd, m.spd);
       } else {
         m.vx += (m.dir * m.spd - m.vx) * Math.min(1, 12 * dt);
-        if (Math.abs(m.x - m.home) > m.range) m.dir = Math.sign(m.home - m.x) || 1;
+        // turn back at the end of the patrol, or on reaching the platform's edge
+        // (which can come first: the map edge cuts some platforms short)
+        if (Math.abs(m.x - m.home) > m.range || (m.dir > 0 && m.x >= hi - 0.5) || (m.dir < 0 && m.x <= lo + 0.5)) {
+          m.dir = Math.sign(m.home - m.x) || -m.dir;
+        }
       }
       // contact damage: only when the bodies actually overlap (x is centre, y is top)
       const touching = Math.abs(d) < (m.w + player.w) / 2
