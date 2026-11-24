@@ -140,13 +140,13 @@ export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
 
 /* ---------------- mobs ---------------- */
 export const MOB_TYPES: MobType[] = [
-  { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 24,  col: '#5fb8f0', areas: ['Beach'] },
-  { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 26,  col: '#e8643c', areas: ['Beach'] },
-  { n: 'Hermit Crab',  lvl: 3,  hp: 240,  w: 18, h: 16, spd: 40,  dmg: 28,  col: '#e8b48a', areas: ['Beach'] },
-  { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 22,  col: '#f4f7fc', fly: true, areas: ['Beach'] },
-  { n: 'Boar',   lvl: 8,  hp: 420,  w: 23, h: 18, spd: 78,  dmg: 38,  col: '#e79ac4' },
-  { n: 'Wisp',       lvl: 14, hp: 700,  w: 16, h: 17, spd: 96,  dmg: 30,  col: '#b98cf5', fly: true },
-  { n: 'Iron Hog',   lvl: 28, hp: 1400, w: 26, h: 21, spd: 60,  dmg: 52,  col: '#8fa2b8' },
+  { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Beach'] },
+  { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Beach'] },
+  { n: 'Hermit Crab',  lvl: 3,  hp: 240,  w: 18, h: 16, spd: 40,  dmg: 3,  col: '#e8b48a', areas: ['Beach'] },
+  { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 2,  col: '#f4f7fc', fly: true, areas: ['Beach'] },
+  { n: 'Boar',   lvl: 8,  hp: 420,  w: 23, h: 18, spd: 78,  dmg: 4,  col: '#e79ac4' },
+  { n: 'Wisp',       lvl: 14, hp: 700,  w: 16, h: 17, spd: 96,  dmg: 3,  col: '#b98cf5', fly: true },
+  { n: 'Iron Hog',   lvl: 28, hp: 1400, w: 26, h: 21, spd: 60,  dmg: 5,  col: '#8fa2b8' },
 ];
 
 
