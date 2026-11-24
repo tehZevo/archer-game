@@ -1,4 +1,4 @@
-import { AREA_FLOORS, BLOCK, townName } from './world';
+import { TIER_FLOORS, townName } from './world';
 
 /* ============================================================
    DEV MODE
@@ -24,7 +24,7 @@ export const DEV_TOWNS = 10;
 export const devStops = (): { stage: number; name: string; label: string }[] => [
   { stage: 1, name: 'Beach 1 - start', label: '1' },
   ...Array.from({ length: DEV_TOWNS }, (_, i) => ({
-    stage: (i + 1) * BLOCK, name: townName((i + 1) * BLOCK), label: `${(i + 1) * AREA_FLOORS}`,
+    stage: (i + 1) * 11, name: townName((i + 1) * 11), label: `${TIER_FLOORS[Math.min(i + 1, 10)]}`,
   })),
 ];
 
