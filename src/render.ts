@@ -2,8 +2,11 @@ import { FX } from './fxsprites';
 import { FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { SPR, blockTile } from './sprites';
-import { localPose, names, peers } from './net';
+import { SPR } from './sprites';
+import * as TB from './tilebake';
+import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
+import { areaFor } from './world';
+import { localPose, names, net, peers } from './net';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
 import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './archer';
@@ -13,7 +16,7 @@ import { clamp } from './util';
 import { drawHUD } from './hud';
 import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
-import type { Climbable, DmgNum, Fx, Mob, Platform, Portal, Shot } from './types';
+import type { Climbable, DmgNum, Fx, Mob, Portal, Shot } from './types';
 
 // Base (internal) resolution. The canvas backing store IS this size; everything
 // is drawn at integer pixel coordinates, then CSS upscales it to fit the screen
@@ -32,37 +35,54 @@ export function resize(): void {
   WORLD.h = Math.max(BASE_H, WORLD.h);
 }
 
-function drawBackground(): void {
+/** `?area=Cave` previews an area's tileset on any floor (e.g. one not on the map yet). */
+const previewArea = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('area') : null;
+/** The tileset of the floor being drawn. */
+const tileset = (): Tileset => tilesetFor(previewArea ?? areaFor(game.floor.number, net.route));
+
+function drawBackground(ts: Tileset): void {
   const { w, h } = game.view;
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, '#1a3a54'); g.addColorStop(0.55, '#20536b'); g.addColorStop(1, '#16394f');
+  g.addColorStop(0, ts.sky[0]); g.addColorStop(0.55, ts.sky[1]); g.addColorStop(1, ts.sky[2]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 }
 
-function drawPlatform(p: Platform): void {
-  if (p.slope) {
-    const R = p.dir === 1, hi = p.part === 1;
-    const s = R ? (hi ? SPR.slopeR1 : SPR.slopeR0) : (hi ? SPR.slopeL1 : SPR.slopeL0);
-    ctx.drawImage(s.c, p.x, p.y);
-    return;
-  }
-  if (!p.ground) {
-    ctx.drawImage(blockTile(p.nb ?? 0).c, p.x, p.y);
-    if (p.foot) ctx.drawImage((p.foot === 1 ? SPR.slopeFootR : SPR.slopeFootL).c, p.x, p.y);
-    return;
-  }
-  // Ground slab: grass along the top, solid dirt below; it runs off-screen
-  // on both sides, so only its top is exposed.
-  const ts = 16;
-  const top = blockTile(NB.E | NB.W | NB.S | NB.SE | NB.SW).c, body = blockTile(255).c;
-  for (let y = p.y; y < p.y + p.h; y += ts) {
-    const h = Math.min(ts, p.y + p.h - y);
-    for (let x = p.x; x < p.x + p.w; x += ts) {
-      const w = Math.min(ts, p.x + p.w - x);
-      ctx.drawImage(y === p.y ? top : body, 0, 0, w, h, x, y, w, h);
+const TS = 16;
+/** Every block tile on the floor as (x, y, neighbours): the ground slab is
+ *  split into its tiles so it gets the same variants and decorations. */
+function eachTile(f: (x: number, y: number, nb: number) => void): void {
+  for (const p of game.floor.platforms) {
+    if (p.slope) continue;
+    if (!p.ground) { f(p.x, p.y, p.nb ?? 0); continue; }
+    for (let y = p.y; y < p.y + p.h; y += TS) for (let x = p.x; x < p.x + p.w; x += TS) {
+      f(x, y, y === p.y ? NB.E | NB.W | NB.S | NB.SE | NB.SW : 255);
     }
   }
+}
+
+function drawPlatforms(ts: Tileset): void {
+  eachTile((x, y, nb) => ctx.drawImage(TB.block(ts, nb, variantAt(x / TS, y / TS)).c, x, y));
+  for (const p of game.floor.platforms) {
+    if (p.slope) ctx.drawImage(TB.slope(ts, p.dir ?? 1, p.part ?? 0).c, p.x, p.y);
+    else if (p.foot) ctx.drawImage(TB.slopeFoot(ts, p.foot).c, p.x, p.y);
+  }
+}
+
+/** What grows on exposed tops and hangs under exposed bottoms (drawn over
+ *  ropes and ladders, so they look tied on). */
+function drawDecorations(ts: Tileset): void {
+  eachTile((x, y, nb) => {
+    const tx = x / TS, ty = y / TS;
+    if (!(nb & NB.N)) {
+      const s = TB.topDeco(ts, variantAt(tx, ty, 1), !(nb & NB.W), !(nb & NB.E));
+      if (s) ctx.drawImage(s.c, x - 2, y - TOP_Y);
+    }
+    if (!(nb & NB.S)) {
+      const s = TB.bottomDeco(ts, variantAt(tx, ty, 2));
+      if (s) ctx.drawImage(s.c, x, y + TS);
+    }
+  });
 }
 
 /** Tile a 16x16 sprite vertically between y1 and y2 at an integer x. */
@@ -73,12 +93,12 @@ function tileVertical(s: Sprite, x: number, y1: number, y2: number): void {
   }
 }
 
-function drawRope(r: Climbable): void {
-  tileVertical(SPR.rope, Math.round(r.x) - 8, Math.round(r.y1), Math.round(r.y2));
+function drawRope(ts: Tileset, r: Climbable): void {
+  tileVertical(TB.rope(ts), Math.round(r.x) - 8, Math.round(r.y1), Math.round(r.y2));
 }
 
-function drawLadder(l: Climbable): void {
-  tileVertical(SPR.ladder, Math.round(l.x) - 8, Math.round(l.y1), Math.round(l.y2));
+function drawLadder(ts: Tileset, l: Climbable): void {
+  tileVertical(TB.ladder(ts), Math.round(l.x) - 8, Math.round(l.y1), Math.round(l.y2));
 }
 
 function drawPortal(p: Portal): void {
@@ -228,12 +248,14 @@ export function render(): void {
   const { w, h } = game.view;
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, w, h);
-  drawBackground();
+  const ts = tileset();
+  drawBackground(ts);
   ctx.save();
   ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
-  game.floor.platforms.forEach(drawPlatform);
-  game.floor.ropes.forEach(drawRope);
-  game.floor.ladders.forEach(drawLadder);
+  drawPlatforms(ts);
+  for (const r of game.floor.ropes) drawRope(ts, r);
+  for (const l of game.floor.ladders) drawLadder(ts, l);
+  drawDecorations(ts);
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
   drawCoins();
