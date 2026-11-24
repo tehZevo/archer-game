@@ -275,11 +275,11 @@ export function render(): void {
   drawDecorations(ts);
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
-  drawCoins();
   game.mobs.forEach(drawMob);
   game.shots.forEach(drawShot);
   drawGhosts();
   drawPlayer();
+  drawCoins(); // in front of the player, so you can see what you're standing on
   game.fx.forEach(drawFx);
   game.dmgNums.forEach(drawDmg);
   ctx.restore();
