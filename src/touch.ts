@@ -19,6 +19,9 @@ const SKILLS: Pad[] = [
   { id: 'w', label: 'W' },
   { id: 'e', label: 'E' },
   { id: 'r', label: 'R' },
+  { id: 'x', label: 'X' },
+  { id: 'a', label: 'A' },
+  { id: 's', label: 'S' },
   { id: 'escape', label: 'II' },
 ];
 

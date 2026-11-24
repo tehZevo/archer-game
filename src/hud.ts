@@ -1,3 +1,5 @@
+import { shop } from './economy';
+import { drawShop, walletLine } from './economydraw';
 import { SKILL_BAR } from './config';
 import { placeName } from './world';
 import { critChance } from './combat';
@@ -45,6 +47,8 @@ function drawHUD(): void {
   }
   // other players' kills are speeding up our waves
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
+  // coins and potions
+  text(ctx, walletLine(), pad, ly, 1, '#ffd166', 'left'); ly += 9;
   if (player.ap || player.sp) {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
     text(ctx, `${pts} - ESC`, pad, ly, 1, '#ffd166', 'left');
@@ -93,6 +97,7 @@ function drawHUD(): void {
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
   if (game.pause) { drawPause(); return; }
+  if (shop.open) { drawShop(); return; }
   if (game.banner) {
     ctx.save();
     ctx.globalAlpha = clamp(game.banner.t / 1.15, 0, 1);

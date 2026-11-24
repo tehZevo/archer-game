@@ -1,3 +1,4 @@
+import { buy, NPC_R, COIN_LIFE, coinValue, drops, PRICES, shop, wallet } from '../src/economy';
 import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
@@ -808,6 +809,61 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     }
   }
   check('enemies carried by Sky Toss stay standing on their platform', runs > 10 && bad === 0, `${bad}/${runs} fell in or through`);
+}
+
+// --- economy: coins drop, X picks them up, potions on A / S, the town shop ---
+{
+  release(); arena(5); wallet.coins = 0; wallet.hp = 0; wallet.mp = 0;
+  check('coins scale with enemy level', coinValue(1, 0) === 2 && coinValue(1, 0.999) === 4 && coinValue(20, 0) === 21);
+  const m = dummy(player.x + 40, 1);
+  killMob(m); step(1);
+  check('a defeated enemy drops a pile of coins', drops.length === 1 && drops[0].v > 0);
+  step(30);
+  const pile = drops[0];
+  check('the pile falls and lands on the platform', pile.landed && Math.abs(pile.y - (player.y + player.h)) < 2, `y ${pile.y.toFixed(1)}`);
+  tap('x');
+  check('X does nothing when the pile is out of reach', drops.length === 1 && wallet.coins === 0);
+  player.x = pile.x + 6; step(1); tap('x');
+  check('X beside the pile picks it up', drops.length === 0 && wallet.coins === pile.v);
+  killMob(dummy(player.x, 1)); step(Math.ceil((COIN_LIFE + 1) / P.STEP));
+  check('an uncollected pile fades away', drops.length === 0);
+
+  // potions
+  wallet.hp = 2; player.hp = 10; tap('a');
+  check('A drinks an HP potion: +40% max HP', wallet.hp === 1 && player.hp === Math.min(player.hpMax, 10 + Math.ceil(player.hpMax * 0.4)));
+  tap('a');
+  check('potions have a short cooldown', wallet.hp === 1);
+  step(30); player.hp = player.hpMax; tap('a');
+  check('no potion wasted at full HP', wallet.hp === 1);
+  wallet.mp = 1; player.mp = 0; tap('s');
+  check('S drinks an MP potion', wallet.mp === 0 && player.mp > 0);
+
+  // the shop
+  release();
+  let townN = 1; while (gotoFloor(townN), !game.floor.town) townN++;
+  const keeper = game.floor.npcs?.find((n) => n.kind === 'shop');
+  check('towns have a shopkeeper', !!keeper);
+  const zones = game.floor.portals.map((q) => [q.x - q.w / 2 - 10, q.x + q.w / 2 + 10]).concat(game.floor.ladders.map((l) => [l.x - 7, l.x + 7]), game.floor.ropes.map((l) => [l.x - 7, l.x + 7]));
+  check("the shopkeeper's talk spot doesn't overlap a portal, ladder or rope", zones.every(([a, b]) => keeper!.x + NPC_R <= a || keeper!.x - NPC_R >= b));
+  player.x = keeper!.x; player.y = keeper!.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
+  wallet.coins = PRICES.hp + 5; wallet.hp = 0;
+  tap('up');
+  check('Up beside the shopkeeper opens the shop', shop.open && game.floor.number === townN);
+  tap('z');
+  check('buying takes the coins and adds a potion', wallet.coins === 5 && wallet.hp === 1);
+  check("can't buy without the coins", !buy('mp') && wallet.mp === 0);
+  tap('escape');
+  check('Esc closes the shop (not the pause menu)', !shop.open && !game.pause);
+  release();
+
+  // saved
+  const mem: Record<string, string> = {};
+  (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; } };
+  wallet.coins = 77; wallet.hp = 3; wallet.mp = 4; save();
+  wallet.coins = 0; wallet.hp = 0; wallet.mp = 0; load();
+  check('coins and potions are saved', wallet.coins === 77 && wallet.hp === 3 && wallet.mp === 4);
+  check('an older save without them starts empty', apply({ ...JSON.parse(mem[Object.keys(mem)[0]]), coins: undefined, potions: undefined }) !== null && wallet.coins === 0 && wallet.hp === 0);
+  delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
 // --- places: areas of 10 floors, named towns between them, two areas per town ---

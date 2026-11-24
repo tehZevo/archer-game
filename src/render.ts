@@ -11,6 +11,7 @@ import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
 import { drawHUD } from './hud';
+import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
 import type { Climbable, DmgNum, Fx, Mob, Platform, Portal, Shot } from './types';
 
@@ -234,6 +235,8 @@ export function render(): void {
   game.floor.ropes.forEach(drawRope);
   game.floor.ladders.forEach(drawLadder);
   game.floor.portals.forEach(drawPortal);
+  drawNpcs();
+  drawCoins();
   game.mobs.forEach(drawMob);
   game.shots.forEach(drawShot);
   drawGhosts();

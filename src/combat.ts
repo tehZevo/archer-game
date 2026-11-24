@@ -1,5 +1,6 @@
 import { P } from './config';
 import { localKill } from './boost';
+import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
 import type { DamageOpts, DmgNum, Mob } from './types';
@@ -56,6 +57,7 @@ export function killMob(m: Mob): void {
   localKill(); // shared with the instance: speeds up other players' waves
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);
+  dropCoins(m);
 }
 
 /**
