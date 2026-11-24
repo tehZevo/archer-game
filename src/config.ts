@@ -145,12 +145,6 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Iron Hog',   lvl: 28, hp: 1400, w: 26, h: 21, spd: 60,  dmg: 52,  col: '#8fa2b8' },
 ];
 
-/** Share of the next-level requirement *at the mob's level* each mob is
- *  worth: two to three kills per level when your level matches the floor,
- *  slower if you out-level it, faster if you climb above it. */
-export const MOB_EXP_SHARE: Record<string, number> = {
-  'Garden Snail': 0.34, 'Boar': 0.42, 'Wisp': 0.40, 'Iron Hog': 0.55,
-};
 
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {

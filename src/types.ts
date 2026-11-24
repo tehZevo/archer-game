@@ -136,7 +136,9 @@ export interface Mob {
   dmg: number;
   fly: boolean;
   col: string;
-  /** Experience awarded on death. */
+  /** Level (from the stage, see mobLevel): sets the EXP and coins it's worth. */
+  level: number;
+  /** Experience awarded on death (see mobExp). */
   exp: number;
   stun: number;
   atkCd: number;

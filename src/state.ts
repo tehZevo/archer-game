@@ -1,7 +1,8 @@
-import { CAM, MOB_EXP_SHARE, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
+import { CAM, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
+import { BLOCK } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
-import { expToNext, jobForLevel, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
+import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
@@ -95,14 +96,16 @@ export function mobBounds(m: Mob): [number, number] {
   return [lo, hi];
 }
 
-/** A mob's level, which sets the EXP it's worth. For now it is simply the
- *  floor number; later it can come from the mob type and area. */
-export const mobLevel = (floor: number): number => Math.max(1, floor);
+/** The level of the enemies on a stage, which sets the EXP (see mobExp) and
+ *  coins they're worth: one per combat floor climbed (towns don't count), so
+ *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
+export const mobLevel = (stage: number): number => Math.max(1, stage - Math.floor(stage / BLOCK));
 
 export function spawnMob(s: Spawn, type: MobType): void {
   // Mobs scale with the player so the tower stays relevant up to Lv.100.
   const scale = 1 + (player.level - 1) * 0.12;
   const hp = Math.round(type.hp * scale);
+  const level = mobLevel(game.floor.number);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
   const lo = s.minX ?? s.x - 110, hi = s.maxX ?? s.x + 110;
@@ -112,7 +115,7 @@ export function spawnMob(s: Spawn, type: MobType): void {
     type, name: type.n, hp, hpMax: hp, spd: type.spd,
     dmg: Math.round(type.dmg * (1 + (player.level - 1) * 0.06)),
     fly: !!type.fly, col: type.col,
-    exp: Math.round(expToNext(mobLevel(game.floor.number)) * MOB_EXP_SHARE[type.n]),
+    level, exp: mobExp(level),
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, anim: Math.random() * 6,
     spawn: s,
   });
