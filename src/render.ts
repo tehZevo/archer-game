@@ -125,19 +125,26 @@ function drawMob(m: Mob): void {
   const bob = m.fly ? -Math.cos(m.anim * 1.6) * 3 : Math.sin(m.anim) * 2;
   ctx.save();
   if (m.hitFlash > 0) ctx.globalAlpha = 0.75;
-  if (s) ctx.drawImage(s.c, Math.round(m.x - s.w / 2), Math.round(m.y + bob));
+  if (s) {
+    // sprites face right: mirror them when the enemy heads left
+    ctx.translate(Math.round(m.x), Math.round(m.y + bob));
+    if (m.dir < 0) ctx.scale(-1, 1);
+    ctx.drawImage(s.c, -Math.round(s.w / 2), 0);
+  }
   ctx.restore();
 
-  // HP bar: integer position and size, fill rounded to whole pixels.
-  const bw = Math.max(24, Math.round(m.w * 0.9)), pct = clamp(m.hp / m.hpMax, 0, 1);
-  const bx = Math.round(m.x - bw / 2), by = Math.round(m.y) - 10;
-  const fill = pct > 0 ? Math.max(1, Math.round(bw * pct)) : 0;
-  ctx.fillStyle = '#0009'; ctx.fillRect(bx, by, bw, 4);
+  // HP bar under the enemy: a 2px fill in a 1px black frame, corners cut.
+  const bw = Math.max(12, Math.round(m.w * 0.8)), pct = clamp(m.hp / m.hpMax, 0, 1);
+  const bx = Math.round(m.x - bw / 2), by = Math.round(m.y + m.h) + 2;
+  const fill = pct > 0 ? Math.max(1, Math.round((bw - 2) * pct)) : 0;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(bx + 1, by, bw - 2, 4); ctx.fillRect(bx, by + 1, bw, 2);
+  ctx.fillStyle = '#3a1a1a'; ctx.fillRect(bx + 1, by + 1, bw - 2, 2);
   ctx.fillStyle = pct > 0.5 ? '#6ee86e' : pct > 0.25 ? '#ffd166' : '#ff6b6b';
-  ctx.fillRect(bx, by, fill, 4);
+  ctx.fillRect(bx + 1, by + 1, fill, 2);
   if (m.stun > 0) {
-    // a small pixel star above the HP bar
-    const sx = Math.round(m.x), sy = by - 5;
+    // a small pixel star over the enemy's head
+    const sx = Math.round(m.x), sy = Math.round(m.y) - 6;
     ctx.fillStyle = '#ffd166';
     ctx.fillRect(sx - 2, sy, 5, 1); ctx.fillRect(sx, sy - 2, 1, 5); ctx.fillRect(sx - 1, sy - 1, 3, 3);
   }

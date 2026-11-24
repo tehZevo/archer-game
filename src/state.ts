@@ -8,11 +8,8 @@ import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
 } from './types';
 
-// Index MobTypes by their level so spawns (which store the level) resolve a type.
-const MOB_TYPES_BY_LVL: Record<number, MobType> = MOB_TYPES.reduce(
-  (o, m) => ((o[m.lvl] = m), o),
-  {} as Record<number, MobType>,
-);
+// Index MobTypes by name so spawn zones (which store names) resolve a type.
+const MOB_TYPES_BY_NAME: Record<string, MobType> = Object.fromEntries(MOB_TYPES.map((m) => [m.n, m]));
 
 const cd: Record<SkillKey, number> = SKILL_ORDER.reduce(
   (o, k) => ((o[k] = 0), o),
@@ -125,7 +122,7 @@ export function spawnMob(s: Spawn, type: MobType): void {
 export function spawnWave(): void {
   for (const z of game.floor.spawns) {
     const alive = game.mobs.filter((m) => m.spawn === z).length;
-    for (let i = alive; i < (z.cap ?? 1); i++) spawnMob(z, mobTypeFor(z.t));
+    for (let i = alive; i < (z.cap ?? 1); i++) spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]));
   }
 }
 
@@ -182,8 +179,8 @@ export function cameraTarget(): { x: number; y: number } {
 }
 
 /** Map a spawn's stored mob level back to its MobType. */
-function mobTypeFor(lvl: number): MobType {
-  return MOB_TYPES_BY_LVL[lvl] ?? MOB_TYPES_BY_LVL[1];
+function mobTypeFor(name: string | undefined): MobType {
+  return MOB_TYPES_BY_NAME[name ?? ''] ?? MOB_TYPES[0];
 }
 
 /** Award experience, cascading through as many levels as it covers. */

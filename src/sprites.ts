@@ -73,6 +73,64 @@ function portalSprite(): Sprite {
   return s;
 }
 
+/** A sprite from a character grid: each character is a palette key, '.' is clear. */
+function grid(rows: string[], pal: Record<string, string>): Sprite {
+  const s = make(rows[0].length, rows.length);
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) px(s, x, y, pal[ch]); }));
+  return s;
+}
+
+/* Beach enemies (facing right, like the others: drawMob mirrors them). */
+const crabSprite = (): Sprite => grid([
+  '..oo..........oo....',
+  '.oRRo........oRRo...',
+  'oRrRRo......oRRrRo..',
+  'oRRoRo..wo..oRoRRo..',
+  '.oo.oRo.ko.oRo.oo...',
+  '.....oRooooooRo.....',
+  '....oRRRRRRRRRRo....',
+  '...oRRrRRRRRRrRRo...',
+  '...oRRRRRRRRRRRRo...',
+  '....oDDDDDDDDDDo....',
+  '...oDo.oDo.oDo.oDo..',
+  '..oDo..oDo..oDo.oDo.',
+  '..o.....o....o...o..',
+], { o: '#3a1208', R: '#e8643c', r: '#ff9a6a', D: '#b8401f', w: '#ffffff', k: '#0d1424' });
+
+const hermitSprite = (): Sprite => grid([
+  '.....oooooo.......',
+  '...ooSSSSSSoo.....',
+  '..oSSsssssSSSo....',
+  '.oSSsSSSSSsSSo....',
+  '.oSsSSoooSSsSSo...',
+  'oSSsSo...oSsSSo...',
+  'oSSsSo.oooSsSSo.wo',
+  'oSSsSSooSSSsSSo.ko',
+  'oSSSsSSSSSsSSSooRo',
+  '.oSSSsssssSSSoRRRo',
+  '.oSSSSSSSSSSSoRrRRo',
+  '..ooSSSSSSSSoRRRRo',
+  '....oooooooooRRoo.',
+  '.....oDo.oDo.oDo..',
+  '....oDo..oDo..oDo.',
+  '....o.....o....o..',
+].map((r) => r.padEnd(19, '.')), { o: '#2a1a10', S: '#e8b48a', s: '#f4d8bc', R: '#d9563a', r: '#ff8a64', D: '#a8402a', w: '#ffffff', k: '#0d1424' });
+
+const gullSprite = (): Sprite => grid([
+  '..................',
+  '.gg............gg.',
+  '.oggg........gggo.',
+  '..oggg..oo..gggo..',
+  '...oggoowwooggo...',
+  '....oowwwwwwkwo...',
+  '.....owwwwwwwwYYo.',
+  '......oowwwwwooo..',
+  '........oowwo.....',
+  '.........oggo.....',
+  '..........oo......',
+  '..................',
+], { o: '#2a3442', w: '#f4f7fc', g: '#9aa6b8', k: '#0d1424', Y: '#f0c040' });
+
 export const SPR = {
   portal: portalSprite(),
   mob: {
@@ -80,5 +138,8 @@ export const SPR = {
     'Boar': pigSprite(),
     'Wisp': wispSprite(),
     'Iron Hog': hogSprite(),
+    'Crab': crabSprite(),
+    'Hermit Crab': hermitSprite(),
+    'Gull': gullSprite(),
   } as Record<string, Sprite>,
 };

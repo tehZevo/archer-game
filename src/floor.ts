@@ -1,6 +1,6 @@
 import { MOB_TYPES, WORLD, TILE } from './config';
 import { net, roomId } from './net';
-import { isAreaEnd, isTown, placeName } from './world';
+import { areaFor, isAreaEnd, isTown, placeName } from './world';
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
@@ -114,10 +114,20 @@ export function makeShape(kind: string, x: number, baseY: number, width = 6, mir
   return { tiles, w: cols.length * T, baseY, baseX: x };
 }
 
-/** A mob type appropriate to the floor's height (higher floors = tougher mobs). */
-function mobForFloor(n: number): MobType {
-  const t = Math.min(MOB_TYPES.length - 1, Math.floor((n - 1) / 3));
-  return MOB_TYPES[t];
+/** The enemies an area can field: its own set, or the general pool for areas without one yet. */
+export function areaMobs(area: string): MobType[] {
+  const own = MOB_TYPES.filter((m) => m.areas?.includes(area));
+  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.areas);
+}
+
+/** A floor's two enemy types, picked from its area's set (same for everyone
+ *  in the room: own seeded stream, so layouts don't shift). Each platform
+ *  then fields one of them or both (see generateFloor). */
+export function floorMobs(n: number, seed: () => number): [string, string] {
+  const pool = areaMobs(areaFor(n, net.route)).map((m) => m.n);
+  const a = Math.floor(seed() * pool.length);
+  const b = (a + 1 + Math.floor(seed() * (pool.length - 1))) % pool.length;
+  return [pool[a], pool[b]];
 }
 
 /**
@@ -144,6 +154,10 @@ export function generateFloor(n: number): Floor {
   const ground = groundSlab();
   const groundY = ground.y;
 
+  const mrng = seeded(hashStr(roomId(n, net.channel, net.code, net.route, '') + '-mobs'));
+  const pair = floorMobs(n, mrng);
+  /** A platform fields one of the floor's two enemies (half the time) or both. */
+  const zoneTypes = (): string[] => (mrng() < 0.5 ? [pair[mrng() < 0.5 ? 0 : 1]] : [...pair]);
   const platforms: Platform[] = [ground];
   const ropes: Climbable[] = [];
   const ladders: Climbable[] = [];
@@ -220,7 +234,7 @@ export function generateFloor(n: number): Floor {
       if (spots.length) {
         const xs = spots.map((s) => s.x);
         spawns.push({
-          x: Math.round(top.x + top.w / 2), y: top.y, t: mobForFloor(n).lvl, spots,
+          x: Math.round(top.x + top.w / 2), y: top.y, types: zoneTypes(), spots,
           cap: groupSize(spots.length), minX: Math.min(...xs), maxX: Math.max(...xs), block: i + 1,
         });
       }
@@ -237,7 +251,7 @@ export function generateFloor(n: number): Floor {
   {
     const spots: { x: number; y: number }[] = [];
     for (let x = 48; x <= WORLD.w - 48; x += TILE) spots.push({ x, y: ground.y });
-    spawns.push({ x: WORLD.w / 2, y: ground.y, t: mobForFloor(n).lvl, spots, cap: 4, minX: 24, maxX: WORLD.w - 24 });
+    spawns.push({ x: WORLD.w / 2, y: ground.y, types: [...pair], spots, cap: 4, minX: 24, maxX: WORLD.w - 24 });
   }
 
   // The exit portal sits centred on the highest platform's walkable top tile.

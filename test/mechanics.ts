@@ -15,7 +15,7 @@ import { textWidth } from '../src/font';
 import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
-import { groupSize, makeShape, SHAPES } from '../src/floor';
+import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
@@ -61,7 +61,7 @@ function arena(level = 1, x = 100): void {
   game.pause = null;
 }
 function dummy(x: number, hp = 1e6): Mob {
-  spawnMob({ x, y: ground().y, t: 1 } as never, MOB_TYPES[0]);
+  spawnMob({ x, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
   const m = game.mobs[game.mobs.length - 1];
   m.hp = m.hpMax = hp; m.vx = 0; m.spd = 0;
   return m;
@@ -409,7 +409,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- shared spawn boost ---
 {
   arena(1); resetBoost();
-  game.floor.spawns = [{ x: 150, y: ground().y, t: 1, cap: 9 } as never];
+  game.floor.spawns = [{ x: 150, y: ground().y, types: ['Garden Snail'], cap: 9 } as never];
   const m = dummy(150, 1); killMob(m);
   check('local kills are batched for sending', takeBatch(0) === 1 && takeBatch(10) === 0);
   remoteKills(2);
@@ -524,7 +524,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   const expAt = (floor: number, level: number): number => {
     arena(level); gotoFloor(floor); game.mobs = [];
-    spawnMob({ x: 100, y: ground().y, t: 1 } as never, MOB_TYPES[0]);
+    spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
     return game.mobs[0].exp;
   };
   check('mob EXP ignores the player level', expAt(3, 1) === expAt(3, 40));
@@ -1063,6 +1063,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   net.hour = '2026112415'; gotoFloor(4); const b = JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
   check('a floor\'s layout is the same whatever the hour', a === b);
   net.hour = was;
+}
+
+{
+  // enemies: two types per floor from the area's set; each platform fields one or both
+  const beach = areaMobs('Beach').map((m) => m.n);
+  check('the Beach has its own enemies (snail, crab, hermit crab, gull)', ['Garden Snail', 'Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
+  check('areas without a set use the general pool', areaMobs('Swamp').every((m) => !m.areas) && areaMobs('Swamp').length >= 2);
+  let pairsOk = true, singles = 0, doubles = 0;
+  for (let n = 1; n <= 9; n++) {
+    gotoFloor(n);
+    const ground = game.floor.spawns[game.floor.spawns.length - 1].types;
+    const [a, b] = ground;
+    if (ground.length !== 2 || a === b || !beach.includes(a) || !beach.includes(b)) pairsOk = false;
+    for (const z of game.floor.spawns.slice(0, -1)) {
+      if (!z.types.every((t) => t === a || t === b)) pairsOk = false;
+      if (z.types.length === 1) singles++; else doubles++;
+    }
+  }
+  check('each Beach floor fields two different beach enemies', pairsOk);
+  check('some platforms field one type, some both', singles > 0 && doubles > 0, `${singles} single, ${doubles} both`);
+  const seq = () => { let i = 0; return () => [0.1, 0.9, 0.5][i++ % 3]; };
+  check('a floor\'s pair is fixed by its seed', JSON.stringify(floorMobs(3, seq())) === JSON.stringify(floorMobs(3, seq())));
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
