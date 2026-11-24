@@ -14,6 +14,7 @@ import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './e
 import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
+import { board, boardInput } from './quests';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -21,8 +22,9 @@ export function update(dt: number): void {
   if (shop.open) { shopInput(); return; }
   // so does the trainer's
   if (trainer.open) { trainerInput(); return; }
-  // and the stylist's
+  // and the stylist's and quest board's
   if (stylist.open) { stylistInput(); return; }
+  if (board.open) { boardInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }

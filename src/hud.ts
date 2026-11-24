@@ -1,5 +1,6 @@
 import { shop, trainer } from './economy';
-import { drawShop, drawTrainer, walletLine } from './economydraw';
+import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
+import { board } from './quests';
 import { SKILL_BAR } from './config';
 import { placeName } from './world';
 import { critChance } from './combat';
@@ -104,6 +105,8 @@ function drawHUDItems(): void {
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
   // coins and potions
   text(ctx, walletLine(), pad, ly, 1, '#ffd166', 'left'); ly += 9;
+  // active quests and their progress
+  for (const [s, done] of questLines()) { text(ctx, s, pad, ly, 1, done ? '#9be89b' : '#c8d3e6', 'left'); ly += 9; }
   if (player.ap || player.sp) {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
     text(ctx, `${pts} - ESC`, pad, ly, 1, '#ffd166', 'left');
@@ -153,12 +156,13 @@ function drawHUDItems(): void {
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
   drawChatLog(y);
-  if (dev.open || game.pause || shop.open || trainer.open || stylist.open) hudShadow(false); // full-screen panels have their own backdrops
+  if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
+  if (board.open) { drawBoard(); return; }
   if (game.banner) {
     ctx.save();
     ctx.globalAlpha = clamp(game.banner.t / 1.15, 0, 1);

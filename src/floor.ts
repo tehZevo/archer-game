@@ -301,10 +301,12 @@ export function townFloor(n: number): Floor {
     spawns: [],
     portal: ups[0] ?? down, portals: [...ups, down],
     // the shopkeeper keeps a stall on the deck, left of the way down; from the
-    // third town up (Lanternhollow) a trainer stands to the right of it; the
-    // stylist works on the ground right of the deck
+    // third town up (Lanternhollow) a trainer stands to the right of it;
+    // the stylist works on the ground right of the deck, and a quest
+    // board stands on the ground left of the ladder
     npcs: [
       { x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' },
+      { x: deckX - TILE, y: ground.y, kind: 'board', name: 'QUESTS' },
       { x: deckX + (deckW + 1) * TILE, y: ground.y, kind: 'stylist', name: 'STYLIST' },
       ...(blockOf(n) >= 2 ? [{ x: deckX + (deckW - 2) * TILE, y: deckTop, kind: 'trainer' as const, name: 'TRAINER' }] : []),
     ],
