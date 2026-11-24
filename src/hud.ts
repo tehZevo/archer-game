@@ -28,9 +28,10 @@ function bar(x: number, y: number, w: number, label: string, value: string, pct:
   text(ctx, value, x + w - 2, y + 1, 1, '#eaf2ff', 'right');
 }
 
-/** Connection icon: three rising signal bars, struck through in red when offline. */
+/** Connection icon: three rising signal bars on a dark chip, struck through in red when offline. */
 const WIFI_W = 7;
 function wifi(x: number, y: number, on: boolean): void {
+  ctx.fillStyle = '#0a1120'; ctx.fillRect(x - 2, y - 1, WIFI_W + 4, 9); // backdrop keeps it legible
   ctx.fillStyle = '#8ea3c2';
   ctx.fillRect(x, y + 5, 1, 2); ctx.fillRect(x + 3, y + 3, 1, 4); ctx.fillRect(x + 6, y, 1, 7);
   if (!on) {
@@ -40,8 +41,9 @@ function wifi(x: number, y: number, on: boolean): void {
 }
 
 /** HUD items get a hard 1px black shadow, down and to the right, so they read on bright areas. */
+const SHADOW = 1;
 function hudShadow(on: boolean): void {
-  const k = ctx.getTransform().a; // shadow offsets are in canvas pixels, not game pixels
+  const k = ctx.getTransform().a * SHADOW; // shadow offsets are in canvas pixels, not game pixels
   ctx.shadowColor = on ? '#000' : 'transparent';
   ctx.shadowOffsetX = on ? k : 0; ctx.shadowOffsetY = on ? k : 0; ctx.shadowBlur = 0;
 }
@@ -51,28 +53,38 @@ function drawHUD(): void {
   try { drawHUDItems(); } finally { hudShadow(false); }
 }
 
+/** Dev mode icon: a small grey wrench (open jaw + handle). */
+const WRENCH_W = 7;
+function wrench(x: number, y: number): void {
+  const g = '#c8ccd4';
+  const at = (dx: number, dy: number, w = 1, h = 1) => { ctx.fillStyle = g; ctx.fillRect(x + dx, y + dy, w, h); };
+  at(2, 0, 2, 1); at(6, 0, 1, 1); at(1, 1, 1, 2); at(6, 1, 1, 2); at(2, 3, 4, 1); // ring, open at the top
+  at(4, 0, 1, 1);                                                                  // ...the jaws' inner tooth
+  at(3, 4, 1, 1); at(2, 5, 1, 1); at(1, 6, 2, 1);                                  // handle down-left
+}
+
 function drawHUDItems(): void {
   const { w, h } = game.view;
   if (menu.open) { hudShadow(false); drawMenu(); return; } // the title menu replaces the HUD
   const pad = 6;
 
-  // top-left: level + floor
-  text(ctx, `Lv.${player.level}`, pad, pad, 1, '#dbe6f5', 'left');
-  text(ctx, placeName(game.floor.number, net.route), pad, pad + 9, 1, '#8ea3c2', 'left');
-  // a private instance shows its code on its own line (shifting the points line down)
-  let ly = pad + 18;
-  // where you are and who's with you: the channel (or private code) and the player count
-  if (net.offline) {
-    wifi(pad, ly, false); // the reason is in the console
-    ly += 9;
-  } else if (net.joined) {
+  // top-left, one line: wrench (dev) + wifi + level; the floor name goes underneath
+  let ly = pad;
+  let ix = pad;
+  if (dev.on) { wrench(ix, ly); ix += WRENCH_W + 4; }
+  const online = !net.offline && net.joined;
+  wifi(ix, ly, online);
+  ix += WIFI_W + 4;
+  text(ctx, `Lv.${player.level}`, ix, ly, 1, '#dbe6f5', 'left');
+  ly += 9;
+  if (online) {
     const n = playerCount();
     const where = net.code ? `Private ${net.code}` : `Ch.${net.channel}`;
-    wifi(pad, ly, true);
-    text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad + WIFI_W + 3, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
+    text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
     ly += 9;
   }
-  if (dev.on) { text(ctx, 'DEV MODE', pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
+  text(ctx, placeName(game.floor.number, net.route), pad, ly, 1, '#8ea3c2', 'left');
+  ly += 9;
   // other players' kills are speeding up our waves
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
   // coins and potions

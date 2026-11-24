@@ -16,6 +16,7 @@ const PAL: Record<string, string> = {
   G: '#c9952f', // dark gold
   w: '#c8944a', // wood
   W: '#8a5f2a', // dark wood
+  L: '#c8a06a', // rope tan
   e: '#7ef29a', // green
   E: '#2fa85f', // dark green
   r: '#ff9f6b', // orange
@@ -263,6 +264,23 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.....rr.......',
     '....r.........',
     '..............',
+  ],
+  // Agile Climbing: a rope ladder
+  AC: [
+    '.....LLLL.....',
+    '.....L..L.....',
+    '.....L..L.....',
+    '.....LLLL.....',
+    '.....L..L.....',
+    '.....L..L.....',
+    '.....LLLL.....',
+    '.....L..L.....',
+    '.....L..L.....',
+    '.....LLLL.....',
+    '.....L..L.....',
+    '.....L..L.....',
+    '.....LLLL.....',
+    '.....L..L.....',
   ],
   // Fervor: a flame
   IR: [

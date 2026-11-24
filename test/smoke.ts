@@ -126,7 +126,8 @@ check('spending SP raises the skill rank', rank('Z').dmg > r0);
 // --- 10. skill bar exposes the 4 buttons; unlock cadence every 5 levels ---
 check('attack keys are Z Q W E R, all bound', SKILL_BAR.map((s) => s.label).join('') === 'ZQWER' && SKILL_BAR.every((s) => s.skill));
 reset();
-check('Sky Toss known from the start', isLearned('Q'));
+check('Jump known from the start', isLearned('C'));
+check('Sky Toss learned at Lv.5', !isLearned('Q'));
 player.ranks.W = 0;
 check('Skyfall Volley not known until picked', !isLearned('W'));
 

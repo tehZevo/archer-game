@@ -1,5 +1,6 @@
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
+import { passiveBonus } from './progress';
 import { cameraTarget, gainExp, game, gotoFloor, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
@@ -75,8 +76,9 @@ export function update(dt: number): void {
     const r = player.climb;
     // Up + Jump starts a rush: shoot up the climbable and pop off the top
     if (!locked && pressed('c') && held('up')) { player.climbRush = true; sfx.jump(); }
-    if (player.climbRush) player.y -= P.CLIMB_RUSH * dt;
-    else if (!locked && held('up'))   player.y -= P.CLIMB * dt;
+    const rush = P.CLIMB_RUSH * (1 + passiveBonus('AC'));
+    if (player.climbRush) player.y -= rush * dt;
+    else if (!locked && held('up'))   player.y -= P.CLIMB * (1 + passiveBonus('AC')) * dt;
     else if (!locked && held('down')) player.y += P.CLIMB * dt;
     const top = r.y1 - player.h, bot = r.y2 - player.h;
     player.y = clamp(player.y, top, bot);

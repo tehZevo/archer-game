@@ -1,4 +1,4 @@
-export type SkillKey = 'Z' | 'C' | 'D' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR';
+export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR';
 
 /** The four core stats, each upgraded with ability points (AP). */
 export interface CoreStats {
