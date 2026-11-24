@@ -158,13 +158,13 @@ export function update(dt: number): void {
   player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2); // x is the centre
   player.anim += dt * (player.animState === 'walk' ? 9 : 4);
 
-  // standing on the portal and pressing Up warps to the next floor
-  const p = game.floor.portal;
+  // standing on a portal and pressing Up warps to where it leads (the next
+  // floor; a town's also lead down, and its two up portals to two routes)
   const feet = player.y + player.h;
-  const onPortal = player.onGround && Math.abs(player.x - p.x) < p.w / 2 + 10 && feet >= p.y - 4 && feet <= p.y + 8;
-  if (onPortal && pressed('up')) {
+  const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
+  if (p && pressed('up')) {
     sfx.portal();
-    gotoFloor(game.floor.number + 1);
+    gotoFloor(p.to, p.route);
     return;
   }
 

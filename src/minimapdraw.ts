@@ -37,8 +37,7 @@ export function drawMinimap(): void {
   ctx.strokeStyle = '#ffffff40';
   ctx.strokeRect(vx + 0.5, vy + 0.5, Math.round(game.view.w * MINI_SCALE) - 1, Math.round(game.view.h * MINI_SCALE) - 1);
 
-  const pt = game.floor.portal;
-  dot(pt.x, pt.y - 4, '#c9a6ff', 2);
+  for (const pt of game.floor.portals) dot(pt.x, pt.y - 4, pt.to < game.floor.number ? '#8fe3c4' : '#c9a6ff', 2);
   for (const m of game.mobs) dot(m.x, m.y + m.h / 2, '#ff6b6b');
   const now = performance.now();
   for (const [id, tr] of peers) {

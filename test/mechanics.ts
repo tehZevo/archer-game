@@ -19,7 +19,7 @@ import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
-import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
+import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
@@ -459,13 +459,14 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
   (globalThis as { localStorage?: unknown }).localStorage = {
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
-  arena(35); gotoFloor(4);
+  arena(35); gotoFloor(24);
   player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.BS = 3; player.ranks.E = 2;
   save();
   const want = JSON.stringify(snapshot());
   arena(1); player.ap = 0; player.sp = 0; player.ranks.BS = 0; player.ranks.E = 0;
   const floor = load();
-  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 4 }) === want && floor === 4);
+  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 24 }) === want && floor === 20);
+  check('you resume on the latest town (floor 1 before the first)', lastTown(24) === 20 && lastTown(20) === 20 && lastTown(9) === 1 && lastTown(10) === 10);
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply('junk') === null);
   apply({ v: 1, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, floor: 0 });
@@ -665,7 +666,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let ok = true;
   for (let n = 1; n <= 20; n++) {
     release(); gotoFloor(n);
-    const f = game.floor, g = f.platforms[0], top = f.portal.y - f.portal.h;
+    const f = game.floor, g = f.platforms[0], top = Math.min(...f.portals.map((p) => p.y - p.h));
     hs.push(f.h);
     if (WORLD.h !== f.h || g.h !== 4 * TILE || g.y + g.h !== f.h || top < 2 * TILE || top > 3 * TILE || f.h < 180) ok = false;
     if (f.platforms.some((p) => p.y < 0) || f.ropes.some((c) => c.y1 < 0)) ok = false;
@@ -685,6 +686,37 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   Object.defineProperty(globalThis, 'crypto', { value: c, configurable: true });
   net.offline = '';
   check('with WebCrypto, multiplayer can connect', canConnect() && net.offline === '');
+}
+
+// --- towns: a designed layout, two ways up (two routes), one way down ---
+{
+  const stand = (pt: { x: number; y: number }): void => {
+    player.x = pt.x; player.y = pt.y - player.h; player.vx = 0; player.vy = 0; player.onGround = true; player.climb = null;
+  };
+  net.route = 0; release(); gotoFloor(10);
+  const f = game.floor, layout = JSON.stringify(f.platforms);
+  net.channel = 3; gotoFloor(20); const other = JSON.stringify(game.floor.platforms); net.channel = 1;
+  check('towns are a designed layout (the same on every channel and town)', layout === other);
+  gotoFloor(10);
+  const [upL, upR, down] = game.floor.portals;
+  check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 11 && upR.to === 11 && down.to === 9 && game.mobs.length === 0);
+  const deck = game.floor.platforms.filter((p) => p.block === 1 && !p.inner);
+  check('the down portal stands on the plaza deck, reached by a ladder and a rope',
+    deck.some((p) => p.y === down.y) && game.floor.ladders[0].y1 === down.y && game.floor.ropes[0].y1 === down.y
+    && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
+  check('a town room is shared by both routes', roomId(10, 1, '', 1) === roomId(10, 1, '', 0) && roomId(11, 1, '', 1) !== roomId(11, 1, '', 0));
+
+  player.hp = 5; player.mp = 1;
+  stand(upR); tap('up');
+  const routeB = JSON.stringify(game.floor.platforms);
+  check('the right portal goes up on route B', game.floor.number === 11 && net.route === 1);
+  check('arriving does not refill HP or MP', player.hp === 5 && player.mp === 1);
+  gotoFloor(10); stand(game.floor.portals[0]); tap('up');
+  check('the left portal goes up on route A, a different layout', game.floor.number === 11 && net.route === 0 && JSON.stringify(game.floor.platforms) !== routeB);
+  gotoFloor(10); stand(game.floor.portals[2]); tap('up');
+  check('the down portal goes back to the floor below', game.floor.number === 9);
+  check('skills work in town', (() => { gotoFloor(10); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
+  net.route = 0; release();
 }
 
 // --- the Esc menu's skill list scrolls instead of overflowing ---

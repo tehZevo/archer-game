@@ -11,8 +11,10 @@ export const MAX_PER_CHANNEL = 20;
 // One room per floor; players spread across numbered channels.
 const APP_ID = 'tehZevo/archer-game';
 /** Public rooms are per floor + channel; a private instance (net.code) is one room per floor. */
-export const roomId = (floor: number, channel: number, code = net.code): string =>
-  code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`;
+export const roomId = (floor: number, channel: number, code = net.code, route = net.route): string =>
+  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route);
+/** Route suffix: none on route 0 (the original ids) and none on towns, where both routes meet. */
+const routeTag = (floor: number, route: number): string => (route > 0 && floor % 10 !== 0 ? `-r${route}` : '');
 
 /* ---------------- private instances ---------------- */
 /** Letters for instance codes: no I or O, which read as 1 and 0. */
@@ -46,6 +48,9 @@ export const net = {
   started: false,
   /** Why multiplayer is off, if it is ('' = fine). */
   offline: '',
+  /** Which way you went at the last town (0 = left, 1 = right): the floors
+   *  above a town come in two routes, each its own layout and rooms. */
+  route: 0,
 };
 
 type Room = ReturnType<typeof joinRoom>;
