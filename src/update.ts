@@ -121,9 +121,11 @@ export function update(dt: number): void {
     } else {
       // horizontal: accel toward target speed (the classic side-scroller walk over a few frames)
       const busy = player.cast === 'rush' ? 0.55 : 1;
+      // holding Down on the ground lies you flat: you can turn but not walk
+      const prone = player.onGround && !locked && held('down');
       let target = 0;
-      if (!locked && held('left'))  { target = -P.WALK * busy; player.face = -1; }
-      if (!locked && held('right')) { target =  P.WALK * busy; player.face =  1; }
+      if (!locked && held('left'))  { target = prone ? 0 : -P.WALK * busy; player.face = -1; }
+      if (!locked && held('right')) { target = prone ? 0 :  P.WALK * busy; player.face =  1; }
       if (!player.onGround) {
         // Air control: holding against your motion brakes toward a standstill
         // but never turns you around; otherwise momentum is kept.
@@ -164,7 +166,7 @@ export function update(dt: number): void {
         player.animState = 'climb';
       } else {
         player.animState = !player.onGround ? 'jump'
-          : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
+          : prone ? 'prone' : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
       }
     }
   }
@@ -172,14 +174,14 @@ export function update(dt: number): void {
   player.anim += dt * (player.animState === 'walk' ? 9 : 4);
 
   // standing on a portal and pressing Up warps to where it leads (the next
-  // floor; a town's also lead down, and its two up portals to two routes)
+  // floor; a town's also lead down, and its up portals into the areas above)
   const feet = player.y + player.h;
   const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
   // Up beside a town NPC talks to them (before the portals: they never overlap)
   if (talk()) return;
   if (p && pressed('up')) {
     sfx.portal();
-    gotoFloor(p.to, p.route);
+    gotoFloor(p.to, p.area);
     return;
   }
 
@@ -299,7 +301,7 @@ export function devInput(dt: number): void {
   if (repeated('up', dt)) dev.sel = (dev.sel + n - 1) % n;
   if (repeated('down', dt)) dev.sel = (dev.sel + 1) % n;
   if (pressed('escape')) dev.open = false;
-  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; gotoFloor(devStops()[dev.sel].stage); }
+  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; const s = devStops()[dev.sel]; gotoFloor(s.stage, s.area); }
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {

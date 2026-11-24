@@ -1,4 +1,4 @@
-import { TIER_FLOORS, townName, townStage } from './world';
+import { AREAS, townStage } from './world';
 
 /* ============================================================
    DEV MODE
@@ -16,17 +16,15 @@ export const dev = {
   sel: 0,
 };
 
-/** Towns the dev menu lists (the tower goes on; this is plenty for testing). */
-export const DEV_TOWNS = 10;
-
-/** The dev menu's rows: the start, then each town by name. `label` is the
- *  floor the row shows: towns by the floor they follow (10, 20, ...), not their stage number. */
-export const devStops = (): { stage: number; name: string; label: string }[] => [
-  { stage: 1, name: 'Beach 1 - start', label: '1' },
-  ...Array.from({ length: DEV_TOWNS }, (_, i) => ({
-    stage: townStage(i + 1), name: townName(townStage(i + 1)), label: `${TIER_FLOORS[i + 1]}`,
-  })),
+/** The dev menu's rows: the start, then every area's town (in tree order,
+ *  indented by depth). `label` is the area the town sits on top of. */
+export const devStops = (): { stage: number; area: number; name: string; label: string }[] => [
+  { stage: 1, area: 0, name: `${AREAS[0].name} 1 - start`, label: '' },
+  ...AREAS.map((a) => ({ stage: townStage(a.depth), area: a.id, name: ' '.repeat(a.depth) + a.town, label: a.name })),
 ];
+
+/** Dev menu rows shown at once (it scrolls to keep the selection in view). */
+export const DEV_ROWS = 12;
 
 /** Room id suffix for dev sessions. */
 export const devTag = (): string => (dev.on ? '-dev' : '');

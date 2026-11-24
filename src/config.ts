@@ -148,8 +148,8 @@ export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
 
 /* ---------------- mobs ---------------- */
 export const MOB_TYPES: MobType[] = [
-  { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Beach'] },
-  { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Beach'] },
+  { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Tide Pools', 'Beach'] },
+  { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Tide Pools', 'Beach'] },
   { n: 'Hermit Crab',  lvl: 3,  hp: 240,  w: 18, h: 16, spd: 40,  dmg: 3,  col: '#e8b48a', areas: ['Beach'] },
   { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 2,  col: '#f4f7fc', fly: true, areas: ['Beach'] },
   { n: 'Boar',   lvl: 8,  hp: 420,  w: 23, h: 18, spd: 78,  dmg: 4,  col: '#e79ac4' },

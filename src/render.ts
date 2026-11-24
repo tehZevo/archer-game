@@ -6,7 +6,7 @@ import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
-import { areaFor } from './world';
+import { areaName } from './world';
 import { localPose, names, net, peers } from './net';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
@@ -40,7 +40,7 @@ export function resize(): void {
 /** `?area=Cave` previews an area's tileset on any floor (e.g. one not on the map yet). */
 const previewArea = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('area') : null;
 /** The tileset of the floor being drawn. */
-const tileset = (): Tileset => tilesetFor(previewArea ?? areaFor(game.floor.number, net.route));
+const tileset = (): Tileset => tilesetFor(previewArea ?? areaName(net.area));
 
 function drawBackground(ts: Tileset): void {
   const { w, h } = game.view;
@@ -166,7 +166,7 @@ function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
-  ctx.drawImage(img, -ARCHER_W / 2, -ARCHER_H);
+  ctx.drawImage(img, -img.width / 2, -ARCHER_H);
   ctx.restore();
 }
 
@@ -176,14 +176,15 @@ tintCv.width = ARCHER_W; tintCv.height = ARCHER_H;
 const tintCtx = tintCv.getContext('2d') as CanvasRenderingContext2D;
 /** The frame washed with a colour (only where the frame has pixels). */
 function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
+  if (tintCv.width !== img.width) tintCv.width = img.width; // the prone frame is wider
   tintCtx.globalCompositeOperation = 'source-over';
   tintCtx.globalAlpha = 1;
-  tintCtx.clearRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.clearRect(0, 0, img.width, ARCHER_H);
   tintCtx.drawImage(img, 0, 0);
   tintCtx.globalCompositeOperation = 'source-atop';
   tintCtx.globalAlpha = 0.45;
   tintCtx.fillStyle = col;
-  tintCtx.fillRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.fillRect(0, 0, img.width, ARCHER_H);
   return tintCv;
 }
 

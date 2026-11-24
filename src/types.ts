@@ -213,7 +213,7 @@ export interface Player extends Body {
   castTotal: number;
   invuln: number;
   anim: number;
-  animState: 'idle' | 'walk' | 'jump' | 'climb';
+  animState: 'idle' | 'walk' | 'jump' | 'climb' | 'prone';
   /** Fervor stacks from linked skills. */
   fervor: number;
   fervorT: number;
@@ -305,8 +305,8 @@ export interface Portal {
   h: number;
   /** Floor it leads to. */
   to: number;
-  /** Route the destination floor is on (towns branch into two); unset keeps yours. */
-  route?: number;
+  /** Area the destination is in (a town's portals lead into other areas); unset keeps yours. */
+  area?: number;
   /** Shown above it (towns: where each portal goes). */
   label?: string;
 }

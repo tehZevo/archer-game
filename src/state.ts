@@ -1,5 +1,5 @@
 import { CAM, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
-import { blockSize, tierOf } from './world';
+import { AREAS, areaFor, tierOf, townStage } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
@@ -96,7 +96,7 @@ export function mobBounds(m: Mob): [number, number] {
 /** The level of the enemies on a stage, which sets the EXP (see mobExp) and
  *  coins they're worth: one per combat floor climbed (towns don't count), so
  *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
-export const mobLevel = (stage: number): number => Math.max(1, stage - Math.floor((stage - 1) / blockSize(tierOf(stage))));
+export const mobLevel = (stage: number): number => Math.max(1, stage - tierOf(stage)); // one town per depth below
 
 export function spawnMob(s: Spawn, type: MobType): void {
   // Mobs scale with the player so the tower stays relevant up to Lv.100.
@@ -130,8 +130,13 @@ export function spawnWave(): void {
 /** How far either side of the ground's centre a player can arrive, px. */
 export const SPAWN_SPREAD = 64;
 
-export function gotoFloor(n: number, route?: number): void {
-  if (route !== undefined) net.route = route; // picked at a town: the floors above follow it
+export function gotoFloor(n: number, area?: number): void {
+  if (area !== undefined) net.area = area; // picked at a town: the floors above follow it
+  // keep the area in step with the stage (dev warps step across towns); a
+  // branch that ends below the stage stops at its own town
+  const fit = areaFor(n, net.area);
+  if (fit === null) n = townStage(AREAS[net.area].depth);
+  else net.area = fit;
   game.floor = generateFloor(n);
   WORLD.h = game.floor.h;
   game.mobs.length = 0;
