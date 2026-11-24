@@ -7,13 +7,17 @@ import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
 import { areaName } from './world';
-import { localPose, names, net, peers } from './net';
+import { drawBackdrop } from './backdropdraw';
+import { PROP_H, PROP_W, propAt, propsFor } from './props';
+import { localPose, looks, names, net, peers } from './net';
+import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
-import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './archer';
+import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, climbPhase } from './archer';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
+import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
 import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
@@ -48,6 +52,8 @@ function drawBackground(ts: Tileset): void {
   g.addColorStop(0, ts.sky[0]); g.addColorStop(0.55, ts.sky[1]); g.addColorStop(1, ts.sky[2]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
+  // the area's parallax layers and drifting particles (towns use the area below them)
+  drawBackdrop(ctx, ts.name, game.cam.x, game.cam.y, w, h, performance.now() / 1000);
 }
 
 const TS = 16;
@@ -87,6 +93,40 @@ function drawDecorations(ts: Tileset): void {
   });
 }
 
+/** Props baked per area: one canvas per prop (see props.ts). */
+const propCanvases = new Map<string, HTMLCanvasElement[]>();
+function bakedProps(area: string): HTMLCanvasElement[] {
+  let cs = propCanvases.get(area);
+  if (!cs) {
+    cs = propsFor(area).map((paint) => {
+      const c = document.createElement('canvas');
+      c.width = PROP_W; c.height = PROP_H;
+      const g = c.getContext('2d')!;
+      paint((x, y, col, w = 1, h = 1) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); });
+      return c;
+    });
+    propCanvases.set(area, cs);
+  }
+  return cs;
+}
+
+/** Props on exposed tops with ground either side, kept clear of portals,
+ *  people, ropes and ladders (they never collide; they just shouldn't hide those). */
+function drawProps(ts: Tileset): void {
+  const cs = bakedProps(ts.name);
+  const f = game.floor;
+  const clear = (x: number, y: number): boolean =>
+    !f.portals.some((p) => Math.abs(p.x - x) < 30 && Math.abs(p.y - y) < 8)
+    && !(f.npcs ?? []).some((n) => Math.abs(n.x - x) < 24 && Math.abs(n.y - y) < 8)
+    && ![...f.ropes, ...f.ladders].some((c) => Math.abs(c.x - x) < 18 && y >= c.y1 - 8 && y <= c.y2 + 8);
+  eachTile((x, y, nb) => {
+    if (nb & NB.N || !(nb & NB.W) || !(nb & NB.E)) return;
+    const i = propAt(ts.name, x / TS, y / TS);
+    if (i === null || !clear(x + TS / 2, y)) return;
+    ctx.drawImage(cs[i], x + TS / 2 - PROP_W / 2, y - PROP_H);
+  });
+}
+
 /** Tile a 16x16 sprite vertically between y1 and y2 at an integer x. */
 function tileVertical(s: Sprite, x: number, y1: number, y2: number): void {
   for (let y = y1; y < y2; y += 16) {
@@ -107,10 +147,11 @@ function drawPortal(p: Portal): void {
   const s = SPR.portal;
   const bob = Math.sin(performance.now() / 300) * 2;
   const down = p.to < game.floor.number;
-  // a way down glows a different colour
+  // a way down glows a different colour; a sealed one (boss still up) is dark
   if (down) ctx.filter = 'hue-rotate(150deg)';
+  if (!portalOpen(p.to)) ctx.filter = 'grayscale(1) brightness(0.55)';
   ctx.drawImage(s.c, Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
-  if (down) ctx.filter = 'none';
+  ctx.filter = 'none';
   if (p.label) {
     // centred over the portal, but kept inside the world (town names are long)
     const half = textWidth(p.label) / 2 + 2;
@@ -120,23 +161,32 @@ function drawPortal(p: Portal): void {
 }
 
 function drawMob(m: Mob): void {
-  const a = SPR.mob[m.name];
+  const a = SPR.mob[m.type.n];
   const s = a?.frames[mobFrame(m, a.frames.length, a.fps)];
+  // a boss is its enemy grown huge; winding up an attack, it shakes and flashes
+  const k = m.boss ? BOSS.SCALE : 1, wind = windingUp(m);
+  const shake = wind ? (Math.floor(performance.now() / 50) % 2 ? 1 : -1) : 0;
   // Walkers animate through their frames; fliers also float. The HP bar and
   // stun star stay anchored to the mob's body position, so they never move with it.
   const bob = m.fly ? -Math.cos(m.anim * 1.6) * 3 : 0;
   ctx.save();
   if (m.hitFlash > 0) ctx.globalAlpha = 0.75;
+  if (wind && Math.floor(performance.now() / 100) % 2) ctx.filter = 'brightness(1.8) saturate(0.6)';
   if (s) {
     // sprites face right: mirror them when the enemy heads left
-    ctx.translate(Math.round(m.x), Math.round(m.y + bob));
-    if (m.dir < 0) ctx.scale(-1, 1);
+    ctx.translate(Math.round(m.x) + shake, Math.round(m.y + bob));
+    ctx.scale(m.dir < 0 ? -k : k, k);
     ctx.drawImage(s.c, -Math.round(s.w / 2), 0);
   }
   ctx.restore();
+  if (wind) {
+    const ex = Math.round(m.x), ey = Math.round(m.y) - 18;
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) text(ctx, '!', ex + ox, ey + oy, 2, '#000', 'center');
+    text(ctx, '!', ex, ey, 2, '#ff6b6b', 'center');
+  }
 
   // HP bar under the enemy, for BAR_SHOW s after each hit: a 2px fill in a 1px black frame, corners cut.
-  if (m.barT > 0) {
+  if (m.barT > 0 && !m.boss) {
     const bw = Math.max(12, Math.round(m.w * 0.8)), pct = clamp(m.hp / m.hpMax, 0, 1);
     const bx = Math.round(m.x - bw / 2), by = Math.round(m.y + m.h) + 2;
     const fill = pct > 0 ? Math.max(1, Math.round((bw - 2) * pct)) : 0;
@@ -154,19 +204,27 @@ function drawMob(m: Mob): void {
   }
 }
 
-const ARCHER = bakeArcher();
+/** A slam's shockwave: dust kicked up along the ground, spreading and fading. */
+function drawQuake(q: { x: number; y: number; t: number }): void {
+  const u = 1 - q.t / QUAKE_T, r = BOSS.QUAKE_R * (0.3 + 0.7 * u);
+  ctx.fillStyle = `rgba(230, 210, 170, ${(1 - u) * 0.9})`;
+  for (let i = -6; i <= 6; i++) {
+    const x = q.x + (i / 6) * r, hgt = Math.round((1 - Math.abs(i) / 7) * 8 * (1 - u) + 2);
+    ctx.fillRect(Math.round(x) - 2, Math.round(q.y) - hgt, 4, hgt);
+  }
+}
 
 /** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s). */
-function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string): void {
+function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string): void {
   // Climbing steps hand over hand with distance climbed, not time, so it
   // holds still while hanging on the rope.
-  const frame = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t, since);
+  const frame = archerFrame(archerFrames(look), pose, pose === 'climb' ? climbPhase(feet) : t, since);
   const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
-  ctx.drawImage(img, -ARCHER_W / 2, -ARCHER_H);
+  ctx.drawImage(img, -img.width / 2, -ARCHER_H);
   ctx.restore();
 }
 
@@ -176,18 +234,19 @@ tintCv.width = ARCHER_W; tintCv.height = ARCHER_H;
 const tintCtx = tintCv.getContext('2d') as CanvasRenderingContext2D;
 /** The frame washed with a colour (only where the frame has pixels). */
 function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
+  if (tintCv.width !== img.width) tintCv.width = img.width; // the prone frame is wider
   tintCtx.globalCompositeOperation = 'source-over';
   tintCtx.globalAlpha = 1;
-  tintCtx.clearRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.clearRect(0, 0, img.width, ARCHER_H);
   tintCtx.drawImage(img, 0, 0);
   tintCtx.globalCompositeOperation = 'source-atop';
   tintCtx.globalAlpha = 0.45;
   tintCtx.fillStyle = col;
-  tintCtx.fillRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.fillRect(0, 0, img.width, ARCHER_H);
   return tintCv;
 }
 
-/** Other players: tinted in their own colour with a name tag, played back
+/** Other players: in their own look, with a name tag in their colour, played back
  *  smoothly, their skill effects replayed from their poses. */
 function drawGhosts(): void {
   const now = performance.now();
@@ -197,7 +256,10 @@ function drawGhosts(): void {
     if (!g) continue;
     const col = tintFor(id);
     game.fx.push(...ghostFx(tr, g));
-    drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, col); // ghosts use the same 16x24 box
+    // ghosts use the same 16x24 box; one on an older version (no look sent)
+    // is washed in their colour instead
+    const look = looks.get(id);
+    drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, look ? undefined : col);
     const name = names.get(id);
     if (name) {
       const nx = Math.round(g.x), ny = Math.round(g.y) - 10;
@@ -224,7 +286,7 @@ function drawBubble(id: string, x: number, bottom: number, now: number): void {
 }
 
 function drawPlayer(): void {
-  drawArcher(player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
+  drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
 }
@@ -281,12 +343,14 @@ export function render(): void {
   ctx.save();
   ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
   drawPlatforms(ts);
+  drawProps(ts);
   for (const r of game.floor.ropes) drawRope(ts, r);
   for (const l of game.floor.ladders) drawLadder(ts, l);
   drawDecorations(ts);
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
   game.mobs.forEach(drawMob);
+  quakes.forEach(drawQuake);
   game.shots.forEach(drawShot);
   drawGhosts();
   drawPlayer();

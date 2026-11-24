@@ -67,17 +67,21 @@ const KEEPER = [
 ];
 let keeper: HTMLCanvasElement | null = null;
 
-/** Bake a 12-wide pixel grid (one PAL letter per pixel) to a canvas. */
-function bakeGrid(rows: readonly string[]): HTMLCanvasElement {
+/** Bake a 12-wide pixel grid (one PAL letter per pixel, `pal` overriding). */
+function bakeGrid(rows: readonly string[], pal: Record<string, string> = {}): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = 12; c.height = rows.length;
   const x = c.getContext('2d') as CanvasRenderingContext2D;
   rows.forEach((row, gy) => [...row].forEach((ch, gx) => {
-    const col = PAL[ch];
+    const col = pal[ch] ?? PAL[ch];
     if (col) { x.fillStyle = col; x.fillRect(gx, gy, 1, 1); }
   }));
   return c;
 }
+
+/** The stylist: the shopkeeper's build in a pink hat and a violet apron. */
+const STYLIST_PAL = { h: '#f29ac0', H: '#c46a92', a: '#b48ae6', c: '#5a3f8a' };
+let stylistSprite: HTMLCanvasElement | null = null;
 
 // the trainer: same build, a plain green tunic
 const TRAINER = [
@@ -134,7 +138,10 @@ export function drawNpcs(): void {
 }
 
 function drawNpc(n: Npc, near: boolean): void {
-  const sprite = n.kind === 'shop' ? (keeper ??= bakeGrid(KEEPER)) : n.kind === 'board' ? (boardSprite ??= bakeGrid(BOARD)) : (trainerSprite ??= bakeGrid(TRAINER));
+  const sprite = n.kind === 'shop' ? (keeper ??= bakeGrid(KEEPER))
+    : n.kind === 'stylist' ? (stylistSprite ??= bakeGrid(KEEPER, STYLIST_PAL))
+    : n.kind === 'board' ? (boardSprite ??= bakeGrid(BOARD))
+    : (trainerSprite ??= bakeGrid(TRAINER));
   const bob = n.kind === 'board' ? 0 : Math.round(Math.sin(performance.now() / 500) * 0.6);
   ctx.drawImage(sprite, Math.round(n.x - 6), Math.round(n.y - sprite.height + 1 + bob));
   text(ctx, near ? `UP: ${n.name}` : n.name, Math.round(n.x), Math.round(n.y - sprite.height - 8), 1, near ? GOLD : '#e6d6ff', 'center');

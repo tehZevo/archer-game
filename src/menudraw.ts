@@ -5,6 +5,10 @@ import { autoChannel, disabled, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X,
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
 import { placeName } from './world';
+import { archerFrame, archerFrames, ARCHER_W } from './archer';
+import { myLook } from './look';
+import { stylist } from './stylist';
+import { drawStylist } from './stylistdraw';
 
 /* The main menu, drawn on the canvas over the frozen world. */
 
@@ -16,6 +20,7 @@ const HINT: Record<ItemId, string> = {
   code: 'TYPE A CODE   ENTER JOINS',
   create: 'MAKE A CODE FOR FRIENDS',
   name: 'Z TO RENAME   ENTER SAVES',
+  look: 'HAIR, SKIN AND OUTFIT',
   reset: 'ERASE YOUR SAVE: LV 1 AGAIN',
 };
 
@@ -70,6 +75,14 @@ export function drawMenu(): void {
         text(ctx, menu.name + caret(editing), R, y, 1, editing ? GOLD : HI, 'right');
         break;
       }
+      case 'look': {
+        text(ctx, 'LOOK', L, y, 1, DIM, 'left');
+        // a small you on the right of the row
+        const f = archerFrame(archerFrames(myLook()), 'idle', 0);
+        ctx.drawImage(f, 0, 0, ARCHER_W, 12, R - ARCHER_W, y - 3, ARCHER_W, 12);
+        text(ctx, 'EDIT', R - ARCHER_W - 4, y, 1, HI, 'right');
+        break;
+      }
       case 'reset':
         text(ctx, menu.confirmReset ? 'SURE? Z AGAIN TO ERASE' : 'RESET PROGRESS', w / 2, y, 1, RED, 'center');
         break;
@@ -79,4 +92,5 @@ export function drawMenu(): void {
   const note = menu.note || HINT[items()[menu.sel]];
   text(ctx, note, w / 2, h - 22, 1, menu.note ? GOLD : DIM, 'center');
   text(ctx, 'ARROWS MOVE   Z OR ENTER SELECT', w / 2, h - 11, 1, '#5d708f', 'center');
+  if (stylist.open) drawStylist(w, h);
 }

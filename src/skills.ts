@@ -1,11 +1,11 @@
-import { LINKED_SKILLS, P } from './config';
+import { LINKED_SKILLS, P, SKILLS } from './config';
 import { game, later, mobBounds, player } from './state';
 import { held } from './input';
 import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
 import { surfaceAt, surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
 import { netShot } from './net';
-import { activeSkill, isLearned, rank } from './progress';
+import { activeSkill, isLearned, passiveBonus, rank } from './progress';
 import type { SkillKey } from './types';
 
 /** Airborne enemies Sky Assault can reach: around and below the player. */
@@ -58,6 +58,9 @@ export function endRush(): void {
   rushStrike?.();
 }
 
+/** A skill's use time, shortened by Haste (+N% attack speed: time / (1 + N)). */
+export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
+
 export function cast(key: SkillKey): void {
   const s = activeSkill(key);
   if (!isLearned(key)) return;
@@ -86,7 +89,7 @@ export function cast(key: SkillKey): void {
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
-  if (kind !== 'C' && kind !== 'D') { player.useT = P.USE_TIME; player.combatT = P.COMBAT_TIME; }
+  if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.combatT = P.COMBAT_TIME; }
 
   // Fervor: skills chained off Sky Toss stack final damage. The link
   // consumes the window, so it can't be chained again without another Sky Toss.

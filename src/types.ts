@@ -1,4 +1,5 @@
-export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR';
+import type { BossState } from './boss';
+export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR' | 'HA';
 
 /** The four core stats, each upgraded with ability points (AP). */
 export interface CoreStats {
@@ -21,6 +22,9 @@ export interface SkillDef {
   /** Master level in the real class. */
   maxLevel: number;
   cd: number;
+  /** Use time, s: how long a cast locks other skills and movement (attack
+   *  skills default to P.USE_TIME; Jump and Glide have none). Haste shortens it. */
+  use?: number;
   /** Stats scale linearly from the Lv.1 value to the master value. */
   mp1: number;
   mpMax: number;
@@ -154,6 +158,8 @@ export interface Mob {
   barT: number;
   anim: number;
   spawn: Spawn;
+  /** Set on an area's boss: what it's doing (see boss.ts). */
+  boss?: BossState;
 }
 
 /** Anything the ground physics apply to. x is the horizontal centre. */
@@ -210,7 +216,7 @@ export interface Player extends Body {
   castTotal: number;
   invuln: number;
   anim: number;
-  animState: 'idle' | 'walk' | 'jump' | 'climb';
+  animState: 'idle' | 'walk' | 'jump' | 'climb' | 'prone';
   /** Fervor stacks from linked skills. */
   fervor: number;
   fervorT: number;
@@ -309,7 +315,7 @@ export interface Portal {
 }
 
 /** A town NPC: stands at (x, y = the surface under their feet). */
-export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'board'; name: string }
+export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board'; name: string }
 
 /** A procedurally generated floor: its layout, enemies and exit portal. */
 export interface Floor {

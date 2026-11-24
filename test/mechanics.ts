@@ -16,6 +16,7 @@ import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, se
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
+import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
@@ -23,12 +24,19 @@ import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { BOSS, bossAlive, quakes } from '../src/boss';
+import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
+import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
+import { styled } from '../src/archer';
 import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
+import { lastTown } from '../src/world';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
+import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
+import { BACKDROPS, particlesAt } from '../src/backdrop';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
 import { dev, devStops } from '../src/dev';
 import { devInput } from '../src/update';
@@ -399,6 +407,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
   check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
 }
+{
+  // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
+  arena(25); dummy(130);
+  cast('Z');
+  const base = player.useT;
+  check('Twin Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
+  player.useT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
+  const rCd = player.cd.R, rUse = player.useT;
+  player.ranks.HA = 3; player.useT = 0; player.cd.R = 0; cast('R');
+  check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.useT - rUse / 1.1) < 1e-6);
+  check('Haste leaves cooldowns alone', player.cd.R === rCd);
+  player.useT = 0; cast('Z');
+  check('a hasted Twin Shot fires about 10% faster', Math.abs(player.useT - base / 1.1) < 1e-6);
+  player.ranks.HA = 0; player.ranks.R = 0;
+}
 
 // --- private instances ---
 {
@@ -429,8 +452,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 
 // --- archer sprite sheet ---
-check('every archer frame is 16x24', Object.values(GRIDS).every((fs) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === 16))));
+check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS).every(([p, fs]) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === (p === 'prone' ? 24 : 16)))));
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
+check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('prone') === POSES.length - 1 && POSES[0] === 'idle');
+{
+  // holding Down on the ground lies you flat: no walking, but you can turn
+  arena(1); player.x = 300; player.vx = 0; player.face = 1;
+  setKey('down', true); setKey('left', true); step(20);
+  check('holding Down on the ground lies you flat and stops you walking', player.animState === 'prone' && player.face === -1 && Math.abs(player.x - 300) < 1);
+  setKey('left', false); setKey('down', false); step(2);
+  check('letting go of Down stands you back up', player.animState === 'idle');
+}
 
 // --- bug: fast ground moves sank into slopes ---
 {
@@ -551,6 +583,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     gotoFloor(2); spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
     const m = game.mobs[game.mobs.length - 1];
     check('a spawned mob has its floor\'s level and that level\'s EXP', m.level === 2 && m.exp === mobExp(2));
+    const hpHere = m.hpMax; player.level = 40; spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
+    check('enemy HP scales with the floor, not the player', game.mobs[game.mobs.length - 1].hpMax === hpHere);
   }
   arena(5); const m = dummy(140, 1); const before = game.dmgNums.length;
   killMob(m);
@@ -618,9 +652,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let started = 0;
   const open = (): void => { initMenu(() => { started++; }, 3); };
   clearSave(); open();
-  check('menu rows: play, channel, code, new code, name (no reset without a save)', items().join(',') === 'play,channel,code,create,name');
+  check('menu rows: play, channel, code, new code, name, look (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look');
   menuKey('up');
-  check('menu selection wraps around', items()[menu.sel] === 'name');
+  check('menu selection wraps around', items()[menu.sel] === 'look');
 
   // channel picker
   check('auto picks the busiest channel with room', autoChannel(new Map([[1, 20], [2, 5], [3, 7]])) === 3);
@@ -773,10 +807,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   gotoFloor(7, beach); stand(game.floor.portals[0]); tap('up');
   check('the left portal goes up into the left area, a different layout', game.floor.number === 8 && net.area === forest && JSON.stringify(game.floor.platforms) !== meadowFloor);
   gotoFloor(13, meadow); stand(game.floor.portals[game.floor.portals.length - 1]); tap('up');
-  check('a town\'s way down goes to the town it branched off (not the floor below)', game.floor.number === 7 && game.floor.town && net.area === beach);
+  check("a town's way down goes to the town it branched off (not the floor below)", game.floor.number === 7 && game.floor.town && net.area === beach);
   gotoFloor(3, 0); stand(game.floor.portals[game.floor.portals.length - 1]); tap('up');
-  check('the first town\'s way down leads to the floor below it', game.floor.number === 2 && net.area === 0);
-  check('skills work in town', (() => { gotoFloor(7, beach); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
+  check("the first town's way down leads to the floor below it", game.floor.number === 2 && net.area === 0);
+  check('skills work in town', (() => { gotoFloor(7, beach); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.useT > 0; })());
   net.area = 0; release();
 }
 
@@ -903,10 +937,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
   // the trainer: from the third town up, respec for coins
   gotoFloor(townStage(0));
-  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'board').length === 1 && game.floor.npcs![0].kind === 'shop');
+  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 1 && game.floor.npcs![0].kind === 'shop');
   gotoFloor(townStage(2));
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
-  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'board').length === 2);
+  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
   wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.BS = 0;
   tap('up');
@@ -1035,6 +1069,20 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
   check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');
+  // props and backdrops: every area with a tileset has its own; props paint inside their canvas
+  const inside = (paint: (p: (x: number, y: number, c: string, w?: number, h?: number) => void) => void, W: number, H: number): boolean => {
+    let ok = true, any = false;
+    paint((x, y, c, w = 1, h = 1) => { any = true; if (!/^#[0-9a-f]{3,8}$/i.test(c) || x < -0.5 || y < -0.5 || x + w > W + 0.5 || y + h > H + 0.5) ok = false; });
+    return ok && any;
+  };
+  const withSets = Object.keys(TILESETS).filter((a) => a !== 'Classic');
+  check('every area with a tileset has its own props and backdrop', withSets.every((a) => PROPS[a] && BACKDROPS[a]),
+    withSets.filter((a) => !PROPS[a] || !BACKDROPS[a]).join(', '));
+  check('every prop paints only inside its canvas', Object.values(PROPS).every((ps) => ps.every((p) => inside(p, PROP_W, PROP_H))));
+  let placed = 0;
+  for (let i = 0; i < 400; i++) { const k = propAt('Forest', i, 7); if (k !== null) { placed++; if (k < 0 || k >= PROPS.Forest.length) placed = -999; } }
+  check('props stand on a few tops, not most', placed > 20 && placed < 90, `${placed}/400`);
+  check('backdrop particles stay in view', Object.values(BACKDROPS).every((b) => !b.particles || particlesAt(b.particles, 3.7, 240, 180).every((q) => q.x >= -20 && q.x <= 240 && q.y >= -20 && q.y <= 180)));
   const hex = /^#[0-9a-f]{6}$/;
   let bad = '';
   for (const ts of Object.values(TILESETS)) {
@@ -1122,7 +1170,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // enemies: two types per floor from the area's set; each platform fields one or both
   const beach = areaMobs('Beach').map((m) => m.n);
   check('the Beach has its own enemies (snail, crab, hermit crab, gull)', ['Garden Snail', 'Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
-  check('areas without a set use the general pool', areaMobs('Swamp').every((m) => !m.areas) && areaMobs('Swamp').length >= 2);
+  check('areas without a set use the general pool', areaMobs('Old Keep').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Old Keep').length >= 2);
+  const withOwn = Object.keys(TILESETS).filter((a) => !['Classic'].includes(a));
+  check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
+    withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
+  let artOk = true;
+  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1]) {
+    paintMob(name, f, (x, y, c, w = 1, h = 1) => { if (x < 0 || y < 0 || x + w > look.w || y + h > look.h || !/^#[0-9a-f]{6}$/i.test(c)) artOk = false; });
+  }
+  check('enemy art paints inside its box (the hitbox)', artOk);
+  check('every enemy with painted art uses its box as its size', MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h));
   let pairsOk = true, singles = 0, doubles = 0;
   for (const n of [1, 2, 4, 5, 6]) { // the Tide Pools and the Beach
     gotoFloor(n);
@@ -1164,6 +1221,110 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
+  // bosses: an area's last floor has one, and its way up stays sealed until it's beaten
+  release();
+  let endN = 1; while (!isAreaEnd(endN)) endN++;
+  gotoFloor(endN - 1, 0);
+  check('no boss before the last floor of an area', !game.mobs.some((m) => m.boss));
+  gotoFloor(townStage(0), 0);
+  check('no boss in a town', !game.mobs.some((m) => m.boss));
+  gotoFloor(endN, 0);
+  const bs = game.mobs.filter((m) => m.boss);
+  check("an area's last floor has exactly one boss", bs.length === 1);
+  const boss = bs[0];
+  check('the boss is one of its enemies, grown huge and much tougher',
+    boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
+  const hp0 = player.hpMax;
+  player.hpMax = player.hp = 1e7;
+  const ground = game.floor.platforms[0];
+  const stand = (x: number): void => { player.x = x; player.y = ground.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.plat = ground; player.climb = null; player.invuln = 0; };
+  const up = game.floor.portals.find((q) => q.to > endN)!;
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('the way up is sealed while the boss stands', game.floor.number === endN && bossAlive() === boss);
+  boss.stun = 2; boss.airTime = 1; step(1);
+  check('the boss shrugs off stuns and launches', boss.stun === 0 && boss.airTime === 0);
+  // charge: far away, it winds up, then rushes
+  boss.x = WORLD.w * 0.75; boss.y = ground.y - boss.h; boss.vy = 0; boss.boss = { act: 'walk', t: 0, cd: 0, air: false };
+  stand(40);
+  step(1);
+  check('far from you, the boss winds up a charge', boss.boss.act === 'windCharge');
+  step(Math.ceil(BOSS.WIND / P.STEP) + 2);
+  check('then rushes at you', boss.boss.act === 'charge' && boss.vx < -boss.spd * 2, `${boss.boss.act} ${boss.vx}`);
+  // slam: the landing hits a player on the ground nearby, not one far off
+  const slam = (dx: number, from = WORLD.w / 2): number => {
+    boss.x = from; boss.y = ground.y - boss.h; boss.vx = boss.vy = 0; boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+    stand(from + dx); quakes.length = 0;
+    const before = player.hp;
+    for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = Math.min(player.invuln, 0.5); game.mobs.splice(0, game.mobs.length, boss); step(1); stand(from + dx); }
+    return before - player.hp;
+  };
+  check("a slam's shockwave hurts a player on the ground nearby", slam(boss.w / 2 + 40) > 0 && quakes.length === 1);
+  check('but not one well out of reach (it leaps toward you)', slam(WORLD.w - 60, 30) === 0);
+  // beaten: the way up opens
+  killMob(boss);
+  check('beating the boss clears it', !bossAlive());
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('then the way up opens', game.floor.number > endN);
+  player.hpMax = player.hp = hp0;
+  // looks: hair style, hair colour, skin and outfit; set from the menu or the town stylist
+  check('a bad saved look falls back to the default', JSON.stringify(cleanLook({ style: 99, hair: -1, skin: 'x' })) === JSON.stringify(DEFAULT_LOOK));
+  check('a good look is kept', cleanLook({ style: 2, hair: 3, skin: 1, outfit: 4 }).hair === 3);
+  check('stepping a look wraps around', stepLook(DEFAULT_LOOK, 'style', -1).style === LOOK_COUNTS.style - 1);
+  check('the elf ear follows the skin tone', lookPalette({ ...DEFAULT_LOOK, skin: 3 }).k === lookPalette({ ...DEFAULT_LOOK, skin: 3 }).s);
+  const poses = Object.keys(GRIDS) as (keyof typeof GRIDS)[];
+  check('the default hair style leaves the sprites as drawn', poses.every((p) => GRIDS[p].every((g) => styled(g, p, 0) === g)));
+  for (const st of [1, 2]) {
+    const ok = poses.every((p) => GRIDS[p].every((g) => {
+      const s = styled(g, p, st);
+      // same size, and below the head only cape, outline or empty pixels change
+      return s.length === g.length && s.every((r, y) => r.length === g[y].length)
+        && s.every((r, y) => y < 12 || [...r].every((ch, x) => ch === g[y][x] || 'cCo.'.includes(g[y][x])));
+    }));
+    check(`hair style ${st}: frames keep their size; the body, bow and arms are untouched`, ok);
+  }
+  check('long hair shows down the back', styled(GRIDS.idle[0], 'idle', 2).join() !== styled(GRIDS.idle[0], 'idle', 1).join());
+  // the menu's LOOK row opens the stylist; keys go to it until it closes
+  const mem = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage ??= { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); }, removeItem: (k: string) => { mem.delete(k); } };
+  setMyLook(DEFAULT_LOOK);
+  initMenu(() => {}, 1);
+  menu.sel = items().indexOf('look'); menuKey('enter');
+  check('LOOK in the menu opens the stylist', stylist.open && stylist.sel === 0);
+  menuKey('right');
+  check('Right changes the picked row (hair style)', myLook().style === 1);
+  menuKey('down'); menuKey('left');
+  check('Left steps back, wrapping (hair colour)', myLook().hair === LOOK_COUNTS.hair - 1);
+  check('the look is kept on this device', cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === LOOK_COUNTS.hair - 1);
+  menuKey('escape');
+  check('Esc closes the stylist, not the menu', !stylist.open && menu.open);
+  // taps: a row's left half steps back, its right half forward
+  stylistKey('escape'); stylist.open = true; stylist.sel = 0;
+  const b = stylistBox(320, 180), rowY = (i: number): number => b.y + ST_TOP + i * 14 + 3;
+  const sk = myLook().skin;
+  stylistTap(b.x + ST_ROWS_W - 10, rowY(2), 320, 180);
+  check('tapping the right half of a row steps it forward', myLook().skin === (sk + 1) % LOOK_COUNTS.skin && stylist.sel === 2);
+  stylistTap(b.x + 10, rowY(2), 320, 180);
+  check('tapping the left half steps it back', myLook().skin === sk);
+  stylistTap(2, 2, 320, 180);
+  check('tapping outside the window closes it', !stylist.open);
+  menu.open = false;
+  // the town stylist
+  let townN = 1; while (gotoFloor(townN), !game.floor.town) townN++;
+  const st = game.floor.npcs?.find((n) => n.kind === 'stylist');
+  const zones = game.floor.portals.map((q) => [q.x - q.w / 2 - 10, q.x + q.w / 2 + 10]).concat(game.floor.ladders.map((l) => [l.x - 7, l.x + 7]), game.floor.ropes.map((l) => [l.x - 7, l.x + 7]));
+  check('towns have a stylist, clear of portals, ladders and ropes', !!st && zones.every(([lo, hi]) => st.x + NPC_R <= lo || st.x - NPC_R >= hi));
+  release(); setMyLook(DEFAULT_LOOK);
+  player.x = st!.x; player.y = st!.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('Up beside the stylist opens the window', stylist.open);
+  tap('right');
+  check('arrows change your look there too', myLook().style === 1);
+  tap('x');
+  check('X closes it', !stylist.open && !game.pause);
+  setMyLook(DEFAULT_LOOK);
+  release();
   // quests: every town has a board posting kill quests for the areas above it
   release(); loadQuests([]);
   for (const a of AREAS) {
@@ -1177,8 +1338,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   }
   check('every town has a quest board clear of portals, ladders and ropes', true);
   gotoFloor(townStage(0), 0);
-  const b = game.floor.npcs!.find((n) => n.kind === 'board')!;
-  player.x = b.x; player.y = b.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
+  const boardNpc = game.floor.npcs!.find((n) => n.kind === 'board')!;
+  player.x = boardNpc.x; player.y = boardNpc.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
   tap('up');
   check('Up beside the board opens it', board.open && boardRows().length > 0);
   tap('z');
