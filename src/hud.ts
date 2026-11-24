@@ -14,6 +14,7 @@ import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
 import { dev, devStops } from './dev';
+import { chat, logLines, wrap as wrapChat } from './chat';
 import { text } from './font';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
@@ -98,6 +99,7 @@ function drawHUD(): void {
   bar(pad + bw + bgap, y, bw, 'MP', `${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, player.mp / player.mpMax, '#3f8fd6');
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
+  drawChatLog(y);
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); return; }
   if (shop.open) { drawShop(); return; }
@@ -122,6 +124,33 @@ function drawDev(): void {
     text(ctx, `${s.stage}`, w - 66, y, 1, '#8ea3c2', 'right');
   });
   text(ctx, 'Z/ENTER WARP  ESC CLOSE', w / 2, h - 12, 1, '#8ea3c2', 'center');
+}
+
+/* ---------------- chat log ----------------
+   The last few lines sit above the bars (all recent ones while typing),
+   and the line being typed sits right above the bars. */
+const LOG_CHARS = 38;
+function drawChatLog(barsY: number): void {
+  const { w } = game.view;
+  const now = performance.now();
+  let y = barsY - 3;
+  if (chat.typing) {
+    const caret = Math.floor(now / 400) % 2 ? '_' : ' ';
+    const line = ('> ' + chat.draft.toUpperCase() + caret).slice(-LOG_CHARS);
+    y -= 10;
+    ctx.fillStyle = '#050a14d0'; ctx.fillRect(2, y - 1, w - 4, 10);
+    text(ctx, line, 5, y + 1, 1, '#eaf2ff', 'left');
+  }
+  // each message wraps to fit; the newest few rows show
+  const rows: { s: string; col: string }[] = [];
+  for (const l of logLines(now)) {
+    wrapChat(`${l.name}: ${l.text}`, LOG_CHARS).forEach((s, i) => rows.push({ s, col: i === 0 ? l.col : '#dbe6f5' }));
+  }
+  const show = rows.slice(-6);
+  if (!show.length) return;
+  y -= show.length * 9 + 1;
+  ctx.fillStyle = '#050a1490'; ctx.fillRect(2, y - 1, w - 4, show.length * 9 + 1);
+  show.forEach((r, i) => text(ctx, r.s, 5, y + i * 9, 1, r.col, 'left'));
 }
 
 /* ---------------- pause menu ----------------

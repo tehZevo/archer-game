@@ -5,7 +5,8 @@ import { isTown } from './world';
 import { devTag } from './dev';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
-import { cleanName, clearShots, myName, queueShot, type ShotMsg } from './presence';
+import { cleanName, clearShots, myName, queueShot, tintFor, type ShotMsg } from './presence';
+import { addChat, cleanChat, clearBubbles, SELF } from './chat';
 
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
@@ -120,6 +121,7 @@ let room: Room | null = null;
 let pos: UserState<Packet> | null = null;
 let sendKills: ((n: number) => Promise<void>) | null = null;
 let sendShot: ((s: ShotMsg) => Promise<void>) | null = null;
+let sendChat: ((s: string) => Promise<void>) | null = null;
 const rec = new Recorder();
 
 /** Network log lines go to the console, prefixed so they're easy to filter. */
@@ -136,6 +138,7 @@ function connect(channel: number): void {
   peers.clear();
   names.clear();
   clearShots();
+  clearBubbles();
   resetBoost();
   net.channel = channel;
   net.floor = game.floor.number;
@@ -171,6 +174,11 @@ function connect(channel: number): void {
   const shots = room.makeAction<ShotMsg>('shot');
   shots.onMessage((s, ctx) => queueShot(peers.get(ctx.userId), s, performance.now()));
   sendShot = shots.send;
+  // chat lines go to everyone in the room (see chat.ts)
+  const chatMsg = room.makeAction<string>('chat');
+  chatMsg.onMessage((s, ctx) =>
+    addChat(ctx.userId, names.get(ctx.userId) ?? '?', cleanChat(s), tintFor(ctx.userId), performance.now()));
+  sendChat = chatMsg.send;
   room.onPeerJoin((ctx) => {
     log('peer joined', ctx.userId.slice(0, 8), 'has position:', !!pos?.getAll()[ctx.userId]);
     const got = pos?.getAll()[ctx.userId];
@@ -178,8 +186,16 @@ function connect(channel: number): void {
     const n = who.getAll()[ctx.userId]?.n;
     if (n) names.set(ctx.userId, cleanName(n));
   });
-  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); });
+  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); clearBubbles(ctx.userId); });
   net.joined = true;
+}
+
+/** Say something: it shows in our own log and bubble, and goes to the room. */
+export function say(raw: string): void {
+  const text = cleanChat(raw);
+  if (!text) return;
+  addChat(SELF, myName(), text, '#ffffff', performance.now());
+  if (net.started && peers.size) sendChat?.(text).catch(() => {});
 }
 
 /** Tell the channel we released a shot (muzzle at x,y; tracer len px). */

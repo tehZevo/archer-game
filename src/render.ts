@@ -16,6 +16,7 @@ import { clamp } from './util';
 import { drawHUD } from './hud';
 import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
+import { bubbleFor, SELF } from './chat';
 import type { Climbable, DmgNum, Fx, Mob, Portal, Shot } from './types';
 
 // Base (internal) resolution. The canvas backing store IS this size; everything
@@ -193,12 +194,28 @@ function drawGhosts(): void {
       for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) text(ctx, name, nx + dx, ny + dy, 1, '#0d1424', 'center');
       text(ctx, name, nx, ny, 1, col, 'center');
     }
+    drawBubble(id, g.x, g.y - (name ? 12 : 2), now);
   }
+}
+
+/** A sender's speech bubble, its bottom (tail tip) at (x, bottom). */
+function drawBubble(id: string, x: number, bottom: number, now: number): void {
+  const lines = bubbleFor(id, now);
+  if (!lines) return;
+  const bw = Math.max(...lines.map((l) => textWidth(l))) + 6, bh = lines.length * 9 + 3;
+  const bx = Math.round(x - bw / 2), by = Math.round(bottom - 3 - bh);
+  ctx.fillStyle = '#0d1424'; ctx.fillRect(bx - 1, by, bw + 2, bh); ctx.fillRect(bx, by - 1, bw, bh + 2);
+  ctx.fillStyle = '#f4f7fc'; ctx.fillRect(bx, by, bw, bh);
+  // tail
+  const tx = Math.round(x);
+  ctx.fillRect(tx - 1, by + bh, 3, 1); ctx.fillRect(tx, by + bh + 1, 1, 1);
+  lines.forEach((l, i) => text(ctx, l, tx, by + 2 + i * 9, 1, '#1a2438', 'center'));
 }
 
 function drawPlayer(): void {
   drawArcher(player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
+  drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
 }
 
 function drawShot(s: Shot): void {
