@@ -1,3 +1,4 @@
+import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
 import { cameraTarget, gainExp, game, gotoFloor, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
@@ -216,7 +217,7 @@ function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
     if (m.hitFlash > 0) m.hitFlash -= dt;
     if (m.barT > 0) m.barT -= dt;
-    m.anim += dt * 6;
+    m.anim += dt * ANIM_RATE;
     if (m.stun > 0) { m.stun -= dt; m.vx *= 0.8; }
     else if (m.airTime > 0) { m.airTime -= dt; m.vx *= 0.9; }
     else {

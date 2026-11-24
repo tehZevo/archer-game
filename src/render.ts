@@ -2,6 +2,7 @@ import { FX } from './fxsprites';
 import { FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
+import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
@@ -119,10 +120,11 @@ function drawPortal(p: Portal): void {
 }
 
 function drawMob(m: Mob): void {
-  const s = SPR.mob[m.name];
-  // Sprite-only motion: walkers bob, fliers float. The HP bar and stun star
-  // stay anchored to the mob's body position, so they never move with it.
-  const bob = m.fly ? -Math.cos(m.anim * 1.6) * 3 : Math.sin(m.anim) * 2;
+  const a = SPR.mob[m.name];
+  const s = a?.frames[mobFrame(m, a.frames.length, a.fps)];
+  // Walkers animate through their frames; fliers also float. The HP bar and
+  // stun star stay anchored to the mob's body position, so they never move with it.
+  const bob = m.fly ? -Math.cos(m.anim * 1.6) * 3 : 0;
   ctx.save();
   if (m.hitFlash > 0) ctx.globalAlpha = 0.75;
   if (s) {
