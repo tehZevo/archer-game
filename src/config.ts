@@ -23,7 +23,7 @@ export const P = {
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.5,   // s Sky Assault hovers (striking) before falling
-  BARRAGE_RISE: 0.75,  // fraction of the way up to the highest launched enemy Sky Assault warps
+  BARRAGE_RISE: 1.5,   // fraction of the way up to the highest launched enemy Sky Assault warps (doubled from 0.75: it now rises past them)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
   Z_WINDUP: 0.10,      // s Twin Shot draws the bow before the arrows fly
@@ -42,6 +42,8 @@ export const P = {
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 110,     // px/s upward bump when it fires (~6px rise, no hover)
   PIERCE_RANGE: 260,   // Piercing Arrow reach, px
+  RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
+  RISE_VX: 40,         // ...with a little forward drift, to stay over them
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
   FRICTION: 700,       // ground friction when no input (a short slide)
   AIR_BRAKE: 400,      // px/s^2: in the air, holding against your motion only slows you (never reverses)
@@ -105,6 +107,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   VS: { key: 'VS', name: 'Vault Shot', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
        desc: 'Leap back into the air, launching enemies ahead' },
+  RA: { key: 'RA', name: 'Rising Arrow', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
+       cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
+       desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
   SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.07, bonusMax: 0.21,
