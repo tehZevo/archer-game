@@ -28,9 +28,32 @@ function bar(x: number, y: number, w: number, label: string, value: string, pct:
   text(ctx, value, x + w - 2, y + 1, 1, '#eaf2ff', 'right');
 }
 
+/** Connection icon: three rising signal bars, struck through in red when offline. */
+const WIFI_W = 7;
+function wifi(x: number, y: number, on: boolean): void {
+  ctx.fillStyle = '#8ea3c2';
+  ctx.fillRect(x, y + 5, 1, 2); ctx.fillRect(x + 3, y + 3, 1, 4); ctx.fillRect(x + 6, y, 1, 7);
+  if (!on) {
+    ctx.fillStyle = '#ff6b6b';
+    for (let i = 0; i < 7; i++) ctx.fillRect(x + i, y + 6 - i, 1, 1);
+  }
+}
+
+/** HUD items get a hard 1px black shadow, down and to the right, so they read on bright areas. */
+function hudShadow(on: boolean): void {
+  const k = ctx.getTransform().a; // shadow offsets are in canvas pixels, not game pixels
+  ctx.shadowColor = on ? '#000' : 'transparent';
+  ctx.shadowOffsetX = on ? k : 0; ctx.shadowOffsetY = on ? k : 0; ctx.shadowBlur = 0;
+}
+
 function drawHUD(): void {
+  hudShadow(true);
+  try { drawHUDItems(); } finally { hudShadow(false); }
+}
+
+function drawHUDItems(): void {
   const { w, h } = game.view;
-  if (menu.open) { drawMenu(); return; } // the title menu replaces the HUD
+  if (menu.open) { hudShadow(false); drawMenu(); return; } // the title menu replaces the HUD
   const pad = 6;
 
   // top-left: level + floor
@@ -40,12 +63,13 @@ function drawHUD(): void {
   let ly = pad + 18;
   // where you are and who's with you: the channel (or private code) and the player count
   if (net.offline) {
-    text(ctx, 'Local only', pad, ly, 1, '#ff9f6b', 'left'); // the reason is in the console
+    wifi(pad, ly, false); // the reason is in the console
     ly += 9;
   } else if (net.joined) {
     const n = playerCount();
     const where = net.code ? `Private ${net.code}` : `Ch.${net.channel}`;
-    text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
+    wifi(pad, ly, true);
+    text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad + WIFI_W + 3, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
     ly += 9;
   }
   if (dev.on) { text(ctx, 'DEV MODE', pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
@@ -101,6 +125,7 @@ function drawHUD(): void {
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
   drawChatLog(y);
+  if (dev.open || game.pause || shop.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); return; }
   if (shop.open) { drawShop(); return; }
@@ -122,7 +147,7 @@ function drawDev(): void {
     const y = 26 + i * 11, on = i === dev.sel;
     if (on) { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 1; ctx.strokeRect(60.5, y - 2.5, w - 121, 11); }
     text(ctx, s.name.toUpperCase(), 66, y, 1, on ? '#eaf2ff' : '#8ea3c2', 'left');
-    text(ctx, `${s.stage}`, w - 66, y, 1, '#8ea3c2', 'right');
+    text(ctx, s.label, w - 66, y, 1, '#8ea3c2', 'right');
   });
   text(ctx, 'Z/ENTER WARP  ESC CLOSE', w / 2, h - 12, 1, '#8ea3c2', 'center');
 }

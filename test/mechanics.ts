@@ -1030,6 +1030,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('` opens the dev menu', dev.open);
   const stops = devStops();
   check('the dev menu lists the start and the towns', stops[0].stage === 1 && stops.slice(1).every((s) => isTown(s.stage)) && stops[1].name === TOWN_NAMES[0]);
+  check('the dev menu labels towns by the floor they follow (10, 20, ...)', stops[1].label === '10' && stops[2].label === '20' && stops[0].label === '1');
   dev.sel = 2; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
   check('picking a town warps there and closes the menu', game.floor.number === stops[2].stage && game.floor.town && !dev.open);
   dev.on = false;

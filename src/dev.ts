@@ -1,4 +1,4 @@
-import { BLOCK, townName } from './world';
+import { AREA_FLOORS, BLOCK, townName } from './world';
 
 /* ============================================================
    DEV MODE
@@ -19,10 +19,13 @@ export const dev = {
 /** Towns the dev menu lists (the tower goes on; this is plenty for testing). */
 export const DEV_TOWNS = 10;
 
-/** The dev menu's rows: the start, then each town by name. */
-export const devStops = (): { stage: number; name: string }[] => [
-  { stage: 1, name: 'Beach 1 - start' },
-  ...Array.from({ length: DEV_TOWNS }, (_, i) => ({ stage: (i + 1) * BLOCK, name: townName((i + 1) * BLOCK) })),
+/** The dev menu's rows: the start, then each town by name. `label` is the
+ *  floor the row shows: towns by the floor they follow (10, 20, ...), not their stage number. */
+export const devStops = (): { stage: number; name: string; label: string }[] => [
+  { stage: 1, name: 'Beach 1 - start', label: '1' },
+  ...Array.from({ length: DEV_TOWNS }, (_, i) => ({
+    stage: (i + 1) * BLOCK, name: townName((i + 1) * BLOCK), label: `${(i + 1) * AREA_FLOORS}`,
+  })),
 ];
 
 /** Room id suffix for dev sessions. */
