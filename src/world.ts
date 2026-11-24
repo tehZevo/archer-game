@@ -66,6 +66,9 @@ export const isTown = (n: number): boolean => localFloor(n) === blockSize(tierOf
 /** The last floor of an area, right before its town (the boss floor, later). */
 export const isAreaEnd = (n: number): boolean => localFloor(n) === TIER_FLOORS[clampTier(tierOf(n))];
 
+/** The stage number of a tier's town. */
+export const townStage = (tier: number): number => baseOf(clampTier(tier)) + TIER_FLOORS[clampTier(tier)];
+
 /** True when a tier's town has two ways up (its two areas are a pair, not one). */
 export const hasRoutes = (tier: number): boolean => TOWER[clampTier(tier)][0] !== TOWER[clampTier(tier)][1];
 

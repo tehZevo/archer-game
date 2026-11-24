@@ -1,5 +1,5 @@
-import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, shop, wallet } from '../src/economy';
-import { areaOf, isAreaEnd, isTown, MAP_AREAS, placeName, TIER_FLOORS, TOWN_NAMES } from '../src/world';
+import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
+import { areaOf, isAreaEnd, isTown, MAP_AREAS, placeName, TIER_FLOORS, TOWN_NAMES, townStage } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
 // fuzzing: if a check needs more than a second, shrink it.
@@ -887,6 +887,30 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check("can't buy without the coins", !buy('mp') && wallet.mp === 0);
   tap('escape');
   check('Esc closes the shop (not the pause menu)', !shop.open && !game.pause);
+  release();
+
+  // the trainer: from the third town up, respec for coins
+  gotoFloor(townStage(0));
+  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.length === 1 && game.floor.npcs![0].kind === 'shop');
+  gotoFloor(townStage(2));
+  const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
+  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.length === 2);
+  player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
+  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.BS = 0;
+  tap('up');
+  check('Up beside the trainer opens the trainer', trainer.open && trainer.sel === 0);
+  tap('z');
+  check('a branch swap keeps the rank and takes the coins', player.ranks.BS === 2 && player.ranks.S === 0 && wallet.coins === 0);
+  tap('escape');
+
+  player.ranks.BS = 0; player.ranks.Z = 3; player.stats.dex = 4; player.ap = 0; player.sp = 0;
+  wallet.coins = RESPEC_PRICES.reset;
+  tap('up');
+  trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
+  check('a full reset refunds every AP and SP spent',
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 2 && wallet.coins === 0,
+    `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
+  tap('escape');
   release();
 
   // saved
