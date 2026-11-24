@@ -312,7 +312,7 @@ export interface Portal {
 }
 
 /** A town NPC: stands at (x, y = the surface under their feet). */
-export interface Npc { x: number; y: number; kind: 'shop' | 'trainer'; name: string }
+export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist'; name: string }
 
 /** A procedurally generated floor: its layout, enemies and exit portal. */
 export interface Floor {

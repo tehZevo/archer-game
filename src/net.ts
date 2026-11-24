@@ -7,6 +7,7 @@ import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
 import { cleanName, clearShots, myName, queueShot, tintFor, type ShotMsg } from './presence';
 import { addChat, cleanChat, clearBubbles, SELF } from './chat';
+import { cleanLook, myLook, watchLook, type Look } from './look';
 
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
@@ -51,6 +52,8 @@ export function parseCode(s: string): string {
 export const peers = new Map<string, GhostTrack>();
 /** Display names of the players in `peers`, by peer id. */
 export const names = new Map<string, string>();
+/** How the players in `peers` look (absent for players on older versions). */
+export const looks = new Map<string, Look>();
 /** Players in this channel or instance, you included. */
 export const playerCount = (): number => peers.size + 1;
 export const net = {
@@ -148,6 +151,7 @@ function connect(channel: number): void {
   room?.leave();
   peers.clear();
   names.clear();
+  looks.clear();
   clearShots();
   clearBubbles();
   resetBoost();
@@ -167,12 +171,19 @@ function connect(channel: number): void {
     else receive(meta.userId, val);
   });
   // names travel in their own user state: set once, not with every motion packet
-  const who = room.makeUserState<{ n: string }>('who', { n: myName() });
+  // (and so does your look, sent again whenever you change it)
+  type Who = { n: string; l?: Look };
+  const who = room.makeUserState<Who>('who', { n: myName(), l: myLook() });
+  const meet = (id: string, val: Who): void => {
+    names.set(id, cleanName(val.n));
+    if (val.l) looks.set(id, cleanLook(val.l)); else looks.delete(id);
+  };
   who.onChange((val, meta) => {
     if (meta.self) return;
-    if (meta.removed || !val) names.delete(meta.userId);
-    else names.set(meta.userId, cleanName(val.n));
+    if (meta.removed || !val) { names.delete(meta.userId); looks.delete(meta.userId); }
+    else meet(meta.userId, val);
   });
+  watchLook((l) => who.set({ n: myName(), l }));
   // A full room (we joined it empty) means everyone is in it: hop to the next.
   // (Private instances have nowhere to spill to: the 21st player just sees nobody.)
   room.onError((err) => {
@@ -196,10 +207,10 @@ function connect(channel: number): void {
     log('peer joined', ctx.userId.slice(0, 8), 'has position:', !!pos?.getAll()[ctx.userId]);
     const got = pos?.getAll()[ctx.userId];
     if (got) receive(ctx.userId, got);
-    const n = who.getAll()[ctx.userId]?.n;
-    if (n) names.set(ctx.userId, cleanName(n));
+    const w = who.getAll()[ctx.userId];
+    if (w?.n) meet(ctx.userId, w);
   });
-  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); clearBubbles(ctx.userId); });
+  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); looks.delete(ctx.userId); clearBubbles(ctx.userId); });
   net.joined = true;
 }
 

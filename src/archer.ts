@@ -1,4 +1,5 @@
 import { P } from './config';
+import { DEFAULT_LOOK, lookKey, lookPalette, type Look } from './look';
 /* ============================================================
    ARCHER SPRITE SHEET
    16x24 frames authored as character grids (facing right) and
@@ -165,29 +166,79 @@ export const POSE_FPS: Record<ArcherPose, number> = {
 
 export const ARCHER_W = 16, ARCHER_H = 24;
 
+/* Hair styles: the swept-back default is in the grids above. The others
+   redraw the back of the head (rows 8-11; ears and face stay) and, for long
+   hair, let it fall down the back over the cape (only cape pixels change,
+   so the bow, arms and quiver stay on top). */
+const SHORT_HEAD: Record<number, string> = {
+  8: '..oohhHSsssso...',
+  9: '...oooooSSoo....',
+  10: '..oCccoostto....',
+  11: '..oCcccottttgo..',
+};
+const LONG_HEAD: Record<number, string> = {
+  9: '..ohhhhoSSoo....',
+  10: '..ohhhhHostto...',
+  11: '..ohhhHHttttgo..',
+};
+/** Long hair over the cape: [row, first column, hair letters] (side view). */
+const LONG_BACK: [number, number, string][] = [[12, 2, 'ohhH'], [13, 2, 'ohhH'], [14, 3, 'ohH'], [15, 3, 'oo']];
+/** ...and seen from behind while climbing. */
+const LONG_CLIMB: [number, number, string][] = [[10, 5, 'HhhhhH'], [11, 6, 'hhhh'], [12, 6, 'Hhhh'], [13, 7, 'HH']];
+
+/** A frame's grid with a hair style applied. */
+export function styled(grid: string[], pose: ArcherPose, style: number): string[] {
+  // crouched low, and lying flat: the hair's out of sight, so keep the drawn grid
+  if (!style || pose === 'rush' || pose === 'prone') return grid;
+  const g = grid.slice();
+  const put = (row: number, col: number, s: string, only: string): void => {
+    const r = [...g[row]];
+    [...s].forEach((ch, i) => { if (only.includes(r[col + i])) r[col + i] = ch; });
+    g[row] = r.join('');
+  };
+  if (pose === 'climb') {
+    if (style === 2) for (const [row, col, s] of LONG_CLIMB) put(row, col, s, 'cC');
+    return g;
+  }
+  for (const [row, s] of Object.entries(style === 1 ? SHORT_HEAD : LONG_HEAD)) g[+row] = s;
+  if (style === 2) for (const [row, col, s] of LONG_BACK) put(row, col, s, 'cCo.');
+  return g;
+}
+
 /** Bake a grid; frames are ARCHER_W wide except wider ones (prone). */
-function bake(grid: string[], flip: boolean): HTMLCanvasElement {
+function bake(grid: string[], flip: boolean, pal: Record<string, string>): HTMLCanvasElement {
   const c = document.createElement('canvas');
   const W = grid[0].length;
   c.width = W; c.height = ARCHER_H;
   const x = c.getContext('2d') as CanvasRenderingContext2D;
   grid.forEach((row, y) => {
     for (let i = 0; i < W; i++) {
-      const col = PAL[row[flip ? W - 1 - i : i]];
+      const col = pal[row[flip ? W - 1 - i : i]];
       if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
     }
   });
   return c;
 }
 
-/** Baked frames, facing right; climb's second step is its mirror. */
-export function bakeArcher(): Record<ArcherPose, HTMLCanvasElement[]> {
+/** Baked frames for a look, facing right; climb's second step is its mirror. */
+export function bakeArcher(look: Look = DEFAULT_LOOK): Record<ArcherPose, HTMLCanvasElement[]> {
+  const pal = { ...PAL, ...lookPalette(look) };
   const out = {} as Record<ArcherPose, HTMLCanvasElement[]>;
   for (const p of Object.keys(GRIDS) as ArcherPose[]) {
-    out[p] = GRIDS[p].map((g) => bake(g, false));
-    if (p === 'climb') out[p].push(bake(GRIDS[p][0], true));
+    const grids = GRIDS[p].map((g) => styled(g, p, look.style));
+    out[p] = grids.map((g) => bake(g, false, pal));
+    if (p === 'climb') out[p].push(bake(grids[0], true, pal));
   }
   return out;
+}
+
+/** Baked frames, one set per look seen so far. */
+const baked = new Map<string, Record<ArcherPose, HTMLCanvasElement[]>>();
+export function archerFrames(look: Look): Record<ArcherPose, HTMLCanvasElement[]> {
+  const k = lookKey(look);
+  let f = baked.get(k);
+  if (!f) baked.set(k, (f = bakeArcher(look)));
+  return f;
 }
 
 /** Climb frame time from height: one hand-over-hand step every CLIMB_STEP px,
