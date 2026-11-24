@@ -28,6 +28,8 @@ import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../s
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
+import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
+import { BACKDROPS, particlesAt } from '../src/backdrop';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
 import { dev, devStops } from '../src/dev';
 import { devInput } from '../src/update';
@@ -1058,6 +1060,20 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
   check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');
+  // props and backdrops: every area with a tileset has its own; props paint inside their canvas
+  const inside = (paint: (p: (x: number, y: number, c: string, w?: number, h?: number) => void) => void, W: number, H: number): boolean => {
+    let ok = true, any = false;
+    paint((x, y, c, w = 1, h = 1) => { any = true; if (!/^#[0-9a-f]{3,8}$/i.test(c) || x < -0.5 || y < -0.5 || x + w > W + 0.5 || y + h > H + 0.5) ok = false; });
+    return ok && any;
+  };
+  const withSets = Object.keys(TILESETS).filter((a) => a !== 'Classic');
+  check('every area with a tileset has its own props and backdrop', withSets.every((a) => PROPS[a] && BACKDROPS[a]),
+    withSets.filter((a) => !PROPS[a] || !BACKDROPS[a]).join(', '));
+  check('every prop paints only inside its canvas', Object.values(PROPS).every((ps) => ps.every((p) => inside(p, PROP_W, PROP_H))));
+  let placed = 0;
+  for (let i = 0; i < 400; i++) { const k = propAt('Forest', i, 7); if (k !== null) { placed++; if (k < 0 || k >= PROPS.Forest.length) placed = -999; } }
+  check('props stand on a few tops, not most', placed > 20 && placed < 90, `${placed}/400`);
+  check('backdrop particles stay in view', Object.values(BACKDROPS).every((b) => !b.particles || particlesAt(b.particles, 3.7, 240, 180).every((q) => q.x >= -20 && q.x <= 240 && q.y >= -20 && q.y <= 180)));
   const hex = /^#[0-9a-f]{6}$/;
   let bad = '';
   for (const ts of Object.values(TILESETS)) {

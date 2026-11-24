@@ -108,6 +108,11 @@ const CLOUDS = (col: string, n: number, s: number, seed: number) => (p: BgPaint)
 
 export const BACKDROPS: Record<string, Backdrop> = {
   Classic: { far: CLOUDS('#ffffff14', 5, 6, 1), mid: CLOUDS('#ffffff20', 3, 10, 2) },
+  'Tide Pools': {
+    far: CLOUDS('#ffffff20', 5, 6, 40),
+    mid: (p) => { ridges(p, 100, 8, 12, '#2e5a7a50', 41); scatter(4, 42, (x, _y, _r, i) => { const by = 100 + (i % 2) * 128; p(x, by - 14, '#2e5a7a50', 6, 14); p(x + 1, by - 22, '#f4f7fc50', 4, 8); }); }, // sea stacks and a lighthouse or two
+    particles: { kind: 'bubbles', cols: ['#bfefff', '#ffffff'], n: 6 },
+  },
   Beach: {
     far: CLOUDS('#ffffff22', 6, 6, 3),
     mid: (p) => { // distant islands with palms
