@@ -1,3 +1,4 @@
+import { mobSize } from './mobart';
 import type { Fx, MobType, SkillDef, SkillKey } from './types';
 
 /* ============================================================
@@ -73,8 +74,10 @@ export const TILE = 16;
    skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
 export const SKILLS: Record<SkillKey, SkillDef> = {
   // Actives: 3 ranks; stats step from rank 1 to rank 3 so every rank is a big jump.
+  // `use` is the use time (see SkillDef); Twin Shot and its upgrades have no
+  // cooldown, so their pace is their use time alone (which Haste speeds up).
   Z: { key: 'Z', name: 'Twin Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
-       cd: 0.42, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
+       cd: 0, use: 0.5, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
@@ -101,11 +104,11 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6,
        desc: 'After Sky Toss: leap up to launched enemies' },
   S: { key: 'S', name: 'Shell Barrage', tag: 'Burst', job: 1, minLevel: 30, maxLevel: 3,
-       cd: 0.42, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
+       cd: 0, use: 0.5, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Branch upgrades: each competes with the other upgrade on the same slot.
   BS: { key: 'BS', name: 'Backstep Shot', tag: 'Reposition', job: 1, minLevel: 30, maxLevel: 3,
-       cd: 0.55, mp1: 3, mpMax: 4, dmg1: 150, dmgMax: 205, hits1: 2, hitsMax: 3, targets1: 2, targetsMax: 3,
+       cd: 0, use: 0.55, mp1: 3, mpMax: 4, dmg1: 150, dmgMax: 205, hits1: 2, hitsMax: 3, targets1: 2, targetsMax: 3,
        desc: 'Hop backward while firing forward' },
   VS: { key: 'VS', name: 'Vault Shot', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
@@ -123,6 +126,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   IR: { key: 'IR', name: 'Fervor', tag: 'Passive', job: 1, minLevel: 5, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.12,
         desc: 'Each Fervor stack gives more damage' },
+  HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
+        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.1,
+        desc: 'Attack speed up (shorter use time, not cooldowns)' },
 };
 
 export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key
@@ -146,10 +152,37 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Tide Pools', 'Beach'] },
   { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Tide Pools', 'Beach'] },
   { n: 'Hermit Crab',  lvl: 3,  hp: 240,  w: 18, h: 16, spd: 40,  dmg: 3,  col: '#e8b48a', areas: ['Beach'] },
-  { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 2,  col: '#f4f7fc', fly: true, areas: ['Beach'] },
-  { n: 'Boar',   lvl: 8,  hp: 420,  w: 23, h: 18, spd: 78,  dmg: 4,  col: '#e79ac4' },
-  { n: 'Wisp',       lvl: 14, hp: 700,  w: 16, h: 17, spd: 96,  dmg: 3,  col: '#b98cf5', fly: true },
-  { n: 'Iron Hog',   lvl: 28, hp: 1400, w: 26, h: 21, spd: 60,  dmg: 5,  col: '#8fa2b8' },
+  { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 2,  col: '#f4f7fc', fly: true, areas: ['Beach', 'Sky'] },
+  { n: 'Boar',   lvl: 8,  hp: 260,  w: 23, h: 18, spd: 78,  dmg: 4,  col: '#e79ac4', areas: ['Forest', '*'] },
+  { n: 'Wisp',       lvl: 14, hp: 220,  w: 16, h: 17, spd: 96,  dmg: 3,  col: '#b98cf5', fly: true, areas: ['Swamp', '*'] },
+  { n: 'Iron Hog',   lvl: 28, hp: 320,  w: 26, h: 21, spd: 60,  dmg: 5,  col: '#8fa2b8' },
+  // each area's own pair (art in mobart.ts; '*' also joins the pool for areas without a set)
+  { n: 'Beetle',         lvl: 6,  hp: 200, ...mobSize('Beetle'),         spd: 55,  dmg: 3, col: '#3a7a4a', areas: ['Forest'] },
+  { n: 'Rabbit',         lvl: 6,  hp: 160, ...mobSize('Rabbit'),         spd: 95,  dmg: 3, col: '#f4eee4', areas: ['Meadow'] },
+  { n: 'Bee',            lvl: 7,  hp: 140, ...mobSize('Bee'),            spd: 100, dmg: 3, col: '#f0c030', fly: true, areas: ['Meadow'] },
+  { n: 'Frog',           lvl: 10, hp: 190, ...mobSize('Frog'),           spd: 80,  dmg: 3, col: '#5aa84a', areas: ['Riverbank'] },
+  { n: 'Otter',          lvl: 11, hp: 230, ...mobSize('Otter'),          spd: 85,  dmg: 4, col: '#8a5a34', areas: ['Riverbank'] },
+  { n: 'Goat',           lvl: 10, hp: 260, ...mobSize('Goat'),           spd: 75,  dmg: 4, col: '#e8e4dc', areas: ['Hills', 'Mountain'] },
+  { n: 'Hawk',           lvl: 11, hp: 160, ...mobSize('Hawk'),           spd: 110, dmg: 4, col: '#8a5a34', fly: true, areas: ['Hills', 'Mountain', 'Sky'] },
+  { n: 'Bat',            lvl: 14, hp: 160, ...mobSize('Bat'),            spd: 105, dmg: 3, col: '#5a3a6a', fly: true, areas: ['Cave'] },
+  { n: 'Rock Crawler',   lvl: 15, hp: 280, ...mobSize('Rock Crawler'),   spd: 45,  dmg: 4, col: '#6a6878', areas: ['Cave'] },
+  { n: 'Slime',          lvl: 14, hp: 240, ...mobSize('Slime'),          spd: 50,  dmg: 3, col: '#7ac04a', areas: ['Swamp'] },
+  { n: 'Mushling',       lvl: 18, hp: 260, ...mobSize('Mushling'),       spd: 55,  dmg: 4, col: '#b4508a', areas: ['Mushroom Grotto'] },
+  { n: 'Spore Puff',     lvl: 19, hp: 180, ...mobSize('Spore Puff'),     spd: 60,  dmg: 4, col: '#c8a8f0', fly: true, areas: ['Mushroom Grotto'] },
+  { n: 'Crystal Golem',  lvl: 19, hp: 340, ...mobSize('Crystal Golem'),  spd: 40,  dmg: 5, col: '#7a6ac8', areas: ['Crystal Caverns'] },
+  { n: 'Shard Bat',      lvl: 19, hp: 170, ...mobSize('Shard Bat'),      spd: 110, dmg: 4, col: '#5a44b0', fly: true, areas: ['Crystal Caverns'] },
+  { n: 'Ruin Guardian',  lvl: 24, hp: 340, ...mobSize('Ruin Guardian'),  spd: 45,  dmg: 5, col: '#5a7a7a', areas: ['Sunken Ruins'] },
+  { n: 'Jellyfish',      lvl: 24, hp: 190, ...mobSize('Jellyfish'),      spd: 50,  dmg: 4, col: '#e8a0d8', fly: true, areas: ['Sunken Ruins'] },
+  { n: 'Windup Soldier', lvl: 24, hp: 280, ...mobSize('Windup Soldier'), spd: 70,  dmg: 5, col: '#a83a3a', areas: ['Clockwork Spire'] },
+  { n: 'Clockwork Bird', lvl: 24, hp: 180, ...mobSize('Clockwork Bird'), spd: 115, dmg: 4, col: '#a8803a', fly: true, areas: ['Clockwork Spire'] },
+  { n: 'Dream Moth',     lvl: 30, hp: 190, ...mobSize('Dream Moth'),     spd: 90,  dmg: 4, col: '#c8b0e8', fly: true, areas: ['Dreamwood'] },
+  { n: 'Shadow Fox',     lvl: 30, hp: 260, ...mobSize('Shadow Fox'),     spd: 105, dmg: 5, col: '#3a2e4a', areas: ['Dreamwood'] },
+  { n: 'Reflection',     lvl: 30, hp: 250, ...mobSize('Reflection'),     spd: 85,  dmg: 5, col: '#a8c8e8', areas: ['Mirror Lake'] },
+  { n: 'Ice Wisp',       lvl: 30, hp: 190, ...mobSize('Ice Wisp'),       spd: 95,  dmg: 4, col: '#c8e8ff', fly: true, areas: ['Mirror Lake'] },
+  { n: 'Star Sprite',    lvl: 36, hp: 180, ...mobSize('Star Sprite'),    spd: 120, dmg: 4, col: '#fff0a0', fly: true, areas: ['Starfall Observatory'] },
+  { n: 'Meteor Golem',   lvl: 36, hp: 360, ...mobSize('Meteor Golem'),   spd: 45,  dmg: 6, col: '#6a4a3a', areas: ['Starfall Observatory'] },
+  { n: 'Void Blossom',   lvl: 40, hp: 300, ...mobSize('Void Blossom'),   spd: 30,  dmg: 6, col: '#8a4ad8', areas: ['Void Garden'] },
+  { n: 'Null Wraith',    lvl: 40, hp: 220, ...mobSize('Null Wraith'),    spd: 100, dmg: 5, col: '#2a1a3a', fly: true, areas: ['Void Garden'] },
 ];
 
 

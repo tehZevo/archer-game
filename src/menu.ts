@@ -1,6 +1,7 @@
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net, newCode, parseCode } from './net';
 import { clearSave, hasSave, saving } from './save';
 import { cleanName, myName, NAME_MAX, setMyName } from './presence';
+import { openStylist, stylist, stylistKey } from './stylist';
 
 /* ============================================================
    MAIN MENU
@@ -8,10 +9,11 @@ import { cleanName, myName, NAME_MAX, setMyName } from './presence';
    this file is the state and the input handling, free of DOM
    and canvas so tests can drive it. Rows: Play, a public channel
    picker (with how many players each channel has), a private
-   instance code, a new code, your name, and Reset progress.
+   instance code, a new code, your name, your look (opens the
+   stylist window, see stylist.ts), and Reset progress.
    ============================================================ */
 
-export type ItemId = 'play' | 'channel' | 'code' | 'create' | 'name' | 'reset';
+export type ItemId = 'play' | 'channel' | 'code' | 'create' | 'name' | 'look' | 'reset';
 
 export const menu = {
   open: true,
@@ -34,7 +36,7 @@ export const menu = {
 export const MENU_TOP = 54, MENU_ROW = 14, MENU_X = 32, MENU_W = 176;
 
 export function items(): ItemId[] {
-  const it: ItemId[] = ['play', 'channel', 'code', 'create', 'name'];
+  const it: ItemId[] = ['play', 'channel', 'code', 'create', 'name', 'look'];
   if (hasSave()) it.push('reset');
   return it;
 }
@@ -114,6 +116,9 @@ export function activate(): void {
     case 'name':
       if (menu.edit === 'name') finishEdit(); else menu.edit = 'name';
       break;
+    case 'look':
+      openStylist();
+      break;
     case 'reset':
       if (!menu.confirmReset) { menu.confirmReset = true; break; }
       saving.enabled = false; clearSave();
@@ -125,6 +130,7 @@ export function activate(): void {
 /** A navigation key: up, down, left, right, enter, escape. */
 export function menuKey(k: string): void {
   if (!menu.open) return;
+  if (stylist.open) { stylistKey(k); return; }
   if (k === 'up' || k === 'down') {
     finishEdit();
     const it = items(), n = it.length;

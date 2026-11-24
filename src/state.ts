@@ -100,10 +100,10 @@ export function mobBounds(m: Mob): [number, number] {
 export const mobLevel = (stage: number): number => Math.max(1, stage - tierOf(stage)); // one town per depth below
 
 export function spawnMob(s: Spawn, type: MobType): void {
-  // Mobs scale with the player so the tower stays relevant up to Lv.100.
-  const scale = 1 + (player.level - 1) * 0.12;
-  const hp = Math.round(type.hp * scale);
+  // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
   const level = mobLevel(game.floor.number);
+  const scale = 1 + (level - 1) * 0.12;
+  const hp = Math.round(type.hp * scale);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
   const lo = s.minX ?? s.x - 110, hi = s.maxX ?? s.x + 110;
@@ -111,7 +111,7 @@ export function spawnMob(s: Spawn, type: MobType): void {
     x: spot.x, y: spot.y - type.h, w: type.w, h: type.h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: type.spd,
-    dmg: Math.round(type.dmg * (1 + (player.level - 1) * 0.06)),
+    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06)),
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level),
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,

@@ -13,6 +13,7 @@ import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
 import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
+import { stylist, stylistKey } from './stylist';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -20,6 +21,8 @@ export function update(dt: number): void {
   if (shop.open) { shopInput(); return; }
   // so does the trainer's
   if (trainer.open) { trainerInput(); return; }
+  // and the stylist's
+  if (stylist.open) { stylistInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }
@@ -122,9 +125,11 @@ export function update(dt: number): void {
     } else {
       // horizontal: accel toward target speed (the classic side-scroller walk over a few frames)
       const busy = player.cast === 'rush' ? 0.55 : 1;
+      // holding Down on the ground lies you flat: you can turn but not walk
+      const prone = player.onGround && !locked && held('down');
       let target = 0;
-      if (!locked && held('left'))  { target = -P.WALK * busy; player.face = -1; }
-      if (!locked && held('right')) { target =  P.WALK * busy; player.face =  1; }
+      if (!locked && held('left'))  { target = prone ? 0 : -P.WALK * busy; player.face = -1; }
+      if (!locked && held('right')) { target = prone ? 0 :  P.WALK * busy; player.face =  1; }
       if (!player.onGround) {
         // Air control: holding against your motion brakes toward a standstill
         // but never turns you around; otherwise momentum is kept.
@@ -165,7 +170,7 @@ export function update(dt: number): void {
         player.animState = 'climb';
       } else {
         player.animState = !player.onGround ? 'jump'
-          : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
+          : prone ? 'prone' : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
       }
     }
   }
@@ -288,6 +293,13 @@ function updateCamera(dt: number): void {
   const k = Math.min(1, CAM.LERP * dt);
   game.cam.x += (t.x - game.cam.x) * k;
   game.cam.y += (t.y - game.cam.y) * k;
+}
+
+/** The stylist's window in town: the same keys as from the menu (X closes too). */
+function stylistInput(): void {
+  for (const k of ['up', 'down', 'left', 'right', 'escape'] as const) if (pressed(k)) stylistKey(k);
+  if (pressed('z') || pressed('enter') || pressed(' ')) stylistKey('enter');
+  if (pressed('x')) stylistKey('escape');
 }
 
 /** Dev menu: Up/Down picks a stop, Z/Enter warps there, Esc or ` closes. */

@@ -117,7 +117,7 @@ export function makeShape(kind: string, x: number, baseY: number, width = 6, mir
 /** The enemies an area can field: its own set, or the general pool for areas without one yet. */
 export function areaMobs(area: string): MobType[] {
   const own = MOB_TYPES.filter((m) => m.areas?.includes(area));
-  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.areas);
+  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.areas || m.areas.includes('*'));
 }
 
 /** A floor's two enemy types, picked from its area's set (same for everyone
@@ -301,9 +301,11 @@ export function townFloor(n: number): Floor {
     spawns: [],
     portal: ups[0] ?? down, portals: [...ups, down],
     // the shopkeeper keeps a stall on the deck, left of the way down; from the
-    // third town up (Lanternhollow) a trainer stands to the right of it
+    // third town up (Lanternhollow) a trainer stands to the right of it; the
+    // stylist works on the ground right of the deck
     npcs: [
       { x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' },
+      { x: deckX + (deckW + 1) * TILE, y: ground.y, kind: 'stylist', name: 'STYLIST' },
       ...(blockOf(n) >= 2 ? [{ x: deckX + (deckW - 2) * TILE, y: deckTop, kind: 'trainer' as const, name: 'TRAINER' }] : []),
     ],
   };
