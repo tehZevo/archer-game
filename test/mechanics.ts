@@ -9,7 +9,8 @@ Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 **
 import { FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
-import { clearPressed, setKey } from '../src/input';
+import { textWidth } from '../src/font';
+import { clearPressed, REPEAT_DELAY, REPEAT_RATE, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { groupSize, makeShape, SHAPES } from '../src/floor';
@@ -22,7 +23,7 @@ import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
-import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
+import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -821,6 +822,39 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(Math.ceil(2 / P.STEP));
   game.dmgNums.length = 0; damage(m, 1);
   check('after a pause a new stack starts at the bottom, right away', game.dmgNums[0].delay === 0 && game.dmgNums[0].y === m.y - 8);
+}
+
+// --- menu polish: key repeat, local-only rows, a steady caret ---
+{
+  // Esc menu: holding Down keeps moving
+  release(); arena(30); game.pause = { col: 1, row: 0 };
+  setKey('down', true);
+  const frames = Math.ceil((REPEAT_DELAY + 4 * REPEAT_RATE) / P.STEP) + 1;
+  for (let i = 0; i < frames; i++) { update(P.STEP); clearPressed(); }
+  const moved = game.pause.row;
+  setKey('down', false); step(5);
+  check('holding Down in the Esc menu repeats the move', moved >= 3, `moved ${moved}`);
+  check('releasing stops the repeat', game.pause.row === moved);
+  game.pause = null;
+
+  // local only: the code rows are skipped and can't be used
+  const mem = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, String(v)); }, removeItem: (k: string) => { mem.delete(k); },
+  };
+  net.offline = 'NEEDS HTTPS';
+  initMenu(() => {}, 1);
+  const seen = new Set<string>();
+  for (let i = 0; i < 10; i++) { menuKey('down'); seen.add(items()[menu.sel]); }
+  const ci = items().indexOf('code');
+  menuTap(MENU_X + 5, MENU_TOP + ci * MENU_ROW + 2);
+  check('local only: the private code rows are skipped', !seen.has('code') && !seen.has('create') && seen.has('name') && disabled('code'));
+  check('local only: tapping the code row does nothing', items()[menu.sel] !== 'code' && menu.edit === null);
+  net.offline = '';
+  check('online: the code rows are back', !disabled('code') && !disabled('create'));
+  delete (globalThis as { localStorage?: unknown }).localStorage;
+
+  check('the caret blinks between same-width glyphs, so text never shifts', textWidth('AB_') === textWidth('AB '));
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

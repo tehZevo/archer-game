@@ -48,3 +48,18 @@ export function held(id: string): boolean {
 export function clearPressed(): void {
   for (const k in keys) if (k.endsWith('_p')) keys[k] = false;
 }
+
+/** Menu key repeat: a held key fires once on press, again after REPEAT_DELAY,
+ *  then every REPEAT_RATE seconds. */
+export const REPEAT_DELAY = 0.35, REPEAT_RATE = 0.08;
+const repT: Record<string, number> = Object.create(null);
+/** Like pressed(), but keeps firing while the key is held (call once per step). */
+export function repeated(id: string, dt: number): boolean {
+  const k = id.toLowerCase();
+  if (pressed(k)) { repT[k] = REPEAT_DELAY; return true; }
+  if (!held(k)) { repT[k] = 0; return false; }
+  repT[k] = (repT[k] ?? REPEAT_DELAY) - dt;
+  if (repT[k] > 0) return false;
+  repT[k] += REPEAT_RATE;
+  return true;
+}
