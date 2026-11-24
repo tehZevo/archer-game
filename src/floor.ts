@@ -131,11 +131,16 @@ function mobForFloor(n: number): MobType {
  *  shortest tops (6 tiles or fewer), one more per 2 tiles, up to 8. */
 export const groupSize = (tiles: number): number => Math.max(4, Math.min(8, 4 + Math.floor((tiles - 6) / 2)));
 
+/** Floors are laid out in a world this tall, then trimmed to fit (see Floor.h). */
+export const GEN_H = 640;
+const SKY_MARGIN = 2 * TILE; // clear sky kept above the portal
+const MIN_H = 180;           // never shorter than the view
+
 export function generateFloor(n: number): Floor {
   rng = seeded(hashStr(roomId(n, net.channel)));
   const town = n % 10 === 0;
-  const groundH = 8 * TILE;
-  const groundY = snap(WORLD.h - groundH);
+  const groundH = 4 * TILE; // a slab, not a wall (it was 8 tiles, mostly unseen)
+  const groundY = snap(GEN_H - groundH);
   const ground: Platform = { x: 0, y: groundY, w: WORLD.w, h: groundH, ground: true };
 
   const platforms: Platform[] = [ground];
@@ -237,5 +242,15 @@ export function generateFloor(n: number): Floor {
   // The exit portal sits centred on the highest platform's walkable top tile.
   const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56 };
 
-  return { number: n, platforms, ropes, ladders, spawns, portal, town };
+  // Trim the sky: shift everything up so the summit's portal sits a couple of
+  // tiles under the top of the world, and size this floor to fit (never
+  // shorter than the view). Whole tiles, so the 16px grid stays put.
+  const top = Math.min(portal.y - portal.h, ...platforms.map((p) => p.y)) - SKY_MARGIN;
+  const shift = Math.max(0, Math.min(Math.floor(top / TILE) * TILE, GEN_H - MIN_H));
+  for (const p of platforms) p.y -= shift;
+  for (const c of [...ropes, ...ladders]) { c.y1 -= shift; c.y2 -= shift; }
+  for (const s of spawns) { s.y -= shift; s.spots?.forEach((q) => { q.y -= shift; }); }
+  portal.y -= shift;
+
+  return { number: n, platforms, ropes, ladders, spawns, portal, town, h: GEN_H - shift };
 }

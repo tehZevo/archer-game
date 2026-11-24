@@ -298,4 +298,6 @@ export interface Floor {
   spawns: Spawn[];
   portal: Portal;
   town: boolean;
+  /** World height for this floor: its content plus a little sky (WORLD.h while on it). */
+  h: number;
 }

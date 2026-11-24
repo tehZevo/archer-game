@@ -121,6 +121,7 @@ export const SPAWN_SPREAD = 64;
 
 export function gotoFloor(n: number): void {
   game.floor = generateFloor(n);
+  WORLD.h = game.floor.h;
   game.mobs.length = 0;
   game.shots.length = 0;
   game.fx.length = 0;
