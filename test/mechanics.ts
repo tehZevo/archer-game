@@ -1,5 +1,5 @@
 import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
-import { areaOf, isAreaEnd, isTown, MAP_AREAS, placeName, TIER_FLOORS, TOWN_NAMES, townStage } from '../src/world';
+import { AREAS, areaName, isAreaEnd, isTown, lastTown, MAP_AREAS, placeName, townStage } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
 // fuzzing: if a check needs more than a second, shrink it.
@@ -16,6 +16,7 @@ import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, se
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
+import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
@@ -26,11 +27,14 @@ import { fmtNum } from '../src/util';
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
 import { styled } from '../src/archer';
-import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
+import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
+import { lastTown } from '../src/world';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
+import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
+import { BACKDROPS, particlesAt } from '../src/backdrop';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
 import { dev, devStops } from '../src/dev';
 import { devInput } from '../src/update';
@@ -76,7 +80,7 @@ function dummy(x: number, hp = 1e6): Mob {
   const walk = (): Platform[] => game.floor.platforms.filter((p) => !p.inner && !p.ground);
   const r = (a: number, b: number): number => a + Math.random() * (b - a);
   let through = 0, trials = 0;
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 4]) {
     gotoFloor(n); game.mobs = []; game.floor.spawns = [];
     const slopes = game.floor.platforms.filter((p) => p.slope);
     for (let k = 0; k < 120 && slopes.length; k++) {
@@ -135,7 +139,7 @@ function dummy(x: number, hp = 1e6): Mob {
 // --- physics: down-jump then Glide never falls back through the dropped platform ---
 {
   let through = 0, trials = 0;
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 4]) {
     gotoFloor(n); game.mobs = []; game.floor.spawns = [];
     const tops = game.floor.platforms.filter((p) => !p.ground && !p.inner && !p.slope).slice(0, 8);
     for (const t of tops) for (const k of [2, 5]) {
@@ -274,7 +278,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- enemies: waves never exceed a zone's cap; mobs stay on their platform ---
 {
   let over = 0;
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 4]) {
     release(); gotoFloor(n); player.x = 4; player.invuln = 999;
     [...game.mobs].slice(0, 3).forEach(killMob);
     step(Math.round((P.WAVE_EVERY + 1) / P.STEP));
@@ -401,6 +405,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
   check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
 }
+{
+  // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
+  arena(25); dummy(130);
+  cast('Z');
+  const base = player.useT;
+  check('Twin Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
+  player.useT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
+  const rCd = player.cd.R, rUse = player.useT;
+  player.ranks.HA = 3; player.useT = 0; player.cd.R = 0; cast('R');
+  check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.useT - rUse / 1.1) < 1e-6);
+  check('Haste leaves cooldowns alone', player.cd.R === rCd);
+  player.useT = 0; cast('Z');
+  check('a hasted Twin Shot fires about 10% faster', Math.abs(player.useT - base / 1.1) < 1e-6);
+  player.ranks.HA = 0; player.ranks.R = 0;
+}
 
 // --- private instances ---
 {
@@ -431,8 +450,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 
 // --- archer sprite sheet ---
-check('every archer frame is 16x24', Object.values(GRIDS).every((fs) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === 16))));
+check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS).every(([p, fs]) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === (p === 'prone' ? 24 : 16)))));
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
+check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('prone') === POSES.length - 1 && POSES[0] === 'idle');
+{
+  // holding Down on the ground lies you flat: no walking, but you can turn
+  arena(1); player.x = 300; player.vx = 0; player.face = 1;
+  setKey('down', true); setKey('left', true); step(20);
+  check('holding Down on the ground lies you flat and stops you walking', player.animState === 'prone' && player.face === -1 && Math.abs(player.x - 300) < 1);
+  setKey('left', false); setKey('down', false); step(2);
+  check('letting go of Down stands you back up', player.animState === 'idle');
+}
 
 // --- bug: fast ground moves sank into slopes ---
 {
@@ -471,7 +499,7 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
   tap('c');
   for (let i = 0; i < 40; i++) { step(1); apex = Math.max(apex, y0 - player.y); }
   check('a jump rises about 35px (25% lower than 46.5)', apex > 32 && apex < 38, `apex ${apex.toFixed(1)}`);
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 4]) {
     gotoFloor(n);
     const blocks = new Set(game.floor.platforms.filter((p) => p.block !== undefined).map((p) => p.block)).size;
     const span = game.floor.platforms[0].y - game.floor.portal.y;
@@ -489,14 +517,19 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
   (globalThis as { localStorage?: unknown }).localStorage = {
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
-  arena(35); gotoFloor(10);
+  const areaId = (name: string): number => AREAS.find((a) => a.name === name)!.id;
+  arena(35); gotoFloor(13, areaId('Forest')); // Mossgate
   player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.BS = 3; player.ranks.E = 2;
   save();
   const want = JSON.stringify(snapshot());
   arena(1); player.ap = 0; player.sp = 0; player.ranks.BS = 0; player.ranks.E = 0;
   const floor = load();
-  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 10 }) === want && floor === 10);
-  check('you resume on the latest town (floor 1 before the first)', lastTown(10) === 10 && lastTown(9) === 10 && lastTown(2) === 4 && lastTown(1) === 4);
+  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 13 }) === want && floor === 13 && net.area === areaId('Forest'));
+  const at = (n: number, a: string): string => { const t = lastTown(n, areaId(a)); return `${t.stage}:${AREAS[t.area].name}`; };
+  check('you resume on the latest town on your branch (floor 1 before the first)',
+    at(13, 'Forest') === '13:Forest' && at(12, 'Meadow') === '7:Beach' && at(5, 'Beach') === '3:Tide Pools' && at(2, 'Tide Pools') === '1:Tide Pools');
+  gotoFloor(10, areaId('Meadow')); save(); arena(1); gotoFloor(1, 0);
+  check('a save on the floors of an area resumes in the town below it', load() === 7 && net.area === areaId('Beach'));
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply('junk') === null);
   apply({ v: 1, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, floor: 0 });
@@ -535,7 +568,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   };
   check('mob EXP ignores the player level', expAt(3, 1) === expAt(3, 40));
   check('mobs on higher floors are worth more EXP', expAt(8, 5) > expAt(2, 5));
-  check('mob level counts combat floors, not towns', mobLevel(1) === 1 && mobLevel(3) === 3 && mobLevel(5) === 5 && mobLevel(10) === 9);
+  check('mob level counts combat floors, not towns', mobLevel(1) === 1 && mobLevel(2) === 2 && mobLevel(4) === 3 && mobLevel(8) === 6);
   {
     // EXP: ~10 same-level kills per level at Lv.1, ~100 at Lv.99 (vs level-100 enemies), smooth between
     const kills = (lv: number, mob: number) => Math.ceil(expToNext(lv) / mobExp(mob));
@@ -545,9 +578,11 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     for (let l = 1; l < 99; l++) if (kills(l + 1, l + 1) < kills(l, l) || kills(l + 1, l + 1) > kills(l, l) + 3) smooth = false;
     check('kills per level climb steadily from 10 to 100', smooth && Math.abs(killsToLevel(50) - Math.sqrt(10 * 100)) < 1);
     check('higher-level enemies are worth more, and a mob carries its level', mobExp(20) > mobExp(10) && Math.abs(mobExp(5, 10) - mobExp(5) * 10) <= 10);
-    gotoFloor(5); spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
+    gotoFloor(2); spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
     const m = game.mobs[game.mobs.length - 1];
-    check('a spawned mob has its floor\'s level and that level\'s EXP', m.level === 5 && m.exp === mobExp(5));
+    check('a spawned mob has its floor\'s level and that level\'s EXP', m.level === 2 && m.exp === mobExp(2));
+    const hpHere = m.hpMax; player.level = 40; spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
+    check('enemy HP scales with the floor, not the player', game.mobs[game.mobs.length - 1].hpMax === hpHere);
   }
   arena(5); const m = dummy(140, 1); const before = game.dmgNums.length;
   killMob(m);
@@ -740,35 +775,41 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('with WebCrypto and WebRTC, multiplayer can connect', canConnect() && net.offline === '');
 }
 
-// --- towns: a designed layout, two ways up (two routes), one way down ---
+// --- towns: a designed layout, ways up into the areas above, one way down ---
 {
   const stand = (pt: { x: number; y: number }): void => {
     player.x = pt.x; player.y = pt.y - player.h; player.vx = 0; player.vy = 0; player.onGround = true; player.climb = null;
   };
-  net.route = 0; release(); gotoFloor(4);
+  const areaId = (name: string): number => AREAS.find((a) => a.name === name)!.id;
+  const beach = areaId('Beach'), forest = areaId('Forest'), meadow = areaId('Meadow');
+  release(); gotoFloor(7, beach); // Driftwood Rest
   const f = game.floor, layout = JSON.stringify(f.platforms);
-  net.channel = 3; gotoFloor(4); const other = JSON.stringify(game.floor.platforms); net.channel = 1;
+  net.channel = 3; gotoFloor(7, beach); const other = JSON.stringify(game.floor.platforms); net.channel = 1;
   check('towns are a designed layout (the same on every channel and town)', layout === other);
-  gotoFloor(4);
+  gotoFloor(7, beach);
   const [upL, upR, down] = game.floor.portals;
-  check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 5 && upR.to === 5 && down.to === 3 && game.mobs.length === 0);
+  check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 8 && upR.to === 8
+    && upL.area === forest && upR.area === meadow && down.to === 3 && down.area === 0 && game.mobs.length === 0);
   const deck = game.floor.platforms.filter((p) => p.block === 1 && !p.inner);
   check('the down portal stands on the plaza deck, reached by a ladder and a rope',
     deck.some((p) => p.y === down.y) && game.floor.ladders[0].y1 === down.y && game.floor.ropes[0].y1 === down.y
     && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
-  check('a town room is shared by both routes', roomId(4, 1, '', 1) === roomId(4, 1, '', 0) && roomId(5, 1, '', 1) !== roomId(5, 1, '', 0));
+  check('every area has its own rooms, its town too (the first area keeps the plain ids)',
+    roomId(13, 1, '', forest) !== roomId(13, 1, '', meadow) && roomId(8, 1, '', forest) !== roomId(8, 1, '', meadow) && !roomId(3, 1, '', 0).includes('-a'));
 
   player.hp = 5; player.mp = 1;
   stand(upR); tap('up');
-  const routeB = JSON.stringify(game.floor.platforms);
-  check('the right portal goes up on route B', game.floor.number === 5 && net.route === 1);
+  const meadowFloor = JSON.stringify(game.floor.platforms);
+  check('the right portal goes up into the right area', game.floor.number === 8 && net.area === meadow);
   check('arriving does not refill HP or MP', player.hp === 5 && player.mp === 1);
-  gotoFloor(4); stand(game.floor.portals[0]); tap('up');
-  check('the left portal goes up on route A, a different layout', game.floor.number === 5 && net.route === 0 && JSON.stringify(game.floor.platforms) !== routeB);
-  gotoFloor(4); stand(game.floor.portals[2]); tap('up');
-  check('the down portal goes back to the floor below', game.floor.number === 3);
-  check('skills work in town', (() => { gotoFloor(4); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
-  net.route = 0; release();
+  gotoFloor(7, beach); stand(game.floor.portals[0]); tap('up');
+  check('the left portal goes up into the left area, a different layout', game.floor.number === 8 && net.area === forest && JSON.stringify(game.floor.platforms) !== meadowFloor);
+  gotoFloor(13, meadow); stand(game.floor.portals[game.floor.portals.length - 1]); tap('up');
+  check("a town's way down goes to the town it branched off (not the floor below)", game.floor.number === 7 && game.floor.town && net.area === beach);
+  gotoFloor(3, 0); stand(game.floor.portals[game.floor.portals.length - 1]); tap('up');
+  check("the first town's way down leads to the floor below it", game.floor.number === 2 && net.area === 0);
+  check('skills work in town', (() => { gotoFloor(7, beach); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.useT > 0; })());
+  net.area = 0; release();
 }
 
 // --- the Esc menu's skill list scrolls instead of overflowing ---
@@ -786,7 +827,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // patrol: every enemy keeps moving (none parked against an edge)
   let frozen = 0, total = 0;
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 4]) {
     release(); gotoFloor(n); player.invuln = 1e9; player.x = 4; player.y = 0; player.climb = null;
     const last = new Map<object, number>(), still = new Map<object, number>();
     for (let i = 0; i < 150; i++) {
@@ -926,34 +967,32 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
-// --- places: areas of 10 floors, named towns between them, two areas per town ---
+// --- places: a tree of areas, each with its own town ---
 {
-  check('an area\'s floors are followed by a town', !isTown(3) && isTown(4) && !isTown(5) && isTown(10));
-  check('places read as area + floor within it', placeName(1, 0) === 'Beach 1' && placeName(3, 0) === 'Beach 3' && placeName(5, 0) === `${areaOf(1, 0)} 1`);
-  check('towns have their own names', placeName(4, 0) === TOWN_NAMES[0] && placeName(10, 1) === TOWN_NAMES[1] && new Set(TOWN_NAMES).size === TOWN_NAMES.length);
-  let differ = true;
-  for (let b = 1; b < 6; b++) if (areaOf(b, 0) === areaOf(b, 1)) differ = false;
-  check('the two ways out of a town lead into two different areas', differ && areaOf(0, 0) === 'Beach');
-  check('the floor before a town is the area end (the boss floor, later)', isAreaEnd(3) && isAreaEnd(9) && !isAreaEnd(4));
+  const areaId = (name: string): number => AREAS.find((a) => a.name === name)!.id;
+  check('an area\'s floors are followed by a town', !isTown(2) && isTown(3) && !isTown(4) && isTown(7) && isTown(13));
+  check('the game starts in the Tide Pools, below the Beach', AREAS[0].name === 'Tide Pools' && AREAS[AREAS[0].up[0]].name === 'Beach');
+  check('places read as area + floor within it', placeName(1, 0) === 'Tide Pools 1' && placeName(4, areaId('Beach')) === 'Beach 1' && placeName(9, areaId('Forest')) === 'Forest 2');
+  check('every area has its own town, all named apart', placeName(13, areaId('Forest')) === 'Mossgate' && placeName(13, areaId('Meadow')) === 'Lanternhollow'
+    && new Set(AREAS.map((a) => a.town)).size === AREAS.length);
+  check('the tower is a strict tree: one parent each, no cycles, depths step by one',
+    AREAS.every((a) => a.id === 0 ? a.parent === -1 : AREAS[a.parent].up.includes(a.id) && AREAS[a.parent].depth === a.depth - 1)
+    && AREAS.every((a) => a.up.length <= 2));
+  check('a fork leads into two different areas', AREAS.every((a) => a.up.length < 2 || areaName(a.up[0]) !== areaName(a.up[1])));
+  check('branches can end (a town with no way up)', AREAS.some((a) => a.up.length === 0 && a.depth < 6));
+  check('the floor before a town is the area end (the boss floor, later)', isAreaEnd(2) && isAreaEnd(6) && isAreaEnd(12) && !isAreaEnd(7));
 
-  // the fork: the two areas above Driftwood Rest are separate stages, each
-  // with its own floors, and each ends in its own town
-  gotoFloor(5, 0);
-  const forest = `${placeName(5, 0)} from ${placeName(4, 0)}`;
-  gotoFloor(5, 1);
-  check('the two ways up from a town are separate stages with their own floors',
-    placeName(5, 0) === 'Forest 1' && placeName(5, 1) === 'Meadow 1' &&
-    placeName(9, 0) === 'Forest 5' && placeName(9, 1) === 'Meadow 5', forest);
-  check('each branch ends in its own town', placeName(10, 0) === placeName(10, 1) && placeName(10, 0) === TOWN_NAMES[1]);
-
-  net.route = 0; release(); gotoFloor(4);
+  release(); gotoFloor(7, areaId('Beach'));
   const [l, r, d] = game.floor.portals.map((p) => p.label);
-  check('town portals are labelled with where they go', l === placeName(5, 0) && r === placeName(5, 1) && d === 'Beach 3' && l !== r, `${l} | ${r} | ${d}`);
-  gotoFloor(3);
-  check('the way into a town is labelled with its name', game.floor.portal.label === TOWN_NAMES[0]);
-  gotoFloor(9, 1);
-  check('the HUD place follows your route', placeName(game.floor.number, net.route) === `${areaOf(1, 1)} 5`);
-  net.route = 0; release();
+  check('town portals are labelled with where they go', l === 'Forest 1' && r === 'Meadow 1' && d === 'Saltwick', `${l} | ${r} | ${d}`);
+  gotoFloor(12, areaId('Meadow'));
+  check('the way into a town is labelled with its own name', game.floor.portal.label === 'Lanternhollow');
+  check('the HUD place follows your area', placeName(game.floor.number, net.area) === 'Meadow 5');
+  gotoFloor(townStage(AREAS[areaId('Mushroom Grotto')].depth), areaId('Mushroom Grotto'));
+  check('a town at the end of a branch has only its way down', game.floor.portals.length === 1 && game.floor.portals[0].to < game.floor.number);
+  gotoFloor(game.floor.number + 1);
+  check('nothing lies above the end of a branch (a warp past it stays in its town)', game.floor.town && placeName(game.floor.number, net.area) === 'Sporehollow');
+  net.area = 0; release();
 }
 
 // --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
@@ -1022,12 +1061,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
   check('every area on the map has a tileset (Classic until it gets its own)', ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
-  check('Clockwork Spire is on the map', [...Array(12).keys()].some((b) => areaOf(b, 0) === 'Clockwork Spire' || areaOf(b, 1) === 'Clockwork Spire'));
-  const own = [...MAP_AREAS.slice(0, 15), 'Mountain', 'Sky']; // the areas that have their own sets
-  // (that's every area in the planned route)
+  check('Clockwork Spire is on the map', MAP_AREAS.includes('Clockwork Spire'));
+  const fallback = ['Old Keep', 'Ember Wastes', 'Sky Reef', 'Chapel Spire', 'Summit']; // no sets of their own yet
+  const own = MAP_AREAS.filter((a) => !fallback.includes(a));
   check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
   check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');
+  // props and backdrops: every area with a tileset has its own; props paint inside their canvas
+  const inside = (paint: (p: (x: number, y: number, c: string, w?: number, h?: number) => void) => void, W: number, H: number): boolean => {
+    let ok = true, any = false;
+    paint((x, y, c, w = 1, h = 1) => { any = true; if (!/^#[0-9a-f]{3,8}$/i.test(c) || x < -0.5 || y < -0.5 || x + w > W + 0.5 || y + h > H + 0.5) ok = false; });
+    return ok && any;
+  };
+  const withSets = Object.keys(TILESETS).filter((a) => a !== 'Classic');
+  check('every area with a tileset has its own props and backdrop', withSets.every((a) => PROPS[a] && BACKDROPS[a]),
+    withSets.filter((a) => !PROPS[a] || !BACKDROPS[a]).join(', '));
+  check('every prop paints only inside its canvas', Object.values(PROPS).every((ps) => ps.every((p) => inside(p, PROP_W, PROP_H))));
+  let placed = 0;
+  for (let i = 0; i < 400; i++) { const k = propAt('Forest', i, 7); if (k !== null) { placed++; if (k < 0 || k >= PROPS.Forest.length) placed = -999; } }
+  check('props stand on a few tops, not most', placed > 20 && placed < 90, `${placed}/400`);
+  check('backdrop particles stay in view', Object.values(BACKDROPS).every((b) => !b.particles || particlesAt(b.particles, 3.7, 240, 180).every((q) => q.x >= -20 && q.x <= 240 && q.y >= -20 && q.y <= 180)));
   const hex = /^#[0-9a-f]{6}$/;
   let bad = '';
   for (const ts of Object.values(TILESETS)) {
@@ -1067,10 +1120,12 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   setKey('`', true); step(1); setKey('`', false); step(1);
   check('` opens the dev menu', dev.open);
   const stops = devStops();
-  check('the dev menu lists the start and the towns', stops[0].stage === 1 && stops.slice(1).every((s) => isTown(s.stage)) && stops[1].name === TOWN_NAMES[1]);
-  check('the dev menu labels towns by the floor they follow', stops[1].label === `${TIER_FLOORS[1]}` && stops[2].label === `${TIER_FLOORS[2]}` && stops[0].label === '1');
+  check('the dev menu lists the start and every town', stops[0].stage === 1 && stops.length === AREAS.length + 1
+    && stops.slice(1).every((s, i) => isTown(s.stage) && s.area === i && s.name.trim() === AREAS[i].town));
+  check('the dev menu labels towns by their area', stops[2].label === AREAS[1].name);
   dev.sel = 2; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
-  check('picking a town warps there and closes the menu', game.floor.number === stops[2].stage && game.floor.town && !dev.open);
+  check('picking a town warps there and closes the menu', game.floor.number === stops[2].stage && net.area === stops[2].area && game.floor.town && !dev.open);
+  net.area = 0;
   dev.on = false;
   // text chat
   check('chat keeps only what the font draws, upper-cased and capped',
@@ -1100,7 +1155,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // rooms by hour: floors carry the UTC hour you entered them; towns never do; layouts ignore it
   check('the hour stamp is the UTC hour, YYYYMMDDHH', hourStamp(Date.UTC(2026, 10, 24, 14, 59, 59)) === '2026112414' && hourStamp(Date.UTC(2026, 10, 24, 15, 0, 0)) === '2026112415');
   check('floor rooms are tagged with the hour', roomId(5, 2, '', 0, '2026112414') === 'eurekaland-f5-c2-h2026112414' && roomId(5, 1, 'ABCDE', 0, '2026112414').endsWith('-pABCDE-h2026112414'));
-  check('towns have no hour tag', roomId(4, 1, '', 0, '2026112414') === 'eurekaland-f4-c1');
+  check('towns have no hour tag', roomId(3, 1, '', 0, '2026112414') === 'eurekaland-f3-c1');
   check('no hour yet: no tag', roomId(5, 1, '', 0, '') === 'eurekaland-f5-c1');
   const was = net.hour;
   net.hour = '2026112414'; gotoFloor(4); const a = JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
@@ -1113,9 +1168,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // enemies: two types per floor from the area's set; each platform fields one or both
   const beach = areaMobs('Beach').map((m) => m.n);
   check('the Beach has its own enemies (snail, crab, hermit crab, gull)', ['Garden Snail', 'Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
-  check('areas without a set use the general pool', areaMobs('Swamp').every((m) => !m.areas) && areaMobs('Swamp').length >= 2);
+  check('areas without a set use the general pool', areaMobs('Old Keep').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Old Keep').length >= 2);
+  const withOwn = Object.keys(TILESETS).filter((a) => !['Classic'].includes(a));
+  check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
+    withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
+  let artOk = true;
+  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1]) {
+    paintMob(name, f, (x, y, c, w = 1, h = 1) => { if (x < 0 || y < 0 || x + w > look.w || y + h > look.h || !/^#[0-9a-f]{6}$/i.test(c)) artOk = false; });
+  }
+  check('enemy art paints inside its box (the hitbox)', artOk);
+  check('every enemy with painted art uses its box as its size', MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h));
   let pairsOk = true, singles = 0, doubles = 0;
-  for (let n = 1; n <= 9; n++) {
+  for (const n of [1, 2, 4, 5, 6]) { // the Tide Pools and the Beach
     gotoFloor(n);
     const ground = game.floor.spawns[game.floor.spawns.length - 1].types;
     const [a, b] = ground;
@@ -1125,7 +1189,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
       if (z.types.length === 1) singles++; else doubles++;
     }
   }
-  check('each Beach floor fields two different beach enemies', pairsOk);
+  check('each Tide Pools and Beach floor fields two different beach enemies', pairsOk);
   check('some platforms field one type, some both', singles > 0 && doubles > 0, `${singles} single, ${doubles} both`);
   const seq = () => { let i = 0; return () => [0.1, 0.9, 0.5][i++ % 3]; };
   check('a floor\'s pair is fixed by its seed', JSON.stringify(floorMobs(3, seq())) === JSON.stringify(floorMobs(3, seq())));
@@ -1166,7 +1230,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     const ok = poses.every((p) => GRIDS[p].every((g) => {
       const s = styled(g, p, st);
       // same size, and below the head only cape, outline or empty pixels change
-      return s.length === g.length && s.every((r) => r.length === 16)
+      return s.length === g.length && s.every((r, y) => r.length === g[y].length)
         && s.every((r, y) => y < 12 || [...r].every((ch, x) => ch === g[y][x] || 'cCo.'.includes(g[y][x])));
     }));
     check(`hair style ${st}: frames keep their size; the body, bow and arms are untouched`, ok);

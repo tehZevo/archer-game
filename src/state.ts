@@ -1,5 +1,5 @@
 import { CAM, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
-import { blockSize, tierOf } from './world';
+import { AREAS, areaFor, tierOf, townStage } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
@@ -96,13 +96,13 @@ export function mobBounds(m: Mob): [number, number] {
 /** The level of the enemies on a stage, which sets the EXP (see mobExp) and
  *  coins they're worth: one per combat floor climbed (towns don't count), so
  *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
-export const mobLevel = (stage: number): number => Math.max(1, stage - Math.floor((stage - 1) / blockSize(tierOf(stage))));
+export const mobLevel = (stage: number): number => Math.max(1, stage - tierOf(stage)); // one town per depth below
 
 export function spawnMob(s: Spawn, type: MobType): void {
-  // Mobs scale with the player so the tower stays relevant up to Lv.100.
-  const scale = 1 + (player.level - 1) * 0.12;
-  const hp = Math.round(type.hp * scale);
+  // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
   const level = mobLevel(game.floor.number);
+  const scale = 1 + (level - 1) * 0.12;
+  const hp = Math.round(type.hp * scale);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
   const lo = s.minX ?? s.x - 110, hi = s.maxX ?? s.x + 110;
@@ -110,7 +110,7 @@ export function spawnMob(s: Spawn, type: MobType): void {
     x: spot.x, y: spot.y - type.h, w: type.w, h: type.h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: type.spd,
-    dmg: Math.round(type.dmg * (1 + (player.level - 1) * 0.06)),
+    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06)),
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level),
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
@@ -130,8 +130,13 @@ export function spawnWave(): void {
 /** How far either side of the ground's centre a player can arrive, px. */
 export const SPAWN_SPREAD = 64;
 
-export function gotoFloor(n: number, route?: number): void {
-  if (route !== undefined) net.route = route; // picked at a town: the floors above follow it
+export function gotoFloor(n: number, area?: number): void {
+  if (area !== undefined) net.area = area; // picked at a town: the floors above follow it
+  // keep the area in step with the stage (dev warps step across towns); a
+  // branch that ends below the stage stops at its own town
+  const fit = areaFor(n, net.area);
+  if (fit === null) n = townStage(AREAS[net.area].depth);
+  else net.area = fit;
   game.floor = generateFloor(n);
   WORLD.h = game.floor.h;
   game.mobs.length = 0;

@@ -6,7 +6,9 @@ import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
-import { areaFor } from './world';
+import { areaName } from './world';
+import { drawBackdrop } from './backdropdraw';
+import { PROP_H, PROP_W, propAt, propsFor } from './props';
 import { localPose, looks, names, net, peers } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
@@ -41,7 +43,7 @@ export function resize(): void {
 /** `?area=Cave` previews an area's tileset on any floor (e.g. one not on the map yet). */
 const previewArea = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('area') : null;
 /** The tileset of the floor being drawn. */
-const tileset = (): Tileset => tilesetFor(previewArea ?? areaFor(game.floor.number, net.route));
+const tileset = (): Tileset => tilesetFor(previewArea ?? areaName(net.area));
 
 function drawBackground(ts: Tileset): void {
   const { w, h } = game.view;
@@ -49,6 +51,8 @@ function drawBackground(ts: Tileset): void {
   g.addColorStop(0, ts.sky[0]); g.addColorStop(0.55, ts.sky[1]); g.addColorStop(1, ts.sky[2]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
+  // the area's parallax layers and drifting particles (towns use the area below them)
+  drawBackdrop(ctx, ts.name, game.cam.x, game.cam.y, w, h, performance.now() / 1000);
 }
 
 const TS = 16;
@@ -85,6 +89,40 @@ function drawDecorations(ts: Tileset): void {
       const s = TB.bottomDeco(ts, variantAt(tx, ty, 2));
       if (s) ctx.drawImage(s.c, x, y + TS);
     }
+  });
+}
+
+/** Props baked per area: one canvas per prop (see props.ts). */
+const propCanvases = new Map<string, HTMLCanvasElement[]>();
+function bakedProps(area: string): HTMLCanvasElement[] {
+  let cs = propCanvases.get(area);
+  if (!cs) {
+    cs = propsFor(area).map((paint) => {
+      const c = document.createElement('canvas');
+      c.width = PROP_W; c.height = PROP_H;
+      const g = c.getContext('2d')!;
+      paint((x, y, col, w = 1, h = 1) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); });
+      return c;
+    });
+    propCanvases.set(area, cs);
+  }
+  return cs;
+}
+
+/** Props on exposed tops with ground either side, kept clear of portals,
+ *  people, ropes and ladders (they never collide; they just shouldn't hide those). */
+function drawProps(ts: Tileset): void {
+  const cs = bakedProps(ts.name);
+  const f = game.floor;
+  const clear = (x: number, y: number): boolean =>
+    !f.portals.some((p) => Math.abs(p.x - x) < 30 && Math.abs(p.y - y) < 8)
+    && !(f.npcs ?? []).some((n) => Math.abs(n.x - x) < 24 && Math.abs(n.y - y) < 8)
+    && ![...f.ropes, ...f.ladders].some((c) => Math.abs(c.x - x) < 18 && y >= c.y1 - 8 && y <= c.y2 + 8);
+  eachTile((x, y, nb) => {
+    if (nb & NB.N || !(nb & NB.W) || !(nb & NB.E)) return;
+    const i = propAt(ts.name, x / TS, y / TS);
+    if (i === null || !clear(x + TS / 2, y)) return;
+    ctx.drawImage(cs[i], x + TS / 2 - PROP_W / 2, y - PROP_H);
   });
 }
 
@@ -166,7 +204,7 @@ function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pos
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
-  ctx.drawImage(img, -ARCHER_W / 2, -ARCHER_H);
+  ctx.drawImage(img, -img.width / 2, -ARCHER_H);
   ctx.restore();
 }
 
@@ -176,14 +214,15 @@ tintCv.width = ARCHER_W; tintCv.height = ARCHER_H;
 const tintCtx = tintCv.getContext('2d') as CanvasRenderingContext2D;
 /** The frame washed with a colour (only where the frame has pixels). */
 function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
+  if (tintCv.width !== img.width) tintCv.width = img.width; // the prone frame is wider
   tintCtx.globalCompositeOperation = 'source-over';
   tintCtx.globalAlpha = 1;
-  tintCtx.clearRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.clearRect(0, 0, img.width, ARCHER_H);
   tintCtx.drawImage(img, 0, 0);
   tintCtx.globalCompositeOperation = 'source-atop';
   tintCtx.globalAlpha = 0.45;
   tintCtx.fillStyle = col;
-  tintCtx.fillRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.fillRect(0, 0, img.width, ARCHER_H);
   return tintCv;
 }
 
@@ -284,6 +323,7 @@ export function render(): void {
   ctx.save();
   ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
   drawPlatforms(ts);
+  drawProps(ts);
   for (const r of game.floor.ropes) drawRope(ts, r);
   for (const l of game.floor.ladders) drawLadder(ts, l);
   drawDecorations(ts);

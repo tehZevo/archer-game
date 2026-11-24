@@ -2,6 +2,8 @@
 // 1px blocks; the base-resolution canvas + image-rendering:pixelated keeps them
 // crisp. Built once at boot, drawn with drawImage.
 
+import { MOB_ART, mobSize, paintMob } from './mobart';
+
 export interface Sprite {
   c: HTMLCanvasElement;
   x: CanvasRenderingContext2D;
@@ -159,6 +161,12 @@ const gullSprite = (f: number): Sprite => grid(f ? [
   '..................',
 ], { o: '#2a3442', w: '#f4f7fc', g: '#9aa6b8', k: '#0d1424', Y: '#f0c040' });
 
+/** An enemy from mobart.ts, baked into its two frames. */
+const artMob = (name: string, fps: number): MobAnim => {
+  const { w, h } = mobSize(name);
+  return anim((f) => { const s = make(w, h); paintMob(name, f, (x, y, col, gw = 1, gh = 1) => px(s, x, y, col, gw, gh)); return s; }, 2, fps);
+};
+
 export const SPR = {
   portal: portalSprite(),
   /** Enemy animations: frames in order, and how fast they play. */
@@ -170,5 +178,6 @@ export const SPR = {
     'Crab': anim(crabSprite, 2, 7),
     'Hermit Crab': anim(hermitSprite, 2, 5),
     'Gull': anim(gullSprite, 2, 5),
+    ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
   } as Record<string, MobAnim>,
 };

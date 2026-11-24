@@ -8,6 +8,7 @@ import { update } from '../src/update';
 import { ICON_GLYPHS } from '../src/icons';
 import { SKILLS } from '../src/config';
 import { rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
+import { net } from '../src/net';
 
 let failures = 0;
 function check(name: string, cond: boolean): void {
@@ -76,7 +77,7 @@ reset();
 setKey('z', true);
 step(1 + Math.ceil(P.Z_WINDUP / P.STEP)); // the arrows fly after the bow-draw windup
 check('Twin Shot fires (muzzle flash, no projectile)', game.fx.some((f) => f.type === 'muzzle') && game.shots.length === 0);
-check('Twin Shot sets cd', player.cd.Z > 0);
+check('Twin Shot sets its use time', player.useT > 0);
 setKey('z', false);
 
 // --- 7. combat: a hitbox kills a low-hp mob and awards exp ---
@@ -141,14 +142,14 @@ step(1);
 check('portal advances the floor', game.floor.number === floor0 + 1);
 setKey('up', false);
 
-// --- 12. after each area's floors comes a town (the Beach is 3 floors) ---
-gotoFloor(4);
-check('stage 4 (after Beach 3) is a town', game.floor.town === true && game.mobs.length === 0);
+// --- 12. after each area's floors comes a town (the Tide Pools are 2 floors) ---
+gotoFloor(3, 0);
+check('stage 3 (after Tide Pools 2) is a town', game.floor.town === true && game.mobs.length === 0);
 player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
 player.onGround = true;
 setKey('up', true);
 step(1);
-check('town portal leads on to the next area', game.floor.number === 5);
+check('town portal leads on to the next area', game.floor.number === 4 && net.area === 1);
 setKey('up', false);
 
 // every skill (bases, upgrades, passives) has its own 14x14 icon glyph

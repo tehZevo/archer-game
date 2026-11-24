@@ -15,8 +15,8 @@ export const MAX_PER_CHANNEL = 20;
 // One room per floor; players spread across numbered channels.
 const APP_ID = 'tehZevo/archer-game';
 /** Public rooms are per floor + channel; a private instance (net.code) is one room per floor. */
-export const roomId = (floor: number, channel: number, code = net.code, route = net.route, hour = net.hour): string =>
-  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route) + hourTag(floor, hour) + devTag();
+export const roomId = (floor: number, channel: number, code = net.code, area = net.area, hour = net.hour): string =>
+  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + areaTag(area) + hourTag(floor, hour) + devTag();
 /* Rooms by hour: a floor's rooms are tagged with the UTC hour you entered
    it (e.g. -h2026112414), so peers left over from earlier sessions are left
    behind. The hour is fixed when you join a floor's room (through a portal,
@@ -26,8 +26,9 @@ export const roomId = (floor: number, channel: number, code = net.code, route = 
 /** The UTC hour stamp for a time: YYYYMMDDHH. */
 export const hourStamp = (ms: number): string => new Date(ms).toISOString().slice(0, 13).replace(/[-T]/g, '');
 const hourTag = (floor: number, hour: string): string => (hour && !isTown(floor) ? `-h${hour}` : '');
-/** Route suffix: none on route 0 (the original ids) and none on towns, where both routes meet. */
-const routeTag = (floor: number, route: number): string => (route > 0 && !isTown(floor) ? `-r${route}` : '');
+/** Area suffix: none for the first area (its original ids); every other area,
+ *  and its own town, has its own rooms. */
+const areaTag = (area: number): string => (area > 0 ? `-a${area}` : '');
 
 /* ---------------- private instances ---------------- */
 /** Letters for instance codes: no I or O, which read as 1 and 0. */
@@ -63,9 +64,8 @@ export const net = {
   started: false,
   /** Why multiplayer is off, if it is ('' = fine). */
   offline: '',
-  /** Which way you went at the last town (0 = left, 1 = right): the floors
-   *  above a town come in two routes, each its own layout and rooms. */
-  route: 0,
+  /** The area (branch of the tower) you're in: an index into AREAS (world.ts). */
+  area: 0,
   /** The UTC hour stamp of the floor room we're in (see hourStamp). */
   hour: '',
 };
