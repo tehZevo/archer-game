@@ -97,13 +97,16 @@ export interface MobType {
   dmg: number;
   col: string;
   fly?: boolean;
+  /** Areas this enemy lives in (see world.ts); none = the fallback pool for areas without their own set. */
+  areas?: string[];
 }
 
 /** A spawn zone: one per platform that has enemies. Waves top it up to `cap`. */
 export interface Spawn {
   x: number;
   y: number;
-  t: number;
+  /** Enemy types (MobType names) this zone spawns, picked at random per enemy. */
+  types: string[];
   /** Surface spots (tile centres) a mob can appear on; defaults to (x, y). */
   spots?: { x: number; y: number }[];
   /** Max mobs alive from this zone at once (default 1). */
@@ -147,6 +150,8 @@ export interface Mob {
   /** Set once the player attacks it; only then does it chase the player. */
   aggro: boolean;
   hitFlash: number;
+  /** Seconds left to show the HP bar; set on each hit, so undamaged enemies show none. */
+  barT: number;
   anim: number;
   spawn: Spawn;
 }
