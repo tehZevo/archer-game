@@ -1,3 +1,4 @@
+import type { BossState } from './boss';
 export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR';
 
 /** The four core stats, each upgraded with ability points (AP). */
@@ -154,6 +155,8 @@ export interface Mob {
   barT: number;
   anim: number;
   spawn: Spawn;
+  /** Set on an area's boss: what it's doing (see boss.ts). */
+  boss?: BossState;
 }
 
 /** Anything the ground physics apply to. x is the horizontal centre. */

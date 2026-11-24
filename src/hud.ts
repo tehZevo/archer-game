@@ -14,6 +14,7 @@ import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
 import { dev, DEV_ROWS, devStops } from './dev';
+import { bossAlive } from './boss';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
 import { text, textWidth } from './font';
@@ -63,6 +64,18 @@ function wrench(x: number, y: number): void {
   at(3, 4, 1, 1); at(2, 5, 1, 1); at(1, 6, 2, 1);                                  // handle down-left
 }
 
+/** The boss's name and HP across the bottom of the screen, over the HP/MP bars. */
+function drawBossBar(w: number, h: number): void {
+  const b = bossAlive();
+  if (!b) return;
+  const bw = 150, bx = Math.round((w - bw) / 2), by = h - 30;
+  const fill = Math.max(b.hp > 0 ? 1 : 0, Math.round((bw - 2) * clamp(b.hp / b.hpMax, 0, 1)));
+  text(ctx, b.name.toUpperCase(), w / 2, by - 9, 1, '#ff9f9f', 'center');
+  ctx.fillStyle = '#000'; ctx.fillRect(bx, by, bw, 5);
+  ctx.fillStyle = '#3a1a1a'; ctx.fillRect(bx + 1, by + 1, bw - 2, 3);
+  ctx.fillStyle = '#e05a5a'; ctx.fillRect(bx + 1, by + 1, fill, 3);
+}
+
 function drawHUDItems(): void {
   const { w, h } = game.view;
   if (menu.open) { hudShadow(false); drawMenu(); return; } // the title menu replaces the HUD
@@ -93,6 +106,7 @@ function drawHUDItems(): void {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
     text(ctx, `${pts} - ESC`, pad, ly, 1, '#ffd166', 'left');
   }
+  drawBossBar(w, h);
 
   // skill bar (top-right): Z, Q, W, E, R as 16x16 icons, no panel background
   const n = SKILL_BAR.length, sw = 16, gap = 5;

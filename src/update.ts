@@ -1,7 +1,7 @@
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
 import { passiveBonus } from './progress';
-import { cameraTarget, gainExp, game, gotoFloor, mobBounds, player, spawnWave } from './state';
+import { cameraTarget, gainExp, game, gotoFloor, logMsg, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, revive } from './combat';
@@ -12,6 +12,7 @@ import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
 import { dev, devStops } from './dev';
+import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -177,13 +178,15 @@ export function update(dt: number): void {
   const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
   // Up beside a town NPC talks to them (before the portals: they never overlap)
   if (talk()) return;
-  if (p && pressed('up')) {
+  if (p && pressed('up') && !portalOpen(p.to)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
+  else if (p && pressed('up')) {
     sfx.portal();
     gotoFloor(p.to, p.area);
     return;
   }
 
   updateMobs(dt);
+  updateQuakes(dt);
   updateEconomy(dt); // coin piles fall and fade; X picks up, A/S drink
   updateRush(dt); // after the mobs move, so the ones being pushed stay in front
 
@@ -222,6 +225,7 @@ function updateMobs(dt: number): void {
     if (m.hitFlash > 0) m.hitFlash -= dt;
     if (m.barT > 0) m.barT -= dt;
     m.anim += dt * ANIM_RATE;
+    if (m.boss) { m.stun = 0; m.airTime = 0; } // bosses shrug off stuns and launches
     if (m.stun > 0) { m.stun -= dt; m.vx *= 0.8; }
     else if (m.airTime > 0) { m.airTime -= dt; m.vx *= 0.9; }
     else {
@@ -231,7 +235,8 @@ function updateMobs(dt: number): void {
       // player is over their own platform: past its end they'd just stand
       // pressed against the edge, so they go back to patrolling
       const reachable = player.x >= lo - 8 && player.x <= hi + 8;
-      if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
+      if (m.boss) bossMove(m, dt, lo, hi);
+      else if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
         m.dir = Math.sign(d) || 1;
         m.vx += clamp(d * 4 - m.vx, -2400 * dt, 2400 * dt) * 0.5;
         m.vx = clamp(m.vx, -m.spd, m.spd);
@@ -248,15 +253,7 @@ function updateMobs(dt: number): void {
         && player.y < m.y + m.h && m.y < player.y + player.h;
       if (touching && m.atkCd <= 0) {
         m.atkCd = 1.1;
-        if (player.invuln <= 0) {
-          player.hp = Math.max(0, player.hp - m.dmg);
-          player.combatT = P.COMBAT_TIME;
-          player.invuln = 1.0;
-          sfx.hit();
-          game.dmgNums.push({
-            x: player.x, y: player.y - 14, v: m.dmg, t: 1, crit: false, vy: -80, col: '#ff8f8f',
-          });
-        }
+        hurtPlayer(m.dmg);
       }
       m.atkCd = Math.max(0, m.atkCd - dt);
     }

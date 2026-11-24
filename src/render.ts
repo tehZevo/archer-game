@@ -14,6 +14,7 @@ import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './arche
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
+import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
 import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
@@ -107,10 +108,11 @@ function drawPortal(p: Portal): void {
   const s = SPR.portal;
   const bob = Math.sin(performance.now() / 300) * 2;
   const down = p.to < game.floor.number;
-  // a way down glows a different colour
+  // a way down glows a different colour; a sealed one (boss still up) is dark
   if (down) ctx.filter = 'hue-rotate(150deg)';
+  if (!portalOpen(p.to)) ctx.filter = 'grayscale(1) brightness(0.55)';
   ctx.drawImage(s.c, Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
-  if (down) ctx.filter = 'none';
+  ctx.filter = 'none';
   if (p.label) {
     // centred over the portal, but kept inside the world (town names are long)
     const half = textWidth(p.label) / 2 + 2;
@@ -120,23 +122,32 @@ function drawPortal(p: Portal): void {
 }
 
 function drawMob(m: Mob): void {
-  const a = SPR.mob[m.name];
+  const a = SPR.mob[m.type.n];
   const s = a?.frames[mobFrame(m, a.frames.length, a.fps)];
+  // a boss is its enemy grown huge; winding up an attack, it shakes and flashes
+  const k = m.boss ? BOSS.SCALE : 1, wind = windingUp(m);
+  const shake = wind ? (Math.floor(performance.now() / 50) % 2 ? 1 : -1) : 0;
   // Walkers animate through their frames; fliers also float. The HP bar and
   // stun star stay anchored to the mob's body position, so they never move with it.
   const bob = m.fly ? -Math.cos(m.anim * 1.6) * 3 : 0;
   ctx.save();
   if (m.hitFlash > 0) ctx.globalAlpha = 0.75;
+  if (wind && Math.floor(performance.now() / 100) % 2) ctx.filter = 'brightness(1.8) saturate(0.6)';
   if (s) {
     // sprites face right: mirror them when the enemy heads left
-    ctx.translate(Math.round(m.x), Math.round(m.y + bob));
-    if (m.dir < 0) ctx.scale(-1, 1);
+    ctx.translate(Math.round(m.x) + shake, Math.round(m.y + bob));
+    ctx.scale(m.dir < 0 ? -k : k, k);
     ctx.drawImage(s.c, -Math.round(s.w / 2), 0);
   }
   ctx.restore();
+  if (wind) {
+    const ex = Math.round(m.x), ey = Math.round(m.y) - 18;
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) text(ctx, '!', ex + ox, ey + oy, 2, '#000', 'center');
+    text(ctx, '!', ex, ey, 2, '#ff6b6b', 'center');
+  }
 
   // HP bar under the enemy, for BAR_SHOW s after each hit: a 2px fill in a 1px black frame, corners cut.
-  if (m.barT > 0) {
+  if (m.barT > 0 && !m.boss) {
     const bw = Math.max(12, Math.round(m.w * 0.8)), pct = clamp(m.hp / m.hpMax, 0, 1);
     const bx = Math.round(m.x - bw / 2), by = Math.round(m.y + m.h) + 2;
     const fill = pct > 0 ? Math.max(1, Math.round((bw - 2) * pct)) : 0;
@@ -151,6 +162,16 @@ function drawMob(m: Mob): void {
     const sx = Math.round(m.x), sy = Math.round(m.y) - 6;
     ctx.fillStyle = '#ffd166';
     ctx.fillRect(sx - 2, sy, 5, 1); ctx.fillRect(sx, sy - 2, 1, 5); ctx.fillRect(sx - 1, sy - 1, 3, 3);
+  }
+}
+
+/** A slam's shockwave: dust kicked up along the ground, spreading and fading. */
+function drawQuake(q: { x: number; y: number; t: number }): void {
+  const u = 1 - q.t / QUAKE_T, r = BOSS.QUAKE_R * (0.3 + 0.7 * u);
+  ctx.fillStyle = `rgba(230, 210, 170, ${(1 - u) * 0.9})`;
+  for (let i = -6; i <= 6; i++) {
+    const x = q.x + (i / 6) * r, hgt = Math.round((1 - Math.abs(i) / 7) * 8 * (1 - u) + 2);
+    ctx.fillRect(Math.round(x) - 2, Math.round(q.y) - hgt, 4, hgt);
   }
 }
 
@@ -287,6 +308,7 @@ export function render(): void {
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
   game.mobs.forEach(drawMob);
+  quakes.forEach(drawQuake);
   game.shots.forEach(drawShot);
   drawGhosts();
   drawPlayer();

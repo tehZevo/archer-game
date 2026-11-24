@@ -4,6 +4,7 @@ import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
+import { spawnBoss } from './boss';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
 } from './types';
@@ -146,6 +147,7 @@ export function gotoFloor(n: number, area?: number): void {
   game.dmgNums.length = 0;
   game.waveT = 0;
   spawnWave();
+  spawnBoss();
   // Drop the player onto the ground slab. The portal sits on the summit
   // platform, so use the ground's own centre — the portal's x can fall in a
   // gap between the ground's tiles on narrower worlds.

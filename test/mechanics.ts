@@ -23,6 +23,7 @@ import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { BOSS, bossAlive, quakes } from '../src/boss';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
@@ -1160,6 +1161,57 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a standing enemy holds frame 0', mobFrame({ ...walk, vx: 0, anim: 3.3 }, 4, 8) === 0);
   check('a stunned enemy holds frame 0', mobFrame({ ...walk, stun: 1, anim: 3.3 }, 4, 8) === 0);
   check('a hovering flier keeps flapping', mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4) === 1);
+}
+
+{
+  // bosses: an area's last floor has one, and its way up stays sealed until it's beaten
+  release();
+  let endN = 1; while (!isAreaEnd(endN)) endN++;
+  gotoFloor(endN - 1, 0);
+  check('no boss before the last floor of an area', !game.mobs.some((m) => m.boss));
+  gotoFloor(townStage(0), 0);
+  check('no boss in a town', !game.mobs.some((m) => m.boss));
+  gotoFloor(endN, 0);
+  const bs = game.mobs.filter((m) => m.boss);
+  check("an area's last floor has exactly one boss", bs.length === 1);
+  const boss = bs[0];
+  check('the boss is one of its enemies, grown huge and much tougher',
+    boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
+  const hp0 = player.hpMax;
+  player.hpMax = player.hp = 1e7;
+  const ground = game.floor.platforms[0];
+  const stand = (x: number): void => { player.x = x; player.y = ground.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.plat = ground; player.climb = null; player.invuln = 0; };
+  const up = game.floor.portals.find((q) => q.to > endN)!;
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('the way up is sealed while the boss stands', game.floor.number === endN && bossAlive() === boss);
+  boss.stun = 2; boss.airTime = 1; step(1);
+  check('the boss shrugs off stuns and launches', boss.stun === 0 && boss.airTime === 0);
+  // charge: far away, it winds up, then rushes
+  boss.x = WORLD.w * 0.75; boss.y = ground.y - boss.h; boss.vy = 0; boss.boss = { act: 'walk', t: 0, cd: 0, air: false };
+  stand(40);
+  step(1);
+  check('far from you, the boss winds up a charge', boss.boss.act === 'windCharge');
+  step(Math.ceil(BOSS.WIND / P.STEP) + 2);
+  check('then rushes at you', boss.boss.act === 'charge' && boss.vx < -boss.spd * 2, `${boss.boss.act} ${boss.vx}`);
+  // slam: the landing hits a player on the ground nearby, not one far off
+  const slam = (dx: number, from = WORLD.w / 2): number => {
+    boss.x = from; boss.y = ground.y - boss.h; boss.vx = boss.vy = 0; boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+    stand(from + dx); quakes.length = 0;
+    const before = player.hp;
+    for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = Math.min(player.invuln, 0.5); game.mobs.splice(0, game.mobs.length, boss); step(1); stand(from + dx); }
+    return before - player.hp;
+  };
+  check("a slam's shockwave hurts a player on the ground nearby", slam(boss.w / 2 + 40) > 0 && quakes.length === 1);
+  check('but not one well out of reach (it leaps toward you)', slam(WORLD.w - 60, 30) === 0);
+  // beaten: the way up opens
+  killMob(boss);
+  check('beating the boss clears it', !bossAlive());
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('then the way up opens', game.floor.number > endN);
+  player.hpMax = player.hp = hp0;
+  release();
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
