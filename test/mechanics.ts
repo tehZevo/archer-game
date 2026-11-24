@@ -1,4 +1,4 @@
-import { buy, NPC_R, COIN_LIFE, coinValue, drops, PRICES, shop, wallet } from '../src/economy';
+import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, shop, wallet } from '../src/economy';
 import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
@@ -853,7 +853,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('X does nothing when the pile is out of reach', drops.length === 1 && wallet.coins === 0);
   player.x = pile.x + 6; step(1); tap('x');
   check('X beside the pile picks it up', drops.length === 0 && wallet.coins === pile.v);
-  killMob(dummy(player.x, 1)); step(Math.ceil((COIN_LIFE + 1) / P.STEP));
+  check('a picked-up pile flies into you, then is gone', flying.length === 1 && (step(Math.ceil(FLY_T / P.STEP) + 1), flying.length === 0));
+  check('piles last 5 minutes', COIN_LIFE === 300);
+  killMob(dummy(player.x, 1)); drops[0].t = 1; step(Math.ceil(1.5 / P.STEP));
   check('an uncollected pile fades away', drops.length === 0);
 
   // potions
@@ -927,7 +929,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.stats.dex = 0; player.stats.vit = 0; recalcStats();
 }
 
-// --- multi-hit damage numbers stack, one every 0.25s ---
+// --- multi-hit damage numbers stack, one every NUM_GAP (1/8 s) ---
 {
   arena(10); const m = dummy(150);
   game.dmgNums.length = 0;
@@ -935,10 +937,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const ns = game.dmgNums.slice();
   const delays = ns.map((d) => +(d.delay ?? 0).toFixed(3)).join(',');
   const lines = ns.every((d, i) => Math.abs(ns[0].y - d.y - i * NUM_LINE) < 1e-9);
-  check('hits at once: each number waits 0.25s after the last', delays === [0, 1, 2, 3].map((k) => +(k * NUM_GAP).toFixed(3)).join(','), delays);
+  check('hits at once: each number waits 1/8 s after the last', NUM_GAP === 0.125 && delays === [0, 1, 2, 3].map((k) => +(k * NUM_GAP).toFixed(3)).join(','), delays);
   check('...and sits one line above it', lines);
-  step(Math.ceil(0.3 / P.STEP));
-  check('the second number shows after ~0.25s, the later ones still wait', (game.dmgNums[1].delay ?? 0) <= 0 && (game.dmgNums[2].delay ?? 0) > 0);
+  step(Math.ceil(0.15 / P.STEP));
+  check('the second number shows after ~1/8 s, the later ones still wait', (game.dmgNums[1].delay ?? 0) <= 0 && (game.dmgNums[2].delay ?? 0) > 0);
   step(Math.ceil(2 / P.STEP));
   game.dmgNums.length = 0; damage(m, 1);
   check('after a pause a new stack starts at the bottom, right away', game.dmgNums[0].delay === 0 && game.dmgNums[0].y === m.y - 8);

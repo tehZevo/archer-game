@@ -1,24 +1,38 @@
 import { ctx } from './canvas';
-import { game } from './state';
+import { game, player } from './state';
 import { text } from './font';
-import { drops, npcNear, PRICES, shop, SHOP_ITEMS, wallet } from './economy';
+import { drops, FLY_T, flying, npcNear, PRICES, shop, SHOP_ITEMS, wallet } from './economy';
 import type { Npc } from './types';
 
 /* Coins, town NPCs and the shop window (drawing only; see economy.ts). */
 
 const GOLD = '#ffd166', DARK_GOLD = '#c9952f', HI = '#eaf2ff', DIM = '#8ea3c2';
 
-/** A coin pile: 1-3 stacked coins by value; blinks before it fades. */
+/** A coin pile: 1-3 stacked coins by value. Landed piles bob slowly up and
+ *  down; a pile blinks before it fades; picked-up piles fly into you. */
 export function drawCoins(): void {
+  const now = performance.now() / 1000;
   for (const c of drops) {
     if (c.t < 5 && Math.floor(c.t * 6) % 2 === 0) continue;
-    const n = c.v >= 20 ? 3 : c.v >= 8 ? 2 : 1;
-    const x = Math.round(c.x), y = Math.round(c.y);
-    for (let i = 0; i < n; i++) {
-      const cx = x - 3 + (i - (n - 1) / 2) * 4, cy = y - 4 - (i % 2) * 2;
-      ctx.fillStyle = DARK_GOLD; ctx.fillRect(Math.round(cx), cy, 5, 4);
-      ctx.fillStyle = GOLD; ctx.fillRect(Math.round(cx) + 1, cy, 3, 3);
-    }
+    // a slow 2px bob, each pile in its own phase
+    const bob = c.landed ? Math.round((Math.sin(now * 2.2 + c.x * 0.37) - 1) * 1.5) : 0;
+    pile(c.x, c.y + bob, c.v);
+  }
+  // flying: ease from where it lay to your chest, shrinking to one coin
+  const tx = player.x, ty = player.y + player.h / 2;
+  for (const f of flying) {
+    const k = Math.min(1, f.t / FLY_T), e = k * k * (3 - 2 * k);
+    pile(f.x + (tx - f.x) * e, f.y + (ty - f.y) * e - Math.sin(k * Math.PI) * 8, k > 0.5 ? 1 : f.v);
+  }
+}
+
+function pile(px: number, py: number, v: number): void {
+  const n = v >= 20 ? 3 : v >= 8 ? 2 : 1;
+  const x = Math.round(px), y = Math.round(py);
+  for (let i = 0; i < n; i++) {
+    const cx = x - 3 + (i - (n - 1) / 2) * 4, cy = y - 4 - (i % 2) * 2;
+    ctx.fillStyle = DARK_GOLD; ctx.fillRect(Math.round(cx), cy, 5, 4);
+    ctx.fillStyle = GOLD; ctx.fillRect(Math.round(cx) + 1, cy, 3, 3);
   }
 }
 
