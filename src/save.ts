@@ -1,5 +1,6 @@
 import { CARRY_MAX, wallet } from './economy';
-import { lastTown } from './world';
+import { areaFor, lastTown, START_AREA } from './world';
+import { net } from './net';
 import { SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
 import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
@@ -28,6 +29,8 @@ export interface SaveData {
   stats: Record<string, number>;
   ranks: Record<string, number>;
   floor: number;
+  /** The area (branch) of that floor (absent in older saves: the leftmost branch). */
+  area?: number;
   /** Coins and potions (absent in older saves: start empty). */
   coins?: number;
   potions?: { hp: number; mp: number };
@@ -43,7 +46,7 @@ export function snapshot(): SaveData {
     v: VERSION,
     level: player.level, exp: Math.floor(player.exp), ap: player.ap, sp: player.sp,
     stats: { ...player.stats }, ranks: { ...player.ranks },
-    floor: game.floor.number,
+    floor: game.floor.number, area: net.area,
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
   };
 }
@@ -53,7 +56,6 @@ const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
   return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
 };
 
-export { lastTown } from './world';
 
 /** Apply a save to the player; returns the floor to resume on, or null if the save is unusable. */
 export function apply(d: unknown): number | null {
@@ -79,7 +81,11 @@ export function apply(d: unknown): number | null {
   wallet.coins = int(s.coins, 0, 1e9, 0);
   wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, 0);
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, 0);
-  return lastTown(int(s.floor, 1, 9999, 1));
+  // resume at the latest town on the saved branch (it also sets the area)
+  const floor = int(s.floor, 1, 9999, 1);
+  const at = lastTown(floor, areaFor(floor, int(s.area, 0, 9999, START_AREA)) ?? START_AREA);
+  net.area = at.area;
+  return at.stage;
 }
 
 /** Off after a reset, so the page-hide save can't write the old progress back. */

@@ -13,10 +13,10 @@ import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
-import { dev, devStops } from './dev';
+import { dev, DEV_ROWS, devStops } from './dev';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
-import { text } from './font';
+import { text, textWidth } from './font';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
 
@@ -83,7 +83,7 @@ function drawHUDItems(): void {
     text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
     ly += 9;
   }
-  text(ctx, placeName(game.floor.number, net.route), pad, ly, 1, '#8ea3c2', 'left');
+  text(ctx, placeName(game.floor.number, net.area), pad, ly, 1, '#8ea3c2', 'left');
   ly += 9;
   // other players' kills are speeding up our waves
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
@@ -156,11 +156,15 @@ function drawDev(): void {
   const { w, h } = game.view;
   ctx.fillStyle = '#050a14e0'; ctx.fillRect(0, 0, w, h);
   text(ctx, 'DEV - WARP', w / 2, 4, 2, '#ff9f6b', 'center');
-  devStops().forEach((s, i) => {
-    const y = 26 + i * 11, on = i === dev.sel;
-    if (on) { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 1; ctx.strokeRect(60.5, y - 2.5, w - 121, 11); }
-    text(ctx, s.name.toUpperCase(), 66, y, 1, on ? '#eaf2ff' : '#8ea3c2', 'left');
-    text(ctx, s.label, w - 66, y, 1, '#8ea3c2', 'right');
+  const stops = devStops();
+  const top = Math.max(0, Math.min(dev.sel - (DEV_ROWS >> 1), stops.length - DEV_ROWS));
+  stops.slice(top, top + DEV_ROWS).forEach((s, row) => {
+    const i = top + row, y = 26 + row * 11, on = i === dev.sel;
+    if (on) { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 1; ctx.strokeRect(28.5, y - 2.5, w - 57, 11); }
+    const name = s.name.toUpperCase(), label = s.label.toUpperCase();
+    text(ctx, name, 34, y, 1, on ? '#eaf2ff' : '#8ea3c2', 'left');
+    // the area it tops, where it fits beside the (indented) town name
+    if (textWidth(name) + textWidth(label) + 8 <= w - 68) text(ctx, label, w - 34, y, 1, '#5f7391', 'right');
   });
   text(ctx, 'Z/ENTER WARP  ESC CLOSE', w / 2, h - 12, 1, '#8ea3c2', 'center');
 }
