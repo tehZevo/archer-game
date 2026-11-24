@@ -1,3 +1,4 @@
+import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
 // fuzzing: if a check needs more than a second, shrink it.
@@ -460,14 +461,14 @@ check('every networked pose has frames and a cycle rate', POSES.every((p) => GRI
   (globalThis as { localStorage?: unknown }).localStorage = {
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
-  arena(35); gotoFloor(24);
+  arena(35); gotoFloor(26);
   player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.BS = 3; player.ranks.E = 2;
   save();
   const want = JSON.stringify(snapshot());
   arena(1); player.ap = 0; player.sp = 0; player.ranks.BS = 0; player.ranks.E = 0;
   const floor = load();
-  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 24 }) === want && floor === 20);
-  check('you resume on the latest town (floor 1 before the first)', lastTown(24) === 20 && lastTown(20) === 20 && lastTown(9) === 1 && lastTown(10) === 10);
+  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 26 }) === want && floor === 22);
+  check('you resume on the latest town (floor 1 before the first)', lastTown(26) === 22 && lastTown(22) === 22 && lastTown(10) === 1 && lastTown(11) === 11);
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply('junk') === null);
   apply({ v: 1, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, floor: 0 });
@@ -694,29 +695,29 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const stand = (pt: { x: number; y: number }): void => {
     player.x = pt.x; player.y = pt.y - player.h; player.vx = 0; player.vy = 0; player.onGround = true; player.climb = null;
   };
-  net.route = 0; release(); gotoFloor(10);
+  net.route = 0; release(); gotoFloor(11);
   const f = game.floor, layout = JSON.stringify(f.platforms);
-  net.channel = 3; gotoFloor(20); const other = JSON.stringify(game.floor.platforms); net.channel = 1;
+  net.channel = 3; gotoFloor(22); const other = JSON.stringify(game.floor.platforms); net.channel = 1;
   check('towns are a designed layout (the same on every channel and town)', layout === other);
-  gotoFloor(10);
+  gotoFloor(11);
   const [upL, upR, down] = game.floor.portals;
-  check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 11 && upR.to === 11 && down.to === 9 && game.mobs.length === 0);
+  check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 12 && upR.to === 12 && down.to === 10 && game.mobs.length === 0);
   const deck = game.floor.platforms.filter((p) => p.block === 1 && !p.inner);
   check('the down portal stands on the plaza deck, reached by a ladder and a rope',
     deck.some((p) => p.y === down.y) && game.floor.ladders[0].y1 === down.y && game.floor.ropes[0].y1 === down.y
     && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
-  check('a town room is shared by both routes', roomId(10, 1, '', 1) === roomId(10, 1, '', 0) && roomId(11, 1, '', 1) !== roomId(11, 1, '', 0));
+  check('a town room is shared by both routes', roomId(11, 1, '', 1) === roomId(11, 1, '', 0) && roomId(12, 1, '', 1) !== roomId(12, 1, '', 0));
 
   player.hp = 5; player.mp = 1;
   stand(upR); tap('up');
   const routeB = JSON.stringify(game.floor.platforms);
-  check('the right portal goes up on route B', game.floor.number === 11 && net.route === 1);
+  check('the right portal goes up on route B', game.floor.number === 12 && net.route === 1);
   check('arriving does not refill HP or MP', player.hp === 5 && player.mp === 1);
-  gotoFloor(10); stand(game.floor.portals[0]); tap('up');
-  check('the left portal goes up on route A, a different layout', game.floor.number === 11 && net.route === 0 && JSON.stringify(game.floor.platforms) !== routeB);
-  gotoFloor(10); stand(game.floor.portals[2]); tap('up');
-  check('the down portal goes back to the floor below', game.floor.number === 9);
-  check('skills work in town', (() => { gotoFloor(10); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
+  gotoFloor(11); stand(game.floor.portals[0]); tap('up');
+  check('the left portal goes up on route A, a different layout', game.floor.number === 12 && net.route === 0 && JSON.stringify(game.floor.platforms) !== routeB);
+  gotoFloor(11); stand(game.floor.portals[2]); tap('up');
+  check('the down portal goes back to the floor below', game.floor.number === 10);
+  check('skills work in town', (() => { gotoFloor(11); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
   net.route = 0; release();
 }
 
@@ -792,6 +793,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     }
   }
   check('enemies carried by Sky Toss stay standing on their platform', runs > 10 && bad === 0, `${bad}/${runs} fell in or through`);
+}
+
+// --- places: areas of 10 floors, named towns between them, two areas per town ---
+{
+  check('an area is 10 floors, then a town', AREA_FLOORS === 10 && !isTown(10) && isTown(11) && !isTown(12) && isTown(22));
+  check('places read as area + floor within it', placeName(1, 0) === 'Beach 1' && placeName(10, 0) === 'Beach 10' && placeName(12, 0) === `${areaOf(1, 0)} 1`);
+  check('towns have their own names', placeName(11, 0) === TOWN_NAMES[0] && placeName(22, 1) === TOWN_NAMES[1] && new Set(TOWN_NAMES).size === TOWN_NAMES.length);
+  let differ = true;
+  for (let b = 1; b < 6; b++) if (areaOf(b, 0) === areaOf(b, 1)) differ = false;
+  check('the two ways out of a town lead into two different areas', differ && areaOf(0, 0) === 'Beach');
+  check('the floor before a town is the area end (the boss floor, later)', isAreaEnd(10) && isAreaEnd(21) && !isAreaEnd(11));
+
+  net.route = 0; release(); gotoFloor(11);
+  const [l, r, d] = game.floor.portals.map((p) => p.label);
+  check('town portals are labelled with where they go', l === placeName(12, 0) && r === placeName(12, 1) && d === 'Beach 10' && l !== r, `${l} | ${r} | ${d}`);
+  gotoFloor(10);
+  check('the way into a town is labelled with its name', game.floor.portal.label === TOWN_NAMES[0]);
+  gotoFloor(BLOCK + 3, 1);
+  check('the HUD place follows your route', placeName(game.floor.number, net.route) === `${areaOf(1, 1)} 3`);
+  net.route = 0; release();
 }
 
 // --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
