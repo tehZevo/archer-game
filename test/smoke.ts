@@ -140,14 +140,14 @@ step(1);
 check('portal advances the floor', game.floor.number === floor0 + 1);
 setKey('up', false);
 
-// --- 12. every 10th floor is a town ---
-gotoFloor(10);
-check('floor 10 is a town', game.floor.town === true && game.mobs.length === 0);
+// --- 12. after each area's 10 floors comes a town ---
+gotoFloor(11);
+check('stage 11 (after Beach 10) is a town', game.floor.town === true && game.mobs.length === 0);
 player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
 player.onGround = true;
 setKey('up', true);
 step(1);
-check('town portal leads on to floor 11', game.floor.number === 11);
+check('town portal leads on to the next area', game.floor.number === 12);
 setKey('up', false);
 
 // every skill (bases, upgrades, passives) has its own 14x14 icon glyph

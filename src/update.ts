@@ -1,6 +1,6 @@
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
 import { cameraTarget, gainExp, game, gotoFloor, mobBounds, player, spawnWave } from './state';
-import { held, pressed } from './input';
+import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, revive } from './combat';
 import { barrageTargets, cast, updateRush } from './skills';
@@ -13,7 +13,8 @@ import type { PauseMenu, Platform } from './types';
 export function update(dt: number): void {
   // Esc pause menu: freezes the game; arrows move, Z/Enter spends AP or SP
   if (pressed('escape')) game.pause = game.pause ? null : { col: 0, row: 0 };
-  if (game.pause) { pauseInput(game.pause); return; }
+  if (game.pause) { pauseInput(game.pause, dt); return; }
+  game.time += dt;
   // Regen: 5% of max HP/MP every 5s; HP doesn't regen while in combat.
   if (player.combatT > 0) player.combatT -= dt;
   player.regenT += dt;
@@ -191,6 +192,7 @@ export function update(dt: number): void {
   }
   for (let i = game.dmgNums.length - 1; i >= 0; i--) {
     const d = game.dmgNums[i];
+    if (d.delay && d.delay > 0) { d.delay -= dt; continue; } // not shown yet
     d.t -= dt * 1.1; d.y += d.vy * dt; d.vy *= 0.96;
     if (d.t <= 0) game.dmgNums.splice(i, 1);
   }
@@ -275,10 +277,11 @@ function updateCamera(dt: number): void {
   game.cam.y += (t.y - game.cam.y) * k;
 }
 
-function pauseInput(m: PauseMenu): void {
+function pauseInput(m: PauseMenu, dt: number): void {
   const n = m.col === 0 ? STAT_KEYS.length : skillRows().length;
-  if (pressed('up')) m.row = (m.row + n - 1) % n;
-  if (pressed('down')) m.row = (m.row + 1) % n;
+  // holding Up/Down keeps moving (key repeat)
+  if (repeated('up', dt)) m.row = (m.row + n - 1) % n;
+  if (repeated('down', dt)) m.row = (m.row + 1) % n;
   if (pressed('left') || pressed('right')) { m.col = m.col ? 0 : 1; m.row = 0; }
   if (pressed('z') || pressed('enter') || pressed(' ')) pauseSpend(m);
 }

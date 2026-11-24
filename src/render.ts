@@ -11,7 +11,7 @@ import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
 import { drawHUD } from './hud';
-import { text } from './font';
+import { text, textWidth } from './font';
 import type { Climbable, DmgNum, Fx, Mob, Platform, Portal, Shot } from './types';
 
 // Base (internal) resolution. The canvas backing store IS this size; everything
@@ -88,7 +88,12 @@ function drawPortal(p: Portal): void {
   if (down) ctx.filter = 'hue-rotate(150deg)';
   ctx.drawImage(s.c, Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
   if (down) ctx.filter = 'none';
-  if (p.label) text(ctx, p.label, Math.round(p.x), Math.round(p.y - s.h - 9), 1, down ? '#8fe3c4' : '#e6d6ff', 'center');
+  if (p.label) {
+    // centred over the portal, but kept inside the world (town names are long)
+    const half = textWidth(p.label) / 2 + 2;
+    const lx = clamp(p.x, half, WORLD.w - half);
+    text(ctx, p.label, Math.round(lx), Math.round(p.y - s.h - 9), 1, down ? '#8fe3c4' : '#e6d6ff', 'center');
+  }
 }
 
 function drawMob(m: Mob): void {
@@ -206,6 +211,7 @@ function drawFx(f: Fx): void {
 }
 
 function drawDmg(d: DmgNum): void {
+  if (d.delay && d.delay > 0) return;
   // pixel font with a 1px black outline (d.y is the old text baseline)
   ctx.save();
   ctx.globalAlpha = clamp(d.t, 0, 1);

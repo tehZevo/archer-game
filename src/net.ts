@@ -1,6 +1,7 @@
 import { joinRoom } from 'trystero';
 import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
+import { isTown } from './world';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
 import { cleanName, clearShots, myName, queueShot, type ShotMsg } from './presence';
@@ -14,7 +15,7 @@ const APP_ID = 'tehZevo/archer-game';
 export const roomId = (floor: number, channel: number, code = net.code, route = net.route): string =>
   (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route);
 /** Route suffix: none on route 0 (the original ids) and none on towns, where both routes meet. */
-const routeTag = (floor: number, route: number): string => (route > 0 && floor % 10 !== 0 ? `-r${route}` : '');
+const routeTag = (floor: number, route: number): string => (route > 0 && !isTown(floor) ? `-r${route}` : '');
 
 /* ---------------- private instances ---------------- */
 /** Letters for instance codes: no I or O, which read as 1 and 0. */
