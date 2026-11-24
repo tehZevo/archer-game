@@ -67,15 +67,22 @@ let lobby: Room | null = null;
 let lobbyAt: UserState<At> | null = null;
 let posted = '';
 
-/** Trystero signs every player's identity with WebCrypto, which browsers
- *  only offer on secure pages (HTTPS or localhost). On plain HTTP (e.g. a LAN
- *  address) joining would fail, so stay offline and say why. */
+/* The two things a browser needs for multiplayer, each checked once.
+   Trystero signs identities with WebCrypto (secure pages only) and talks to
+   peers over WebRTC (some Firefox builds ship it off). */
+const hasWebCrypto = (): boolean => typeof globalThis.crypto?.subtle?.generateKey === 'function';
+/** Firefox's WebRTC lives under both names; some builds only define one. */
+const hasWebRTC = (): boolean =>
+  typeof RTCPeerConnection !== 'undefined' ||
+  typeof (globalThis as { mozRTCPeerConnection?: unknown }).mozRTCPeerConnection !== 'undefined';
+
+/** True when the browser can actually connect; on false, net.offline says
+ *  why and the menu shows "local only" instead of the channel picker. */
 export function canConnect(): boolean {
-  if (typeof globalThis.crypto?.subtle?.generateKey === 'function') return true;
-  if (!net.offline) {
-    net.offline = 'NEEDS HTTPS'; // for the console/netStatus; the screen just says local only
-    console.warn('[net] multiplayer is off: WebCrypto (crypto.subtle) is only available on HTTPS or localhost pages');
-  }
+  const why = hasWebCrypto() ? (hasWebRTC() ? '' : 'NO WEBRTC') : 'NEEDS HTTPS'; // console/netStatus text
+  if (!why) return true;
+  if (!net.offline) console.warn('[net] multiplayer is off:', why);
+  net.offline = why;
   return false;
 }
 

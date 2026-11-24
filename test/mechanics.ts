@@ -694,7 +694,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the minimap fits the tallest trimmed floor', Math.max(...hs) * MINI_SCALE + miniRect().y < 180 - 16);
 }
 
-// --- multiplayer stays offline (and says why) without WebCrypto ---
+// --- multiplayer stays offline (and says why) without WebCrypto or WebRTC ---
 {
   const c = globalThis.crypto;
   Object.defineProperty(globalThis, 'crypto', { value: {}, configurable: true });
@@ -702,8 +702,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const ok = canConnect();
   check('no WebCrypto (plain HTTP page): multiplayer stays off with a reason', !ok && net.offline.includes('HTTPS'));
   Object.defineProperty(globalThis, 'crypto', { value: c, configurable: true });
+  // Firefox-style: WebRTC lives under the moz-prefixed name
+  const g = globalThis as { RTCPeerConnection?: unknown; mozRTCPeerConnection?: unknown };
+  g.RTCPeerConnection = undefined; g.mozRTCPeerConnection = function () {};
   net.offline = '';
-  check('with WebCrypto, multiplayer can connect', canConnect() && net.offline === '');
+  check('WebRTC under the moz-prefixed name counts', canConnect() && net.offline === '');
+  g.mozRTCPeerConnection = undefined;
+  net.offline = '';
+  check('no WebRTC (e.g. Firefox with it turned off): local only, no crash', !canConnect() && net.offline.includes('WEBRTC'));
+  g.RTCPeerConnection = function () {};
+  net.offline = '';
+  check('with WebCrypto and WebRTC, multiplayer can connect', canConnect() && net.offline === '');
 }
 
 // --- towns: a designed layout, two ways up (two routes), one way down ---
