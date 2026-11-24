@@ -428,8 +428,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 
 // --- archer sprite sheet ---
-check('every archer frame is 16x24', Object.values(GRIDS).every((fs) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === 16))));
+check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS).every(([p, fs]) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === (p === 'prone' ? 24 : 16)))));
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
+check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('prone') === POSES.length - 1 && POSES[0] === 'idle');
+{
+  // holding Down on the ground lies you flat: no walking, but you can turn
+  arena(1); player.x = 300; player.vx = 0; player.face = 1;
+  setKey('down', true); setKey('left', true); step(20);
+  check('holding Down on the ground lies you flat and stops you walking', player.animState === 'prone' && player.face === -1 && Math.abs(player.x - 300) < 1);
+  setKey('left', false); setKey('down', false); step(2);
+  check('letting go of Down stands you back up', player.animState === 'idle');
+}
 
 // --- bug: fast ground moves sank into slopes ---
 {

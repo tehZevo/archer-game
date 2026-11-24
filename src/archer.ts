@@ -129,7 +129,21 @@ const IDLE = [...HEAD, ...IDLE_BODY];
 // idle breathing: the second frame sinks the upper body a pixel onto the legs
 const IDLE2 = ['................', ...IDLE.slice(0, 17), ...IDLE.slice(18)];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage';
+/** Lying flat (holding Down on the ground): a wider 24px frame, head
+ *  forward, bow tucked under the chin. */
+const PRONE = [
+  ...Array(16).fill('........................'),
+  '................oooo....',
+  '...............ohhhho...',
+  '..............ohhggggo..',
+  '..ooo..ooooooohhhhsseo..',
+  '.obbbooollllTTtttHsssso.',
+  '.obbbollllTTTttgtoSSoxw.',
+  '.obbboollllTTTTTCcooxwW.',
+  '..ooo.ooooooooooooo.oo..',
+];
+
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone';
 
 /** Frames per pose (as grids); a climb frame is mirrored for the second step. */
 export const GRIDS: Record<ArcherPose, string[][]> = {
@@ -141,22 +155,25 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   shoot: [withRows(IDLE, 12, DRAW_BODY), withRows(IDLE, 12, SHOOT_BODY), withRows(IDLE, 12, FOLLOW_BODY)],
   rush: [['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY]],
   barrage: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, JUMP_LEGS)],
+  prone: [PRONE],
 };
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 1.2, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 1, barrage: 1,
+  idle: 1.2, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 1, barrage: 1, prone: 1,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;
 
+/** Bake a grid; frames are ARCHER_W wide except wider ones (prone). */
 function bake(grid: string[], flip: boolean): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = ARCHER_W; c.height = ARCHER_H;
+  const W = grid[0].length;
+  c.width = W; c.height = ARCHER_H;
   const x = c.getContext('2d') as CanvasRenderingContext2D;
   grid.forEach((row, y) => {
-    for (let i = 0; i < ARCHER_W; i++) {
-      const col = PAL[row[flip ? ARCHER_W - 1 - i : i]];
+    for (let i = 0; i < W; i++) {
+      const col = PAL[row[flip ? W - 1 - i : i]];
       if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
     }
   });
