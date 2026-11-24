@@ -6,9 +6,9 @@ import { surfaceYAt } from './surface';
 import { NB } from './nb';
 import type { Climbable, Floor, MobType, Platform, Portal, Spawn } from './types';
 
-// One stream per floor generation, seeded from the room name so every player
+// One stream per floor generation, seeded from the room name (minus its hour) so every player
 // in a channel gets the same layout (reseeded at the top of generateFloor).
-let rng = seeded(hashStr(roomId(1, net.channel)));
+let rng = seeded(hashStr(roomId(1, net.channel, net.code, net.route, '')));
 const rand = (a: number, b: number): number => a + rng() * (b - a);
 const randInt = (a: number, b: number): number => Math.floor(rand(a, b + 1));
 /** Snap a coordinate to the tile grid. */
@@ -138,7 +138,8 @@ const SKY_MARGIN = 2 * TILE; // clear sky kept above the portal
 const MIN_H = 180;           // never shorter than the view
 
 export function generateFloor(n: number): Floor {
-  rng = seeded(hashStr(roomId(n, net.channel)));
+  // layouts don't change with the hour: seeded from the room id without it
+  rng = seeded(hashStr(roomId(n, net.channel, net.code, net.route, '')));
   if (isTown(n)) return trim(townFloor(n));
   const ground = groundSlab();
   const groundY = ground.y;

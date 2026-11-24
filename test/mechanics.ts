@@ -24,7 +24,7 @@ import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, ski
 import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
-import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
+import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
@@ -1053,6 +1053,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   setLayout({ KeyZ: 'w', KeyQ: 'a', KeyW: 'z', KeyA: 'q' });
   check('on AZERTY the labels show what the keys type', keyName('z') === 'W' && keyName('Q') === 'A' && keyName('w') === 'Z' && keyName('escape') === 'ESCAPE');
   setLayout({});
+  // rooms by hour: floors carry the UTC hour you entered them; towns never do; layouts ignore it
+  check('the hour stamp is the UTC hour, YYYYMMDDHH', hourStamp(Date.UTC(2026, 10, 24, 14, 59, 59)) === '2026112414' && hourStamp(Date.UTC(2026, 10, 24, 15, 0, 0)) === '2026112415');
+  check('floor rooms are tagged with the hour', roomId(5, 2, '', 0, '2026112414') === 'eurekaland-f5-c2-h2026112414' && roomId(5, 1, 'ABCDE', 0, '2026112414').endsWith('-pABCDE-h2026112414'));
+  check('towns have no hour tag', roomId(11, 1, '', 0, '2026112414') === 'eurekaland-f11-c1');
+  check('no hour yet: no tag', roomId(5, 1, '', 0, '') === 'eurekaland-f5-c1');
+  const was = net.hour;
+  net.hour = '2026112414'; gotoFloor(4); const a = JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
+  net.hour = '2026112415'; gotoFloor(4); const b = JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
+  check('a floor\'s layout is the same whatever the hour', a === b);
+  net.hour = was;
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
