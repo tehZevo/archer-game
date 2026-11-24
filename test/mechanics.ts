@@ -14,7 +14,7 @@ import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { groupSize, makeShape, SHAPES } from '../src/floor';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
-import { WORLD } from '../src/config';
+import { TILE, WORLD } from '../src/config';
 import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
@@ -657,6 +657,22 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const [x0, y0] = toMini(0, 0), [x1, y1] = toMini(WORLD.w - 1, WORLD.h - 1);
   check('minimap covers the whole floor', x0 === r.x && y0 === r.y && x1 < r.x + r.w && y1 < r.y + r.h);
   check('minimap is 1:10', MINI_SCALE === 0.1 && r.w === Math.ceil(WORLD.w / 10));
+}
+
+// --- floors are trimmed to their content: a thin ground, a little sky ---
+{
+  const hs: number[] = [];
+  let ok = true;
+  for (let n = 1; n <= 20; n++) {
+    release(); gotoFloor(n);
+    const f = game.floor, g = f.platforms[0], top = f.portal.y - f.portal.h;
+    hs.push(f.h);
+    if (WORLD.h !== f.h || g.h !== 4 * TILE || g.y + g.h !== f.h || top < 2 * TILE || top > 3 * TILE || f.h < 180) ok = false;
+    if (f.platforms.some((p) => p.y < 0) || f.ropes.some((c) => c.y1 < 0)) ok = false;
+  }
+  check('each floor is ground (4 tiles) up to its portal plus 2-3 tiles of sky', ok, `heights ${[...new Set(hs)].join(',')}`);
+  game.view.w = 240; game.view.h = 180;
+  check('the minimap fits the tallest trimmed floor', Math.max(...hs) * MINI_SCALE + miniRect().y < 180 - 16);
 }
 
 // --- multiplayer stays offline (and says why) without WebCrypto ---
