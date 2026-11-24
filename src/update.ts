@@ -14,6 +14,7 @@ export function update(dt: number): void {
   // Esc pause menu: freezes the game; arrows move, Z/Enter spends AP or SP
   if (pressed('escape')) game.pause = game.pause ? null : { col: 0, row: 0 };
   if (game.pause) { pauseInput(game.pause); return; }
+  game.time += dt;
   // Regen: 5% of max HP/MP every 5s; HP doesn't regen while in combat.
   if (player.combatT > 0) player.combatT -= dt;
   player.regenT += dt;
@@ -191,6 +192,7 @@ export function update(dt: number): void {
   }
   for (let i = game.dmgNums.length - 1; i >= 0; i--) {
     const d = game.dmgNums[i];
+    if (d.delay && d.delay > 0) { d.delay -= dt; continue; } // not shown yet
     d.t -= dt * 1.1; d.y += d.vy * dt; d.vy *= 0.96;
     if (d.t <= 0) game.dmgNums.splice(i, 1);
   }

@@ -206,6 +206,7 @@ function drawFx(f: Fx): void {
 }
 
 function drawDmg(d: DmgNum): void {
+  if (d.delay && d.delay > 0) return;
   // pixel font with a 1px black outline (d.y is the old text baseline)
   ctx.save();
   ctx.globalAlpha = clamp(d.t, 0, 1);
