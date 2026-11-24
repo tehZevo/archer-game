@@ -3,33 +3,32 @@ import { SKILLS, SKILL_ORDER } from './config';
 import { player } from './state';
 
 /* ============================================================
-   EXPERIENCE CURVE
-   Real GMS table anchors, exponentially interpolated between
-   points so the curve matches the client from 1 to 200.
+   EXPERIENCE
+   Leveling pace is set in kills. Two curves, tied together:
+   - mobExp(m): what one level-m enemy is worth (7% more per level)
+   - killsToLevel(L): how many kills of your own level a level-up takes,
+     10 at Lv.1 rising evenly (geometrically) to 100 at Lv.99
+   and expToNext(L) = killsToLevel(L) * mobExp(L). A new enemy only needs a
+   level to plug in; `mul` scales one up (e.g. a boss worth 10 kills).
    ============================================================ */
-const ANCHORS: Array<[number, number]> = [
-  [1, 15], [2, 24], [3, 34], [5, 49], [10, 151], [15, 363], [20, 602],
-  [25, 1105], [30, 1711], [35, 2578], [40, 4141], [45, 6141], [50, 8898],
-  [55, 12801], [60, 17664], [65, 24301], [70, 32911], [75, 44101],
-  [80, 57656], [85, 75401], [90, 96714], [95, 123001], [100, 154822],
-  [110, 239429], [120, 359367], [130, 529000], [140, 760000],
-  [150, 1080000], [160, 1520000], [170, 2100000], [180, 2880000],
-  [190, 3900000], [200, 5250000],
-];
-
 export const MAX_LEVEL = 100;
+export const KILLS_FIRST = 10;   // same-level kills to go from Lv.1 to 2
+export const KILLS_LAST = 100;   // ...and from Lv.99 to 100
+const MOB_EXP_BASE = 10;         // a level-1 enemy's EXP
+const MOB_EXP_GROWTH = 1.07;     // each enemy level is worth 7% more
 
-export function expToNext(level: number): number {
-  const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(level)));
-  let lo = ANCHORS[0], hi = ANCHORS[ANCHORS.length - 1];
-  for (let i = 0; i < ANCHORS.length - 1; i++) {
-    if (lv >= ANCHORS[i][0] && lv <= ANCHORS[i + 1][0]) { lo = ANCHORS[i]; hi = ANCHORS[i + 1]; break; }
-  }
-  const [l0, e0] = lo, [l1, e1] = hi;
-  if (l0 === l1 || e0 === e1) return Math.round(e0);
-  const t = (lv - l0) / (l1 - l0);
-  return Math.round(e0 * Math.pow(e1 / e0, t));
-}
+const clampLv = (l: number): number => Math.max(1, Math.min(MAX_LEVEL, Math.floor(l)));
+
+/** Same-level kills a level-up takes at level `l`. */
+export const killsToLevel = (l: number): number =>
+  KILLS_FIRST * (KILLS_LAST / KILLS_FIRST) ** ((clampLv(l) - 1) / (MAX_LEVEL - 2));
+
+/** EXP one enemy of level `m` is worth. */
+export const mobExp = (m: number, mul = 1): number =>
+  Math.round(MOB_EXP_BASE * MOB_EXP_GROWTH ** (Math.max(1, Math.floor(m)) - 1) * mul);
+
+/** EXP needed to go from level `l` to the next. */
+export const expToNext = (l: number): number => Math.round(killsToLevel(l) * mobExp(clampLv(l)));
 
 /* ---------------- job advancement ----------------
    Archer is created already wielding her 1st Job skills, so the tree opens

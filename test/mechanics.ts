@@ -27,6 +27,7 @@ import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../s
 import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
+import { expToNext, killsToLevel, mobExp } from '../src/progress';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -524,7 +525,20 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   };
   check('mob EXP ignores the player level', expAt(3, 1) === expAt(3, 40));
   check('mobs on higher floors are worth more EXP', expAt(8, 5) > expAt(2, 5));
-  check('mob level is the floor for now', mobLevel(7) === 7);
+  check('mob level counts combat floors, not towns', mobLevel(1) === 1 && mobLevel(7) === 7 && mobLevel(12) === 11 && mobLevel(23) === 21);
+  {
+    // EXP: ~10 same-level kills per level at Lv.1, ~100 at Lv.99 (vs level-100 enemies), smooth between
+    const kills = (lv: number, mob: number) => Math.ceil(expToNext(lv) / mobExp(mob));
+    check('Lv.1 takes about 10 kills of level-1 enemies', kills(1, 1) === 10, `${kills(1, 1)}`);
+    check('Lv.99 takes about 100 kills of level-100 enemies', Math.abs(kills(99, 100) - 100) <= 8, `${kills(99, 100)}`);
+    let smooth = true;
+    for (let l = 1; l < 99; l++) if (kills(l + 1, l + 1) < kills(l, l) || kills(l + 1, l + 1) > kills(l, l) + 3) smooth = false;
+    check('kills per level climb steadily from 10 to 100', smooth && Math.abs(killsToLevel(50) - Math.sqrt(10 * 100)) < 1);
+    check('higher-level enemies are worth more, and a mob carries its level', mobExp(20) > mobExp(10) && Math.abs(mobExp(5, 10) - mobExp(5) * 10) <= 10);
+    gotoFloor(12); spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
+    const m = game.mobs[game.mobs.length - 1];
+    check('a spawned mob has its floor\'s level and that level\'s EXP', m.level === 11 && m.exp === mobExp(11));
+  }
   arena(5); const m = dummy(140, 1); const before = game.dmgNums.length;
   killMob(m);
   check('a kill shows no floating EXP number', game.dmgNums.length === before);

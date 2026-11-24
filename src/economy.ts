@@ -1,5 +1,5 @@
 import { P } from './config';
-import { game, mobLevel, player } from './state';
+import { game, player } from './state';
 import { pressed } from './input';
 import { surfaceBetween, surfaceYAt } from './physics';
 import type { Floor, Mob, Npc } from './types';
@@ -36,7 +36,7 @@ export function coinValue(level: number, r = Math.random()): number {
 
 export function dropCoins(m: Mob): void {
   sameFloor();
-  drops.push({ x: m.x, y: m.y + m.h - 6, vy: -150, v: coinValue(mobLevel(game.floor.number)), t: COIN_LIFE, landed: false });
+  drops.push({ x: m.x, y: m.y + m.h - 6, vy: -150, v: coinValue(m.level), t: COIN_LIFE, landed: false });
 }
 
 let potT = 0;
