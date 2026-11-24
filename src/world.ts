@@ -1,4 +1,3 @@
-import { AREAS } from './config';
 
 /* ============================================================
    WORLD MAP
@@ -23,12 +22,31 @@ export const localFloor = (n: number): number => ((n - 1) % BLOCK) + 1;
 /** The last floor of an area, right before its town (the boss floor, later). */
 export const isAreaEnd = (n: number): boolean => localFloor(n) === AREA_FLOORS;
 
-/** The area a block's floors are in on a route. The first block is the Beach;
- *  after that each town branches into two areas, cycling through the rest. */
+/** The tower's plan, straight up: one tier per block, each tier a pair of
+ *  areas (left portal = index 0, right = index 1). Each pair has its own
+ *  town, so no two areas lead to the same town. The tower tops out at the
+ *  last tier's town. */
+export const TOWER: readonly (readonly [string, string])[] = [
+  ['Beach', 'Beach'],
+  ['Forest', 'Meadow'],
+  ['Riverbank', 'Hills'],
+  ['Cave', 'Swamp'],
+  ['Mushroom Grotto', 'Crystal Caverns'],
+  ['Sunken Ruins', 'Clockwork Spire'],
+  ['Dreamwood', 'Mirror Lake'],
+  ['Starfall Observatory', 'Void Garden'],
+  ['Old Keep', 'Ember Wastes'],
+  ['Sky Reef', 'Chapel Spire'],
+  ['Summit', 'Summit'],
+];
+/** The top block's town is the last stop; above it there is nowhere to go. */
+export const TOP_BLOCK = TOWER.length - 1;
+/** Only the Beach's town has a single way up; the rest branch into two. */
+export const hasRoutes = (block: number): boolean => TOWER[Math.min(block, TOP_BLOCK)][0] !== TOWER[Math.min(block, TOP_BLOCK)][1];
+
+/** The area a block's floors are in on a route (0 = left way, 1 = right). */
 export function areaOf(block: number, route: number): string {
-  if (block <= 0) return AREAS[0];
-  const rest = AREAS.length - 1;
-  return AREAS[1 + ((2 * (block - 1) + (route ? 1 : 0)) % rest)];
+  return TOWER[Math.min(block, TOP_BLOCK)][route ? 1 : 0];
 }
 export const areaFor = (n: number, route: number): string => areaOf(blockOf(n), route);
 

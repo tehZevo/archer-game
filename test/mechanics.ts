@@ -1,5 +1,6 @@
 import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, shop, wallet } from '../src/economy';
-import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES } from '../src/world';
+import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES, TOWER, TOP_BLOCK } from '../src/world';
+import { townFloor } from '../src/floor';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
 // fuzzing: if a check needs more than a second, shrink it.
@@ -907,6 +908,13 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let differ = true;
   for (let b = 1; b < 6; b++) if (areaOf(b, 0) === areaOf(b, 1)) differ = false;
   check('the two ways out of a town lead into two different areas', differ && areaOf(0, 0) === 'Beach');
+  // the plan is a strict tree: 11 tiers, each a distinct pair (the Beach's two
+  // ways lead into the same area), and no area name is reused
+  const pairs = TOWER;
+  check('the tower is a strict tree of 11 tiers, each a distinct pair',
+    TOWER.length === 11 && pairs.every(([l, r]) => l === r || l !== 'Beach') &&
+    new Set(pairs.map(([l]) => l)).size === 11,
+    `${TOWER.length} tiers, ${new Set(pairs.map(([l]) => l)).size} distinct`);
   check('the floor before a town is the area end (the boss floor, later)', isAreaEnd(10) && isAreaEnd(21) && !isAreaEnd(11));
 
   net.route = 0; release(); gotoFloor(11);
