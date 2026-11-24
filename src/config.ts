@@ -59,7 +59,7 @@ export const WORLD = { w: 320, h: 640 };
 /* The tower is divided into named regions, one per town block: floors 1-9
    (capped by the town on 10) are the Beach, floors 11-19 the Forest, and so
    on, cycling every 10 floors. */
-export const AREAS = ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky', 'Clockwork Spire'] as const;
+
 /* (which area a floor is in, and what it's called: see world.ts) */
 
 /** Camera deadzone, as fractions of the view: the player (centre x, feet y)

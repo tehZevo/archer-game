@@ -1,6 +1,6 @@
 import { MOB_TYPES, WORLD, TILE } from './config';
 import { net, roomId } from './net';
-import { areaFor, isAreaEnd, isTown, placeName } from './world';
+import { areaFor, blockOf, hasRoutes, isAreaEnd, isTown, placeName } from './world';
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
@@ -288,13 +288,15 @@ export function townFloor(n: number): Floor {
   const upL = P(2 * TILE, ground.y, n + 1, placeName(n + 1, 0), 0);
   const upR = P(WORLD.w - 2 * TILE, ground.y, n + 1, placeName(n + 1, 1), 1);
   const down = P(WORLD.w / 2, deckTop, n - 1, placeName(n - 1, net.route));
+  // the top town's area has no pair above it, so only the left way leads up
+  const ups = hasRoutes(blockOf(n) + 1) ? [upL, upR] : [upL];
   return {
     number: n, town: true, h: GEN_H,
     platforms: [ground, ...deck.tiles],
     ladders: [{ x: deckX + TILE / 2, y1: deckTop, y2: ground.y }],
     ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
     spawns: [],
-    portal: upL, portals: [upL, upR, down],
+    portal: upL, portals: [...ups, down],
     // the shopkeeper keeps a stall on the deck, left of the way down
     npcs: [{ x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' }],
   };
