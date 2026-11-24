@@ -12,6 +12,7 @@ import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
 import { dev, devStops } from './dev';
+import { board, boardInput } from './quests';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -19,6 +20,8 @@ export function update(dt: number): void {
   if (shop.open) { shopInput(); return; }
   // so does the trainer's
   if (trainer.open) { trainerInput(); return; }
+  // and the quest board's
+  if (board.open) { boardInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }

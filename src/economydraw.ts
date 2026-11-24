@@ -4,6 +4,7 @@ import { text } from './font';
 import { SKILLS } from './config';
 import { activeSkill } from './progress';
 import { drops, FLY_T, flying, npcNear, PRICES, RESPEC_PRICES, shop, SHOP_ITEMS, TRAINER_ITEMS, TRAINER_SLOTS, trainer, wallet } from './economy';
+import { board, boardRows, isDone, QUEST_MAX, quests } from './quests';
 import type { Npc } from './types';
 
 /* Coins, town NPCs and the shop window (drawing only; see economy.ts). */
@@ -39,7 +40,7 @@ function pile(px: number, py: number, v: number): void {
 }
 
 /* the shopkeeper: hat, face, apron (12 x 22) */
-const PAL: Record<string, string> = { o: '#0d1424', h: '#7a4bb8', H: '#5a3590', s: '#f2d0a9', e: '#0d1424', c: '#3f9fdc', a: '#f4efe2', b: '#7a5232', m: '#2f8f6f' };
+const PAL: Record<string, string> = { o: '#0d1424', h: '#7a4bb8', H: '#5a3590', s: '#f2d0a9', e: '#0d1424', c: '#3f9fdc', a: '#f4efe2', b: '#7a5232', m: '#2f8f6f', w: '#9a6a3a', W: '#5e3b1f', p: '#efe6c8', r: '#e05a5a', i: '#7d735c' };
 const KEEPER = [
   '....oooo....',
   '...ohhhho...',
@@ -65,11 +66,13 @@ const KEEPER = [
   '............',
 ];
 let keeper: HTMLCanvasElement | null = null;
-function bakeKeeper(): HTMLCanvasElement {
+
+/** Bake a 12-wide pixel grid (one PAL letter per pixel) to a canvas. */
+function bakeGrid(rows: readonly string[]): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = 12; c.height = KEEPER.length;
+  c.width = 12; c.height = rows.length;
   const x = c.getContext('2d') as CanvasRenderingContext2D;
-  KEEPER.forEach((row, gy) => [...row].forEach((ch, gx) => {
+  rows.forEach((row, gy) => [...row].forEach((ch, gx) => {
     const col = PAL[ch];
     if (col) { x.fillStyle = col; x.fillRect(gx, gy, 1, 1); }
   }));
@@ -101,16 +104,29 @@ const TRAINER = [
   '............',
 ];
 let trainerSprite: HTMLCanvasElement | null = null;
-function bakeTrainer(): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = 12; c.height = TRAINER.length;
-  const x = c.getContext('2d') as CanvasRenderingContext2D;
-  TRAINER.forEach((row, gy) => [...row].forEach((ch, gx) => {
-    const col = PAL[ch];
-    if (col) { x.fillStyle = col; x.fillRect(gx, gy, 1, 1); }
-  }));
-  return c;
-}
+
+/* the quest board: a wooden notice board on two posts, notes pinned up (12 x 18) */
+const BOARD = [
+  'WWWWWWWWWWWW',
+  'WwwwwwwwwwwW',
+  'WwrppwwrppwW',
+  'WwpiiwwpiiwW',
+  'WwppiwwpppwW',
+  'WwpiiwwpiiwW',
+  'WwwwwrppwwwW',
+  'WwwwwpiiwwwW',
+  'WwwwwpppwwwW',
+  'WwwwwwwwwwwW',
+  'WWWWWWWWWWWW',
+  '.WW......WW.',
+  '.WW......WW.',
+  '.WW......WW.',
+  '.WW......WW.',
+  '.WW......WW.',
+  '.WW......WW.',
+  'WWWW....WWWW',
+];
+let boardSprite: HTMLCanvasElement | null = null;
 
 export function drawNpcs(): void {
   const near = npcNear();
@@ -118,8 +134,8 @@ export function drawNpcs(): void {
 }
 
 function drawNpc(n: Npc, near: boolean): void {
-  const sprite = n.kind === 'shop' ? (keeper ??= bakeKeeper()) : (trainerSprite ??= bakeTrainer());
-  const bob = Math.round(Math.sin(performance.now() / 500) * 0.6);
+  const sprite = n.kind === 'shop' ? (keeper ??= bakeGrid(KEEPER)) : n.kind === 'board' ? (boardSprite ??= bakeGrid(BOARD)) : (trainerSprite ??= bakeGrid(TRAINER));
+  const bob = n.kind === 'board' ? 0 : Math.round(Math.sin(performance.now() / 500) * 0.6);
   ctx.drawImage(sprite, Math.round(n.x - 6), Math.round(n.y - sprite.height + 1 + bob));
   text(ctx, near ? `UP: ${n.name}` : n.name, Math.round(n.x), Math.round(n.y - sprite.height - 8), 1, near ? GOLD : '#e6d6ff', 'center');
 }
@@ -145,6 +161,34 @@ export function drawTrainer(): void {
   });
   text(ctx, 'Z PICK   ESC CLOSE', w / 2, by + bh - 12, 1, DIM, 'center');
 }
+
+/** The quest board's window: your quests (with progress), then postings. */
+export function drawBoard(): void {
+  const { w, h } = game.view;
+  ctx.fillStyle = '#050a14c8'; ctx.fillRect(0, 0, w, h);
+  const rows = boardRows();
+  const bw = 232, bh = 52 + Math.max(1, rows.length) * 14, bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
+  ctx.fillStyle = '#101a2e'; ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+  text(ctx, 'QUEST BOARD', w / 2, by + 6, 1, GOLD, 'center');
+  text(ctx, `${quests.length}/${QUEST_MAX}`, bx + bw - 6, by + 6, 1, DIM, 'right');
+  if (!rows.length) text(ctx, 'NO POSTINGS HERE', w / 2, by + 24, 1, DIM, 'center');
+  rows.forEach(({ q, active }, i) => {
+    const y = by + 24 + i * 14;
+    if (board.sel === i) { ctx.strokeStyle = GOLD; ctx.strokeRect(bx + 4.5, y - 3.5, bw - 9, 13); }
+    const tag = active === null ? 'NEW' : isDone(q) ? 'DONE' : `${q.have}/${q.need}`;
+    const col = active === null ? DIM : isDone(q) ? '#9be89b' : HI;
+    text(ctx, `${tag}  ${active === null ? `${q.need} ` : ''}${q.mob}`, bx + 9, y, 1, col, 'left');
+    text(ctx, `${q.exp}XP ${q.coins}G`, bx + bw - 9, y, 1, GOLD, 'right');
+  });
+  const r = rows[board.sel];
+  const hint = !r ? 'ESC CLOSE' : r.active === null ? 'Z TAKE   ESC CLOSE' : isDone(r.q) ? 'Z TURN IN   X DROP   ESC' : 'X DROP   ESC CLOSE';
+  text(ctx, hint, w / 2, by + bh - 12, 1, DIM, 'center');
+}
+
+/** HUD lines for your active quests: [text, finished]. */
+export const questLines = (): [string, boolean][] =>
+  quests.map((q) => [isDone(q) ? `${q.mob} DONE` : `${q.mob} ${q.have}/${q.need}`, isDone(q)]);
 
 /** The wallet line for the HUD: coins, then potions with their keys. */
 export const walletLine = (): string => `${wallet.coins}G  A:HP ${wallet.hp}  S:MP ${wallet.mp}`;

@@ -23,6 +23,7 @@ import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
@@ -902,10 +903,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
   // the trainer: from the third town up, respec for coins
   gotoFloor(townStage(0));
-  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.length === 1 && game.floor.npcs![0].kind === 'shop');
+  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'board').length === 1 && game.floor.npcs![0].kind === 'shop');
   gotoFloor(townStage(2));
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
-  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.length === 2);
+  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
   wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.BS = 0;
   tap('up');
@@ -1160,6 +1161,54 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a standing enemy holds frame 0', mobFrame({ ...walk, vx: 0, anim: 3.3 }, 4, 8) === 0);
   check('a stunned enemy holds frame 0', mobFrame({ ...walk, stun: 1, anim: 3.3 }, 4, 8) === 0);
   check('a hovering flier keeps flapping', mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4) === 1);
+}
+
+{
+  // quests: every town has a board posting kill quests for the areas above it
+  release(); loadQuests([]);
+  for (const a of AREAS) {
+    gotoFloor(townStage(a.depth), a.id);
+    const b = game.floor.npcs?.find((n) => n.kind === 'board');
+    const zones = game.floor.portals.map((q) => [q.x - q.w / 2 - 10, q.x + q.w / 2 + 10]).concat(game.floor.ladders.map((l) => [l.x - 7, l.x + 7]), game.floor.ropes.map((l) => [l.x - 7, l.x + 7]));
+    if (!b || !zones.every(([lo, hi]) => b.x + NPC_R <= lo || b.x - NPC_R >= hi)) { check(`${a.town} has a clear quest board`, false); break; }
+    const offers = boardOffers(townStage(a.depth), a.id);
+    const want = new Set((a.up.length ? a.up : [a.id]).flatMap((id) => areaMobs(AREAS[id].name).map((m) => m.n)));
+    if (!offers.length || !offers.every((o) => want.has(o.mob) && o.exp > 0 && o.coins > 0)) { check(`${a.town} posts quests for the areas above`, false, offers.map((o) => o.mob).join(',')); break; }
+  }
+  check('every town has a quest board clear of portals, ladders and ropes', true);
+  gotoFloor(townStage(0), 0);
+  const b = game.floor.npcs!.find((n) => n.kind === 'board')!;
+  player.x = b.x; player.y = b.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('Up beside the board opens it', board.open && boardRows().length > 0);
+  tap('z');
+  check('Z takes the selected posting', quests.length === 1 && quests[0].have === 0);
+  const q = quests[0];
+  check('a taken posting leaves the offer list', boardRows().filter((r) => r.active === null).every((r) => r.q.mob !== q.mob));
+  for (let i = 0; i < q.need + 3; i++) questKill(q.mob);
+  questKill('Nobody');
+  check('kills count toward the quest (capped at the goal)', q.have === q.need);
+  const exp0 = player.exp, lvl0 = player.level, coins0 = wallet.coins;
+  board.sel = 0; tap('z');
+  check('Z hands in a finished quest for EXP and coins', quests.length === 0 && wallet.coins === coins0 + q.coins && (player.exp > exp0 || player.level > lvl0));
+  for (let i = 0; i < 5; i++) { board.sel = boardRows().findIndex((r) => r.active === null); if (board.sel >= 0) tap('z'); }
+  check(`at most ${QUEST_MAX} quests at once`, quests.length <= QUEST_MAX);
+  const n0 = quests.length; board.sel = 0; tap('x');
+  check('X drops an active quest', quests.length === n0 - 1);
+  tap('escape');
+  check('Esc closes the board (not the pause menu)', !board.open && !game.pause);
+  release();
+  // a kill in the world counts
+  loadQuests([{ mob: 'Garden Snail', need: 2, have: 0, exp: 5, coins: 5 }]);
+  gotoFloor(1, 0); spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]); killMob(game.mobs[game.mobs.length - 1]);
+  check('killing an enemy advances its quest', quests[0].have === 1);
+  // saved and restored
+  const snap = snapshot();
+  loadQuests([]); apply(snap);
+  check('quests survive a save and load', quests.length === 1 && quests[0].mob === 'Garden Snail' && quests[0].have === 1);
+  loadQuests([{ mob: 3 }, null, { mob: 'Crab', need: -5, have: 99, exp: 'x', coins: 1 }]);
+  check('malformed saved quests are dropped or clamped', quests.length === 1 && quests[0].need === 1 && quests[0].have === 1 && quests[0].exp === 0);
+  loadQuests([]);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
