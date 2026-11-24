@@ -225,7 +225,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Assault hovers about half a second, then lands', hover >= 12 && hover <= 18 && player.onGround, `hover ${hover} frames`);
   check('Sky Assault hits', m.hp < hp0);
   const peak = y0 - Math.min(y0, top - player.h - 4);
-  check('Sky Assault rises 75% of the way to the launched enemy', Math.abs(up - peak * P.BARRAGE_RISE) < 1, `up ${up.toFixed(1)} full ${peak.toFixed(1)}`);
+  check('Sky Assault rises 1.5x the way to the launched enemy (twice its old height)', P.BARRAGE_RISE === 1.5 && Math.abs(up - peak * P.BARRAGE_RISE) < 1, `up ${up.toFixed(1)} full ${peak.toFixed(1)}`);
 }
 
 {
@@ -345,6 +345,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Vault Shot launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
   const hp0 = m.hp; step(6); tap('w'); step(15);
   check('Vault Shot opens the link window for W', m.hp < hp0);
+}
+{
+  // Rising Arrow: the other Sky Toss branch
+  arena(20); player.ranks.RA = 1; player.ranks.W = 1;
+  const m = dummy(130);
+  const x0 = player.x, y0 = player.y;
+  tap('q');
+  let gap = 0;
+  for (let i = 0; i < 8; i++) { step(1); gap = Math.max(gap, Math.abs((player.y + player.h) - (m.y + m.h))); }
+  check('Rising Arrow launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
+  check('Rising Arrow jumps straight up with it (rising together)', player.y < y0 - 40 && Math.abs(player.x - x0) < 16 && gap < 12, `dy ${(y0 - player.y).toFixed(1)} gap ${gap.toFixed(1)}`);
+  const hp0 = m.hp; tap('w'); step(15);
+  check('Rising Arrow opens the link window for W in the air', m.hp < hp0);
+  arena(20); player.ranks.RA = 1;
+  check('Rising Arrow and Vault Shot are rival branches', !skillRows().some((r) => r.key === 'VS'));
 }
 
 // --- E / R ---
@@ -486,7 +501,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const bad: string[] = [];
   for (const key of ['Z', 'Q', 'W', 'E', 'R', 'D'] as const) {
     arena(60, 200);
-    for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['S', 'BS', 'VS', 'AB'].includes(k) ? 0 : 1;
+    for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['S', 'BS', 'VS', 'RA', 'AB'].includes(k) ? 0 : 1;
     dummy(240); dummy(280);
     game.fx = [];
     cast(key); step(1);

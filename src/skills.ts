@@ -78,7 +78,7 @@ export function cast(key: SkillKey): void {
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
   // Sky Toss is a ground launcher: no mid-air use.
-  if ((kind === 'Q' || kind === 'VS') && !player.onGround) return;
+  if ((kind === 'Q' || kind === 'VS' || kind === 'RA') && !player.onGround) return;
   // Plunging Volley fires down from the air: no ground use.
   if (kind === 'E' && !airborne) return;
 
@@ -245,6 +245,26 @@ export function cast(key: SkillKey): void {
       player.vx = -face * P.VAULT_VX;
       player.vy = -P.VAULT_VY;
       game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: -face });
+      player.combo = 1.4; player.comboT = 1.4;
+      break;
+    }
+
+    case 'RA': {
+      // Rising Arrow: launch the enemies ahead and jump straight up with them
+      // (the same launch speed, so you climb together), opening the link
+      // window: W or Sky Assault follow them up in the air
+      player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
+      sfx.jump();
+      const face = player.face;
+      const cx = player.x + face * 30;
+      const tg = hitbox(cx, player.y + player.h / 2, 80, 64).slice(0, r.targets);
+      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
+        .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
+      tg.forEach((m) => damage(m, r.dmg, { launch: true }));
+      player.onGround = false;
+      player.vx = face * P.RISE_VX;
+      player.vy = -P.RISE_VY;
+      game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face });
       player.combo = 1.4; player.comboT = 1.4;
       break;
     }

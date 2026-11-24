@@ -166,7 +166,7 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
 export const SKILL_PICK_EVERY = 5;
 /** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
  *  several upgrades is a branch: taking one locks the others out for good. */
-const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q' };
+const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q' };
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {
