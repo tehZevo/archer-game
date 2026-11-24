@@ -76,13 +76,16 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   Z: { key: 'Z', name: 'Twin Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
        cd: 0.42, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
        desc: 'Hits the closest enemies in range twice' },
+  AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
+        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
+        desc: 'Climb ropes and ladders faster' },
   C: { key: 'C', name: 'Jump', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
        cd: 0.05, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0,
        desc: 'Standard jump, keeps your running momentum' },
   D: { key: 'D', name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
        cd: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
-  Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 1, minLevel: 1, maxLevel: 3,
+  Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 1, minLevel: 5, maxLevel: 3,
        cd: 0.70, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
        desc: 'Launch enemies airborne, opens the link window' },
   W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 1, minLevel: 5, maxLevel: 3,
@@ -122,7 +125,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         desc: 'Each Fervor stack gives more damage' },
 };
 
-export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key
+export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key
 
 /** The buttons shown in the on-canvas skill bar. Z is the main attack slot:
  *  Twin Shot early, upgraded to Shell Barrage at Lv.30. */
