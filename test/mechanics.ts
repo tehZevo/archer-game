@@ -18,6 +18,7 @@ import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
+import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
@@ -1098,6 +1099,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('enemy HP bar: hidden before the first hit', before);
   check('enemy HP bar: shown after a hit, for 4 s', after && still && BAR_SHOW === 4);
   check('enemy HP bar: hidden again once the time runs out', m.barT <= 0);
+}
+
+{
+  // enemy animations: walkers step only while moving; fliers always flap; stun freezes
+  const walk = { anim: 0, fly: false, vx: 60, stun: 0 }, frames = new Set<number>();
+  for (let i = 0; i < 24; i++) { walk.anim = i * ANIM_RATE / 24; frames.add(mobFrame(walk, 4, 8)); }
+  check('a walking enemy cycles through all its frames', frames.size === 4, [...frames].join(','));
+  check('a standing enemy holds frame 0', mobFrame({ ...walk, vx: 0, anim: 3.3 }, 4, 8) === 0);
+  check('a stunned enemy holds frame 0', mobFrame({ ...walk, stun: 1, anim: 3.3 }, 4, 8) === 0);
+  check('a hovering flier keeps flapping', mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4) === 1);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
