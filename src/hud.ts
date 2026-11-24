@@ -15,6 +15,7 @@ import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spend
 import { pauseSpend } from './update';
 import { dev, devStops } from './dev';
 import { chat, logLines, wrap as wrapChat } from './chat';
+import { keyName } from './input';
 import { text } from './font';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
@@ -68,7 +69,7 @@ function drawHUD(): void {
       // empty slot: a dim frame with its key
       ctx.fillStyle = '#0006'; ctx.fillRect(x, by, sw, 16);
       ctx.strokeStyle = '#4a5c7a'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, by + 0.5, sw - 1, 15);
-      text(ctx, slot.label, x + 1, by + 1, 1, '#4a5c7a', 'left');
+      text(ctx, keyName(slot.label), x + 1, by + 1, 1, '#4a5c7a', 'left');
       return;
     }
     const k: SkillKey = slot.skill;
@@ -80,7 +81,7 @@ function drawHUD(): void {
     ctx.drawImage(skillIcon(s.key), x, by, 16, 16);
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#0009'; ctx.fillRect(x, by, 7, 7);
-    text(ctx, slot.label, x + 1, by + 1, 1, learned ? '#ffd166' : '#4a5c7a', 'left');
+    text(ctx, keyName(slot.label), x + 1, by + 1, 1, learned ? '#ffd166' : '#4a5c7a', 'left');
     if (learned && frac > 0) {
       ctx.fillStyle = '#000a';
       ctx.fillRect(x, by, sw, 16 * frac);
@@ -260,7 +261,7 @@ export function buildPanel(): void {
     const s = activeSkill(k);
     const d = document.createElement('div');
     d.className = 'skill';
-    d.innerHTML = `<div class="key">${k}</div><div class="sbody">
+    d.innerHTML = `<div class="key">${keyName(k)}</div><div class="sbody">
       <div class="nm">${s.name}<span class="tag">${s.tag}</span></div>
       <div class="ds">${s.desc}</div>
       <div class="row"><span class="rl"></span>

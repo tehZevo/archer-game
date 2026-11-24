@@ -7,9 +7,24 @@ const PREVENT = new Set(['a', 's', 'z', 'x', 'c', 'v', 'b', 'q', 'w', 'e', 'r', 
 
 const keys: Record<string, boolean> = Object.create(null);
 
-interface KeyEv extends Event { key: string }
+interface KeyEv extends Event { key: string; code?: string }
 
-function normalize(e: KeyEv): string {
+/* Keys are matched by physical position (KeyboardEvent.code), not the typed
+   letter, so the controls sit in the same place on any layout: on AZERTY
+   the key in QWERTY's Z spot types W but still attacks. Ids stay the
+   QWERTY names ('z', 'q', '1', ...); keyName() gives the layout's letter. */
+const CODE_IDS: Record<string, string> = {
+  Space: ' ', Enter: 'enter', NumpadEnter: 'enter', Escape: 'escape',
+  BracketLeft: '[', BracketRight: ']', Backquote: '`',
+  ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+};
+
+/** The input id for a key event: by physical key where the browser says, else by the typed key. */
+export function normalize(e: KeyEv): string {
+  const c = e.code ?? '';
+  if (/^Key[A-Z]$/.test(c)) return c.slice(3).toLowerCase();
+  if (/^Digit[0-9]$/.test(c)) return c.slice(5);
+  if (CODE_IDS[c]) return CODE_IDS[c];
   const k = e.key.toLowerCase();
   return KEY_MAP[k] || k;
 }
@@ -19,14 +34,31 @@ if (typeof window !== 'undefined') {
     const id = normalize(e as KeyEv);
     if (!keys[id]) keys[id + '_p'] = true;
     keys[id] = true;
-    if (KEY_MAP[(e as KeyEv).key.toLowerCase()] || PREVENT.has((e as KeyEv).key.toLowerCase())) {
-      e.preventDefault();
-    }
+    if (['left', 'right', 'up', 'down'].includes(id) || PREVENT.has(id)) e.preventDefault();
   });
 
   window.addEventListener('keyup', (e) => {
     keys[normalize(e as KeyEv)] = false;
   });
+}
+
+/* ---------------- key names for this layout ---------------- */
+const layout = new Map<string, string>();
+/** Learn what this keyboard layout types on each physical key (Chromium only;
+ *  elsewhere labels stay the QWERTY letters). */
+export async function loadLayout(): Promise<void> {
+  try {
+    const kb = (navigator as unknown as { keyboard?: { getLayoutMap(): Promise<Map<string, string>> } }).keyboard;
+    const m = await kb?.getLayoutMap();
+    m?.forEach((v, k) => layout.set(k, v));
+  } catch { /* not allowed here (e.g. in an iframe): keep QWERTY labels */ }
+}
+/** Teach the layout by hand (tests). */
+export const setLayout = (m: Record<string, string>): void => { layout.clear(); for (const k in m) layout.set(k, m[k]); };
+/** The label to show for an input id: the letter this layout types there (upper-case). */
+export function keyName(id: string): string {
+  const code = /^[a-z]$/i.test(id) ? 'Key' + id.toUpperCase() : /^[0-9]$/.test(id) ? 'Digit' + id : '';
+  return (layout.get(code) ?? id).toUpperCase();
 }
 
 /** Drive input programmatically (headless tests, console). */
