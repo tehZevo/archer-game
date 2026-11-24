@@ -8,7 +8,7 @@ import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES } 
 let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
-import { FX_DUR, MOB_TYPES, P } from '../src/config';
+import { AREAS, FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
@@ -984,8 +984,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
   check('every area on the map has a tileset (Classic until it gets its own)', ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
   check('Clockwork Spire is on the map', [...Array(12).keys()].some((b) => areaOf(b, 0) === 'Clockwork Spire' || areaOf(b, 1) === 'Clockwork Spire'));
-  check('Beach, Forest, Cave and Clockwork Spire have their own tilesets',
-    ['Beach', 'Forest', 'Cave', 'Clockwork Spire'].every((a) => tilesetFor(a).name === a) && tilesetFor('Swamp').name === 'Classic');
+  const own = [...AREAS, 'Meadow', 'Riverbank', 'Hills'];
+  check('every area in play, plus Meadow, Riverbank and Hills, has its own tileset', own.every((a) => tilesetFor(a).name === a),
+    own.filter((a) => tilesetFor(a).name !== a).join(', '));
+  check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');
   const hex = /^#[0-9a-f]{6}$/;
   let bad = '';
   for (const ts of Object.values(TILESETS)) {
