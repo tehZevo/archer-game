@@ -1,5 +1,5 @@
 import { CAM, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
-import { BLOCK } from './world';
+import { blockSize, tierOf } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
@@ -96,7 +96,7 @@ export function mobBounds(m: Mob): [number, number] {
 /** The level of the enemies on a stage, which sets the EXP (see mobExp) and
  *  coins they're worth: one per combat floor climbed (towns don't count), so
  *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
-export const mobLevel = (stage: number): number => Math.max(1, stage - Math.floor(stage / BLOCK));
+export const mobLevel = (stage: number): number => Math.max(1, stage - Math.floor((stage - 1) / blockSize(tierOf(stage))));
 
 export function spawnMob(s: Spawn, type: MobType): void {
   // Mobs scale with the player so the tower stays relevant up to Lv.100.
