@@ -1,4 +1,4 @@
-import { CAM, MOB_EXP_SHARE, MOB_TYPES, SKILLS, SKILL_ORDER, WORLD } from './config';
+import { CAM, MOB_EXP_SHARE, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
 import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
@@ -84,6 +84,14 @@ export const game = {
   pause: null as PauseMenu | null,
   view: { w: 1280, h: 720, sx: 1, sy: 1 },
 };
+
+/** How far a mob's centre may go: its platform's walkable extent (tile
+ *  edges), inside the map. */
+export function mobBounds(m: Mob): [number, number] {
+  const lo = Math.max(m.w / 2, m.home - m.range - TILE / 2);
+  const hi = Math.min(WORLD.w - m.w / 2, m.home + m.range + TILE / 2);
+  return [lo, hi];
+}
 
 /** A mob's level, which sets the EXP it's worth. For now it is simply the
  *  floor number; later it can come from the mob type and area. */

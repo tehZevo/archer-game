@@ -17,7 +17,7 @@ import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
@@ -25,7 +25,7 @@ import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
-import type { Mob, Platform } from '../src/types';
+import type { Mob, PauseMenu, Platform } from '../src/types';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = ''): void {
@@ -353,8 +353,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Plunging Volley does nothing on the ground', player.cd.E === 0 && under.hp === 1e6);
   // jump, then fire at the top of the jump
   tap('c'); step(8);
-  const yTop = player.y; tap('e'); step(1);
-  check('Plunging Volley checks your fall', Math.abs(player.y - yTop) < 2 && player.vy === 0);
+  const yTop = player.y; player.vx = 40; tap('e'); step(1);
+  check('Plunging Volley bumps you up a little', player.y < yTop && player.y > yTop - 8 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
+  step(4);
+  check('Plunging Volley does not freeze you mid-air', player.vy > 0 && player.vx !== 0);
   step(10);
   check('Plunging Volley hits the enemy beneath you', under.hp < 1e6);
   check('Plunging Volley leaves enemies off to the side alone', beside.hp === 1e6);
@@ -715,6 +717,80 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the down portal goes back to the floor below', game.floor.number === 9);
   check('skills work in town', (() => { gotoFloor(10); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
   net.route = 0; release();
+}
+
+// --- the Esc menu's skill list scrolls instead of overflowing ---
+{
+  const m: PauseMenu = { col: 1, row: 0 }, n = PAUSE_ROWS + 4;
+  let inView = true;
+  for (let r = 0; r < n; r++) { m.row = r; const t = pauseScroll(m, n); if (r < t || r >= t + PAUSE_ROWS) inView = false; }
+  const atEnd = m.scroll;
+  m.row = 5; const back = pauseScroll(m, n);
+  check('Esc menu skill list keeps the selected row in view', inView && atEnd === 4 && back === 4, `end ${atEnd} back ${back}`);
+  check('a short skill list never scrolls', pauseScroll({ col: 1, row: 3, scroll: 2 }, 6) === 0);
+}
+
+// --- enemies never freeze at a platform end; Sky Toss carry fixes ---
+{
+  // patrol: every enemy keeps moving (none parked against an edge)
+  let frozen = 0, total = 0;
+  for (const n of [1, 2, 3]) {
+    release(); gotoFloor(n); player.invuln = 1e9; player.x = 4; player.y = 0; player.climb = null;
+    const last = new Map<object, number>(), still = new Map<object, number>();
+    for (let i = 0; i < 150; i++) {
+      step(1); player.hp = player.hpMax;
+      for (const m of game.mobs) {
+        still.set(m, Math.abs(m.x - (last.get(m) ?? -9)) > 0.2 ? 0 : (still.get(m) ?? 0) + 1); last.set(m, m.x);
+      }
+    }
+    total += game.mobs.length; frozen += game.mobs.filter((m) => (still.get(m) ?? 0) > 45).length;
+  }
+  check('patrolling enemies turn at platform ends instead of freezing', frozen === 0, `${frozen}/${total} frozen`);
+
+  // chase: an angry enemy whose player is off its platform goes back to patrolling
+  arena(1); const g = ground(), w0 = g.w;
+  const m = dummy(100); m.spd = 50; m.aggro = true; m.home = 80; m.range = 60;
+  player.x = 300; player.y = g.y - player.h;
+  let still = 0, lx = m.x;
+  for (let i = 0; i < 90; i++) { step(1); still = Math.abs(m.x - lx) < 0.2 ? still + 1 : 0; lx = m.x; }
+  g.w = w0;
+  check('an enemy does not pin itself to the edge chasing an unreachable player', still < 30, `still ${still} frames`);
+
+  // Sky Toss hits at most 6
+  arena(1); player.ranks.Q = 3;
+  const ms = Array.from({ length: 9 }, (_, i) => dummy(120 + i * 6));
+  tap('q'); step(14);
+  check('Sky Toss hits at most 6 enemies', ms.filter((x) => x.hp < 1e6).length === 6, `${ms.filter((x) => x.hp < 1e6).length} hit`);
+
+  // grab reaches a little behind
+  arena(1); const behind = dummy(95); player.x = 100;
+  tap('q'); step(14);
+  check('Sky Toss scoops up an enemy just behind you', behind.hp < 1e6 && behind.x > 100);
+}
+
+// --- an enemy carried by Sky Toss never ends up inside or under its platform ---
+{
+  let bad = 0, runs = 0;
+  for (const n of [1, 2, 3, 4]) {
+    release(); gotoFloor(n);
+    const count = Math.min(10, game.mobs.filter((m) => !m.fly).length);
+    for (let k = 0; k < count; k++) for (const face of [1, -1]) {
+      release(); gotoFloor(n); player.invuln = 1e9; player.mp = 999; player.ranks.Q = 1;
+      const m = game.mobs.filter((x) => !x.fly)[k];
+      if (!m) continue;
+      player.x = m.x - face * 14; player.y = m.y + m.h - player.h; player.vy = 0; player.face = face;
+      player.onGround = true; player.climb = null; player.cd.Q = 0; player.useT = 0;
+      step(1); if (!player.onGround) continue;
+      runs++;
+      tap('q');
+      step(60);
+      if (!game.mobs.includes(m)) continue;
+      const home = game.floor.platforms.filter((p) => !p.inner && p.block === m.spawn?.block && m.x >= p.x && m.x < p.x + p.w);
+      const onTop = home.some((p) => Math.abs(surfaceYAt(p, m.x) - (m.y + m.h)) < 3);
+      if (!onTop) bad++;
+    }
+  }
+  check('enemies carried by Sky Toss stay standing on their platform', runs > 10 && bad === 0, `${bad}/${runs} fell in or through`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

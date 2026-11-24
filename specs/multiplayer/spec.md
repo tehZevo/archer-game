@@ -4,6 +4,7 @@ Other players appear as ghosts on the same floor and channel, each washed in the
 
 - Each floor has numbered channels of up to 20 players; a full channel spills into the next.
 - Each player samples their own motion 10 times a second (position, velocity, pose) and sends the last few samples together about 3 times a second, so updates are few but carry the full motion between them.
+- A player whose tab is in the background keeps sending their (unchanging) position, so they stay visible to others, standing still, instead of vanishing.
 - Receivers play ghosts back a little under half a second behind, interpolating between samples. If a packet is late, the ghost coasts briefly on its last velocity, then holds still.
 - Ghosts play the same poses as their owner: idle, walk, jump, climb, shoot, Sky Toss lean and hover.
 - Other players' skills show their effects locally, visual only (no damage). Every released shot (Twin Shot, Piercing Arrow) is sent as its own message and shows its flash and tracer when that player's ghost reaches the moment it was fired, so rapid back-to-back shots all show; Sky Toss's horn of light and Sky Assault's swoosh play from the ghost's pose.
