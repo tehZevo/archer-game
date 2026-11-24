@@ -758,9 +758,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 8 && upR.to === 8
     && upL.area === forest && upR.area === meadow && down.to === 3 && down.area === 0 && game.mobs.length === 0);
   const deck = game.floor.platforms.filter((p) => p.block === 1 && !p.inner);
-  check('the down portal stands on the plaza deck, reached by a ladder and a rope',
-    deck.some((p) => p.y === down.y) && game.floor.ladders[0].y1 === down.y && game.floor.ropes[0].y1 === down.y
-    && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
+  const deckTop = Math.min(...deck.map((p) => p.y));
+  check('the plaza deck is reached by a ladder and a rope from the ground',
+    game.floor.ladders[0].y1 === deckTop && game.floor.ropes[0].y1 === deckTop && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
+  // two-level towns: a loft over the deck, up a ladder, with the way down on it
+  let lofts = 0, flat = 0, loftsOk = true;
+  for (const a of AREAS) {
+    gotoFloor(townStage(a.depth), a.id);
+    const fl = game.floor, dk = fl.platforms.filter((p) => p.block === 1), lf = fl.platforms.filter((p) => p.block === 2);
+    const dTop = Math.min(...dk.map((p) => p.y)), dn = fl.portals.find((q) => q.to < fl.number)!;
+    if (!lf.length) { flat++; if (dn.y !== dTop) loftsOk = false; continue; }
+    lofts++;
+    const lTop = Math.min(...lf.map((p) => p.y)), lBottom = Math.max(...lf.map((p) => p.y + p.h));
+    const lad = fl.ladders[1];
+    const ok = dn.y === lTop && lf.some((p) => !p.inner && p.y === lTop && dn.x >= p.x && dn.x <= p.x + p.w)
+      && lad && lad.y1 === lTop && lad.y2 === dTop
+      && dTop - lBottom >= player.h + 4 // you can walk the deck under it
+      && Math.abs(lad.x - dn.x) >= dn.w / 2 + 10 + 7; // climbing off the ladder isn't standing in the portal
+    if (!ok) { loftsOk = false; check(`${a.town}'s loft`, false); break; }
+  }
+  check("some towns have a second level and some don't", lofts > 0 && flat > 0, `${lofts} two-level, ${flat} one-level`);
+  check("a loft holds the way down, up a ladder from the deck, with headroom under it", loftsOk);
+  gotoFloor(7, beach);
   check('every area has its own rooms, its town too (the first area keeps the plain ids)',
     roomId(13, 1, '', forest) !== roomId(13, 1, '', meadow) && roomId(8, 1, '', forest) !== roomId(8, 1, '', meadow) && !roomId(3, 1, '', 0).includes('-a'));
 
