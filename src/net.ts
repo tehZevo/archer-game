@@ -2,6 +2,7 @@ import { joinRoom } from 'trystero';
 import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
 import { isTown } from './world';
+import { devTag } from './dev';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
 import { cleanName, clearShots, myName, queueShot, type ShotMsg } from './presence';
@@ -13,7 +14,7 @@ export const MAX_PER_CHANNEL = 20;
 const APP_ID = 'tehZevo/archer-game';
 /** Public rooms are per floor + channel; a private instance (net.code) is one room per floor. */
 export const roomId = (floor: number, channel: number, code = net.code, route = net.route): string =>
-  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route);
+  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route) + devTag();
 /** Route suffix: none on route 0 (the original ids) and none on towns, where both routes meet. */
 const routeTag = (floor: number, route: number): string => (route > 0 && !isTown(floor) ? `-r${route}` : '');
 
@@ -60,7 +61,8 @@ type Room = ReturnType<typeof joinRoom>;
    One small room shared by everyone (menu or playing): each player posts
    the public floor + channel they're on, so the menu can show how busy
    each channel is. Nobody appears as a ghost here; it's counts only. */
-const LOBBY = 'eurekaland-lobby';
+/** (dev sessions get their own lobby, see dev.ts) */
+const lobbyId = (): string => 'eurekaland-lobby' + devTag();
 export const LOBBY_MAX = 100;
 interface At { f: number; c: number }
 let lobby: Room | null = null;
@@ -89,7 +91,7 @@ export function canConnect(): boolean {
 export function joinLobby(): void {
   if (lobby || !canConnect()) return;
   try {
-    lobby = joinRoom({ appId: APP_ID, maxUsers: LOBBY_MAX, identity: 'none' }, LOBBY);
+    lobby = joinRoom({ appId: APP_ID, maxUsers: LOBBY_MAX, identity: 'none' }, lobbyId());
     lobbyAt = lobby.makeUserState<At>('at', { f: 0, c: 0 });
     lobby.onError((err) => console.warn('[net] lobby error:', err.code, err.message, err));
     lobby.onPeerJoin((ctx) => log('lobby peer joined', ctx.userId.slice(0, 8)));
