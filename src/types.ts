@@ -210,7 +210,7 @@ export interface Player extends Body {
   castTotal: number;
   invuln: number;
   anim: number;
-  animState: 'idle' | 'walk' | 'jump' | 'climb';
+  animState: 'idle' | 'walk' | 'jump' | 'climb' | 'prone';
   /** Fervor stacks from linked skills. */
   fervor: number;
   fervorT: number;

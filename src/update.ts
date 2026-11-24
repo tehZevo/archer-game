@@ -121,9 +121,11 @@ export function update(dt: number): void {
     } else {
       // horizontal: accel toward target speed (the classic side-scroller walk over a few frames)
       const busy = player.cast === 'rush' ? 0.55 : 1;
+      // holding Down on the ground lies you flat: you can turn but not walk
+      const prone = player.onGround && !locked && held('down');
       let target = 0;
-      if (!locked && held('left'))  { target = -P.WALK * busy; player.face = -1; }
-      if (!locked && held('right')) { target =  P.WALK * busy; player.face =  1; }
+      if (!locked && held('left'))  { target = prone ? 0 : -P.WALK * busy; player.face = -1; }
+      if (!locked && held('right')) { target = prone ? 0 :  P.WALK * busy; player.face =  1; }
       if (!player.onGround) {
         // Air control: holding against your motion brakes toward a standstill
         // but never turns you around; otherwise momentum is kept.
@@ -164,7 +166,7 @@ export function update(dt: number): void {
         player.animState = 'climb';
       } else {
         player.animState = !player.onGround ? 'jump'
-          : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
+          : prone ? 'prone' : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
       }
     }
   }

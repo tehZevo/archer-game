@@ -9,8 +9,9 @@
    ============================================================ */
 
 /** How the archer is posed this instant; drives the sprite. */
-export type Pose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage';
-export const POSES: Pose[] = ['idle', 'walk', 'jump', 'climb', 'shoot', 'rush', 'barrage'];
+export type Pose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone';
+/** Sent as an index: new poses go on the end (older clients show them as idle). */
+export const POSES: Pose[] = ['idle', 'walk', 'jump', 'climb', 'shoot', 'rush', 'barrage', 'prone'];
 
 /** One motion sample: ms offset (≤ 0) from the packet's send time, x, y, vx, vy, pose index. */
 export type Sample = [number, number, number, number, number, number];

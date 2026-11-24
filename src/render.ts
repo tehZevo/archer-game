@@ -166,7 +166,7 @@ function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
-  ctx.drawImage(img, -ARCHER_W / 2, -ARCHER_H);
+  ctx.drawImage(img, -img.width / 2, -ARCHER_H);
   ctx.restore();
 }
 
@@ -176,14 +176,15 @@ tintCv.width = ARCHER_W; tintCv.height = ARCHER_H;
 const tintCtx = tintCv.getContext('2d') as CanvasRenderingContext2D;
 /** The frame washed with a colour (only where the frame has pixels). */
 function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
+  if (tintCv.width !== img.width) tintCv.width = img.width; // the prone frame is wider
   tintCtx.globalCompositeOperation = 'source-over';
   tintCtx.globalAlpha = 1;
-  tintCtx.clearRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.clearRect(0, 0, img.width, ARCHER_H);
   tintCtx.drawImage(img, 0, 0);
   tintCtx.globalCompositeOperation = 'source-atop';
   tintCtx.globalAlpha = 0.45;
   tintCtx.fillStyle = col;
-  tintCtx.fillRect(0, 0, ARCHER_W, ARCHER_H);
+  tintCtx.fillRect(0, 0, img.width, ARCHER_H);
   return tintCv;
 }
 
