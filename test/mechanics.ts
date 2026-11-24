@@ -1,3 +1,11 @@
+  // the fork: a town's two ways lead into two areas, each with its own floors
+  // and its own town above (the stage number is the height, the route the branch)
+  gotoFloor(12, 0);
+  const l = game.floor.portals[0].label, r = game.floor.portals[1].label;
+  check('a town's two ways lead into two areas, each with its own town above',
+    placeName(12, 0) === 'Forest 1' && placeName(12, 1) === 'Meadow 1' &&
+    placeName(21, 0) === 'Forest 10' && placeName(21, 1) === 'Meadow 10' &&
+    placeName(22, 0) === placeName(22, 1) && l === 'Forest 1' && r === 'Meadow 1', `${l} | ${r}`);
 import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, shop, wallet } from '../src/economy';
 import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
@@ -908,6 +916,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   for (let b = 1; b < 6; b++) if (areaOf(b, 0) === areaOf(b, 1)) differ = false;
   check('the two ways out of a town lead into two different areas', differ && areaOf(0, 0) === 'Beach');
   check('the floor before a town is the area end (the boss floor, later)', isAreaEnd(10) && isAreaEnd(21) && !isAreaEnd(11));
+
+  // the fork: the two blocks above Driftwood Rest are separate stages, each
+  // with its own floors, and each ends in its own town
+  gotoFloor(12, 0);
+  const forest = `${placeName(12, 0)} from ${placeName(11, 0)}`;
+  gotoFloor(13, 1);
+  check('the two ways up from a town are separate stages with their own floors',
+    placeName(12, 0) === 'Forest 1' && placeName(13, 1) === 'Meadow 1' &&
+    placeName(21, 0) === 'Forest 10' && placeName(32, 1) === 'Meadow 10', forest);
+  check('each branch ends in its own town', placeName(22, 0) === placeName(33, 1) === TOWN_NAMES[1]);
 
   net.route = 0; release(); gotoFloor(11);
   const [l, r, d] = game.floor.portals.map((p) => p.label);
