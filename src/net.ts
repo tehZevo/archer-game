@@ -14,8 +14,17 @@ export const MAX_PER_CHANNEL = 20;
 // One room per floor; players spread across numbered channels.
 const APP_ID = 'tehZevo/archer-game';
 /** Public rooms are per floor + channel; a private instance (net.code) is one room per floor. */
-export const roomId = (floor: number, channel: number, code = net.code, route = net.route): string =>
-  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route) + devTag();
+export const roomId = (floor: number, channel: number, code = net.code, route = net.route, hour = net.hour): string =>
+  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + routeTag(floor, route) + hourTag(floor, hour) + devTag();
+/* Rooms by hour: a floor's rooms are tagged with the UTC hour you entered
+   it (e.g. -h2026112414), so peers left over from earlier sessions are left
+   behind. The hour is fixed when you join a floor's room (through a portal,
+   or starting play): if it turns while you're on a floor you stay put, and
+   your next portal takes you into the new hour's rooms. Towns have no hour,
+   so everyone passing through meets there. (The lobby, counts only, has none.) */
+/** The UTC hour stamp for a time: YYYYMMDDHH. */
+export const hourStamp = (ms: number): string => new Date(ms).toISOString().slice(0, 13).replace(/[-T]/g, '');
+const hourTag = (floor: number, hour: string): string => (hour && !isTown(floor) ? `-h${hour}` : '');
 /** Route suffix: none on route 0 (the original ids) and none on towns, where both routes meet. */
 const routeTag = (floor: number, route: number): string => (route > 0 && !isTown(floor) ? `-r${route}` : '');
 
@@ -54,6 +63,8 @@ export const net = {
   /** Which way you went at the last town (0 = left, 1 = right): the floors
    *  above a town come in two routes, each its own layout and rooms. */
   route: 0,
+  /** The UTC hour stamp of the floor room we're in (see hourStamp). */
+  hour: '',
 };
 
 type Room = ReturnType<typeof joinRoom>;
@@ -141,6 +152,8 @@ function connect(channel: number): void {
   clearBubbles();
   resetBoost();
   net.channel = channel;
+  // a new floor takes the current hour; a channel hop on the same floor keeps it
+  if (net.floor !== game.floor.number || !net.hour) net.hour = hourStamp(Date.now());
   net.floor = game.floor.number;
   // identity: 'none' gives each tab its own userId; the default persists one
   // per browser, so two tabs in a profile would share a slot and overwrite
