@@ -76,7 +76,7 @@ reset();
 setKey('z', true);
 step(1 + Math.ceil(P.Z_WINDUP / P.STEP)); // the arrows fly after the bow-draw windup
 check('Twin Shot fires (muzzle flash, no projectile)', game.fx.some((f) => f.type === 'muzzle') && game.shots.length === 0);
-check('Twin Shot sets cd', player.cd.Z > 0);
+check('Twin Shot sets its use time', player.useT > 0);
 setKey('z', false);
 
 // --- 7. combat: a hitbox kills a low-hp mob and awards exp ---
