@@ -7,10 +7,11 @@ import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
 import { areaFor } from './world';
-import { localPose, names, net, peers } from './net';
+import { localPose, looks, names, net, peers } from './net';
+import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
-import { ARCHER_H, ARCHER_W, archerFrame, bakeArcher, climbPhase } from './archer';
+import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, climbPhase } from './archer';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import { clamp } from './util';
@@ -154,13 +155,12 @@ function drawMob(m: Mob): void {
   }
 }
 
-const ARCHER = bakeArcher();
 
 /** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s). */
-function drawArcher(x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string): void {
+function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string): void {
   // Climbing steps hand over hand with distance climbed, not time, so it
   // holds still while hanging on the rope.
-  const frame = archerFrame(ARCHER, pose, pose === 'climb' ? climbPhase(feet) : t, since);
+  const frame = archerFrame(archerFrames(look), pose, pose === 'climb' ? climbPhase(feet) : t, since);
   const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -187,7 +187,7 @@ function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
   return tintCv;
 }
 
-/** Other players: tinted in their own colour with a name tag, played back
+/** Other players: in their own look, with a name tag in their colour, played back
  *  smoothly, their skill effects replayed from their poses. */
 function drawGhosts(): void {
   const now = performance.now();
@@ -197,7 +197,10 @@ function drawGhosts(): void {
     if (!g) continue;
     const col = tintFor(id);
     game.fx.push(...ghostFx(tr, g));
-    drawArcher(g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, col); // ghosts use the same 16x24 box
+    // ghosts use the same 16x24 box; one on an older version (no look sent)
+    // is washed in their colour instead
+    const look = looks.get(id);
+    drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, look ? undefined : col);
     const name = names.get(id);
     if (name) {
       const nx = Math.round(g.x), ny = Math.round(g.y) - 10;
@@ -224,7 +227,7 @@ function drawBubble(id: string, x: number, bottom: number, now: number): void {
 }
 
 function drawPlayer(): void {
-  drawArcher(player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
+  drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
 }

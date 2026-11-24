@@ -23,6 +23,9 @@ import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
+import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
+import { styled } from '../src/archer';
 import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
@@ -612,9 +615,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let started = 0;
   const open = (): void => { initMenu(() => { started++; }, 3); };
   clearSave(); open();
-  check('menu rows: play, channel, code, new code, name (no reset without a save)', items().join(',') === 'play,channel,code,create,name');
+  check('menu rows: play, channel, code, new code, name, look (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look');
   menuKey('up');
-  check('menu selection wraps around', items()[menu.sel] === 'name');
+  check('menu selection wraps around', items()[menu.sel] === 'look');
 
   // channel picker
   check('auto picks the busiest channel with room', autoChannel(new Map([[1, 20], [2, 5], [3, 7]])) === 3);
@@ -891,10 +894,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
   // the trainer: from the third town up, respec for coins
   gotoFloor(townStage(0));
-  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.length === 1 && game.floor.npcs![0].kind === 'shop');
+  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'stylist').length === 1 && game.floor.npcs![0].kind === 'shop');
   gotoFloor(townStage(2));
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
-  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.length === 2);
+  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
   wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.BS = 0;
   tap('up');
@@ -1149,6 +1152,66 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a standing enemy holds frame 0', mobFrame({ ...walk, vx: 0, anim: 3.3 }, 4, 8) === 0);
   check('a stunned enemy holds frame 0', mobFrame({ ...walk, stun: 1, anim: 3.3 }, 4, 8) === 0);
   check('a hovering flier keeps flapping', mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4) === 1);
+}
+
+{
+  // looks: hair style, hair colour, skin and outfit; set from the menu or the town stylist
+  check('a bad saved look falls back to the default', JSON.stringify(cleanLook({ style: 99, hair: -1, skin: 'x' })) === JSON.stringify(DEFAULT_LOOK));
+  check('a good look is kept', cleanLook({ style: 2, hair: 3, skin: 1, outfit: 4 }).hair === 3);
+  check('stepping a look wraps around', stepLook(DEFAULT_LOOK, 'style', -1).style === LOOK_COUNTS.style - 1);
+  check('the elf ear follows the skin tone', lookPalette({ ...DEFAULT_LOOK, skin: 3 }).k === lookPalette({ ...DEFAULT_LOOK, skin: 3 }).s);
+  const poses = Object.keys(GRIDS) as (keyof typeof GRIDS)[];
+  check('the default hair style leaves the sprites as drawn', poses.every((p) => GRIDS[p].every((g) => styled(g, p, 0) === g)));
+  for (const st of [1, 2]) {
+    const ok = poses.every((p) => GRIDS[p].every((g) => {
+      const s = styled(g, p, st);
+      // same size, and below the head only cape, outline or empty pixels change
+      return s.length === g.length && s.every((r) => r.length === 16)
+        && s.every((r, y) => y < 12 || [...r].every((ch, x) => ch === g[y][x] || 'cCo.'.includes(g[y][x])));
+    }));
+    check(`hair style ${st}: frames keep their size; the body, bow and arms are untouched`, ok);
+  }
+  check('long hair shows down the back', styled(GRIDS.idle[0], 'idle', 2).join() !== styled(GRIDS.idle[0], 'idle', 1).join());
+  // the menu's LOOK row opens the stylist; keys go to it until it closes
+  const mem = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage ??= { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); }, removeItem: (k: string) => { mem.delete(k); } };
+  setMyLook(DEFAULT_LOOK);
+  initMenu(() => {}, 1);
+  menu.sel = items().indexOf('look'); menuKey('enter');
+  check('LOOK in the menu opens the stylist', stylist.open && stylist.sel === 0);
+  menuKey('right');
+  check('Right changes the picked row (hair style)', myLook().style === 1);
+  menuKey('down'); menuKey('left');
+  check('Left steps back, wrapping (hair colour)', myLook().hair === LOOK_COUNTS.hair - 1);
+  check('the look is kept on this device', cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === LOOK_COUNTS.hair - 1);
+  menuKey('escape');
+  check('Esc closes the stylist, not the menu', !stylist.open && menu.open);
+  // taps: a row's left half steps back, its right half forward
+  stylistKey('escape'); stylist.open = true; stylist.sel = 0;
+  const b = stylistBox(320, 180), rowY = (i: number): number => b.y + ST_TOP + i * 14 + 3;
+  const sk = myLook().skin;
+  stylistTap(b.x + ST_ROWS_W - 10, rowY(2), 320, 180);
+  check('tapping the right half of a row steps it forward', myLook().skin === (sk + 1) % LOOK_COUNTS.skin && stylist.sel === 2);
+  stylistTap(b.x + 10, rowY(2), 320, 180);
+  check('tapping the left half steps it back', myLook().skin === sk);
+  stylistTap(2, 2, 320, 180);
+  check('tapping outside the window closes it', !stylist.open);
+  menu.open = false;
+  // the town stylist
+  let townN = 1; while (gotoFloor(townN), !game.floor.town) townN++;
+  const st = game.floor.npcs?.find((n) => n.kind === 'stylist');
+  const zones = game.floor.portals.map((q) => [q.x - q.w / 2 - 10, q.x + q.w / 2 + 10]).concat(game.floor.ladders.map((l) => [l.x - 7, l.x + 7]), game.floor.ropes.map((l) => [l.x - 7, l.x + 7]));
+  check('towns have a stylist, clear of portals, ladders and ropes', !!st && zones.every(([lo, hi]) => st.x + NPC_R <= lo || st.x - NPC_R >= hi));
+  release(); setMyLook(DEFAULT_LOOK);
+  player.x = st!.x; player.y = st!.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('Up beside the stylist opens the window', stylist.open);
+  tap('right');
+  check('arrows change your look there too', myLook().style === 1);
+  tap('x');
+  check('X closes it', !stylist.open && !game.pause);
+  setMyLook(DEFAULT_LOOK);
+  release();
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

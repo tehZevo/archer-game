@@ -14,6 +14,8 @@ import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
 import { dev, devStops } from './dev';
+import { stylist } from './stylist';
+import { drawStylist } from './stylistdraw';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
 import { text } from './font';
@@ -137,11 +139,12 @@ function drawHUDItems(): void {
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
   drawChatLog(y);
-  if (dev.open || game.pause || shop.open || trainer.open) hudShadow(false); // full-screen panels have their own backdrops
+  if (dev.open || game.pause || shop.open || trainer.open || stylist.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
+  if (stylist.open) { drawStylist(w, h); return; }
   if (game.banner) {
     ctx.save();
     ctx.globalAlpha = clamp(game.banner.t / 1.15, 0, 1);

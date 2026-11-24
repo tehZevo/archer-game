@@ -12,6 +12,7 @@ import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
 import { dev, devStops } from './dev';
+import { stylist, stylistKey } from './stylist';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -19,6 +20,8 @@ export function update(dt: number): void {
   if (shop.open) { shopInput(); return; }
   // so does the trainer's
   if (trainer.open) { trainerInput(); return; }
+  // and the stylist's
+  if (stylist.open) { stylistInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }
@@ -291,6 +294,13 @@ function updateCamera(dt: number): void {
   const k = Math.min(1, CAM.LERP * dt);
   game.cam.x += (t.x - game.cam.x) * k;
   game.cam.y += (t.y - game.cam.y) * k;
+}
+
+/** The stylist's window in town: the same keys as from the menu (X closes too). */
+function stylistInput(): void {
+  for (const k of ['up', 'down', 'left', 'right', 'escape'] as const) if (pressed(k)) stylistKey(k);
+  if (pressed('z') || pressed('enter') || pressed(' ')) stylistKey('enter');
+  if (pressed('x')) stylistKey('escape');
 }
 
 /** Dev menu: Up/Down picks a stop, Z/Enter warps there, Esc or ` closes. */

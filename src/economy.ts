@@ -3,6 +3,7 @@ import { game, player } from './state';
 import { pressed } from './input';
 import { surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
+import { openStylist } from './stylist';
 import { activeSkill, recalcStats, STAT_KEYS, upgradesOf } from './progress';
 import type { Floor, Mob, Npc, SkillKey } from './types';
 
@@ -185,6 +186,7 @@ export function talk(): boolean {
   if (!n) return false;
   if (n.kind === 'shop') { shop.open = true; shop.sel = 0; }
   if (n.kind === 'trainer') { trainer.open = true; trainer.sel = 0; }
+  if (n.kind === 'stylist') openStylist();
   return true;
 }
 
