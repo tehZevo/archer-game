@@ -1,3 +1,4 @@
+import { keepAliveWhileHidden } from './background';
 import { bannerMsg, game, gainExp, gotoFloor, logMsg } from './state';
 import { rank, spendSp } from './progress';
 import { clearPressed } from './input';
@@ -67,4 +68,6 @@ initMenu(() => {
 bindMenu(cv);
 // the lobby only shares channel head-counts, so the menu can show them
 net.joinLobby();
+// a background tab has no frames: keep publishing our (still) position anyway
+keepAliveWhileHidden(sync);
 requestAnimationFrame(frame);

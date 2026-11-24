@@ -17,7 +17,7 @@ import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { WORLD } from '../src/config';
 import { killMob } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { activeSkill, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
@@ -25,7 +25,7 @@ import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
-import type { Mob, Platform } from '../src/types';
+import type { Mob, PauseMenu, Platform } from '../src/types';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = ''): void {
@@ -667,6 +667,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   Object.defineProperty(globalThis, 'crypto', { value: c, configurable: true });
   net.offline = '';
   check('with WebCrypto, multiplayer can connect', canConnect() && net.offline === '');
+}
+
+// --- the Esc menu's skill list scrolls instead of overflowing ---
+{
+  const m: PauseMenu = { col: 1, row: 0 }, n = PAUSE_ROWS + 4;
+  let inView = true;
+  for (let r = 0; r < n; r++) { m.row = r; const t = pauseScroll(m, n); if (r < t || r >= t + PAUSE_ROWS) inView = false; }
+  const atEnd = m.scroll;
+  m.row = 5; const back = pauseScroll(m, n);
+  check('Esc menu skill list keeps the selected row in view', inView && atEnd === 4 && back === 4, `end ${atEnd} back ${back}`);
+  check('a short skill list never scrolls', pauseScroll({ col: 1, row: 3, scroll: 2 }, 6) === 0);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
