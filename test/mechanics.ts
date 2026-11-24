@@ -30,6 +30,8 @@ import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../s
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
 import { dev, devStops } from '../src/dev';
 import { devInput } from '../src/update';
+import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
+import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -1024,6 +1026,22 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   dev.sel = 2; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
   check('picking a town warps there and closes the menu', game.floor.number === stops[2].stage && game.floor.town && !dev.open);
   dev.on = false;
+  // text chat
+  check('chat keeps only what the font draws, upper-cased and capped',
+    cleanChat('  hi, there!  \u{1F600} ok?') === "HI, THERE! OK?" && cleanChat('x'.repeat(200)).length === CHAT_MAX && cleanChat('   ') === '');
+  check('chat wraps on words and splits long ones', JSON.stringify(wrap('HELLO THERE FRIEND', 11)) === '["HELLO THERE","FRIEND"]' && wrap('A'.repeat(25), 10).length === 3);
+  chat.log.length = 0; clearBubbles();
+  say('hello world');
+  check('saying something logs it and shows our bubble', chat.log.length === 1 && chat.log[0].id === SELF && chat.log[0].text === 'HELLO WORLD' && !!bubbleFor(SELF, performance.now()));
+  say('   ');
+  check('blank lines are not sent', chat.log.length === 1);
+  const t0 = 1e6;
+  addChat('peer1', 'BOB', 'HI', '#ff0000', t0);
+  check('a bubble lasts a few seconds, then goes', !!bubbleFor('peer1', t0 + 1000) && bubbleFor('peer1', t0 + bubbleMs('HI') + 1) === null);
+  check('old lines leave the log unless you are typing', !logLines(t0 + LOG_SHOW_MS + 1).some((l) => l.id === 'peer1'));
+  chat.typing = true;
+  check('typing shows the whole recent log', logLines(t0 + LOG_SHOW_MS + 1).some((l) => l.id === 'peer1'));
+  chat.typing = false; chat.log.length = 0; clearBubbles();
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

@@ -12,6 +12,7 @@ import * as net from './net';
 import * as boost from './boost';
 import { initMenu, menu } from './menu';
 import { bindMenu } from './menudom';
+import { bindChat } from './chatdom';
 import { load, save, tickSave } from './save';
 const { sync } = net;
 
@@ -66,6 +67,7 @@ initMenu(() => {
   bannerMsg('Archer', 'Elven Bow · Arrow keys to move');
 }, resumeFloor);
 bindMenu(cv);
+bindChat(cv);
 // the lobby only shares channel head-counts, so the menu can show them
 net.joinLobby();
 // a background tab has no frames: keep publishing our (still) position anyway
