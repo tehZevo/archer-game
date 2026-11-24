@@ -984,8 +984,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
   check('every area on the map has a tileset (Classic until it gets its own)', ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
   check('Clockwork Spire is on the map', [...Array(12).keys()].some((b) => areaOf(b, 0) === 'Clockwork Spire' || areaOf(b, 1) === 'Clockwork Spire'));
-  const own = [...AREAS, 'Meadow', 'Riverbank', 'Hills'];
-  check('every area in play, plus Meadow, Riverbank and Hills, has its own tileset', own.every((a) => tilesetFor(a).name === a),
+  const own = [...AREAS, 'Meadow', 'Riverbank', 'Hills', 'Mushroom Grotto', 'Crystal Caverns', 'Sunken Ruins'];
+  check('every area in play, plus the planned ones so far, has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
   check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');
   const hex = /^#[0-9a-f]{6}$/;
