@@ -1,6 +1,7 @@
 import { shop } from './economy';
 import { drawShop, walletLine } from './economydraw';
-import { areaFor, SKILL_BAR } from './config';
+import { SKILL_BAR } from './config';
+import { placeName } from './world';
 import { critChance } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
@@ -31,9 +32,7 @@ function drawHUD(): void {
 
   // top-left: level + floor
   text(ctx, `Lv.${player.level}`, pad, pad, 1, '#dbe6f5', 'left');
-  const area = areaFor(game.floor.number);
-  text(ctx, game.floor.town ? `${area} · Town` : `${area} · Floor ${game.floor.number}`,
-    pad, pad + 9, 1, '#8ea3c2', 'left');
+  text(ctx, placeName(game.floor.number, net.route), pad, pad + 9, 1, '#8ea3c2', 'left');
   // a private instance shows its code on its own line (shifting the points line down)
   let ly = pad + 18;
   // where you are and who's with you: the channel (or private code) and the player count

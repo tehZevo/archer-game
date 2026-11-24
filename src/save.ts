@@ -1,4 +1,5 @@
 import { CARRY_MAX, wallet } from './economy';
+import { lastTown } from './world';
 import { SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
 import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
@@ -52,9 +53,7 @@ const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
   return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : dflt;
 };
 
-/** Towns are the save points: you resume on the latest town at or below
- *  your floor (floor 1 before the first town). */
-export const lastTown = (n: number): number => (n >= 10 ? n - (n % 10) : 1);
+export { lastTown } from './world';
 
 /** Apply a save to the player; returns the floor to resume on, or null if the save is unusable. */
 export function apply(d: unknown): number | null {

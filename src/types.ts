@@ -1,4 +1,4 @@
-export type SkillKey = 'Z' | 'C' | 'D' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'SA' | 'PP' | 'IR';
+export type SkillKey = 'Z' | 'C' | 'D' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR';
 
 /** The four core stats, each upgraded with ability points (AP). */
 export interface CoreStats {
@@ -116,6 +116,9 @@ export interface Spawn {
 }
 
 export interface Mob {
+  /** Damage-number stack: when its latest number shows (game time) and its height in the stack. */
+  numAt?: number;
+  numK?: number;
   x: number;
   y: number;
   w: number;
@@ -263,6 +266,8 @@ export interface DmgNum {
   y: number;
   v: number;
   t: number;
+  /** s until it appears (a multi-hit's later numbers wait their turn). */
+  delay?: number;
   vy: number;
   crit: boolean;
   col: string;

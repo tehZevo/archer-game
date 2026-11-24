@@ -1,5 +1,6 @@
 import { MOB_TYPES, WORLD, TILE } from './config';
 import { net, roomId } from './net';
+import { isAreaEnd, isTown, placeName } from './world';
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
@@ -125,7 +126,7 @@ function mobForFloor(n: number): MobType {
  * connected to the next by a rope/ladder that runs from the top surface of the
  * lower platform to the top surface of the upper one. Enemies stand on the
  * ground and on platforms; a portal on the summit leads to the next floor.
- * Every 10th floor is a town instead: a designed layout (see townFloor).
+ * The stage after every area's 10th floor is a town instead: a designed layout (see townFloor).
  */
 /** Enemies in a platform's group, by its walkable tiles: 4 on the
  *  shortest tops (6 tiles or fewer), one more per 2 tiles, up to 8. */
@@ -138,7 +139,7 @@ const MIN_H = 180;           // never shorter than the view
 
 export function generateFloor(n: number): Floor {
   rng = seeded(hashStr(roomId(n, net.channel)));
-  if (n % 10 === 0) return trim(townFloor(n));
+  if (isTown(n)) return trim(townFloor(n));
   const ground = groundSlab();
   const groundY = ground.y;
 
@@ -240,6 +241,7 @@ export function generateFloor(n: number): Floor {
 
   // The exit portal sits centred on the highest platform's walkable top tile.
   const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: n + 1 };
+  if (isAreaEnd(n)) portal.label = placeName(n + 1, net.route); // the way into the town names it
 
   return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H });
 }
@@ -252,7 +254,7 @@ function groundSlab(): Platform {
 }
 
 /**
- * A town (every 10th floor): one designed layout, not random, and no enemies.
+ * A town (the stop after each area's 10 floors, see world.ts): one designed layout, not random, and no enemies.
  * Two ways up from the ends of the ground, each to its own route of the
  * floors above (left = route 0, right = route 1); on a floating plaza deck
  * in the middle (ladder on its left, rope on its right) a way back down to
@@ -267,9 +269,10 @@ export function townFloor(n: number): Floor {
   const deckTop = Math.min(...deck.tiles.map((t) => t.y));
   const P = (x: number, y: number, to: number, label: string, route?: number): Portal =>
     ({ x, y, w: 40, h: 56, to, label, ...(route === undefined ? {} : { route }) });
-  const upL = P(2 * TILE, ground.y, n + 1, `UP ${n + 1} A`, 0);
-  const upR = P(WORLD.w - 2 * TILE, ground.y, n + 1, `UP ${n + 1} B`, 1);
-  const down = P(WORLD.w / 2, deckTop, n - 1, `DOWN ${n - 1}`);
+  // labelled with where they lead: the two areas ahead, and the way you came
+  const upL = P(2 * TILE, ground.y, n + 1, placeName(n + 1, 0), 0);
+  const upR = P(WORLD.w - 2 * TILE, ground.y, n + 1, placeName(n + 1, 1), 1);
+  const down = P(WORLD.w / 2, deckTop, n - 1, placeName(n - 1, net.route));
   return {
     number: n, town: true, h: GEN_H,
     platforms: [ground, ...deck.tiles],

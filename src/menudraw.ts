@@ -1,9 +1,10 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { text } from './font';
-import { autoChannel, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
+import { autoChannel, disabled, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
+import { placeName } from './world';
 
 /* The main menu, drawn on the canvas over the frozen world. */
 
@@ -25,7 +26,7 @@ export function drawMenu(): void {
   // without multiplayer (no WebCrypto on this page) say so up front
   if (net.offline) text(ctx, 'LOCAL ONLY - NO MULTIPLAYER', w / 2, 28, 1, '#ff9f6b', 'center');
   else text(ctx, 'CLIMB THE TOWER', w / 2, 28, 1, DIM, 'center');
-  text(ctx, hasSave() ? `LV ${player.level} · FLOOR ${menu.floor}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
+  text(ctx, hasSave() ? `LV ${player.level} · ${placeName(menu.floor, net.route).toUpperCase()}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
 
   const blink = Math.floor(performance.now() / 400) % 2 === 0;
   const counts = lobbyCounts(menu.floor);
@@ -36,7 +37,10 @@ export function drawMenu(): void {
       ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(MENU_X + 0.5, y - 2.5, MENU_W - 1, MENU_ROW - 2);
     }
     const L = MENU_X + 5, R = MENU_X + MENU_W - 5;
-    const caret = (on: boolean): string => (on && blink ? '_' : '');
+    // the caret blinks between '_' and a space of the same width, so the
+    // right-aligned text beside it never shifts
+    const caret = (on: boolean): string => (on ? (blink ? '_' : ' ') : '');
+    if (disabled(it)) ctx.globalAlpha = 0.35;
     switch (it) {
       case 'play':
         text(ctx, 'PLAY', w / 2, y, 1, GOLD, 'center');
@@ -70,6 +74,7 @@ export function drawMenu(): void {
         text(ctx, menu.confirmReset ? 'SURE? Z AGAIN TO ERASE' : 'RESET PROGRESS', w / 2, y, 1, RED, 'center');
         break;
     }
+    ctx.globalAlpha = 1;
   });
   const note = menu.note || HINT[items()[menu.sel]];
   text(ctx, note, w / 2, h - 22, 1, menu.note ? GOLD : DIM, 'center');

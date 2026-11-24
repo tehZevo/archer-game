@@ -145,6 +145,23 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.......x......',
     '..gggggggggg..',
   ],
+  // Rising Arrow: an arrow climbing beside a launched target, with lift lines
+  RA: [
+    '......a.......',
+    '.....aaa......',
+    '....a.x.a.....',
+    '......x....r..',
+    '..a...x...rRr.',
+    '..a...x....r..',
+    '......x.......',
+    '..a...x...a...',
+    '..a...x...a...',
+    '......x.......',
+    '.....w.w......',
+    '..............',
+    '..gggggggggg..',
+    '.GGGGGGGGGGGG.',
+  ],
   // Skyfall Volley: arrows raining down at an angle
   W: [
     '..x.....x.....',

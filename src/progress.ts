@@ -65,8 +65,8 @@ export function statsForLevel(level: number): { hpMax: number; mpMax: number; de
 export const AP_PER_LEVEL = 1;
 
 export const STAT_INFO: Record<StatKey, { name: string; desc: string }> = {
-  dex: { name: 'DEX', desc: 'Attack power' },
-  vit: { name: 'VIT', desc: 'Max HP +1%' },
+  dex: { name: 'DEX', desc: 'Attack +3%' },
+  vit: { name: 'VIT', desc: 'Max HP +5%' },
   spi: { name: 'SPI', desc: 'Max MP' },
   luk: { name: 'LUK', desc: 'Crit chance' },
 };
@@ -74,14 +74,16 @@ export const STAT_INFO: Record<StatKey, { name: string; desc: string }> = {
 export const STAT_KEYS = Object.keys(STAT_INFO) as StatKey[];
 
 /** Per-point contribution of each stat. */
-export const STAT_GAIN: Record<StatKey, number> = { dex: 1, vit: 0.01, spi: 4, luk: 0.4 };
+export const STAT_GAIN: Record<StatKey, number> = { dex: 0.03, vit: 0.05, spi: 4, luk: 0.4 };
 
 /** Recompute the live derived stats from base growth + core stat points. */
 export function recalcStats(): void {
   const base = statsForLevel(player.level);
   const s = player.stats;
   player.dex = base.dex + s.dex;
-  player.war = base.war + s.dex * STAT_GAIN.dex;
+  // attack grows with level and DEX: each DEX point is a % of the level's
+  // attack, so it stays worth the same at Lv.5 and Lv.50 (a flat +1 didn't)
+  player.war = base.war * (1 + s.dex * STAT_GAIN.dex);
   player.hpMax = Math.round(base.hpMax * (1 + s.vit * STAT_GAIN.vit)); // VIT is a % bonus so it keeps pace with level
   player.mpMax = base.mpMax + s.spi * STAT_GAIN.spi;
 }
@@ -164,7 +166,7 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
 export const SKILL_PICK_EVERY = 5;
 /** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
  *  several upgrades is a branch: taking one locks the others out for good. */
-const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q' };
+const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q' };
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {

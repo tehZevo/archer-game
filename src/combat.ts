@@ -3,7 +3,7 @@ import { localKill } from './boost';
 import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
-import type { DamageOpts, Mob } from './types';
+import type { DamageOpts, DmgNum, Mob } from './types';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
@@ -25,13 +25,29 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   target.aggro = true;
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);
   game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: hx, y: hy, t: opts.fx === 'stunHit' ? 0.3 : crit && !opts.fx ? 0.28 : 0.24, face: -game.player.face }); // streaks point back at the shooter
-  game.dmgNums.push({
-    x: target.x + rand(-10, 10), y: target.y - 8, v: dmg, t: 1, crit,
-    vy: -70, col: crit ? '#ffd166' : '#ffffff',
-  });
+  game.dmgNums.push(stackedNum(target, dmg, crit));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   if (opts.launch) { target.airTime = 1.1; target.vy = -430; target.y -= 4; }
   if (target.hp <= 0) killMob(target);
+}
+
+/** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
+ *  previous one, a line higher, instead of all landing at once in a pile. A
+ *  pause longer than NUM_RESET starts a new stack. */
+export const NUM_GAP = 0.25, NUM_LINE = 9, NUM_MAX = 8;
+const NUM_RESET = 0.4;
+function stackedNum(m: Mob, v: number, crit: boolean): DmgNum {
+  const now = game.time;
+  const fresh = m.numAt === undefined || now - m.numAt > NUM_RESET;
+  const k = fresh ? 0 : ((m.numK ?? 0) + 1) % NUM_MAX;
+  const at = fresh ? now : Math.max(now, m.numAt! + NUM_GAP);
+  m.numAt = at; m.numK = k;
+  return {
+    // a slow drift (it was 70px/s): fast enough to feel alive, slow enough that
+    // a number doesn't rise into the line the next one appears on
+    x: m.x, y: m.y - 8 - k * NUM_LINE, v, t: 1, crit, delay: at - now,
+    vy: -12, col: crit ? '#ffd166' : '#ffffff',
+  };
 }
 
 export function killMob(m: Mob): void {
