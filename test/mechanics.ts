@@ -10,20 +10,21 @@ Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 **
 import { FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
-import { clearPressed, setKey } from '../src/input';
+import { textWidth } from '../src/font';
+import { clearPressed, REPEAT_DELAY, REPEAT_RATE, setKey } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { groupSize, makeShape, SHAPES } from '../src/floor';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
-import { killMob } from '../src/combat';
+import { damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { activeSkill, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
-import { activate, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
+import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -812,6 +813,69 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   gotoFloor(BLOCK + 3, 1);
   check('the HUD place follows your route', placeName(game.floor.number, net.route) === `${areaOf(1, 1)} 3`);
   net.route = 0; release();
+}
+
+// --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
+{
+  arena(1); player.stats.dex = 0; player.stats.vit = 0; recalcStats();
+  const att1 = player.war, hp1 = player.hpMax;
+  arena(40); recalcStats(); const att40 = player.war;
+  player.stats.dex = 10; player.stats.vit = 10; recalcStats();
+  check('attack grows with level', att40 > att1 * 3, `Lv1 ${att1.toFixed(1)} Lv40 ${att40.toFixed(1)}`);
+  check('each DEX point is +3% attack at any level', Math.abs(player.war / att40 - (1 + 10 * STAT_GAIN.dex)) < 1e-9 && STAT_GAIN.dex === 0.03);
+  arena(1); player.stats.vit = 1; recalcStats();
+  check('each VIT point is +5% max HP', player.hpMax === Math.round(hp1 * 1.05), `${hp1} -> ${player.hpMax}`);
+  player.stats.dex = 0; player.stats.vit = 0; recalcStats();
+}
+
+// --- multi-hit damage numbers stack, one every 0.25s ---
+{
+  arena(10); const m = dummy(150);
+  game.dmgNums.length = 0;
+  for (let i = 0; i < 4; i++) damage(m, 1);
+  const ns = game.dmgNums.slice();
+  const delays = ns.map((d) => +(d.delay ?? 0).toFixed(3)).join(',');
+  const lines = ns.every((d, i) => Math.abs(ns[0].y - d.y - i * NUM_LINE) < 1e-9);
+  check('hits at once: each number waits 0.25s after the last', delays === [0, 1, 2, 3].map((k) => +(k * NUM_GAP).toFixed(3)).join(','), delays);
+  check('...and sits one line above it', lines);
+  step(Math.ceil(0.3 / P.STEP));
+  check('the second number shows after ~0.25s, the later ones still wait', (game.dmgNums[1].delay ?? 0) <= 0 && (game.dmgNums[2].delay ?? 0) > 0);
+  step(Math.ceil(2 / P.STEP));
+  game.dmgNums.length = 0; damage(m, 1);
+  check('after a pause a new stack starts at the bottom, right away', game.dmgNums[0].delay === 0 && game.dmgNums[0].y === m.y - 8);
+}
+
+// --- menu polish: key repeat, local-only rows, a steady caret ---
+{
+  // Esc menu: holding Down keeps moving
+  release(); arena(30); game.pause = { col: 1, row: 0 };
+  setKey('down', true);
+  const frames = Math.ceil((REPEAT_DELAY + 4 * REPEAT_RATE) / P.STEP) + 1;
+  for (let i = 0; i < frames; i++) { update(P.STEP); clearPressed(); }
+  const moved = game.pause.row;
+  setKey('down', false); step(5);
+  check('holding Down in the Esc menu repeats the move', moved >= 3, `moved ${moved}`);
+  check('releasing stops the repeat', game.pause.row === moved);
+  game.pause = null;
+
+  // local only: the code rows are skipped and can't be used
+  const mem = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, String(v)); }, removeItem: (k: string) => { mem.delete(k); },
+  };
+  net.offline = 'NEEDS HTTPS';
+  initMenu(() => {}, 1);
+  const seen = new Set<string>();
+  for (let i = 0; i < 10; i++) { menuKey('down'); seen.add(items()[menu.sel]); }
+  const ci = items().indexOf('code');
+  menuTap(MENU_X + 5, MENU_TOP + ci * MENU_ROW + 2);
+  check('local only: the private code rows are skipped', !seen.has('code') && !seen.has('create') && seen.has('name') && disabled('code'));
+  check('local only: tapping the code row does nothing', items()[menu.sel] !== 'code' && menu.edit === null);
+  net.offline = '';
+  check('online: the code rows are back', !disabled('code') && !disabled('create'));
+  delete (globalThis as { localStorage?: unknown }).localStorage;
+
+  check('the caret blinks between same-width glyphs, so text never shifts', textWidth('AB_') === textWidth('AB '));
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

@@ -23,7 +23,7 @@ Skill effects follow the style of classic MMOs' Archer effects, as original pixe
 
 ## Draw order
 
-Sky gradient → floor platforms → ropes/ladders → portal → mobs (with HP bars) → arrows → player → effects → floating damage numbers → HUD overlay.
+Sky gradient → floor platforms → ropes/ladders → portal → mobs (with HP bars) → arrows → player → effects → floating damage numbers (a multi-hit's numbers stack upward on the enemy, each appearing 0.25s after the one below; they drift up slowly) → HUD overlay.
 
 The skill bar shows a distinct pixel icon for each slot's active skill, so taking an upgrade changes the slot's icon; every skill, upgrade and passive has its own icon.
 

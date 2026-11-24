@@ -38,6 +38,8 @@ export function items(): ItemId[] {
   if (hasSave()) it.push('reset');
   return it;
 }
+/** Rows that can't be picked right now: no private codes without multiplayer. */
+export const disabled = (it: ItemId): boolean => !!net.offline && (it === 'code' || it === 'create');
 const cur = (): ItemId => items()[menu.sel];
 
 /** Channels on offer: auto, then 1..N, always one beyond the highest busy one (up to 9). */
@@ -64,7 +66,7 @@ export function initMenu(start: () => void, floor: number): void {
   menu.name = myName();
   menu.code = typeof location !== 'undefined' ? parseCode(location.hash.slice(1)) : '';
   // a share link lands on the code row: Enter joins
-  menu.sel = menu.code ? items().indexOf('code') : 0;
+  menu.sel = menu.code && !disabled('code') ? items().indexOf('code') : 0;
 }
 
 function go(code: string): void {
@@ -95,6 +97,7 @@ function finishEdit(): void {
 /** Activate the selected row (Enter / Z / a second tap). */
 export function activate(): void {
   const it = cur();
+  if (disabled(it)) return;
   if (it !== 'reset') menu.confirmReset = false;
   menu.note = '';
   switch (it) {
@@ -124,8 +127,9 @@ export function menuKey(k: string): void {
   if (!menu.open) return;
   if (k === 'up' || k === 'down') {
     finishEdit();
-    const n = items().length;
-    menu.sel = (menu.sel + (k === 'up' ? n - 1 : 1)) % n;
+    const it = items(), n = it.length;
+    // step over rows that can't be picked (local only: the code rows)
+    do menu.sel = (menu.sel + (k === 'up' ? n - 1 : 1)) % n; while (disabled(it[menu.sel]));
     menu.confirmReset = false; menu.note = '';
   } else if ((k === 'left' || k === 'right') && !menu.edit && cur() === 'channel') {
     stepChannel(k === 'left' ? -1 : 1);
@@ -146,7 +150,7 @@ export function menuText(v: string): void {
  *  row's left and right thirds step the channel. */
 export function menuTap(x: number, y: number): void {
   const row = Math.floor((y - MENU_TOP) / MENU_ROW);
-  if (row < 0 || row >= items().length || x < MENU_X || x >= MENU_X + MENU_W) return;
+  if (row < 0 || row >= items().length || x < MENU_X || x >= MENU_X + MENU_W || disabled(items()[row])) return;
   if (items()[row] === 'channel' && menu.sel === row) {
     const third = (x - MENU_X) / MENU_W;
     if (third < 1 / 3) { stepChannel(-1); return; }
