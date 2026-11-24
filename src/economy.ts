@@ -1,9 +1,10 @@
-import { P } from './config';
+import { P, SKILLS } from './config';
 import { game, player } from './state';
 import { pressed } from './input';
 import { surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
-import type { Floor, Mob, Npc } from './types';
+import { activeSkill, recalcStats, STAT_KEYS, upgradesOf } from './progress';
+import type { Floor, Mob, Npc, SkillKey } from './types';
 
 /* ============================================================
    ECONOMY
@@ -119,6 +120,56 @@ export const SHOP_ITEMS = [
   { kind: 'mp' as const, name: 'MP POTION', key: 'S' },
 ];
 
+/* ---------------- the trainer (respec) ----------------
+   From the third town (Lanternhollow) up, a trainer stands beside the
+   shopkeeper. Two services, both paid in coins: swap a skill slot over to
+   its other branch (keeping the rank you put into it), or refund every AP
+   and SP spent and start the build over. */
+
+/** The trainer's window (open while browsing; the world waits). */
+export const trainer = { open: false, sel: 0 };
+
+/** What each service costs. Swapping one slot is cheap; rebuilding the whole
+ *  build costs more. */
+export const RESPEC_PRICES = { swap: 100, reset: 500 };
+
+/** The slots the trainer can respec, and the label the menu gives each. */
+export const TRAINER_SLOTS: { slot: SkillKey; label: string }[] = [
+  { slot: 'Z', label: 'MAIN' }, { slot: 'Q', label: 'LAUNCH' }, { slot: 'W', label: 'LINK' },
+];
+
+/** Every skill the slot can be: its base first, then each competing branch. */
+export const slotBranches = (slot: SkillKey): SkillKey[] => [slot, ...upgradesOf(slot)];
+
+/** Swap a slot to its next branch, keeping the rank you paid for (clamped to
+ *  what the new skill can take). False if you can't afford it. */
+export function swapBranch(slot: SkillKey): boolean {
+  if (wallet.coins < RESPEC_PRICES.swap) return false;
+  const list = slotBranches(slot), cur = activeSkill(slot).key;
+  const next = list[(list.indexOf(cur) + 1) % list.length];
+  const keep = Math.min(player.ranks[cur] || 1, SKILLS[next].maxLevel);
+  list.forEach((k) => { player.ranks[k] = k === next ? keep : 0; });
+  wallet.coins -= RESPEC_PRICES.swap;
+  sfx.coin();
+  return true;
+}
+
+/** Ranks the Archer starts with (free, so a reset gives them back). */
+const FREE_RANKS = (Object.keys(SKILLS) as SkillKey[]).filter((k) => SKILLS[k].minLevel <= 1).length;
+
+/** Refund every AP and SP spent, back to the starting skills. */
+export function resetPoints(): boolean {
+  if (wallet.coins < RESPEC_PRICES.reset) return false;
+  player.ap += STAT_KEYS.reduce((n, k) => n + player.stats[k], 0);
+  STAT_KEYS.forEach((k) => { player.stats[k] = 0; });
+  player.sp += (Object.keys(player.ranks) as SkillKey[]).reduce((n, k) => n + (player.ranks[k] || 0), 0) - FREE_RANKS;
+  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = SKILLS[k].minLevel <= 1 ? 1 : 0; });
+  recalcStats();
+  wallet.coins -= RESPEC_PRICES.reset;
+  sfx.coin();
+  return true;
+}
+
 /** Buy one of an item; false if you can't afford it or can't carry more. */
 export function buy(kind: 'hp' | 'mp'): boolean {
   if (wallet.coins < PRICES[kind] || wallet[kind] >= CARRY_MAX) return false;
@@ -133,6 +184,7 @@ export function talk(): boolean {
   const n = npcNear();
   if (!n) return false;
   if (n.kind === 'shop') { shop.open = true; shop.sel = 0; }
+  if (n.kind === 'trainer') { trainer.open = true; trainer.sel = 0; }
   return true;
 }
 
@@ -143,4 +195,20 @@ export function shopInput(): void {
   if (pressed('down')) shop.sel = (shop.sel + 1) % n;
   if (pressed('z') || pressed('enter') || pressed(' ')) buy(SHOP_ITEMS[shop.sel].kind);
   if (pressed('escape') || pressed('x')) shop.open = false;
+}
+
+/** The trainer's menu: Up/Down picks a service, Z takes it, Esc or X closes.
+ *  The rows are the three skill slots (swap that slot's branch), then the
+ *  full reset at the bottom. */
+export const TRAINER_ITEMS = [...TRAINER_SLOTS.map((s) => s.label), 'FULL RESET'];
+
+export function trainerInput(): void {
+  const n = TRAINER_ITEMS.length;
+  if (pressed('up')) trainer.sel = (trainer.sel + n - 1) % n;
+  if (pressed('down')) trainer.sel = (trainer.sel + 1) % n;
+  if (pressed('z') || pressed('enter') || pressed(' ')) {
+    if (trainer.sel === n - 1) resetPoints();
+    else swapBranch(TRAINER_SLOTS[trainer.sel].slot);
+  }
+  if (pressed('escape') || pressed('x')) trainer.open = false;
 }

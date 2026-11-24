@@ -297,8 +297,12 @@ export function townFloor(n: number): Floor {
     ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
     spawns: [],
     portal: upL, portals: [...ups, down],
-    // the shopkeeper keeps a stall on the deck, left of the way down
-    npcs: [{ x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' }],
+    // the shopkeeper keeps a stall on the deck, left of the way down; from the
+    // third town up (Lanternhollow) a trainer stands to the right of it
+    npcs: [
+      { x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' },
+      ...(blockOf(n) >= 2 ? [{ x: deckX + (deckW - 2) * TILE, y: deckTop, kind: 'trainer' as const, name: 'TRAINER' }] : []),
+    ],
   };
 }
 

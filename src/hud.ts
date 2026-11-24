@@ -1,5 +1,5 @@
-import { shop } from './economy';
-import { drawShop, walletLine } from './economydraw';
+import { shop, trainer } from './economy';
+import { drawShop, drawTrainer, walletLine } from './economydraw';
 import { SKILL_BAR } from './config';
 import { placeName } from './world';
 import { critChance } from './combat';
@@ -125,10 +125,11 @@ function drawHUDItems(): void {
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
   drawChatLog(y);
-  if (dev.open || game.pause || shop.open) hudShadow(false); // full-screen panels have their own backdrops
+  if (dev.open || game.pause || shop.open || trainer.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); return; }
   if (shop.open) { drawShop(); return; }
+  if (trainer.open) { drawTrainer(); return; }
   if (game.banner) {
     ctx.save();
     ctx.globalAlpha = clamp(game.banner.t / 1.15, 0, 1);

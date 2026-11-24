@@ -1,7 +1,9 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { text } from './font';
-import { drops, FLY_T, flying, npcNear, PRICES, shop, SHOP_ITEMS, wallet } from './economy';
+import { SKILLS } from './config';
+import { activeSkill } from './progress';
+import { drops, FLY_T, flying, npcNear, PRICES, RESPEC_PRICES, shop, SHOP_ITEMS, TRAINER_ITEMS, TRAINER_SLOTS, trainer, wallet } from './economy';
 import type { Npc } from './types';
 
 /* Coins, town NPCs and the shop window (drawing only; see economy.ts). */
@@ -37,7 +39,7 @@ function pile(px: number, py: number, v: number): void {
 }
 
 /* the shopkeeper: hat, face, apron (12 x 22) */
-const PAL: Record<string, string> = { o: '#0d1424', h: '#7a4bb8', H: '#5a3590', s: '#f2d0a9', e: '#0d1424', c: '#3f9fdc', a: '#f4efe2', b: '#7a5232' };
+const PAL: Record<string, string> = { o: '#0d1424', h: '#7a4bb8', H: '#5a3590', s: '#f2d0a9', e: '#0d1424', c: '#3f9fdc', a: '#f4efe2', b: '#7a5232', m: '#2f8f6f' };
 const KEEPER = [
   '....oooo....',
   '...ohhhho...',
@@ -74,16 +76,74 @@ function bakeKeeper(): HTMLCanvasElement {
   return c;
 }
 
+// the trainer: same build, a plain green tunic
+const TRAINER = [
+  '....oooo....',
+  '...ohhhho...',
+  '..ohhhhhho..',
+  '.oHHHHHHHHo.',
+  '..ossssso...',
+  '..osesseso..',
+  '..ossssso...',
+  '...osssso...',
+  '..occccco...',
+  '.ocmmmmmmco.',
+  '.ocmmmmmmco.',
+  '.ocmmmmmmco.',
+  '.ocmmmmmmco.',
+  '.osmmmmmmso.',
+  '..ommmmmmo..',
+  '..occccco...',
+  '..occ..cco..',
+  '..occ..cco..',
+  '..obb..bbo..',
+  '.obbb..bbbo.',
+  '............',
+];
+let trainerSprite: HTMLCanvasElement | null = null;
+function bakeTrainer(): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = 12; c.height = TRAINER.length;
+  const x = c.getContext('2d') as CanvasRenderingContext2D;
+  TRAINER.forEach((row, gy) => [...row].forEach((ch, gx) => {
+    const col = PAL[ch];
+    if (col) { x.fillStyle = col; x.fillRect(gx, gy, 1, 1); }
+  }));
+  return c;
+}
+
 export function drawNpcs(): void {
   const near = npcNear();
   for (const n of game.floor.npcs ?? []) drawNpc(n, n === near);
 }
 
 function drawNpc(n: Npc, near: boolean): void {
-  keeper ??= bakeKeeper();
+  const sprite = n.kind === 'shop' ? (keeper ??= bakeKeeper()) : (trainerSprite ??= bakeTrainer());
   const bob = Math.round(Math.sin(performance.now() / 500) * 0.6);
-  ctx.drawImage(keeper, Math.round(n.x - 6), Math.round(n.y - keeper.height + 1 + bob));
-  text(ctx, near ? 'UP: SHOP' : n.name, Math.round(n.x), Math.round(n.y - keeper.height - 8), 1, near ? GOLD : '#e6d6ff', 'center');
+  ctx.drawImage(sprite, Math.round(n.x - 6), Math.round(n.y - sprite.height + 1 + bob));
+  text(ctx, near ? `UP: ${n.name}` : n.name, Math.round(n.x), Math.round(n.y - sprite.height - 8), 1, near ? GOLD : '#e6d6ff', 'center');
+}
+
+/** The trainer's window (screen space): the three skill slots, each showing
+ *  what is on it now, and the full reset below them. */
+export function drawTrainer(): void {
+  const { w, h } = game.view;
+  ctx.fillStyle = '#050a14c8'; ctx.fillRect(0, 0, w, h);
+  const bw = 208, bh = 108, bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
+  ctx.fillStyle = '#101a2e'; ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+  text(ctx, 'TRAINER', w / 2, by + 6, 1, GOLD, 'center');
+  text(ctx, `${wallet.coins}G`, bx + bw - 6, by + 6, 1, GOLD, 'right');
+  TRAINER_ITEMS.forEach((label, i) => {
+    const y = by + 24 + i * 14, sel = trainer.sel === i;
+    const slot = TRAINER_SLOTS[i];
+    const now = slot ? SKILLS[activeSkill(slot.slot).key].name : 'all AP and SP';
+    const cost = slot ? RESPEC_PRICES.swap : RESPEC_PRICES.reset;
+    if (sel) { ctx.strokeStyle = GOLD; ctx.strokeRect(bx + 4.5, y - 3.5, bw - 9, 13); }
+    text(ctx, `${label}  ${slot ? '> ' : '> '}${now}`, bx + 9, y, 1, HI, 'left');
+    text(ctx, `${cost}G`, bx + bw - 9, y, 1, wallet.coins >= cost ? GOLD : '#e07a8a', 'right');
+  });
+  text(ctx, 'Z PICK   ESC CLOSE', w / 2, by + bh - 12, 1, DIM, 'center');
 }
 
 /** The wallet line for the HUD: coins, then potions with their keys. */
