@@ -16,9 +16,9 @@ import { surfaceYAt } from '../src/surface';
 import { groupSize, makeShape, SHAPES } from '../src/floor';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
-import { killMob } from '../src/combat';
+import { damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { activeSkill, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
 import { apply, clearSave, hasSave, lastTown, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
@@ -792,6 +792,36 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     }
   }
   check('enemies carried by Sky Toss stay standing on their platform', runs > 10 && bad === 0, `${bad}/${runs} fell in or through`);
+}
+
+// --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
+{
+  arena(1); player.stats.dex = 0; player.stats.vit = 0; recalcStats();
+  const att1 = player.war, hp1 = player.hpMax;
+  arena(40); recalcStats(); const att40 = player.war;
+  player.stats.dex = 10; player.stats.vit = 10; recalcStats();
+  check('attack grows with level', att40 > att1 * 3, `Lv1 ${att1.toFixed(1)} Lv40 ${att40.toFixed(1)}`);
+  check('each DEX point is +3% attack at any level', Math.abs(player.war / att40 - (1 + 10 * STAT_GAIN.dex)) < 1e-9 && STAT_GAIN.dex === 0.03);
+  arena(1); player.stats.vit = 1; recalcStats();
+  check('each VIT point is +5% max HP', player.hpMax === Math.round(hp1 * 1.05), `${hp1} -> ${player.hpMax}`);
+  player.stats.dex = 0; player.stats.vit = 0; recalcStats();
+}
+
+// --- multi-hit damage numbers stack, one every 0.25s ---
+{
+  arena(10); const m = dummy(150);
+  game.dmgNums.length = 0;
+  for (let i = 0; i < 4; i++) damage(m, 1);
+  const ns = game.dmgNums.slice();
+  const delays = ns.map((d) => +(d.delay ?? 0).toFixed(3)).join(',');
+  const lines = ns.every((d, i) => Math.abs(ns[0].y - d.y - i * NUM_LINE) < 1e-9);
+  check('hits at once: each number waits 0.25s after the last', delays === [0, 1, 2, 3].map((k) => +(k * NUM_GAP).toFixed(3)).join(','), delays);
+  check('...and sits one line above it', lines);
+  step(Math.ceil(0.3 / P.STEP));
+  check('the second number shows after ~0.25s, the later ones still wait', (game.dmgNums[1].delay ?? 0) <= 0 && (game.dmgNums[2].delay ?? 0) > 0);
+  step(Math.ceil(2 / P.STEP));
+  game.dmgNums.length = 0; damage(m, 1);
+  check('after a pause a new stack starts at the bottom, right away', game.dmgNums[0].delay === 0 && game.dmgNums[0].y === m.y - 8);
 }
 
 // --- menu polish: key repeat, local-only rows, a steady caret ---

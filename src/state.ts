@@ -72,6 +72,8 @@ export const game = {
   /** Delayed skill hits, run on game time (so they freeze with the pause menu). */
   timers: [] as Array<{ t: number; fn: () => void }>,
   dmgNums: [] as DmgNum[],
+  /** Game time, s (stops with the pause menu). */
+  time: 0,
   /** Seconds since the last enemy wave. */
   waveT: 0,
   kills: 0,
