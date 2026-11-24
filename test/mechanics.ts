@@ -1,5 +1,5 @@
 import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, shop, wallet } from '../src/economy';
-import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES, TOWER, TOP_BLOCK } from '../src/world';
+import { AREA_FLOORS, areaOf, BLOCK, isAreaEnd, isTown, placeName, TOWN_NAMES, TOWER, TOP_BLOCK, MAP_AREAS } from '../src/world';
 import { townFloor } from '../src/floor';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
@@ -9,7 +9,7 @@ import { townFloor } from '../src/floor';
 let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
-import { AREAS, FX_DUR, MOB_TYPES, P } from '../src/config';
+import { FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
@@ -992,11 +992,11 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
-  check('every area on the map has a tileset (Classic until it gets its own)', ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
-  check('Clockwork Spire is on the map', [...Array(12).keys()].some((b) => areaOf(b, 0) === 'Clockwork Spire' || areaOf(b, 1) === 'Clockwork Spire'));
-  const own = [...AREAS, 'Meadow', 'Riverbank', 'Hills', 'Mushroom Grotto', 'Crystal Caverns', 'Sunken Ruins',
-    'Dreamwood', 'Mirror Lake', 'Starfall Observatory', 'Void Garden'];
-  // (that's every area in the planned route)
+  check('every area on the map has a tileset (Classic until it gets its own)', MAP_AREAS.every((a) => !!tilesetFor(a)));
+  check('Clockwork Spire is on the map', MAP_AREAS.includes('Clockwork Spire'));
+  // the 17 original areas have their own sets; the three new upper tiers and the
+  // summit fall back to Classic until they get theirs
+  const own = [...MAP_AREAS.slice(0, 15), 'Mountain', 'Sky']; // the areas that have their own sets
   check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
   check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');

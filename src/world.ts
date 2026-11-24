@@ -50,6 +50,9 @@ export function areaOf(block: number, route: number): string {
 }
 export const areaFor = (n: number, route: number): string => areaOf(blockOf(n), route);
 
+/** Every area in the tower, in climbing order (the Beach's pair counts once). */
+export const MAP_AREAS: readonly string[] = [...new Set(TOWER.flat())];
+
 /** Towns' own names, in order up the tower (cycling if the tower is taller). */
 export const TOWN_NAMES = [
   'Driftwood Rest', 'Mossgate', 'Lanternhollow', 'Fernwick', 'Emberfold',
