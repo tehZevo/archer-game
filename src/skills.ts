@@ -1,8 +1,8 @@
 import { LINKED_SKILLS, P } from './config';
-import { game, later, player } from './state';
+import { game, later, mobBounds, player } from './state';
 import { held } from './input';
 import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
-import { surfaceAt } from './physics';
+import { surfaceAt, surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
 import { netShot } from './net';
 import { activeSkill, isLearned, rank } from './progress';
@@ -30,11 +30,23 @@ export function updateRush(dt: number): void {
   if (player.rushT <= 0) return;
   player.rushT -= dt;
   const face = Math.sign(player.vx) || player.face;
-  for (const m of hitbox(player.x + face * P.RUSH_GRAB / 2, player.y + player.h / 2, P.RUSH_GRAB, 40)) {
+  // the grab reaches a little behind you too, so an enemy you just passed is still scooped up
+  const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
+  for (const m of hitbox(grabX, player.y + player.h / 2, P.RUSH_GRAB + P.RUSH_GRAB_BACK, 40)) {
+    if (player.rushCarry.length >= rank('Q').targets) break; // carry only as many as it hits
     if (!player.rushCarry.some((c) => c.m === m)) player.rushCarry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
   }
   player.rushCarry = player.rushCarry.filter((c) => game.mobs.includes(c.m));
-  for (const c of player.rushCarry) { c.m.x = player.x + face * c.off; c.m.vx = 0; }
+  for (const c of player.rushCarry) {
+    const m = c.m;
+    const [lo, hi] = mobBounds(m);
+    m.x = Math.max(lo, Math.min(hi, player.x + face * c.off)); m.vx = 0;
+    // keep the pushed enemy standing on its own platform's surface at its new
+    // x (a slope can rise or drop more than a frame's landing reach)
+    const feet = m.y + m.h;
+    const s = surfaceBetween(m.x, m.w, feet - 24, feet + 24, null, (p) => p.block === m.spawn?.block);
+    if (s && m.airTime <= 0) { m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; }
+  }
   if (player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 

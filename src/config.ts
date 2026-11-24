@@ -33,6 +33,7 @@ export const P = {
   RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (~70px slide)
   RUSH_MAX: 0.32,     // s the Sky Toss slide lasts at most; the strike lands as it ends
   RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up
+  RUSH_GRAB_BACK: 10, // ...and px behind, so an enemy you just passed still counts
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
@@ -79,13 +80,13 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 1, minLevel: 1, maxLevel: 3,
-       cd: 0.70, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 8, targetsMax: 8,
+       cd: 0.70, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
        desc: 'Launch enemies airborne, opens the link window' },
   W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 1, minLevel: 5, maxLevel: 3,
        cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 8, targetsMax: 8,
        desc: 'Airborne-only volley after Sky Toss' },
   E: { key: 'E', name: 'Plunging Volley', tag: 'Aerial', job: 1, minLevel: 10, maxLevel: 3,
-       cd: 3.0, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
+       cd: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
        desc: 'Mid-air only: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
        cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,

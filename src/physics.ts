@@ -8,8 +8,10 @@ export { surfaceYAt };
 /** Candidate surfaces under a body at x: tiles containing x, or (only when
  *  standing past a block's edge) tiles the body merely overlaps. Only a
  *  block's top tiles are walkable; inner tiles (with a tile above) are not. */
-function surfacesAt(x: number, w: number, ignoreBlock: number | null = null): Platform[] {
-  const plats = game.floor.platforms.filter((p) => !p.inner && (ignoreBlock === null || p.block !== ignoreBlock));
+function surfacesAt(x: number, w: number, ignoreBlock: number | null = null, only?: (p: Platform) => boolean): Platform[] {
+  // filter first: a tile of some other block under x must not hide the
+  // edge tile of the one asked for (a mob at the very end of its platform)
+  const plats = game.floor.platforms.filter((p) => !p.inner && (ignoreBlock === null || p.block !== ignoreBlock) && (!only || only(p)));
   const under = plats.filter((p) => x >= p.x && x < p.x + p.w);
   if (under.length) return under;
   return plats.filter((p) => !p.slope && x + w * 0.5 > p.x && x - w * 0.5 < p.x + p.w);
@@ -18,8 +20,7 @@ function surfacesAt(x: number, w: number, ignoreBlock: number | null = null): Pl
 /** The topmost surface in [yTop, yBot] under a body at x (y grows downward). */
 export function surfaceBetween(x: number, w: number, yTop: number, yBot: number, ignoreBlock: number | null = null, only?: (p: Platform) => boolean): Platform | null {
   let best: Platform | null = null, bestY = Infinity;
-  for (const p of surfacesAt(x, w, ignoreBlock)) {
-    if (only && !only(p)) continue;
+  for (const p of surfacesAt(x, w, ignoreBlock, only)) {
     const sy = surfaceYAt(p, x);
     if (sy >= yTop && sy <= yBot && sy < bestY) { best = p; bestY = sy; }
   }
