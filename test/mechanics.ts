@@ -12,7 +12,7 @@ import { FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
-import { clearPressed, REPEAT_DELAY, REPEAT_RATE, setKey } from '../src/input';
+import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { groupSize, makeShape, SHAPES } from '../src/floor';
@@ -1044,6 +1044,15 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   chat.typing = true;
   check('typing shows the whole recent log', logLines(t0 + LOG_SHOW_MS + 1).some((l) => l.id === 'peer1'));
   chat.typing = false; chat.log.length = 0; clearBubbles();
+  // AZERTY: keys go by physical position, labels by layout
+  const ev = (key: string, code?: string) => ({ key, code }) as unknown as Parameters<typeof normalize>[0];
+  check('the key in the Z spot is Z on any layout (AZERTY types W there)', normalize(ev('w', 'KeyZ')) === 'z' && normalize(ev('a', 'KeyQ')) === 'q');
+  check('digits, space, arrows and Enter go by physical key', normalize(ev('&', 'Digit1')) === '1' && normalize(ev(' ', 'Space')) === ' ' && normalize(ev('ArrowUp', 'ArrowUp')) === 'up' && normalize(ev('Enter', 'NumpadEnter')) === 'enter');
+  check('without a code, the typed key is used', normalize(ev('ArrowLeft')) === 'left' && normalize(ev('X')) === 'x');
+  check('labels are QWERTY until the layout is known', keyName('z') === 'Z' && keyName('Q') === 'Q');
+  setLayout({ KeyZ: 'w', KeyQ: 'a', KeyW: 'z', KeyA: 'q' });
+  check('on AZERTY the labels show what the keys type', keyName('z') === 'W' && keyName('Q') === 'A' && keyName('w') === 'Z' && keyName('escape') === 'ESCAPE');
+  setLayout({});
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

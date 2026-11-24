@@ -13,6 +13,7 @@ import * as boost from './boost';
 import { initMenu, menu } from './menu';
 import { bindMenu } from './menudom';
 import { bindChat } from './chatdom';
+import { loadLayout } from './input';
 import { load, save, tickSave } from './save';
 const { sync } = net;
 
@@ -68,6 +69,7 @@ initMenu(() => {
 }, resumeFloor);
 bindMenu(cv);
 bindChat(cv);
+void loadLayout().then(buildPanel); // relabel the panel with this layout's letters
 // the lobby only shares channel head-counts, so the menu can show them
 net.joinLobby();
 // a background tab has no frames: keep publishing our (still) position anyway

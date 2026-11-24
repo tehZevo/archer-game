@@ -11,7 +11,7 @@ import { menu, menuKey, menuTap, menuText } from './menu';
 
 const NAV: Record<string, string> = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
-  Enter: 'enter', Escape: 'escape', z: 'enter', Z: 'enter',
+  Enter: 'enter', Escape: 'escape',
 };
 
 export function bindMenu(canvas: HTMLCanvasElement): void {
@@ -39,7 +39,8 @@ export function bindMenu(canvas: HTMLCanvasElement): void {
   addEventListener('keydown', (e) => {
     if (!menu.open) return;
     e.stopPropagation(); // the game's input never sees menu keys
-    const k = NAV[e.key];
+    // Z confirms by its physical spot (KeyZ), like the game's keys (see input.ts)
+    const k = e.code === 'KeyZ' ? 'enter' : NAV[e.key];
     // while typing, letters (z included) go to the field; only Enter, Esc and Up/Down navigate
     if (menu.edit && !['Enter', 'Escape', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     if (!k) return;
