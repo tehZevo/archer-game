@@ -353,8 +353,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Plunging Volley does nothing on the ground', player.cd.E === 0 && under.hp === 1e6);
   // jump, then fire at the top of the jump
   tap('c'); step(8);
-  const yTop = player.y; tap('e'); step(1);
-  check('Plunging Volley checks your fall', Math.abs(player.y - yTop) < 2 && player.vy === 0);
+  const yTop = player.y; player.vx = 40; tap('e'); step(1);
+  check('Plunging Volley bumps you up a little', player.y < yTop && player.y > yTop - 8 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
+  step(4);
+  check('Plunging Volley does not freeze you mid-air', player.vy > 0 && player.vx !== 0);
   step(10);
   check('Plunging Volley hits the enemy beneath you', under.hp < 1e6);
   check('Plunging Volley leaves enemies off to the side alone', beside.hp === 1e6);

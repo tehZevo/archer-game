@@ -39,7 +39,8 @@ export const P = {
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
   PLUNGE_W: 56,        // Plunging Volley: width of the column it rains into, px
   PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
-  PLUNGE_STALL: 0.3,   // s the volley checks your fall (you hang, then drop)
+  PLUNGE_POSE: 0.3,    // s of the volley's firing pose
+  PLUNGE_HOP: 110,     // px/s upward bump when it fires (~6px rise, no hover)
   PIERCE_RANGE: 260,   // Piercing Arrow reach, px
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
   FRICTION: 700,       // ground friction when no input (a short slide)

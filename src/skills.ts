@@ -250,19 +250,17 @@ export function cast(key: SkillKey): void {
     }
 
     case 'E': {
-      // Plunging Volley: mid-air only. Check the fall for a moment and rain
-      // arrows straight down into a column beneath you, hitting every enemy
-      // in it (nearest first), then drop.
-      player.cast = 'barrage'; player.castT = P.PLUNGE_STALL; player.castTotal = P.PLUNGE_STALL;
+      // Plunging Volley: mid-air only. A small upward bump (no freeze: you
+      // keep your drift and fall right after) as arrows rain straight down
+      // into a column beneath you, hitting every enemy in it (nearest first).
+      player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
       sfx.shoot();
       const feet = player.y + player.h;
       const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
         .filter((m) => m.y + m.h > feet) // beneath you, not beside you
         .sort((a, b) => a.y - b.y)
         .slice(0, r.targets);
-      // the hover: no strikes of its own (hangHits 0), just a pause in the fall
-      player.vx = 0; player.vy = 0;
-      player.hangT = P.PLUNGE_STALL; player.hangHits = 0;
+      player.vy = Math.min(player.vy, -P.PLUNGE_HOP);
       // the volley rains onto each target, or onto the ground below if none
       (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x, feet + 40]])
         .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
