@@ -34,7 +34,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
 /** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
  *  previous one, a line higher, instead of all landing at once in a pile. A
  *  pause longer than NUM_RESET starts a new stack. */
-export const NUM_GAP = 0.25, NUM_LINE = 9, NUM_MAX = 8;
+export const NUM_GAP = 0.125, NUM_LINE = 9, NUM_MAX = 8;
 const NUM_RESET = 0.4;
 function stackedNum(m: Mob, v: number, crit: boolean): DmgNum {
   const now = game.time;

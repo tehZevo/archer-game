@@ -33,4 +33,5 @@ export const sfx = {
   hit: (): void => tone(220, 0.08, 'square', 0.12, 140),
   levelUp: (): void => { tone(523, 0.12, 'triangle', 0.2); setTimeout(() => tone(784, 0.18, 'triangle', 0.2), 110); },
   portal: (): void => tone(330, 0.3, 'sine', 0.2, 990),
+  coin: (): void => { tone(988, 0.06, 'square', 0.1); setTimeout(() => tone(1319, 0.14, 'square', 0.1), 55); },
 };

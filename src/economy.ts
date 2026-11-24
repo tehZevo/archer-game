@@ -2,14 +2,15 @@ import { P } from './config';
 import { game, player } from './state';
 import { pressed } from './input';
 import { surfaceBetween, surfaceYAt } from './physics';
+import { sfx } from './audio';
 import type { Floor, Mob, Npc } from './types';
 
 /* ============================================================
    ECONOMY
    Coins and potions. A defeated enemy drops a pile of coins
    (worth more on higher floors) that falls onto the platform;
-   stand on it and press X to pick it up. Piles fade after a
-   while. Coins buy potions from the town shopkeeper (press Up
+   stand on it and press X to pick it up (it flies to you with a
+   chime). Landed piles bob gently and fade after 5 minutes. Coins buy potions from the town shopkeeper (press Up
    beside them); A drinks an HP potion, S an MP potion. All of it
    is local (enemies are local too) and saved.
    ============================================================ */
@@ -20,8 +21,12 @@ export const wallet = { coins: 0, hp: 0, mp: 0 };
 /** A pile of coins on the floor. */
 export interface Coin { x: number; y: number; vy: number; v: number; t: number; landed: boolean }
 export const drops: Coin[] = [];
+/** Piles just picked up, flying into you (already in the wallet): t counts up to FLY_T. */
+export interface Flying { x: number; y: number; v: number; t: number }
+export const flying: Flying[] = [];
+export const FLY_T = 0.25;       // s a picked-up pile takes to reach you
 
-export const COIN_LIFE = 30;     // s before an uncollected pile vanishes
+export const COIN_LIFE = 300;    // s before an uncollected pile vanishes (5 minutes)
 export const PICK_R = 16;        // px from your centre a pile can be picked up
 export const POTION_HEAL = 0.4;  // a potion restores 40% of max HP / MP
 export const POTION_CD = 0.6;    // s between potions
@@ -43,12 +48,13 @@ let potT = 0;
 let onFloor: Floor | null = null;
 /** On a new floor, the piles left behind are gone. */
 function sameFloor(): void {
-  if (onFloor !== game.floor) { drops.length = 0; onFloor = game.floor; }
+  if (onFloor !== game.floor) { drops.length = 0; flying.length = 0; onFloor = game.floor; }
 }
 
 /** Fall, land, fade; pick up with X; drink with A / S. Call each step. */
 export function updateEconomy(dt: number): void {
   sameFloor();
+  for (let i = flying.length - 1; i >= 0; i--) if ((flying[i].t += dt) >= FLY_T) flying.splice(i, 1);
   for (let i = drops.length - 1; i >= 0; i--) {
     const c = drops[i];
     c.t -= dt;
@@ -73,9 +79,13 @@ export function pickUp(): number {
   let got = 0;
   for (let i = drops.length - 1; i >= 0; i--) {
     const c = drops[i];
-    if (Math.abs(c.x - player.x) <= PICK_R && Math.abs(c.y - feet) <= 12) { got += c.v; drops.splice(i, 1); }
+    if (Math.abs(c.x - player.x) <= PICK_R && Math.abs(c.y - feet) <= 12) {
+      got += c.v; drops.splice(i, 1);
+      flying.push({ x: c.x, y: c.y, v: c.v, t: 0 });
+    }
   }
   wallet.coins += got;
+  if (got) sfx.coin();
   return got;
 }
 
