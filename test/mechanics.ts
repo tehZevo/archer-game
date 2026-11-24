@@ -16,6 +16,7 @@ import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, se
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
+import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
@@ -576,6 +577,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     gotoFloor(2); spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
     const m = game.mobs[game.mobs.length - 1];
     check('a spawned mob has its floor\'s level and that level\'s EXP', m.level === 2 && m.exp === mobExp(2));
+    const hpHere = m.hpMax; player.level = 40; spawnMob(game.floor.spawns[0], MOB_TYPES[0]);
+    check('enemy HP scales with the floor, not the player', game.mobs[game.mobs.length - 1].hpMax === hpHere);
   }
   arena(5); const m = dummy(140, 1); const before = game.dmgNums.length;
   killMob(m);
@@ -1161,7 +1164,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // enemies: two types per floor from the area's set; each platform fields one or both
   const beach = areaMobs('Beach').map((m) => m.n);
   check('the Beach has its own enemies (snail, crab, hermit crab, gull)', ['Garden Snail', 'Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
-  check('areas without a set use the general pool', areaMobs('Swamp').every((m) => !m.areas) && areaMobs('Swamp').length >= 2);
+  check('areas without a set use the general pool', areaMobs('Old Keep').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Old Keep').length >= 2);
+  const withOwn = Object.keys(TILESETS).filter((a) => !['Classic'].includes(a));
+  check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
+    withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
+  let artOk = true;
+  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1]) {
+    paintMob(name, f, (x, y, c, w = 1, h = 1) => { if (x < 0 || y < 0 || x + w > look.w || y + h > look.h || !/^#[0-9a-f]{6}$/i.test(c)) artOk = false; });
+  }
+  check('enemy art paints inside its box (the hitbox)', artOk);
+  check('every enemy with painted art uses its box as its size', MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h));
   let pairsOk = true, singles = 0, doubles = 0;
   for (const n of [1, 2, 4, 5, 6]) { // the Tide Pools and the Beach
     gotoFloor(n);
