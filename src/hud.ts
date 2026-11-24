@@ -8,7 +8,7 @@ import { drawMenu } from './menudraw';
 import { drawMinimap } from './minimapdraw';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
-import { activeSkill, isLearned, rank, skillRows, spendSp, STAT_INFO, STAT_KEYS } from './progress';
+import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
 import { text } from './font';
 import { clamp, fmtNum } from './util';
@@ -135,14 +135,21 @@ function drawPause(): void {
     if (player.ap) text(ctx, '+', x + COLS[0].w - 3, y, 1, gold, 'right');
   });
   const rows = skillRows();
-  rows.forEach((r, i) => {
-    const y = TOP + i * ROW, x = COLS[1].x, can = player.sp > 0 && !!r.action;
-    sel(1, i);
+  // a long skill list scrolls (the cursor stays in view) instead of running
+  // into the description below; little arrows show there is more
+  const top = pauseScroll(m, rows.length);
+  rows.slice(top, top + PAUSE_ROWS).forEach((r, vi) => {
+    const i = top + vi, y = TOP + vi * ROW, x = COLS[1].x, can = player.sp > 0 && !!r.action;
+    if (m.col === 1 && m.row === i) { ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(COLS[1].x + 0.5, y - 1.5, COLS[1].w - 1, ROW); }
     text(ctx, r.slot || '-', x + 2, y, 1, r.slot ? gold : dim, 'left');
     text(ctx, r.name, x + 11, y, 1, r.rank ? hi : dim, 'left');
     const tag = r.rank === 0 ? 'NEW' : r.max > 1 ? `${r.rank}/${r.max}` : '';
     text(ctx, can ? `${tag}+` : tag, x + COLS[1].w - 3, y, 1, can ? gold : dim, 'right');
   });
+  const ax = COLS[1].x + COLS[1].w / 2;
+  ctx.fillStyle = dim;
+  if (top > 0) for (let k = 0; k < 3; k++) ctx.fillRect(ax - k, TOP - 6 + k, 2 * k + 1, 1);
+  if (top + PAUSE_ROWS < rows.length) for (let k = 0; k < 3; k++) ctx.fillRect(ax - k, TOP + PAUSE_ROWS * ROW + 1 - k, 2 * k + 1, 1);
 
   // description of the selected row
   let desc = '';
@@ -176,8 +183,10 @@ export function bindMenuClicks(canvas: HTMLCanvasElement): void {
     const b = canvas.getBoundingClientRect();
     const x = (e.clientX - b.left) / b.width * game.view.w, y = (e.clientY - b.top) / b.height * game.view.h;
     const col = COLS.findIndex((c) => x >= c.x && x < c.x + c.w);
-    const row = Math.floor((y - TOP + 1.5) / ROW);
     const n = col === 0 ? STAT_KEYS.length : skillRows().length;
+    const vis = Math.floor((y - TOP + 1.5) / ROW);
+    if (col === 1 && vis >= PAUSE_ROWS) return;
+    const row = vis + (col === 1 ? pauseScroll(m, n) : 0);
     if (col < 0 || row < 0 || row >= n) return;
     if (m.col === col && m.row === row) pauseSpend(m);
     else { m.col = col as 0 | 1; m.row = row; }

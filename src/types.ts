@@ -46,7 +46,8 @@ export interface SkillRank {
   maxLevel: number;
 }
 
-export interface PauseMenu { col: 0 | 1; row: number }
+/** Esc menu cursor; `scroll` is the first skill row shown when the list is longer than the panel. */
+export interface PauseMenu { col: 0 | 1; row: number; scroll?: number }
 
 export interface JobDef {
   job: number;
