@@ -113,7 +113,7 @@ export function spawnMob(s: Spawn, type: MobType): void {
     dmg: Math.round(type.dmg * (1 + (player.level - 1) * 0.06)),
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level),
-    stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, anim: Math.random() * 6,
+    stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
     spawn: s,
   });
 }

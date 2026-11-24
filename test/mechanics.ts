@@ -18,7 +18,7 @@ import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
-import { damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
+import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
@@ -1085,6 +1085,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('some platforms field one type, some both', singles > 0 && doubles > 0, `${singles} single, ${doubles} both`);
   const seq = () => { let i = 0; return () => [0.1, 0.9, 0.5][i++ % 3]; };
   check('a floor\'s pair is fixed by its seed', JSON.stringify(floorMobs(3, seq())) === JSON.stringify(floorMobs(3, seq())));
+}
+
+{
+  // enemy HP bar: hidden until hit, then up for BAR_SHOW s after each hit
+  arena(); const m = dummy(150);
+  const before = m.barT <= 0;
+  damage(m, 1); const after = m.barT > 0;
+  for (let i = 0; i < 30; i++) update(1 / 60);
+  const still = m.barT > 0;
+  m.barT = 0.01; update(1 / 60);
+  check('enemy HP bar: hidden before the first hit', before);
+  check('enemy HP bar: shown after a hit, for 4 s', after && still && BAR_SHOW === 4);
+  check('enemy HP bar: hidden again once the time runs out', m.barT <= 0);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

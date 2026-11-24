@@ -215,6 +215,7 @@ export function update(dt: number): void {
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
     if (m.hitFlash > 0) m.hitFlash -= dt;
+    if (m.barT > 0) m.barT -= dt;
     m.anim += dt * 6;
     if (m.stun > 0) { m.stun -= dt; m.vx *= 0.8; }
     else if (m.airTime > 0) { m.airTime -= dt; m.vx *= 0.9; }

@@ -150,6 +150,8 @@ export interface Mob {
   /** Set once the player attacks it; only then does it chase the player. */
   aggro: boolean;
   hitFlash: number;
+  /** Seconds left to show the HP bar; set on each hit, so undamaged enemies show none. */
+  barT: number;
   anim: number;
   spawn: Spawn;
 }

@@ -14,6 +14,9 @@ export const critChance = (): number => 0.15 + game.player.stats.luk * 0.004 + p
 /** Built-in damage bonus, raised by the Power Surge passive. */
 export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
 
+/** Seconds the enemy HP bar stays up after a hit. */
+export const BAR_SHOW = 4;
+
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   let dmg = game.player.war * mult * passiveDmg() * fervorMult() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
@@ -22,6 +25,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   dmg = Math.round(dmg);
   target.hp -= dmg;
   target.hitFlash = 0.14;
+  target.barT = BAR_SHOW;
   target.aggro = true;
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);
   game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: hx, y: hy, t: opts.fx === 'stunHit' ? 0.3 : crit && !opts.fx ? 0.28 : 0.24, face: -game.player.face }); // streaks point back at the shooter
