@@ -398,6 +398,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
   check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
 }
+{
+  // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
+  arena(25); dummy(130);
+  cast('Z');
+  const base = player.useT;
+  check('Twin Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
+  player.useT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
+  const rCd = player.cd.R, rUse = player.useT;
+  player.ranks.HA = 3; player.useT = 0; player.cd.R = 0; cast('R');
+  check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.useT - rUse / 1.1) < 1e-6);
+  check('Haste leaves cooldowns alone', player.cd.R === rCd);
+  player.useT = 0; cast('Z');
+  check('a hasted Twin Shot fires about 10% faster', Math.abs(player.useT - base / 1.1) < 1e-6);
+  player.ranks.HA = 0; player.ranks.R = 0;
+}
 
 // --- private instances ---
 {
@@ -781,10 +796,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   gotoFloor(7, beach); stand(game.floor.portals[0]); tap('up');
   check('the left portal goes up into the left area, a different layout', game.floor.number === 8 && net.area === forest && JSON.stringify(game.floor.platforms) !== meadowFloor);
   gotoFloor(13, meadow); stand(game.floor.portals[game.floor.portals.length - 1]); tap('up');
-  check('a town\'s way down goes to the town it branched off (not the floor below)', game.floor.number === 7 && game.floor.town && net.area === beach);
+  check("a town's way down goes to the town it branched off (not the floor below)", game.floor.number === 7 && game.floor.town && net.area === beach);
   gotoFloor(3, 0); stand(game.floor.portals[game.floor.portals.length - 1]); tap('up');
-  check('the first town\'s way down leads to the floor below it', game.floor.number === 2 && net.area === 0);
-  check('skills work in town', (() => { gotoFloor(7, beach); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.cd.Z > 0; })());
+  check("the first town's way down leads to the floor below it", game.floor.number === 2 && net.area === 0);
+  check('skills work in town', (() => { gotoFloor(7, beach); player.cd.Z = 0; player.mp = 99; player.useT = 0; tap('z'); return player.useT > 0; })());
   net.area = 0; release();
 }
 

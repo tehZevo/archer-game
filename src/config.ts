@@ -73,8 +73,10 @@ export const TILE = 16;
    skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
 export const SKILLS: Record<SkillKey, SkillDef> = {
   // Actives: 3 ranks; stats step from rank 1 to rank 3 so every rank is a big jump.
+  // `use` is the use time (see SkillDef); Twin Shot and its upgrades have no
+  // cooldown, so their pace is their use time alone (which Haste speeds up).
   Z: { key: 'Z', name: 'Twin Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
-       cd: 0.42, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
+       cd: 0, use: 0.5, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
@@ -101,11 +103,11 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6,
        desc: 'After Sky Toss: leap up to launched enemies' },
   S: { key: 'S', name: 'Shell Barrage', tag: 'Burst', job: 1, minLevel: 30, maxLevel: 3,
-       cd: 0.42, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
+       cd: 0, use: 0.5, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Branch upgrades: each competes with the other upgrade on the same slot.
   BS: { key: 'BS', name: 'Backstep Shot', tag: 'Reposition', job: 1, minLevel: 30, maxLevel: 3,
-       cd: 0.55, mp1: 3, mpMax: 4, dmg1: 150, dmgMax: 205, hits1: 2, hitsMax: 3, targets1: 2, targetsMax: 3,
+       cd: 0, use: 0.55, mp1: 3, mpMax: 4, dmg1: 150, dmgMax: 205, hits1: 2, hitsMax: 3, targets1: 2, targetsMax: 3,
        desc: 'Hop backward while firing forward' },
   VS: { key: 'VS', name: 'Vault Shot', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
@@ -123,6 +125,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   IR: { key: 'IR', name: 'Fervor', tag: 'Passive', job: 1, minLevel: 5, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.12,
         desc: 'Each Fervor stack gives more damage' },
+  HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
+        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.1,
+        desc: 'Attack speed up (shorter use time, not cooldowns)' },
 };
 
 export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key

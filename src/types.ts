@@ -1,4 +1,4 @@
-export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR';
+export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR' | 'HA';
 
 /** The four core stats, each upgraded with ability points (AP). */
 export interface CoreStats {
@@ -21,6 +21,9 @@ export interface SkillDef {
   /** Master level in the real class. */
   maxLevel: number;
   cd: number;
+  /** Use time, s: how long a cast locks other skills and movement (attack
+   *  skills default to P.USE_TIME; Jump and Glide have none). Haste shortens it. */
+  use?: number;
   /** Stats scale linearly from the Lv.1 value to the master value. */
   mp1: number;
   mpMax: number;

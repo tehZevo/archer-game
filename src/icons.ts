@@ -248,6 +248,23 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '......g.......',
     '..............',
   ],
+  // Haste: an arrowhead with speed lines trailing it
+  HA: [
+    '..............',
+    '..............',
+    '.........gg...',
+    'aaaa......gg..',
+    '...........gg.',
+    'AAAAA.xxxxxxgg',
+    '...........gg.',
+    'aaaa......gg..',
+    '.........gg...',
+    '..............',
+    '.AAA..........',
+    '..............',
+    '..............',
+    '..............',
+  ],
   // Power Surge: a lightning bolt
   PP: [
     '........rr....',
