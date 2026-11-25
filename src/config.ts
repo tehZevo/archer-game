@@ -122,7 +122,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 4, targetsMax: 4,
        desc: 'Airborne-only volley after Sky Toss' },
   E: { key: 'E', name: 'Spike Lift', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: P.SPIKE_CD, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
+       cd: P.SPIKE_CD, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
@@ -136,7 +136,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 8, targetsMax: 8,
+       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 3, use: 0.5, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
