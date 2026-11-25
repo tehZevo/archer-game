@@ -52,6 +52,7 @@ export const player: Player = {
   mp: start.mpMax, mpMax: start.mpMax,
   cd,
   readyT,
+  diving: false,
   cast: null, castT: 0, castTotal: 0,
   invuln: 0,
   anim: 0, animState: 'idle',

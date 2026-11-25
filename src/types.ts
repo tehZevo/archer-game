@@ -248,6 +248,8 @@ export interface Player extends Body {
   /** Counts down right after a skill's cooldown finishes, driving the
    *  yellow ready-glow on its bar icon (see hud.ts). */
   readyT: Record<SkillKey, number>;
+  /** True while an Air Dive is in flight; the landing rolls into the rush. */
+  diving: boolean;
   cast: CastName | null;
   castT: number;
   castTotal: number;

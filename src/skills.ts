@@ -85,8 +85,8 @@ export function cast(key: SkillKey): void {
   if (player.climb && kind !== 'C' && kind !== 'D') return;
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
-  // Sky Toss is a ground launcher: no mid-air use.
-  if ((kind === 'Q' || kind === 'VS' || kind === 'RA') && !player.onGround) return;
+  // Q is a two-form key: the ground rush, and the Air Dive in mid-air.
+  if ((kind === 'VS' || kind === 'RA') && !player.onGround) return;
   // Plunging Volley fires down from the air: no ground use.
   if (kind === 'E' && !airborne) return;
 
@@ -176,6 +176,19 @@ export function cast(key: SkillKey): void {
     }
 
     case 'Q': {
+      // Air Dive (air form): plunge diagonally down, carrying the enemies
+      // under and in front of you, and roll into the ground rush on landing.
+      // TODO: dedicated dive art.
+      if (!player.onGround) {
+        player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
+        sfx.jump();
+        player.vx = player.face * P.DIVE_VX;
+        player.vy = P.DIVE_VY;
+        player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
+        player.diving = true;
+        player.combo = 1.1; player.comboT = 1.1;
+        break;
+      }
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
       // Down + Q strikes in place. Otherwise slide forward, scooping up the

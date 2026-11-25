@@ -40,6 +40,10 @@ export const P = {
   RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up
   RUSH_GRAB_BACK: 10, // ...and px behind, so an enemy you just passed still counts
   RUSH_HIT: 0.4,      // the slide hits each enemy once as it scoops them up, at this share of Sky Toss's damage
+  // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
+  DIVE_VX: 260,        // px/s forward
+  DIVE_VY: 420,        // px/s down
+  DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s

@@ -51,6 +51,13 @@ export function update(dt: number): void {
     player.mp = Math.min(player.mpMax, player.mp + player.mpMax * P.REGEN_FRAC);
     if (player.combatT <= 0) player.hp = Math.min(player.hpMax, player.hp + player.hpMax * P.REGEN_FRAC);
   }
+  if (player.diving && player.onGround) {
+    // the dive lands: roll straight into the ground rush
+    player.diving = false;
+    player.vx = player.face * P.RUSH_SLIDE_V;
+    player.rushT = P.RUSH_MAX; player.rushDist = 0;
+    player.cast = 'rush'; player.castT = P.RUSH_MAX; player.castTotal = P.RUSH_MAX;
+  }
   for (const k of SKILL_ORDER) {
     const was = player.cd[k];
     player.cd[k] = Math.max(0, was - dt);
