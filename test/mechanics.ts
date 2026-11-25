@@ -2242,7 +2242,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('it is only a little bump, and you land again', player.onGround && peak > 3 && peak < 16, `peak ${peak.toFixed(1)}px`);
   check('you end up a little way back from the enemy', x0 - player.x > 8 && x0 - player.x < 50, `moved ${(x0 - player.x).toFixed(1)}px`);
   arena(1, 120); player.invuln = 0;
-  hurtPlayer(1, player.x - 10);
+  hurtPlayer(1, player.x - 10, player.level);
   check('hit from behind, you are pushed the other way', player.vx > 0);
   arena(1, 120); player.invuln = 0;
   hurtPlayer(1);
