@@ -34,7 +34,7 @@ export function gearFor(kind: GearKind, lvl: number): GearItem {
   return { kind, name: NAMES[kind][t], lvl: Math.max(1, Math.round(lvl)) };
 }
 
-/** A weapon's bonus, as a share of your attack: +12% at Lv.1, +32% at Lv.10. */
+/** A weapon's bonus, as a share of your attack: +12% at Lv.1, +30% at Lv.10. */
 export const weaponBonus = (i: GearItem): number => (10 + i.lvl * 2) / 100;
 
 /** An armor piece soaks this share of the damage taken, capped so you never
