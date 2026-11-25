@@ -2652,5 +2652,23 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the Blitz rush strikes the carried enemy', m.hp < 1e6, `hp ${m.hp.toFixed(0)}`);
 }
 
+{
+  // Damage growth: both sides of the fight scale 1.5x faster per level
+  arena(1); player.stats.dex = 0; recalcStats();
+  const war1 = player.war;
+  arena(21); recalcStats();
+  check('attack grows 2.55 per level (was 1.7)', Math.abs(player.war - (14 + 20 * 2.55)) < 1e-9, `${player.war}`);
+  check('...and it is 1.5x the old per-level step', Math.abs((player.war - 14) / 20 - 1.5 * 1.7) < 1e-9);
+  check('the Lv.1 archer still starts at 14 attack', Math.abs(war1 - 14) < 1e-9, `${war1}`);
+  arena(1); spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
+  check('a Lv.1 mob hits for its base damage', game.mobs[0].dmg === MOB_TYPES[0].dmg, `${game.mobs[0].dmg}`);
+  game.mobs.length = 0; gotoPlace({ path: 'meadows', floor: 11 });
+  spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
+  check('a high-floor mob hits 1.5x harder per level than before',
+    game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * (1 + (mobLevel(game.floor.place) - 1) * 0.09)),
+    `${game.mobs[0].dmg} at floor ${game.floor.floor}`);
+  gotoPlace(START);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
