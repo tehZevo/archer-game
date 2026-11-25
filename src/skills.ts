@@ -134,6 +134,11 @@ export function formCd(kind: SkillKey): number {
 }
 
 /** `chained`: fired off the end of a Q rush (see the Z chain below), so the rush's use time doesn't hold it. */
+/** Aerial skills need real height, not just any airtime: ~2/3 of the default
+ *  jump's peak (v²/2g ≈ 35px), so shallow jumps don't trigger the full
+ *  aerial combo. */
+export const AIR_MIN_H = (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
+
 export function cast(key: SkillKey, chained = false): void {
   const ground = activeSkill(key);
   const airborne = !player.onGround && !player.climb;
@@ -143,14 +148,20 @@ export function cast(key: SkillKey, chained = false): void {
   const airKey = airborne && ground.key !== 'AB' ? AIR_FORM[key] : undefined;
   const s = airKey ? SKILLS[airKey] : ground;
   if (!isLearned(s.key)) return;
+  // Air Dive, Midair Spin and Plunging Volley want you properly airborne:
+  // at least ~2/3 of a full jump's peak above the floor.
+  if (airborne && (s.key === 'AD' || s.key === 'MS' || s.key === 'PV') &&
+      game.floor.platforms[0].y - (player.y + player.h) < AIR_MIN_H) return;
   const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
-  const linked = LINKED_SKILLS.includes(kind);
+  // Tempest is a link too, but only off the end of a Sky Assault hover (see
+  // update's hang block): it stays a standalone skill the rest of the time.
+  const linked = LINKED_SKILLS.includes(kind) || (kind === 'R' && player.assaultLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
-  if (linked && player.combo <= 0 && kind !== 'MS') return;
+  if (LINKED_SKILLS.includes(kind) && player.combo <= 0 && kind !== 'MS') return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   // Input buffering: a link pressed during the source skill's post-animation
@@ -195,10 +206,13 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
+    player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
-    // linked skills also shorten Tempest's long cooldown and refill a Blitz
+    // linked skills also shorten Tempest's and Spike Lift's long cooldowns
+    // and refill a Blitz: spending a link refunds a second off each
     player.cd.R = Math.max(0, player.cd.R - 1);
+    player.cd.E = Math.max(0, player.cd.E - 1);
     if (player.blitzCharges < P.BLITZ_MAX) player.blitzT += 1;
   }
 

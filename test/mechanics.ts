@@ -526,6 +526,20 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('E fires straight out of the hover', player.hangT === 0 && player.cast === 'barrage' && player.useT > 0);
 }
 {
+  // Sky Assault -> R: the hover's end opens the link window for Tempest
+  arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
+  dummy(130);
+  tap('q'); step(14); tap('w');
+  step(40); // the 0.8s hover plays out and you drop back to the ground
+  check('the Sky Assault hover ends on the ground', player.onGround && player.hangT <= 0,
+    `onGround ${player.onGround} hangT ${player.hangT.toFixed(2)}`);
+  check('landing the assault opens the link window', player.assaultLinkT > 0, `t ${player.assaultLinkT.toFixed(2)}`);
+  tap('r');
+  check('Tempest links out of the landed Sky Assault', player.cast === 'shoot' && player.castT > 0,
+    `cast ${player.cast} castT ${player.castT.toFixed(2)}`);
+  check('the linked Tempest consumes the window', player.assaultLinkT <= 0, `t ${player.assaultLinkT.toFixed(2)}`);
+}
+{
   // Q rushes chain into Z: pressed mid-slide, Twin Shot fires as the slide ends
   arena(20); player.ranks.Q = 1; player.ranks.W = 0;
   dummy(200);
@@ -723,6 +737,23 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Plunging Volley still fires in the air during the Spike Lift cooldown', player.y < yv && player.cast === 'barrage' && player.cd['E.air'] === 0 && player.cd.E > 4);
   check('the bar shows the form you are in', cdSlot('E') === 'E.air' && cdSlot('E', false) === 'E');
   step(40);
+}
+{
+  // A linked skill refunds 1s off Spike Lift's cooldown (as it does Tempest's)
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
+  dummy(150);
+  tap('e'); step(2);
+  check('Spike Lift starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
+  step(20); // let the lift land
+  player.cd.R = 5; // so the Tempest shave is visible too
+  tap('q'); step(14); // the rush ends, the link window is live
+  const cd1 = player.cd.E, cdR1 = player.cd.R;
+  tap('w'); step(4); // the queued volley fires as the rush clears
+  check('the linked Skyfall Volley fires', player.cast === 'shoot' && player.combo <= 0,
+    `cast ${player.cast} combo ${player.combo.toFixed(2)}`);
+  check('the link refunds 1s off Spike Lift', Math.abs(player.cd.E - (cd1 - 1 - 4 / 30)) < 0.05,
+    `cd ${player.cd.E.toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
+  check('the same link also shaves Tempest', player.cd.R < cdR1 - 0.9 && player.cd.R > cdR1 - 1.3, `cd.R ${player.cd.R.toFixed(2)} of ${cdR1.toFixed(2)}`);
 }
 {
   // Midair Spin (W in the air): one sweep per 4s, and no extra rise
@@ -2387,6 +2418,42 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('one killed in the air falls to the ground as it dies', Math.abs(c.drop - 40) < 1 && Math.abs(deathPose(c, 1).dy - c.drop) < 1, `drop ${c.drop.toFixed(1)} dy ${deathPose(c, 1).dy.toFixed(1)}`);
   gotoPlace(climb(3)); step(1);
   check('deaths do not follow you to another floor', corpses.length === 0);
+}
+
+{
+  // Aerial height gate: the air forms want ~2/3 of the jump's peak of height
+  // (AIR_MIN_H), not just any airtime
+  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  dummy(100);
+  tap('c'); step(1); // just left the ground: ~9px of height
+  const mp0 = player.mp;
+  tap('e');
+  check('Plunging Volley needs real height: early in the jump', player.cast !== 'barrage' && player.mp === mp0, `cast ${player.cast}`);
+  step(7); // near the jump's apex (~35px)
+  tap('e');
+  check('Plunging Volley fires near the jump apex', player.cast === 'barrage' && player.mp < mp0, `cast ${player.cast}`);
+}
+{
+  // the same gate on Air Dive and Midair Spin
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  tap('c'); step(1);
+  const mp0 = player.mp;
+  tap('q');
+  check('Air Dive needs real height: early in the jump', player.cast !== 'rush' && player.mp === mp0, `cast ${player.cast}`);
+  step(7);
+  tap('q');
+  check('Air Dive fires near the jump apex', player.cast === 'rush' && player.mp < mp0, `cast ${player.cast}`);
+}
+{
+  // ...and on Midair Spin
+  arena(20); player.ranks.W = 1; player.ranks.MS = 1;
+  tap('c'); step(1);
+  const mp0 = player.mp;
+  tap('w');
+  check('Midair Spin needs real height: early in the jump', player.mp === mp0 && player.cd['W.air'] === 0, `cd ${player.cd['W.air'].toFixed(1)}`);
+  step(7);
+  tap('w');
+  check('Midair Spin fires near the jump apex', player.mp < mp0 && player.cd['W.air'] > 0, `cd ${player.cd['W.air'].toFixed(1)}`);
 }
 
 {
