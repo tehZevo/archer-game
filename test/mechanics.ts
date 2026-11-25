@@ -428,6 +428,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('W offers Sky Assault as its upgrade', activeSkill('W').key === 'AB');
 }
 {
+  // Air Dive: Q's air form plunges down and rolls into the ground rush
+  arena(20); player.ranks.Q = 1;
+  tap('c'); step(6);
+  const y0 = player.y;
+  tap('q'); step(2);
+  check('Air Dive plunges you down and forward', player.y > y0 + 4 && player.diving && player.vx !== 0, `dy ${(player.y - y0).toFixed(1)}`);
+  step(24);
+  check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
+}
+{
   // Midair Spin: W's air form sweeps the enemies around you
   arena(20); player.ranks.Q = 1; player.ranks.W = 1;
   const m = dummy(140);

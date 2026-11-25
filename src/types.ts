@@ -248,6 +248,8 @@ export interface Player extends Body {
   /** Counts down right after a skill's cooldown finishes, driving the
    *  yellow ready-glow on its bar icon (see hud.ts). */
   readyT: Record<SkillKey, number>;
+  /** True while an Air Dive is in flight; the landing rolls into the rush. */
+  diving: boolean;
   /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
   blitzCharges: number;
   blitzT: number;

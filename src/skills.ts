@@ -71,6 +71,7 @@ export function cast(key: SkillKey): void {
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
   const linked = LINKED_SKILLS.includes(kind);
+  const airborne = !player.onGround && !player.climb;
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep.
   if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
@@ -81,13 +82,12 @@ export function cast(key: SkillKey): void {
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   if (player.useT > 0 && !linked) return;
 
-  const airborne = !player.onGround && !player.climb;
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return;
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
-  // Sky Toss is a ground launcher: no mid-air use.
-  if ((kind === 'Q' || kind === 'VS' || kind === 'RA') && !player.onGround) return;
+  // Q is a two-form key: the ground rush, and the Air Dive in mid-air.
+  if ((kind === 'VS' || kind === 'RA') && !player.onGround) return;
   // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air.
   // (the shared cooldown gate below covers both forms)
 
@@ -182,6 +182,19 @@ export function cast(key: SkillKey): void {
     // Electric Blitz is the same rush, just faster and longer (see below).
     case 'EB':
     case 'Q': {
+      // Air Dive (air form): plunge diagonally down, carrying the enemies
+      // under and in front of you, and roll into the ground rush on landing.
+      // TODO: dedicated dive art.
+      if (!player.onGround) {
+        player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
+        sfx.jump();
+        player.vx = player.face * P.DIVE_VX;
+        player.vy = P.DIVE_VY;
+        player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
+        player.diving = true;
+        player.combo = 1.1; player.comboT = 1.1;
+        break;
+      }
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
       // Down + Q strikes in place. Otherwise slide forward, scooping up the
@@ -350,9 +363,20 @@ export function cast(key: SkillKey): void {
     }
 
     case 'W': {
-      // Skyfall Volley: knock the enemies ahead into the air and shoot them
-      // before they land. Q (the rush) gathers them up first, and the link
-      // window it opens is what makes this available.
+      // Midair Spin (air form): a 360° sweep around you, hitting every enemy
+      // in reach. Shares the key with the launch and is picked by state.
+      // TODO: dedicated spin art; this uses a ring of horns.
+      if (airborne) {
+        player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
+        sfx.shoot();
+        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
+        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.3 }));
+        tg.forEach((m) => damage(m, r.dmg));
+        break;
+      }
+      // Skyfall Volley (ground form): knock the enemies ahead into the air and
+      // shoot them before they land. Q (the rush) gathers them up first, and
+      // the link window it opens is what makes this available.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       sfx.shoot();
       const face = player.face;

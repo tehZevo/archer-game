@@ -45,6 +45,10 @@ export const P = {
   BLITZ_MAX: 2,        // charges banked at full
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
   BLITZ_DIST: 96,      // px the blitz travels
+  // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
+  DIVE_VX: 260,        // px/s forward
+  DIVE_VY: 420,        // px/s down
+  DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s

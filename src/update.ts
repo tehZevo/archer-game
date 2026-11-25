@@ -57,6 +57,13 @@ export function update(dt: number): void {
     player.blitzCharges++;
     player.blitzT = player.blitzCharges >= P.BLITZ_MAX ? 0 : P.BLITZ_CHARGE_T - player.blitzT;
   }
+  if (player.diving && player.onGround) {
+    // the dive lands: roll straight into the ground rush
+    player.diving = false;
+    player.vx = player.face * P.RUSH_SLIDE_V;
+    player.rushT = P.RUSH_MAX; player.rushDist = 0;
+    player.cast = 'rush'; player.castT = P.RUSH_MAX; player.castTotal = P.RUSH_MAX;
+  }
   for (const k of SKILL_ORDER) {
     const was = player.cd[k];
     player.cd[k] = Math.max(0, was - dt);
