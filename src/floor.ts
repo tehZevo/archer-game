@@ -1,4 +1,4 @@
-import { MOB_TYPES, WORLD, TILE } from './config';
+import { MOB_TYPES, VARIANT_CHANCE, WORLD, TILE } from './config';
 import { net, roomId } from './net';
 import { AREAS, areaName, blockOf, isAreaEnd, isTown, placeName, tierOf, townStage } from './world';
 import { hashStr, seeded } from './rng';
@@ -117,8 +117,20 @@ export function makeShape(kind: string, x: number, baseY: number, width = 6, mir
 
 /** The enemies an area can field: its own set, or the general pool for areas without one yet. */
 export function areaMobs(area: string): MobType[] {
-  const own = MOB_TYPES.filter((m) => m.areas?.includes(area));
-  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.areas || m.areas.includes('*'));
+  const own = MOB_TYPES.filter((m) => !m.of && m.areas?.includes(area));
+  return own.length >= 2 ? own : MOB_TYPES.filter((m) => !m.of && (!m.areas || m.areas.includes('*')));
+}
+
+/** An enemy's variants that live in this area. */
+export const variantsOf = (base: string, area: string): MobType[] =>
+  MOB_TYPES.filter((m) => m.of === base && m.areas?.includes(area));
+
+/** The enemy that actually spawns for a floor's type: now and then (VARIANT_CHANCE)
+ *  one of its variants instead. `r` is a random number in [0, 1). */
+export function pickVariant(type: MobType, area: string, r = Math.random()): MobType {
+  const vs = variantsOf(type.n, area);
+  if (!vs.length || r >= VARIANT_CHANCE) return type;
+  return vs[Math.min(vs.length - 1, Math.floor(r / VARIANT_CHANCE * vs.length))];
 }
 
 /** A floor's two enemy types, picked from its area's set (same for everyone

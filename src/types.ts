@@ -115,6 +115,8 @@ export interface MobType {
   fly?: boolean;
   /** Areas this enemy lives in (see world.ts); none = the fallback pool for areas without their own set. */
   areas?: string[];
+  /** A variant of this enemy: never picked for a floor itself, it turns up in its base's place. */
+  of?: string;
 }
 
 /** A spawn zone: one per platform that has enemies. Waves top it up to `cap`. */

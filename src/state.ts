@@ -1,6 +1,6 @@
 import { CAM, ELITE, MOB_TYPES, P, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
 import { AREAS, areaFor, areaName, tierOf, townStage } from './world';
-import { generateFloor } from './floor';
+import { generateFloor, pickVariant } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
@@ -135,7 +135,8 @@ export const heldBy = (z: Spawn): number => Math.max(0, (z.cap ?? 1) - Math.floo
 export function spawnWave(): void {
   const zones = game.floor.spawns;
   const alive = (z: Spawn): number => game.mobs.filter((m) => m.spawn === z).length;
-  const add = (z: Spawn): void => spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), Math.random() < ELITE.CHANCE);
+  const area = areaName(net.area);
+  const add = (z: Spawn): void => spawnMob(z, pickVariant(mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), area), Math.random() < ELITE.CHANCE);
   let moved = 0;
   for (const z of zones) {
     const want = heldBy(z);

@@ -2,7 +2,7 @@
 // 1px blocks; the base-resolution canvas + image-rendering:pixelated keeps them
 // crisp. Built once at boot, drawn with drawImage.
 
-import { HURT, MOB_ART, mobSize, paintMob } from './mobart';
+import { HURT, MOB_ART, RECOLOR, mobSize, paintMob } from './mobart';
 
 export interface Sprite {
   c: HTMLCanvasElement;
@@ -124,10 +124,28 @@ function hogHurt(): Sprite {
   return s;
 }
 
+/** A copy of a sprite with some exact colours swapped (map keys are #rrggbb). */
+function recolor(src: Sprite, map: Record<string, string>): Sprite {
+  const s = make(src.w, src.h);
+  s.x.drawImage(src.c, 0, 0);
+  const img = s.x.getImageData(0, 0, s.w, s.h), d = img.data;
+  const hex = (v: number): string => v.toString(16).padStart(2, '0');
+  const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const to = map[`#${hex(d[i])}${hex(d[i + 1])}${hex(d[i + 2])}`];
+    if (to) [d[i], d[i + 1], d[i + 2]] = rgb(to);
+  }
+  s.x.putImageData(img, 0, 0);
+  return s;
+}
+
 /** An enemy's walk/flap cycle, how fast it plays, and its hurt pose. */
 export interface MobAnim { frames: Sprite[]; fps: number; hurt: Sprite }
 const anim = (draw: (f: number) => Sprite, n: number, fps: number, hurt: () => Sprite): MobAnim =>
   ({ frames: Array.from({ length: n }, (_, f) => draw(f)), fps, hurt: hurt() });
+const recolorAnim = (a: MobAnim, map: Record<string, string>): MobAnim =>
+  ({ frames: a.frames.map((f) => recolor(f, map)), fps: a.fps, hurt: recolor(a.hurt, map) });
 
 /** A glowing warp pad. */
 function portalSprite(): Sprite {
@@ -248,3 +266,5 @@ export const SPR = {
     ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
   } as Record<string, MobAnim>,
 };
+// palette-swapped variants of the hand-drawn enemies
+for (const [n, { base, map }] of Object.entries(RECOLOR)) SPR.mob[n] = recolorAnim(SPR.mob[base], map);
