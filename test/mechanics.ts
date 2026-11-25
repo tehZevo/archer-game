@@ -87,7 +87,7 @@ function arena(level = 1, x = 100): void {
   release();
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
   player.level = level; player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats();
-  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['Z', 'C', 'D', 'Q', 'AD'].includes(k) ? 1 : 0;
+  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'C', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.useT = 0; player.cast = null; player.castT = 0; player.combo = 0; player.queued = null; player.hangT = 0;
@@ -269,7 +269,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Sky Assault is gated by the link window: one use per Sky Toss, not spammed.
-  arena(20); player.ranks.W = 3; player.ranks.AB = 1;
+  arena(20); player.ranks.W = 3; player.ranks.AB = 3; // Sky Assault is the W upgrade: maxing W masters it
   dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   check('the Sky Toss opens the link window', player.combo > 0);
@@ -422,7 +422,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 
 {
   // The air forms show the key they're used on (Q, W, E), not AD/MS/PV.
-  arena(30);
+  arena(60);
   player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
   const rows = skillRows();
   const ad = rows.find((r) => r.key === 'AD'), ms = rows.find((r) => r.key === 'MS'), pv = rows.find((r) => r.key === 'PV');
@@ -432,14 +432,13 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 // --- a skill's prerequisite must be mastered before it unlocks ---
 {
-  arena(30);
+  arena(60);
   player.ranks.Q = 1; player.ranks.W = 1;
   const ad = skillRows().find((r) => r.key === 'AD');
   check('Air Dive is locked until Sky Toss is mastered', !!ad && ad.action === '' && !!ad.need?.includes('Sky Toss'), ad?.need);
   player.ranks.Q = 3;
   const ad2 = skillRows().find((r) => r.key === 'AD');
   check('...and unlocks once Sky Toss is at max rank', !!ad2 && ad2.action.startsWith('Learn'));
-  player.ranks.W = 3; player.ranks.AB = 1;
   const ms = skillRows().find((r) => r.key === 'MS');
   check('Midair Spin is locked until Sky Assault is mastered', !!ms && ms.action === '' && !!ms.need?.includes('Sky Assault'), ms?.need);
   player.ranks.AB = 3;
@@ -471,7 +470,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Toss hits the enemy ahead and leaves it on the ground', m.hp < 1e6 && m.airTime === 0);
   const hp0 = m.hp; tap('w'); step(15);
   check('the rush opens the link window, and W launches and shoots it', m.hp < hp0 && m.airTime > 0);
-  arena(15); player.ranks.W = 3; player.ranks.AB = 1;
+  arena(15); player.ranks.W = 3; player.ranks.AB = 3; // Sky Assault is the W upgrade: maxing W masters it
   check('W offers Sky Assault as its upgrade', activeSkill('W').key === 'AB');
 }
 {
@@ -519,7 +518,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Sky Assault -> E: Plunging Volley cuts the hover short instead of waiting it out
-  arena(20); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 1; player.ranks.E = 1; player.ranks.PV = 1;
+  arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Sky Assault hovers', player.hangT > 0);
@@ -591,7 +590,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('...and it scales with the skill\'s own rank', rank('Z').hits === 4, `${rank('Z').hits}`);
   player.ranks.ES = 3;
   check('Echo Shot stays doubled at max rank', rank('Z').hits === 4, `${rank('Z').hits}`);
-  check('Echo Shot unlocks at Lv.15 and is a passive', SKILLS.ES.minLevel === 15 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
+  check('Echo Shot unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
   player.ranks.ES = 0;
   check("a passive's bonus is one lot of arrows until learned", rank('Z').hits === 2);
   arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
@@ -1435,7 +1434,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent (Glide too)',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 4 && player.ranks.D === 0 && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 5 && player.ranks.D === 0 && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();

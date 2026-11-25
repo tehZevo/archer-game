@@ -105,8 +105,8 @@ gainExp(expToNext(1));
 check('exp to next level advances a level', player.level > lvl0);
 check('level up grants 1 AP and no menu', player.ap === 1 && !game.pause);
 reset();
-for (let i = 0; i < 4; i++) gainExp(player.expNext - player.exp);
-check('Lv.5 has 4 AP and 1 SP to spend', player.level === 5 && player.ap === 4 && player.sp === 1);
+for (let i = 0; i < 9; i++) gainExp(player.expNext - player.exp);
+check('Lv.10 has 9 AP and 2 SP to spend', player.level === 10 && player.ap === 9 && player.sp === 2);
 const tap = (k: string): void => { setKey(k, false); setKey(k, true); step(1); setKey(k, false); step(1); };
 tap('escape');
 const wave0 = game.waveT, regen0 = player.regenT;
@@ -114,12 +114,12 @@ step(10);
 check('esc pauses the game', !!game.pause && game.waveT === wave0 && player.regenT === regen0);
 const vit0 = player.stats.vit, hp0 = player.hpMax;
 tap('down'); tap('z'); // VIT
-check('pause menu spends AP on a stat', player.stats.vit === vit0 + 1 && player.hpMax > hp0 && player.ap === 3);
+check('pause menu spends AP on a stat', player.stats.vit === vit0 + 1 && player.hpMax > hp0 && player.ap === 8);
 tap('right'); // skills column
 const wRow = skillRows().findIndex((r) => r.key === 'W');
 for (let i = 0; i < wRow; i++) tap('down');
 tap('z');
-check('pause menu spends SP to learn Skyfall Volley', isLearned('W') && player.sp === 0);
+check('pause menu spends SP to learn Skyfall Volley', isLearned('W') && player.sp === 1);
 tap('escape');
 check('esc resumes', !game.pause);
 
