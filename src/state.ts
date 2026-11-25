@@ -60,6 +60,7 @@ export const player: Player = {
   war: start.war,
   job: jobForLevel(1),
   ranks,
+  effects: [],
 };
 
 export const game = {
@@ -171,6 +172,7 @@ export function gotoFloor(n: number, area?: number): void {
   player.queued = null;
   player.hangT = 0; player.hangHits = 0;
   player.rushT = 0; player.rushCarry = [];
+  player.effects.length = 0; // effects don't follow you to another floor
 }
 
 /** Where the camera wants to be: the nearest position that puts the player

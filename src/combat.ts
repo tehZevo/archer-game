@@ -5,6 +5,7 @@ import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
 import { bossDown } from './boss';
 import { questKill } from './quests';
+import { clearStatus, INFLICT, maybeInflict } from './status';
 import type { DamageOpts, DmgNum, Mob } from './types';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
@@ -35,6 +36,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   if (opts.launch) { target.airTime = 1.1; target.vy = -430; target.y -= 4; }
   if (target.hp <= 0) killMob(target);
+  else maybeInflict(target, INFLICT.player); // the area's element (see status.ts)
 }
 
 /** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
@@ -108,5 +110,6 @@ export function revive(): void {
   game.player.climb = null; game.player.climbRush = false;
   game.player.fervor = 0;
   game.player.combo = 0;
+  clearStatus(game.player);
   logMsg('You were knocked out. <b>Revived at the village gate.</b>');
 }

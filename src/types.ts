@@ -1,6 +1,17 @@
 import type { BossState } from './boss';
 export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR' | 'HA';
 
+/** A status effect (see status.ts). */
+export type StatusKind = 'poison' | 'burn' | 'chill';
+export interface Status {
+  kind: StatusKind;
+  stacks: number;
+  /** Seconds left (each new stack restarts it). */
+  t: number;
+  /** Seconds to the next damage tick. */
+  tick: number;
+}
+
 /** The four core stats, each upgraded with ability points (AP). */
 export interface CoreStats {
   dex: number; // attack power
@@ -161,6 +172,8 @@ export interface Mob {
   spawn: Spawn;
   /** A rare, tougher spawn (see ELITE in config.ts): bigger, gold-outlined, worth more. */
   elite?: boolean;
+  /** Status effects on it (see status.ts). */
+  effects?: Status[];
   /** Set on an area's boss: what it's doing (see boss.ts). */
   boss?: BossState;
 }
@@ -242,6 +255,8 @@ export interface Player extends Body {
   war: number;
   job: JobDef;
   ranks: Record<SkillKey, number>;
+  /** Status effects on you (see status.ts). */
+  effects: Status[];
 }
 
 export type CastName =

@@ -22,6 +22,7 @@ import { settingsTap, settingsUi } from './settings';
 import { drawSettings } from './settingsdraw';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
+import { STATUS } from './status';
 import { text, textWidth } from './font';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
@@ -157,7 +158,20 @@ function drawHUDItems(): void {
   bar(pad + bw + bgap, y, bw, 'MP', `${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, player.mp / player.mpMax, '#3f8fd6');
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
 
-  drawChatLog(y);
+  // status effects on you, over the HP bar: a coloured pip and "POISON x2 4s" each
+  let ey = y;
+  if (player.effects.length) {
+    ey = y - 10;
+    let ex = pad;
+    for (const e of player.effects) {
+      const st = STATUS[e.kind];
+      ctx.fillStyle = st.col; ctx.fillRect(ex, ey + 2, 3, 3);
+      const label = `${st.label}${e.stacks > 1 ? ` x${e.stacks}` : ''} ${Math.ceil(e.t)}s`;
+      text(ctx, label, ex + 5, ey + 1, 1, st.col, 'left');
+      ex += 5 + textWidth(label) + 7;
+    }
+  }
+  drawChatLog(ey);
   if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); return; }

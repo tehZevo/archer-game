@@ -23,6 +23,7 @@ import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { settings } from './settings';
+import { STATUS } from './status';
 import type { Climbable, DmgNum, Fx, Mob, Portal, Shot } from './types';
 
 // Base (internal) resolution. The canvas backing store IS this size; everything
@@ -217,6 +218,16 @@ function drawMob(m: Mob): void {
     ctx.fillStyle = '#3a1a1a'; ctx.fillRect(bx + 1, by + 1, bw - 2, 2);
     ctx.fillStyle = pct > 0.5 ? '#6ee86e' : pct > 0.25 ? '#ffd166' : '#ff6b6b';
     ctx.fillRect(bx + 1, by + 1, fill, 2);
+  }
+  // status effects: a coloured pip per effect (one per stack) over its head
+  if (m.effects?.length) {
+    let px = Math.round(m.x) - 1 - (m.effects.reduce((n, e) => n + e.stacks, 0) - 1) * 2;
+    const py = Math.round(m.y) - (m.stun > 0 ? 11 : 5);
+    for (const e of m.effects) for (let i = 0; i < e.stacks; i++) {
+      ctx.fillStyle = '#000'; ctx.fillRect(px - 1, py - 1, 4, 4);
+      ctx.fillStyle = STATUS[e.kind].col; ctx.fillRect(px, py, 2, 2);
+      px += 4;
+    }
   }
   if (m.stun > 0) {
     // a small pixel star over the enemy's head

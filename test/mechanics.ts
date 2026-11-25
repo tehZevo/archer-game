@@ -30,7 +30,7 @@ import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '
 import { styled } from '../src/archer';
 import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
-import { lastTown } from '../src/world';
+import { baseOf, lastTown } from '../src/world';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
@@ -45,6 +45,7 @@ import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
+import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
 
@@ -1456,6 +1457,47 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const frac = game.mobs.filter((m) => m.elite).length / game.mobs.length;
   check('waves roll elites about 1 in 8', frac > 0.07 && frac < 0.19, frac.toFixed(3));
   game.mobs = []; game.floor.spawns = [];
+}
+
+// --- status effects: stacks, damage ticks, slow, and which areas carry them ---
+{
+  arena();
+  check('the starting area carries no element', areaStatus() === undefined);
+  const swamp = AREAS.find((a) => a.name === 'Swamp')!;
+  gotoFloor(baseOf(swamp.depth), swamp.id); game.mobs = []; game.floor.spawns = [];
+  check('the Swamp carries poison', areaStatus() === 'poison');
+  player.invuln = 0; player.hp = player.hpMax = 1000;
+  applyStatus(player, 'poison'); applyStatus(player, 'poison');
+  check('a second dose adds a stack', player.effects.length === 1 && player.effects[0].stacks === 2);
+  for (let i = 0; i < 5; i++) applyStatus(player, 'poison');
+  check(`stacks stop at ${MAX_STACKS}`, player.effects[0].stacks === MAX_STACKS);
+  const hp0 = player.hp;
+  updateStatus(player, 1.01);
+  check('poison ticks each second, by stacks', hp0 - player.hp === Math.round(1000 * DOT.poison.player * MAX_STACKS));
+  player.hp = 2; updateStatus(player, 1.01);
+  check('poison never takes you below 1 HP', player.hp === 1);
+  updateStatus(player, STATUS.poison.dur);
+  check('it wears off', player.effects.length === 0);
+  // chill slows you
+  player.hp = player.hpMax; applyStatus(player, 'chill');
+  check('chill slows movement', slowFactor(player) === CHILL_SLOW);
+  player.x = 100; player.vx = 0; player.y = ground().y - player.h; player.onGround = true;
+  setKey('right', true); step(30); const chilled = player.vx; release(); player.effects.length = 0; player.vx = 0;
+  setKey('right', true); step(30); const free = player.vx; release();
+  check('a chilled walk is slower', chilled < free * 0.9 && chilled > 0, `${chilled} vs ${free}`);
+  // on enemies: burn ticks off their HP and can finish them
+  const m = dummy(200, 30);
+  applyStatus(m, 'burn'); player.war = 100;
+  game.mobs = [m]; step(Math.ceil(1.05 / P.STEP));
+  check('burn hurts an enemy each second (and can kill it)', !game.mobs.includes(m));
+  // your hits inflict the area's element
+  const m2 = dummy(200); let got = false;
+  for (let i = 0; i < 40 && !got; i++) { damage(m2, 0.01); got = (m2.effects?.length ?? 0) > 0; }
+  check("your hits inflict the area's element", got && m2.effects![0].kind === 'poison');
+  // gotoFloor clears yours
+  applyStatus(player, 'burn'); gotoFloor(1, 0);
+  check('effects clear on a new floor', player.effects.length === 0);
+  game.mobs = [];
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

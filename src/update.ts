@@ -15,6 +15,7 @@ import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
+import { INFLICT, maybeInflict, slowFactor, updateStatus } from './status';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
 
@@ -44,6 +45,7 @@ export function update(dt: number): void {
     if (player.combatT <= 0) player.hp = Math.min(player.hpMax, player.hp + player.hpMax * P.REGEN_FRAC);
   }
   for (const k of SKILL_ORDER) player.cd[k] = Math.max(0, player.cd[k] - dt);
+  updateStatus(player, dt);
   // skill keys
   // Basic attack during Sky Toss's link window casts the link skill
   // (Skyfall Volley, or Sky Assault once upgraded).
@@ -129,7 +131,7 @@ export function update(dt: number): void {
       player.animState = 'jump';
     } else {
       // horizontal: accel toward target speed (the classic side-scroller walk over a few frames)
-      const busy = player.cast === 'rush' ? 0.55 : 1;
+      const busy = (player.cast === 'rush' ? 0.55 : 1) * slowFactor(player); // chill slows you
       // holding Down on the ground lies you flat: you can turn but not walk
       const prone = player.onGround && !locked && held('down');
       let target = 0;
@@ -232,6 +234,8 @@ export function update(dt: number): void {
 
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
+    updateStatus(m, dt, m);
+    if (!game.mobs.includes(m)) continue; // poisoned or burned to death
     if (m.hitFlash > 0) m.hitFlash -= dt;
     if (m.barT > 0) m.barT -= dt;
     m.anim += dt * ANIM_RATE;
@@ -249,9 +253,9 @@ function updateMobs(dt: number): void {
       else if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
         m.dir = Math.sign(d) || 1;
         m.vx += clamp(d * 4 - m.vx, -2400 * dt, 2400 * dt) * 0.5;
-        m.vx = clamp(m.vx, -m.spd, m.spd);
+        m.vx = clamp(m.vx, -m.spd * slowFactor(m), m.spd * slowFactor(m));
       } else {
-        m.vx += (m.dir * m.spd - m.vx) * Math.min(1, 12 * dt);
+        m.vx += (m.dir * m.spd * slowFactor(m) - m.vx) * Math.min(1, 12 * dt);
         // turn back at the end of the patrol, or on reaching the platform's edge
         // (which can come first: the map edge cuts some platforms short)
         if (Math.abs(m.x - m.home) > m.range || (m.dir > 0 && m.x >= hi - 0.5) || (m.dir < 0 && m.x <= lo + 0.5)) {
@@ -263,7 +267,7 @@ function updateMobs(dt: number): void {
         && player.y < m.y + m.h && m.y < player.y + player.h;
       if (touching && m.atkCd <= 0) {
         m.atkCd = 1.1;
-        hurtPlayer(m.dmg);
+        if (hurtPlayer(m.dmg)) maybeInflict(player, INFLICT.mob);
       }
       m.atkCd = Math.max(0, m.atkCd - dt);
     }
