@@ -1,4 +1,4 @@
-import { CARRY_MAX, wallet } from './economy';
+import { CARRY_MAX, START_POTIONS, wallet } from './economy';
 import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
@@ -20,7 +20,7 @@ import type { SkillKey } from './types';
    ============================================================ */
 
 const KEY = 'archer-game:save';
-const VERSION = 3; // 3: places (towns and paths) replaced stage numbers (older saves are dropped)
+const VERSION = 4; // 4: the starting kit (3 HP + 3 MP potions) (older saves are dropped)
 export const SAVE_EVERY = 5; // s between autosaves
 
 export interface SaveData {
@@ -87,8 +87,8 @@ export function apply(d: unknown): Place | null {
   recalcStats();
   player.hp = player.hpMax; player.mp = player.mpMax;
   wallet.coins = int(s.coins, 0, 1e9, 0);
-  wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, 0);
-  wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, 0);
+  wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, START_POTIONS);
+  wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, START_POTIONS);
   loadQuests(s.quests);
   pet.owned = s.pet === true;
   // resume in the saved town (the start if it's gone from the map)
