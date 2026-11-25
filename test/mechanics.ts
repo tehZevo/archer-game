@@ -55,6 +55,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
+import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
@@ -452,6 +453,18 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Piercing Arrow hits every enemy in the line', a.hp < 1e6 && b.hp < 1e6);
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
   check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
+}
+{
+  // ready-glow: the bar icon flashes the moment a cooldown runs out
+  arena(20); player.ranks.Q = 1;
+  tap('q');
+  check('casting starts the cooldown with no glow', player.cd.Q > 0 && player.readyT.Q === 0);
+  for (let i = 0; i < 200 && player.cd.Q > 0; i++) step(1);
+  check('the glow flashes as the cooldown ends', player.cd.Q === 0 && player.readyT.Q > 0, `cd ${player.cd.Q.toFixed(2)} readyT ${player.readyT.Q.toFixed(2)}`);
+  step(8);
+  check('the glow fades as the flash plays out', player.readyT.Q > 0 && player.readyT.Q < READY_FLASH, `readyT ${player.readyT.Q.toFixed(2)}`);
+  step(10);
+  check('the glow is gone once the flash is over', player.readyT.Q === 0);
 }
 {
   // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
