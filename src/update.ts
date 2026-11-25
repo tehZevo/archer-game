@@ -10,7 +10,7 @@ import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, killMob, revive } from './combat';
 import { setPlayerDeath, updatePlayerDeath } from './deaths';
-import { barrageTargets, cast, landDive, updateRush } from './skills';
+import { assaultLeaping, barrageTargets, cast, landDive, updateRush } from './skills';
 import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
@@ -104,7 +104,7 @@ export function update(dt: number): void {
   // your movement (mashing Q left, Q right zips you back and forth).
   const aimDir = held('left') ? -1 : held('right') ? 1 : 0;
   if (player.queued && aimDir !== 0) player.face = aimDir as 1 | -1;
-  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && !window)) {
+  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && !window) && !assaultLeaping()) {
     const k = player.queued; player.queued = null;
     cast(k, k === 'Z');
   }

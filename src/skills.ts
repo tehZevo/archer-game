@@ -147,6 +147,11 @@ export function formCd(kind: SkillKey): number {
  *  aerial combo. */
 export const AIR_MIN_H = (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
 
+/** Sky Assault's opening leap is still playing (a Midair Spin pressed now is
+ *  buffered; once it's done the sweep fires straight out of the hover). */
+export const assaultLeaping = (): boolean =>
+  player.cast === 'barrage' && player.hangT > 0 && player.castTotal - player.castT < P.ASSAULT_LEAP;
+
 export function cast(key: SkillKey, chained = false): void {
   const ground = activeSkill(key);
   const airborne = !player.onGround && !player.climb;
@@ -186,7 +191,7 @@ export function cast(key: SkillKey, chained = false): void {
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   // Sky Assault's own animation buffers the sweep it links into, so pressing
   // W on the way up lands as the leap peaks
-  if (kind === 'MS' && player.spinLinkT > 0 && player.cast === 'barrage' && player.castT > 0) { player.queued = key; return; }
+  if (kind === 'MS' && player.spinLinkT > 0 && assaultLeaping()) { player.queued = key; return; }
   // Input buffering: a link pressed during the source skill's post-animation
   // recovery is kept and fires on the first free frame (the rush's own
   // queue above covers its animation). Links bypass the animation itself, so
@@ -497,6 +502,7 @@ export function cast(key: SkillKey, chained = false): void {
       // hitting every enemy in reach.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       player.skillPose = 'spin';
+      player.hangT = 0; player.hangHits = 0; // swept out of a Sky Assault hover: the spin takes over
       player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide...
       player.volleyLinkT = P.SPIN_VOLLEY; // ...and into a Plunging Volley
       sfx.shoot();
