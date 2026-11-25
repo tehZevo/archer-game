@@ -195,7 +195,8 @@ export function cast(key: SkillKey): void {
         (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
           .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
         tg.forEach((m) => {
-          damage(m, r.dmg, { launch: true });
+          // the rush carries and hits; the launch is the W's job now
+          damage(m, r.dmg);
           if (!inPlace) m.vx = face * 80; // a little follow-through drift
         });
       };
@@ -323,28 +324,30 @@ export function cast(key: SkillKey): void {
     }
 
     case 'W': {
-      // Skyfall Volley: a volley of arrows rains down onto the launched enemies
+      // Skyfall Volley: knock the enemies ahead into the air and shoot them
+      // before they land. Q (the rush) gathers them up first, and the link
+      // window it opens is what makes this available.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       sfx.shoot();
-      const tg = airborneInBox(player.x, player.y - 20, 200, 150).slice(0, r.targets);
+      const face = player.face;
+      const tg = hitbox(player.x + face * 30, player.y + player.h / 2, 110, 80).slice(0, r.targets);
       // the volley rains onto each target, or onto the ground just ahead if there are none
-      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x + player.face * 40, player.y + player.h]])
+      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x + face * 40, player.y + player.h]])
         .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
-      for (let h = 0; h < r.hits; h++) {
-        later(0.06 + h * 0.07, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { airborne: true, fx: 'rainHit', more: h < r.hits - 1 }));
-        });
-      }
+      tg.forEach((m) => damage(m, r.dmg, { launch: true, fx: 'rainHit' }));
       break;
     }
 
     case 'AB': {
-      // Sky Assault: warp straight up above the enemies Sky Toss
-      // launched (no horizontal movement), hover there striking every airborne
-      // enemy in reach for a moment, then drop with normal gravity. The
-      // strikes run on the fixed step in update (see the hang block).
+      // Sky Assault: knock the enemies ahead into the air and warp straight
+      // up with them (no horizontal movement), hovering to strike every
+      // airborne enemy in reach for a moment before dropping with normal
+      // gravity. The strikes run on the fixed step in update (see the hang
+      // block); the launch is what the upgrade keeps from the base W.
       player.cast = 'barrage'; player.castT = P.BARRAGE_HANG; player.castTotal = P.BARRAGE_HANG;
       sfx.shoot();
+      hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
+        .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true }));
       const from = player.y + player.h / 2;
       // always the same rise: it used to scale with how high the launched
       // enemies were at that moment, so casting at the top of their arc

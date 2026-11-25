@@ -278,7 +278,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Toss launches nothing until the slide ends', !launchedEarly);
   check('the Sky Toss charge hits each enemy it scoops up, once', hits === 1, `${hits} hits, dx ${(player.x - x0).toFixed(1)}, rushT ${player.rushT.toFixed(2)}`);
   step(2);
-  check('Sky Toss strikes and launches as the slide ends', m.hp < 1e6 && m.airTime > 0);
+  check('Sky Toss strikes as the slide ends (the launch is on W now)', m.hp < 1e6 && m.airTime === 0);
 }
 {
   // Sky Toss travels its fixed distance even when an enemy slows it mid-slide
@@ -420,9 +420,9 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.Q = 1; player.ranks.W = 1;
   const m = dummy(140);
   tap('q'); step(14);
-  check('Sky Toss launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
+  check('Sky Toss hits the enemy ahead and leaves it on the ground', m.hp < 1e6 && m.airTime === 0);
   const hp0 = m.hp; tap('w'); step(15);
-  check('Sky Toss opens the link window for W', m.hp < hp0);
+  check('the rush opens the link window, and W launches and shoots it', m.hp < hp0 && m.airTime > 0);
   arena(15); player.ranks.W = 3; player.ranks.AB = 1;
   check('W offers Sky Assault as its upgrade', activeSkill('W').key === 'AB');
 }
