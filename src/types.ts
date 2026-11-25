@@ -333,6 +333,8 @@ export interface Portal {
   area?: number;
   /** Shown above it (towns: where each portal goes). */
   label?: string;
+  /** A town's ways up: the level of the enemies where it leads (shown under the label). */
+  lvl?: number;
 }
 
 /** A town NPC: stands at (x, y = the surface under their feet). */

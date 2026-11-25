@@ -158,9 +158,17 @@ function drawPortal(p: Portal): void {
     // centred over the portal, but kept inside the world (town names are long)
     const half = textWidth(p.label) / 2 + 2;
     const lx = clamp(p.x, half, WORLD.w - half);
-    text(ctx, p.label, Math.round(lx), Math.round(p.y - s.h - 9), 1, down ? '#8fe3c4' : '#e6d6ff', 'center');
+    // a way up from town also says the level it's meant for (under the name),
+    // coloured by how you measure up
+    const ly = Math.round(p.y - s.h - (p.lvl ? 18 : 9));
+    text(ctx, p.label, Math.round(lx), ly, 1, down ? '#8fe3c4' : '#e6d6ff', 'center');
+    if (p.lvl) text(ctx, `LV.${p.lvl}+`, Math.round(lx), ly + 9, 1, levelCol(p.lvl), 'center');
   }
 }
+
+/** Green when you're at least the level, gold within 5 under it, red further under. */
+export const levelCol = (lvl: number): string =>
+  player.level >= lvl ? '#9be89b' : player.level >= lvl - 5 ? '#ffd166' : '#ff8a8a';
 
 /** A sprite's silhouette in gold (cached per frame): an elite's outline. */
 const glow = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
