@@ -5,7 +5,7 @@ import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
 import { passiveBonus } from './progress';
-import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, spawnWave } from './state';
+import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, READY_FLASH, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, killMob, revive } from './combat';
@@ -51,7 +51,13 @@ export function update(dt: number): void {
     player.mp = Math.min(player.mpMax, player.mp + player.mpMax * P.REGEN_FRAC);
     if (player.combatT <= 0) player.hp = Math.min(player.hpMax, player.hp + player.hpMax * P.REGEN_FRAC);
   }
-  for (const k of SKILL_ORDER) player.cd[k] = Math.max(0, player.cd[k] - dt);
+  for (const k of SKILL_ORDER) {
+    const was = player.cd[k];
+    player.cd[k] = Math.max(0, was - dt);
+    // a skill that just finished cooling off flashes on the bar
+    if (was > 0 && player.cd[k] === 0) player.readyT[k] = READY_FLASH;
+    else player.readyT[k] = Math.max(0, player.readyT[k] - dt);
+  }
   updateStatus(player, dt);
   // F1-F7: emotes
   EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });

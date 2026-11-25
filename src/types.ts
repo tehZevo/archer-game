@@ -245,6 +245,9 @@ export interface Player extends Body {
   mp: number;
   mpMax: number;
   cd: Record<SkillKey, number>;
+  /** Counts down right after a skill's cooldown finishes, driving the
+   *  yellow ready-glow on its bar icon (see hud.ts). */
+  readyT: Record<SkillKey, number>;
   cast: CastName | null;
   castT: number;
   castTotal: number;
