@@ -161,8 +161,11 @@ export function cast(key: SkillKey, chained = false): void {
   // update's hang block): it stays a standalone skill the rest of the time.
   // Electric Blitz links into itself: a blitz cast opens a short window in
   // which the next blitz skips the ending lag, chaining like a combo.
+  // And the aerial skills (Air Dive, Midair Spin, Plunging Volley) open a
+  // glide-link window: D pressed inside it fires on the spot.
   const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0) ||
-    (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0);
+    (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0) ||
+    (kind === 'D' && player.glideLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
@@ -308,6 +311,7 @@ export function cast(key: SkillKey, chained = false): void {
       player.diving = true;
       rushStrike = null; // (a strike left over from an earlier rush must not land now)
       player.combo = 1.1; player.comboT = 1.1;
+      player.glideLinkT = P.GLIDE_LINK; // and it links into a Glide
       break;
     }
 
@@ -432,6 +436,7 @@ export function cast(key: SkillKey, chained = false): void {
       // the volley opens the link window, so Midair Spin (W in the air)
       // follows the rain without waiting for it to land
       if (tg.length) { player.combo = 1.4; player.comboT = 1.4; }
+      player.glideLinkT = P.GLIDE_LINK; // and into a Glide
       break;
     }
 
@@ -459,6 +464,7 @@ export function cast(key: SkillKey, chained = false): void {
       // hitting every enemy in reach.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       player.skillPose = 'spin';
+      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide
       sfx.shoot();
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);

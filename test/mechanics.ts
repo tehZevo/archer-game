@@ -2495,5 +2495,27 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the chained blitz opens a fresh window of its own', player.blitzLinkT > 0.5, `t ${player.blitzLinkT.toFixed(2)}`);
 }
 
+{
+  // Aerial skills link into Glide: pressed while the cast is still going,
+  // D fires on the spot (no use-time wait)
+  arena(20); player.ranks.C = 1; player.ranks.D = 1; player.ranks.E = 1; player.ranks.PV = 1;
+  dummy(100);
+  tap('c'); step(8);
+  tap('e');
+  check('the volley opens the glide window', player.glideLinkT > 0 && player.useT > 0, `t ${player.glideLinkT.toFixed(2)} use ${player.useT.toFixed(2)}`);
+  tap('d');
+  check('the volley links into Glide', player.cast === 'jump' && player.glideLinkT <= 0, `cast ${player.cast} t ${player.glideLinkT.toFixed(2)}`);
+}
+{
+  // ...and so does the Midair Spin
+  arena(20); player.ranks.C = 1; player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  dummy(150);
+  tap('c'); step(8);
+  tap('w');
+  check('Midair Spin opens the glide window', player.glideLinkT > 0, `t ${player.glideLinkT.toFixed(2)}`);
+  tap('d');
+  check('the spin links into Glide', player.cast === 'jump' && player.cd.D > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

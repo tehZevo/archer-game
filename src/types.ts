@@ -292,6 +292,9 @@ export interface Player extends Body {
   /** >0 in the window right after a Sky Assault hover ends, during which
    *  Tempest (R) links: it fires immediately, no cast/recovery wait. */
   assaultLinkT: number;
+  /** >0 right after an aerial skill (Air Dive, Midair Spin, Plunging
+   *  Volley): Glide (D) links, settling into the glide mid-combo. */
+  glideLinkT: number;
   /** Progression. */
   level: number;
   exp: number;
