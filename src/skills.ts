@@ -215,9 +215,9 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
-    player.combo = 0; player.comboT = 0;
     player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
     player.blitzLinkT = 0; // a linked blitz spends its own window too
+    player.glideLinkT = 0; // a linked glide spends the aerial skill's window
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
