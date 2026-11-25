@@ -91,7 +91,8 @@ export function update(dt: number): void {
   if (player.castT > 0) player.castT -= dt; else player.cast = null;
   // a chained link fires as soon as Sky Toss finishes
   // (a chained Twin Shot also waits out the slide itself)
-  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0)) {
+  const busy = player.recoverT > 0; // the animation's recovery: a live link window cuts it short
+  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && player.combo <= 0)) {
     const k = player.queued; player.queued = null;
     cast(k, k === 'Z');
   }
