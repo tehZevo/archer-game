@@ -864,6 +864,12 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 
 // --- archer sprite sheet ---
 check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS).every(([p, fs]) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === (p === 'prone' ? 24 : 16)))));
+{
+  // lying flat keeps the standing head's size (it used to shrink to 4 rows)
+  const headRows = (g: string[]): number => g.filter((r) => /[hs]/.test(r)).length;
+  check('the prone head is as tall as the standing one', headRows(GRIDS.prone[0]) >= headRows(GRIDS.idle[0].slice(0, 10)) - 1,
+    `${headRows(GRIDS.prone[0])} vs ${headRows(GRIDS.idle[0].slice(0, 10))}`);
+}
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
 check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('vanish') === POSES.length - 1 && POSES.indexOf('prone') === 7 && POSES[0] === 'idle');
 {
