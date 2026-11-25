@@ -13,7 +13,7 @@ Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 **
  *  2 = the first floor of its first path, ...): walks the ways up in order. */
 const climb = (n: number): Place => { let p: Place = START; for (let i = 1; i < n; i++) p = nextPlace(p); return p; };
 
-import { ELITE, FX_DUR, MOB_TYPES, P, VARIANT_CHANCE } from '../src/config';
+import { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/config';
 import { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
@@ -26,7 +26,7 @@ import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, damage, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
-import { barrageTargets, cast } from '../src/skills';
+import { barrageTargets, cast, cdSlot } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { mobLevel } from '../src/world';
 import { fmtNum } from '../src/util';
@@ -464,8 +464,13 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('q'); step(1);
   check('with no charges Q does nothing', player.blitzCharges === 0 && player.rushT === 0,
     `charges ${player.blitzCharges} rushT ${player.rushT.toFixed(2)}`);
-  step(Math.round(P.BLITZ_CHARGE_T * 30) + 2);
+  check('...and no ready-glow flashes (nothing came off cooldown)', player.readyT.Q === 0 && player.cd.Q === 0);
+  for (let i = 0; i < P.BLITZ_CHARGE_T * 30 + 2 && player.blitzCharges === 0; i++) step(1);
   check('a charge recharges after 10s', player.blitzCharges === 1, `charges ${player.blitzCharges}`);
+  check('the recharged charge flashes the icon', player.readyT.Q > 0);
+  player.blitzCharges = 1; player.blitzT = 3; player.combo = 1; player.comboT = 1; player.ranks.W = 1; player.useT = 0;
+  cast('W');
+  check('a linked skill speeds up the charge filling (it never sets it back)', player.blitzT === 4, `blitzT ${player.blitzT}`);
 }
 
 // --- Equipment: a weapon and an armor piece ---
@@ -479,13 +484,14 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('gear is named by the level it is made for', bow.name === 'Long Bow' && bow.lvl === 10, bow.name);
   check('a Lv.10 bow adds 30% to every hit', equip(bow) && Math.abs(gearDmg() - 1.30) < 0.001, `x${gearDmg().toFixed(3)}`);
   const war0 = player.war;
+  dummy(140); game.dmgNums.length = 0;
   tap('z'); step(12);
   const hit = game.dmgNums[game.dmgNums.length - 1];
   check('the bow multiplies the arrow that lands', hit.v > war0 * 1.29, `hit ${hit.v}`);
 
   check('a weaker bow leaves the stronger one equipped', !equip(gearFor('weapon', 4)) && gear.weapon?.lvl === 10);
   const better = gearFor('weapon', 20);
-  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Composite Bow', gear.weapon?.name);
+  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Yew Bow', gear.weapon?.name);
 
   const plate = gearFor('armor', 30);
   check('armor soaks a share of what you take (capped)', equip(plate) && gearSoak() === 0.35, `soak ${gearSoak()}`);
@@ -496,17 +502,22 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   // a kill can leave a piece behind, and walking over it puts it on
   clearGear();
   const slain = dummy(100);
-  for (let i = 0; i < 40 && gearDrops.length === 0; i++) { killMob(slain); slain.hp = 1e6; }
-  check('a defeated enemy can leave gear where it fell', gearDrops.length > 0 && gearDrops[0].item.lvl === slain.lvl);
+  for (let i = 0; i < 80 && gearDrops.length === 0; i++) { slain.dead = false; killMob(slain); slain.hp = 1e6; }
+  check('a defeated enemy can leave gear where it fell', gearDrops.length > 0 && gearDrops[0].item.lvl === slain.level);
   const d = gearDrops[0];
   player.x = d.x; player.y = d.y - player.h; player.onGround = true;
   step(1);
   check('walking over it equips it', gear[d.item.kind] !== null && gearDrops.length === 0);
 
+  const mem: Record<string, string> = {};
+  (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; } };
+  clearGear(); equip(gearFor('weapon', 20)); equip(gearFor('armor', 34));
   save();
   clearGear();
-  apply(load());
-  check('your gear survives a reload', gear.weapon?.name === 'Composite Bow' && gear.armor?.name === 'Plate Armor', `${gear.weapon?.name} / ${gear.armor?.name}`);
+  load();
+  check('your gear survives a reload', gear.weapon?.name === gearFor('weapon', 20).name && gear.armor?.lvl === 34, `${gear.weapon?.name} / ${gear.armor?.name}`);
+  clearSave(); clearGear();
+  delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
 // --- E / R ---
@@ -532,6 +543,40 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Plunging Volley leaves enemies off to the side alone', beside.hp === 1e6);
   step(30);
   check('after the volley you drop back down', player.onGround);
+  // the two forms cool down apart: Spike Lift's long cooldown never locks out the volley
+  player.cd.E = 0; player.cd['E.air'] = 0; player.useT = 0;
+  tap('e'); step(6);
+  check('Spike Lift fills its own slot, its full length', player.cd.E > 4 && player.cdMax.E === P.SPIKE_CD && player.cd['E.air'] === 0);
+  player.useT = 0; const yv = player.y; tap('e'); step(1);
+  check('Plunging Volley still fires in the air during the Spike Lift cooldown', player.y < yv && player.cd['E.air'] > 0 && player.cd['E.air'] <= SKILLS.E.cd);
+  check('the bar shows the form you are in', cdSlot('E') === 'E.air' && cdSlot('E', false) === 'E');
+  step(40);
+}
+{
+  // Midair Spin (W in the air): one sweep per 4s, and no extra rise
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
+  tap('c'); let apex0 = player.y;
+  for (let i = 0; i < 30; i++) { step(1); apex0 = Math.min(apex0, player.y); }
+  step(40);
+  check('back on the ground', player.onGround);
+  const m = dummy(140);
+  tap('c'); step(3); tap('w'); step(2);
+  const hp1 = m.hp; player.useT = 0; tap('w'); step(2);
+  check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['W.air'] > 3);
+  let apex = player.y;
+  for (let i = 0; i < 30; i++) { tap('w'); step(1); apex = Math.min(apex, player.y); }
+  check('spinning adds no rise beyond your jump', apex >= apex0 - 1, `apex ${apex.toFixed(1)} vs ${apex0.toFixed(1)}`);
+  check('the spin cools down for 4s', player.cdMax['W.air'] === P.SPIN_CD && P.SPIN_CD === 4);
+}
+{
+  // Q: the ground rush cools down for 4s; the Air Dive keeps its own short one
+  arena(20); player.ranks.Q = 1;
+  tap('q');
+  check('the ground rush has a 4s cooldown', SKILLS.Q.cd === 4 && player.cdMax.Q === 4);
+  step(40); player.cd.Q = 0;
+  tap('c'); step(6); tap('q');
+  check('the Air Dive uses its own cooldown slot', player.cd['Q.air'] > 0 && player.cd.Q === 0);
+  step(40);
 }
 {
   arena(25); player.ranks.R = 1;
@@ -1187,7 +1232,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const bowRow = stock.find((r) => r.kind === 'weapon')!, plateRow = stock.find((r) => r.kind === 'armor')!;
   check('the shop stocks a weapon and an armor piece', !!bowRow.item && !!plateRow.item);
   check("the gear is built for this town's level", bowRow.item?.lvl === mobLevel(game.floor.place), `Lv.${bowRow.item?.lvl}`);
-  wallet.coins = bowRow.price;
+  clearGear(); wallet.coins = bowRow.price;
   shop.sel = stock.indexOf(bowRow); tap('z');
   check('buying the bow takes its price and puts it on', wallet.coins === 0 && gear.weapon?.name === bowRow.item?.name);
   wallet.coins = plateRow.price - 1;

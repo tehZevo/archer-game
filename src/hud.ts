@@ -2,6 +2,7 @@ import { shop, trainer } from './economy';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
 import { P, SKILL_BAR } from './config';
+import { cdSlot } from './skills';
 import { READY_FLASH } from './state';
 import { placeName } from './world';
 import { critChance } from './combat';
@@ -157,8 +158,14 @@ function drawHUDItems(): void {
     const k: SkillKey = slot.skill;
     const s = activeSkill(k);
     const learned = isLearned(k);
-    const linked = player.combo > 0 && (k === 'W');
-    const cd = player.cd[k] || 0, frac = s.cd ? cd / s.cd : 0;
+    // the bar shows the form the key would fire right now (its air form in the air)
+    const cs = cdSlot(k);
+    let cd = player.cd[cs] || 0, frac = Math.min(1, cd / (player.cdMax[cs] || cd || 1));
+    // Electric Blitz banks charges rather than cooling down: with none left,
+    // the recharge shows like a cooldown
+    if (s.key === 'EB' && cs === 'Q' && player.blitzCharges <= 0) {
+      cd = P.BLITZ_CHARGE_T - player.blitzT; frac = cd / P.BLITZ_CHARGE_T;
+    }
     ctx.globalAlpha = learned ? 1 : 0.4;
     ctx.drawImage(skillIcon(s.key), x, by, 16, 16);
     ctx.globalAlpha = 1;
@@ -169,19 +176,20 @@ function drawHUDItems(): void {
       ctx.fillRect(x, by, sw, 16 * frac);
       text(ctx, cd.toFixed(1), x + sw / 2, by + 5, 1, '#fff', 'center');
     }
-    // Electric Blitz banks charges rather than cooling down: show how many
-    // are in the bank (a lit pip each) so you know you have one to spend.
+    // ...and how many are in the bank (a lit pip each), with the next one
+    // filling in as a thin line under them
     if (learned && s.key === 'EB') {
       for (let c = 0; c < P.BLITZ_MAX; c++) {
         ctx.fillStyle = c < player.blitzCharges ? '#6fd3ff' : '#0007';
         ctx.fillRect(x + 1 + c * 4, by + 12, 3, 3);
       }
+      if (player.blitzCharges < P.BLITZ_MAX) {
+        ctx.fillStyle = '#6fd3ff';
+        ctx.fillRect(x + 1, by + 15, Math.round(14 * player.blitzT / P.BLITZ_CHARGE_T), 1);
+      }
     }
     // the flash that plays as the cooldown runs out, so you know you can press it
-    if (learned && player.readyT[k] > 0) readyGlow(x, by, player.readyT[k]);
-    if (learned && linked) {
-      text(ctx, 'LINK', x + sw / 2, by + 9, 1, '#6fd3ff', 'center');
-    }
+    if (learned && (player.readyT[cs] ?? 0) > 0) readyGlow(x, by, player.readyT[cs]);
   });
   ctx.restore();
   drawMinimap(); // under the skill bar

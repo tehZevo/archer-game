@@ -244,10 +244,14 @@ export interface Player extends Body {
   hpMax: number;
   mp: number;
   mpMax: number;
-  cd: Record<SkillKey, number>;
-  /** Counts down right after a skill's cooldown finishes, driving the
+  /** Seconds left on each cooldown slot: a key ("E"), or a key's air form
+   *  ("E.air"), which cools down on its own (see cdSlot in skills.ts). */
+  cd: Record<string, number>;
+  /** The full length of each slot's current cooldown (the bar's dark fill). */
+  cdMax: Record<string, number>;
+  /** Counts down right after a slot's cooldown finishes, driving the
    *  yellow ready-glow on its bar icon (see hud.ts). */
-  readyT: Record<SkillKey, number>;
+  readyT: Record<string, number>;
   /** True while an Air Dive is in flight; the landing rolls into the rush. */
   diving: boolean;
   /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
