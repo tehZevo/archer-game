@@ -739,6 +739,23 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(40);
 }
 {
+  // A linked skill refunds 1s off Spike Lift's cooldown (as it does Tempest's)
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
+  dummy(150);
+  tap('e'); step(2);
+  check('Spike Lift starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
+  step(20); // let the lift land
+  player.cd.R = 5; // so the Tempest shave is visible too
+  tap('q'); step(14); // the rush ends, the link window is live
+  const cd1 = player.cd.E, cdR1 = player.cd.R;
+  tap('w'); step(4); // the queued volley fires as the rush clears
+  check('the linked Skyfall Volley fires', player.cast === 'shoot' && player.combo <= 0,
+    `cast ${player.cast} combo ${player.combo.toFixed(2)}`);
+  check('the link refunds 1s off Spike Lift', Math.abs(player.cd.E - (cd1 - 1 - 4 / 30)) < 0.05,
+    `cd ${player.cd.E.toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
+  check('the same link also shaves Tempest', player.cd.R < cdR1 - 0.9 && player.cd.R > cdR1 - 1.3, `cd.R ${player.cd.R.toFixed(2)} of ${cdR1.toFixed(2)}`);
+}
+{
   // Midair Spin (W in the air): one sweep per 4s, and no extra rise
   arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
   tap('c'); let apex0 = player.y;
