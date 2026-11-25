@@ -2389,5 +2389,21 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('deaths do not follow you to another floor', corpses.length === 0);
 }
 
+{
+  // Electric Blitz self-link: a second blitz pressed during the first's
+  // animation (with a charge banked) fires as soon as it clears
+  arena(20); player.ranks.Q = 1; player.ranks.EB = 1;
+  dummy(150);
+  check('blitzes start banked', player.blitzCharges === P.BLITZ_MAX, `charges ${player.blitzCharges}`);
+  tap('q');
+  check('the blitz opens its self-link window', player.blitzLinkT > 0, `t ${player.blitzLinkT.toFixed(2)}`);
+  tap('q'); // pressed mid-animation: buffered, not dropped
+  check('the second blitz is buffered', player.queued === 'Q', `queued ${player.queued}`);
+  step(12); // the first blitz's slide (0.34s) ends
+  check('the buffered blitz fires', player.blitzCharges === P.BLITZ_MAX - 2 && player.cast === 'rush',
+    `charges ${player.blitzCharges} cast ${player.cast}`);
+  check('the chained blitz opens a fresh window of its own', player.blitzLinkT > 0.5, `t ${player.blitzLinkT.toFixed(2)}`);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

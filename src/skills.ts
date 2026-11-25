@@ -146,7 +146,9 @@ export function cast(key: SkillKey, chained = false): void {
   const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
-  const linked = LINKED_SKILLS.includes(kind);
+  // Electric Blitz links into itself: a blitz cast opens a short window in
+  // which the next blitz skips the ending lag, chaining like a combo.
+  const linked = LINKED_SKILLS.includes(kind) || (kind === 'EB' && player.blitzLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
@@ -195,6 +197,7 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
+    player.blitzLinkT = 0; // a linked blitz spends its own window too
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's long cooldown and refill a Blitz
@@ -295,6 +298,9 @@ export function cast(key: SkillKey, chained = false): void {
     case 'VS':
     case 'RA': {
       groundRush(held('down'), s.key === 'EB');
+      // the blitz's self-link window: the next blitz (with a charge banked)
+      // fires immediately, skipping this one's ending lag
+      if (kind === 'EB') player.blitzLinkT = P.BLITZ_LINK;
       break;
     }
 
