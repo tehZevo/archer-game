@@ -155,6 +155,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
        desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
+  ES: { key: 'ES', name: 'Echo Shot', tag: 'Passive', job: 1, minLevel: 15, maxLevel: 3, passive: true,
+        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 1, bonusMax: 2,
+        desc: 'A shadow archer shoots with you, adding extra hits to your attacks' },
   SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.07, bonusMax: 0.21,
         desc: 'Crit chance up' },
