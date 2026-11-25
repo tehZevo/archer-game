@@ -85,7 +85,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   Z: { key: 'Z', name: 'Twin Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
        cd: 0, use: 0.5, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
        desc: 'Hits the closest enemies in range twice' },
-  AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
+  AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
         desc: 'Climb ropes and ladders faster' },
   C: { key: 'C', name: 'Jump', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
