@@ -2532,5 +2532,30 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the spin does not hover', player.onGround);
 }
 
+{
+  // Off a Sky Assault hover: Glide ends the hover and carries you, and the
+  // Air Dive snaps out of the assault pose into its own dive
+  arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.D = 1;
+  dummy(130);
+  tap('q'); step(14); tap('w'); step(3);
+  check('hovering (setup)', player.hangT > 0 && !player.onGround, `hangT ${player.hangT.toFixed(2)}`);
+  tap('d');
+  check('Glide off the hover ends it', player.hangT === 0 && player.cast === 'jump' && player.vx !== 0,
+    `hangT ${player.hangT.toFixed(2)} cast ${player.cast} vx ${player.vx.toFixed(0)}`);
+  step(20);
+  check('...and you fall with the glide', player.onGround || player.vy > -500, `vy ${player.vy.toFixed(0)}`);
+}
+{
+  arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.AD = 1;
+  dummy(130);
+  tap('q'); step(14); tap('w'); step(3);
+  tap('q');
+  check('Air Dive off the hover snaps out of the assault', player.hangT === 0 && player.cast === 'rush' && player.diving,
+    `hangT ${player.hangT.toFixed(2)} cast ${player.cast}`);
+  step(2);
+  check('...and the dive plays out (no hover freeze)', player.hangT === 0 && (player.diving || player.rushT > 0),
+    `diving ${player.diving} rushT ${player.rushT.toFixed(2)}`);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
