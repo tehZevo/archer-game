@@ -286,6 +286,9 @@ export interface Player extends Body {
   /** >0 while the Sky Toss link window is open. */
   combo: number;
   comboT: number;
+  /** >0 right after an aerial skill (Air Dive, Midair Spin, Plunging
+   *  Volley): Glide (D) links, settling into the glide mid-combo. */
+  glideLinkT: number;
   /** Progression. */
   level: number;
   exp: number;

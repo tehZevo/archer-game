@@ -146,11 +146,14 @@ export function cast(key: SkillKey, chained = false): void {
   const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
-  const linked = LINKED_SKILLS.includes(kind);
+  // The aerial skills (Air Dive, Midair Spin, Plunging Volley) open a short
+  // glide-link window: D pressed inside it fires on the spot, so the player
+  // settles into a glide mid-combo instead of waiting out the animation.
+  const linked = LINKED_SKILLS.includes(kind) || (kind === 'D' && player.glideLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
-  if (linked && player.combo <= 0 && kind !== 'MS') return;
+  if (LINKED_SKILLS.includes(kind) && player.combo <= 0 && kind !== 'MS') return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   // Input buffering: a link pressed during the source skill's post-animation
@@ -195,6 +198,7 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
+    player.glideLinkT = 0; // a linked glide spends the aerial skill's window
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's long cooldown and refill a Blitz
@@ -287,6 +291,7 @@ export function cast(key: SkillKey, chained = false): void {
       player.diving = true;
       rushStrike = null; // (a strike left over from an earlier rush must not land now)
       player.combo = 1.1; player.comboT = 1.1;
+      player.glideLinkT = P.GLIDE_LINK; // and it links into a Glide
       break;
     }
 
@@ -408,6 +413,7 @@ export function cast(key: SkillKey, chained = false): void {
       // the volley opens the link window, so Midair Spin (W in the air)
       // follows the rain without waiting for it to land
       if (tg.length) { player.combo = 1.4; player.comboT = 1.4; }
+      player.glideLinkT = P.GLIDE_LINK; // and into a Glide
       break;
     }
 
@@ -435,6 +441,7 @@ export function cast(key: SkillKey, chained = false): void {
       // hitting every enemy in reach.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       player.skillPose = 'spin';
+      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide
       sfx.shoot();
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
