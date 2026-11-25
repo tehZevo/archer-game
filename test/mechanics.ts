@@ -44,6 +44,7 @@ import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, 
 import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
+import { addShake, cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, shake, shakeOffset, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
 
 let failures = 0;
@@ -652,9 +653,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let started = 0;
   const open = (): void => { initMenu(() => { started++; }, 3); };
   clearSave(); open();
-  check('menu rows: play, channel, code, new code, name, look (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look');
+  check('menu rows: play, channel, code, new code, name, look, settings (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look,settings');
   menuKey('up');
-  check('menu selection wraps around', items()[menu.sel] === 'look');
+  check('menu selection wraps around', items()[menu.sel] === 'settings');
 
   // channel picker
   check('auto picks the busiest channel with room', autoChannel(new Map([[1, 20], [2, 5], [3, 7]])) === 3);
@@ -1389,6 +1390,57 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   loadQuests([{ mob: 3 }, null, { mob: 'Crab', need: -5, have: 99, exp: 'x', coins: 1 }]);
   check('malformed saved quests are dropped or clamped', quests.length === 1 && quests[0].need === 1 && quests[0].have === 1 && quests[0].exp === 0);
   loadQuests([]);
+}
+
+// --- settings: the window, its values, storage, and where it opens from ---
+{
+  const mem = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, String(v)); },
+    removeItem: (k: string) => { mem.delete(k); },
+  };
+  Object.assign(settings, DEFAULT_SETTINGS);
+  check('bad stored settings fall back to the defaults', JSON.stringify(cleanSettings({ sound: 'x', shake: 3 })) === JSON.stringify(DEFAULT_SETTINGS));
+  check('stored volume is clamped', cleanSettings({ sound: 99 }).sound === VOLUME_MAX && cleanSettings({ sound: -4 }).sound === 0);
+  openSettings();
+  const s0 = settings.sound;
+  settingsKey('left');
+  check('Left turns the sound down (and saves it)', settings.sound === s0 - 1 && JSON.parse(mem.get('archer-game:settings')!).sound === s0 - 1);
+  for (let i = 0; i < 20; i++) settingsKey('right');
+  check('the volume stops at its max', settings.sound === VOLUME_MAX);
+  settingsKey('down'); settingsKey('enter');
+  check('Z flips screen shake', settings.shake === false && settingsUi.open);
+  addShake(1, 3);
+  check('no shake while it is off', shake.t === 0 && shakeOffset().x === 0 && shakeOffset().y === 0);
+  settingsKey('right');
+  addShake(0.5, 3);
+  let moved = false; for (let i = 0; i < 20; i++) { const o = shakeOffset(); if (o.x || o.y) moved = true; if (Math.abs(o.x) > 3 || Math.abs(o.y) > 3) moved = false; }
+  check('a shake moves the view a few pixels', moved);
+  shake.t = 0; shake.mag = 0;
+  settingsKey('down'); settingsKey('left');
+  check('damage numbers toggle', settings.dmgNums === false);
+  const b = settingsBox(320, 180);
+  settingsTap(b.x + SET_W - 10, b.y + SET_TOP + 2 * SET_ROW + 2, 320, 180);
+  check('a tap on a row changes it', settings.dmgNums === true && settingsUi.sel === 2);
+  settingsTap(b.x + 10, b.y + SET_TOP + (SETTING_ROWS.length - 1) * SET_ROW + 2, 320, 180);
+  check('tapping DONE closes the window', !settingsUi.open);
+  // from the main menu
+  initMenu(() => {}, 1); menu.sel = items().indexOf('settings'); menuKey('enter');
+  check('the main menu opens the settings', settingsUi.open);
+  menuKey('escape');
+  check('Esc closes them back to the menu', !settingsUi.open && menu.open);
+  menu.open = false;
+  // from the Esc menu: Right past the skills column reaches the SETTINGS button
+  arena();
+  tap('escape'); tap('right'); tap('right');
+  check('Right twice in the Esc menu selects SETTINGS', game.pause?.col === 2);
+  tap('z');
+  check('Z there opens the settings over the paused game', settingsUi.open && !!game.pause);
+  const t0 = game.time; tap('down'); tap('escape');
+  check('Esc closes the settings but stays paused', !settingsUi.open && !!game.pause && game.time === t0);
+  tap('escape');
+  check('a second Esc resumes', !game.pause);
+  Object.assign(settings, DEFAULT_SETTINGS);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

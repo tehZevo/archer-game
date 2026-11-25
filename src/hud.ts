@@ -18,6 +18,8 @@ import { dev, DEV_ROWS, devStops } from './dev';
 import { bossAlive } from './boss';
 import { stylist } from './stylist';
 import { drawStylist } from './stylistdraw';
+import { settingsTap, settingsUi } from './settings';
+import { drawSettings } from './settingsdraw';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
 import { text, textWidth } from './font';
@@ -158,7 +160,7 @@ function drawHUDItems(): void {
   drawChatLog(y);
   if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
-  if (game.pause) { drawPause(); return; }
+  if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
@@ -228,6 +230,11 @@ function drawPause(): void {
   const dim = '#8ea3c2', hi = '#eaf2ff', gold = '#ffd166';
   ctx.fillStyle = '#050a14e0'; ctx.fillRect(0, 0, w, h);
   text(ctx, 'PAUSED', w / 2, 4, 2, gold, 'center');
+  // the SETTINGS button, top right (Right from the skills column reaches it)
+  const sb = settingsButton(w);
+  ctx.fillStyle = m.col === 2 ? '#16223a' : '#0d1526'; ctx.fillRect(sb.x, sb.y, sb.w, sb.h);
+  ctx.strokeStyle = m.col === 2 ? gold : '#4a5c7a'; ctx.lineWidth = 1; ctx.strokeRect(sb.x + 0.5, sb.y + 0.5, sb.w - 1, sb.h - 1);
+  text(ctx, 'SETTINGS', sb.x + sb.w / 2, sb.y + 3, 1, m.col === 2 ? gold : dim, 'center');
   text(ctx, `LV ${player.level}  HP ${fmtNum(player.hp)}/${fmtNum(player.hpMax)}  MP ${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, w / 2, 23, 1, hi, 'center');
   text(ctx, `ATT ${Math.round(player.war)}  CRIT ${Math.round(critChance() * 100)}%  EXP ${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, w / 2, 32, 1, hi, 'center');
 
@@ -267,7 +274,8 @@ function drawPause(): void {
 
   // description of the selected row
   let desc = '';
-  if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
+  if (m.col === 2) desc = 'Sound, screen shake and damage numbers';
+  else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
   else if (rows[m.row]) desc = rows[m.row].action || `${rows[m.row].name}: mastered`;
   desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();
   // long descriptions (e.g. a branch upgrade's lock-out note) wrap to two lines
@@ -289,6 +297,9 @@ function wrap(s: string, n: number): string[] {
   return out;
 }
 
+/** The Esc menu's SETTINGS button (screen space). */
+export const settingsButton = (w: number): { x: number; y: number; w: number; h: number } => ({ x: w - 58, y: 4, w: 52, h: 13 });
+
 /** Tap/click on a pause-menu row selects it; tapping the selected row spends. */
 export function bindMenuClicks(canvas: HTMLCanvasElement): void {
   canvas.addEventListener('pointerdown', (e) => {
@@ -296,6 +307,9 @@ export function bindMenuClicks(canvas: HTMLCanvasElement): void {
     if (!m) return;
     const b = canvas.getBoundingClientRect();
     const x = (e.clientX - b.left) / b.width * game.view.w, y = (e.clientY - b.top) / b.height * game.view.h;
+    if (settingsUi.open) { settingsTap(x, y, game.view.w, game.view.h); return; }
+    const sb = settingsButton(game.view.w);
+    if (x >= sb.x && x < sb.x + sb.w && y >= sb.y && y < sb.y + sb.h) { m.col = 2; m.row = 0; pauseSpend(m); return; }
     const col = COLS.findIndex((c) => x >= c.x && x < c.x + c.w);
     const n = col === 0 ? STAT_KEYS.length : skillRows().length;
     const vis = Math.floor((y - TOP + 1.5) / ROW);

@@ -1,6 +1,7 @@
 import { game } from './state';
 import { menu, menuKey, menuTap, menuText } from './menu';
 import { stylist, stylistTap } from './stylist';
+import { settingsTap, settingsUi } from './settings';
 
 /* ============================================================
    MENU INPUT (browser only)
@@ -54,7 +55,9 @@ export function bindMenu(canvas: HTMLCanvasElement): void {
     if (!menu.open) return;
     const b = canvas.getBoundingClientRect();
     const x = (e.clientX - b.left) / b.width * game.view.w, y = (e.clientY - b.top) / b.height * game.view.h;
-    if (stylist.open) stylistTap(x, y, game.view.w, game.view.h); else menuTap(x, y);
+    if (stylist.open) stylistTap(x, y, game.view.w, game.view.h);
+    else if (settingsUi.open) settingsTap(x, y, game.view.w, game.view.h);
+    else menuTap(x, y);
     // focus inside the tap's own handler: mobile only opens a keyboard for a user gesture
     syncField();
     if (menu.edit) e.preventDefault();

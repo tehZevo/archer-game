@@ -1,0 +1,108 @@
+/* ============================================================
+   SETTINGS
+   Sound volume, screen shake and damage numbers, saved in
+   localStorage (apart from the progress save, so a reset keeps
+   them). The window opens from the main menu's SETTINGS row and
+   from the Esc menu. Up/Down picks a row, Left/Right (or Z)
+   changes it; DONE, Esc or X closes. State and input only; see
+   settingsdraw.ts.
+   ============================================================ */
+
+export interface Settings {
+  /** Effects volume, 0 (muted) to VOLUME_MAX. */
+  sound: number;
+  /** Shake the view when you're hit or a boss slams. */
+  shake: boolean;
+  /** Show damage numbers over enemies (and you). */
+  dmgNums: boolean;
+}
+
+export const VOLUME_MAX = 10;
+export const DEFAULT_SETTINGS: Settings = { sound: 8, shake: true, dmgNums: true };
+const STORE = 'archer-game:settings';
+
+/** Validate stored settings: anything missing or malformed falls back to the default. */
+export function cleanSettings(v: unknown): Settings {
+  const o = (v && typeof v === 'object' ? v : {}) as Partial<Record<keyof Settings, unknown>>;
+  const n = Math.floor(Number(o.sound));
+  return {
+    sound: Number.isFinite(n) ? Math.max(0, Math.min(VOLUME_MAX, n)) : DEFAULT_SETTINGS.sound,
+    shake: typeof o.shake === 'boolean' ? o.shake : DEFAULT_SETTINGS.shake,
+    dmgNums: typeof o.dmgNums === 'boolean' ? o.dmgNums : DEFAULT_SETTINGS.dmgNums,
+  };
+}
+
+const load = (): Settings => {
+  try { return cleanSettings(JSON.parse(localStorage.getItem(STORE) ?? 'null')); } catch { return { ...DEFAULT_SETTINGS }; }
+};
+export const settings: Settings = load();
+
+export function saveSettings(): void {
+  try { localStorage.setItem(STORE, JSON.stringify(settings)); } catch { /* no storage */ }
+}
+
+/* ---------------- screen shake ---------------- */
+/** Seconds of shake left, and how hard (px). */
+export const shake = { t: 0, mag: 0 };
+/** Shake the view for t seconds, mag px either way (the stronger shake wins). */
+export function addShake(t: number, mag: number): void {
+  if (!settings.shake) return;
+  shake.t = Math.max(shake.t, t); shake.mag = Math.max(shake.mag, mag);
+}
+export function updateShake(dt: number): void {
+  if (shake.t > 0) shake.t = Math.max(0, shake.t - dt);
+  if (shake.t === 0) shake.mag = 0;
+}
+/** This frame's view offset (whole pixels). */
+export function shakeOffset(): { x: number; y: number } {
+  if (shake.t <= 0 || !settings.shake) return { x: 0, y: 0 };
+  const m = Math.ceil(shake.mag * Math.min(1, shake.t / 0.15));
+  const r = (): number => Math.round((Math.random() * 2 - 1) * m);
+  return { x: r(), y: r() };
+}
+
+/* ---------------- the window ---------------- */
+export type SettingRow = 'sound' | 'shake' | 'dmgNums' | 'done';
+export const SETTING_ROWS: SettingRow[] = ['sound', 'shake', 'dmgNums', 'done'];
+export const SETTING_NAMES: Record<SettingRow, string> = {
+  sound: 'SOUND', shake: 'SCREEN SHAKE', dmgNums: 'DAMAGE NUMBERS', done: 'DONE',
+};
+
+export const settingsUi = { open: false, sel: 0 };
+export function openSettings(): void { settingsUi.open = true; settingsUi.sel = 0; }
+
+/** Change a row's value: d = -1 / +1 (toggles flip either way). */
+export function stepSetting(row: SettingRow, d: number): void {
+  if (row === 'sound') settings.sound = Math.max(0, Math.min(VOLUME_MAX, settings.sound + d));
+  else if (row === 'shake') { settings.shake = !settings.shake; if (!settings.shake) { shake.t = 0; shake.mag = 0; } }
+  else if (row === 'dmgNums') settings.dmgNums = !settings.dmgNums;
+  else return;
+  saveSettings();
+}
+
+/** A navigation key: up, down, left, right, enter, escape. */
+export function settingsKey(k: string): void {
+  const n = SETTING_ROWS.length, row = SETTING_ROWS[settingsUi.sel];
+  if (k === 'up') settingsUi.sel = (settingsUi.sel + n - 1) % n;
+  else if (k === 'down') settingsUi.sel = (settingsUi.sel + 1) % n;
+  else if ((k === 'left' || k === 'right') && row !== 'done') stepSetting(row, k === 'left' ? -1 : 1);
+  else if (k === 'enter' && row !== 'done') stepSetting(row, 1);
+  else if (k === 'enter' || k === 'escape') settingsUi.open = false;
+}
+
+/* layout (screen space), shared with the drawing and the tap hit-test */
+export const SET_W = 176, SET_ROW = 14, SET_TOP = 24;
+export const setH = (): number => SET_TOP + SETTING_ROWS.length * SET_ROW + 14;
+export const settingsBox = (w: number, h: number): { x: number; y: number } =>
+  ({ x: Math.round((w - SET_W) / 2), y: Math.round((h - setH()) / 2) });
+
+/** A tap (view coords): a row's left half steps back, its right half forward;
+ *  DONE (or anywhere outside the window) closes it. */
+export function settingsTap(x: number, y: number, w: number, h: number): void {
+  const b = settingsBox(w, h);
+  if (x < b.x || x >= b.x + SET_W || y < b.y || y >= b.y + setH()) { settingsUi.open = false; return; }
+  const i = Math.floor((y - b.y - SET_TOP + 3) / SET_ROW);
+  if (i < 0 || i >= SETTING_ROWS.length) return;
+  settingsUi.sel = i;
+  settingsKey(SETTING_ROWS[i] === 'done' ? 'enter' : x - b.x < SET_W / 2 ? 'left' : 'right');
+}

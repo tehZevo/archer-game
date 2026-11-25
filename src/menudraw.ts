@@ -9,6 +9,8 @@ import { archerFrame, archerFrames, ARCHER_W } from './archer';
 import { myLook } from './look';
 import { stylist } from './stylist';
 import { drawStylist } from './stylistdraw';
+import { settingsUi } from './settings';
+import { drawSettings } from './settingsdraw';
 
 /* The main menu, drawn on the canvas over the frozen world. */
 
@@ -21,6 +23,7 @@ const HINT: Record<ItemId, string> = {
   create: 'MAKE A CODE FOR FRIENDS',
   name: 'Z TO RENAME   ENTER SAVES',
   look: 'HAIR, SKIN AND OUTFIT',
+  settings: 'SOUND, SHAKE, DAMAGE NUMBERS',
   reset: 'ERASE YOUR SAVE: LV 1 AGAIN',
 };
 
@@ -83,6 +86,9 @@ export function drawMenu(): void {
         text(ctx, 'EDIT', R - ARCHER_W - 4, y, 1, HI, 'right');
         break;
       }
+      case 'settings':
+        text(ctx, 'SETTINGS', w / 2, y, 1, HI, 'center');
+        break;
       case 'reset':
         text(ctx, menu.confirmReset ? 'SURE? Z AGAIN TO ERASE' : 'RESET PROGRESS', w / 2, y, 1, RED, 'center');
         break;
@@ -93,4 +99,5 @@ export function drawMenu(): void {
   text(ctx, note, w / 2, h - 22, 1, menu.note ? GOLD : DIM, 'center');
   text(ctx, 'ARROWS MOVE   Z OR ENTER SELECT', w / 2, h - 11, 1, '#5d708f', 'center');
   if (stylist.open) drawStylist(w, h);
+  if (settingsUi.open) drawSettings(w, h);
 }

@@ -2,6 +2,8 @@
 // short oscillator + gain envelope. The AudioContext is created lazily on the
 // first user gesture so autoplay policies don't mute it.
 
+import { settings, VOLUME_MAX } from './settings';
+
 let ac: AudioContext | null = null;
 const hasAudio = typeof window !== 'undefined';
 
@@ -11,7 +13,8 @@ function ctx(): AudioContext | null {
 }
 
 function tone(freq: number, dur: number, type: OscillatorType, vol = 0.2, slideTo?: number): void {
-  if (!hasAudio) return;
+  if (!hasAudio || settings.sound <= 0) return;
+  vol *= settings.sound / VOLUME_MAX; // the SOUND setting
   const a = ctx();
   if (!a) return;
   const o = a.createOscillator();
