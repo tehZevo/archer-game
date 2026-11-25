@@ -1090,6 +1090,20 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.stats.dex = 0; player.stats.vit = 0; recalcStats();
 }
 
+// --- emotes: F1-F7 pop a face over your head (and your ghost's) ---
+{
+  arena(1); clearEmotes();
+  setKey('f2', true); step(1); setKey('f2', false);
+  check('F2 shows the sad emote over you', emoteFor(SELF, performance.now()) === 'sad');
+  check('an emote runs out after a few seconds', emoteFor(SELF, performance.now() + EMOTE_MS + 1) === null);
+  check('seven emotes, each a 9x9 face from the palette', EMOTES.length === 7 && EMOTES.every((e) => EMOTE_ART[e].length === 9
+    && EMOTE_ART[e].every((r) => r.length === 9 && [...r].every((c) => c === '.' || EMOTE_PAL[c]))));
+  check('emotes from the network are checked', cleanEmote(5) === 'love' && cleanEmote(7) === null && cleanEmote('1') === null && cleanEmote(-1) === null);
+  setEmote('peer', 'love', 0); clearEmotes('peer');
+  check('a peer leaving clears their emote', emoteFor('peer', 0) === null);
+  clearEmotes();
+}
+
 // --- multi-hit damage numbers stack, one every NUM_GAP (1/8 s) ---
 {
   arena(10); const m = dummy(150);
@@ -1701,20 +1715,6 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(Math.ceil(HITSTUN / P.STEP) + 1);
   check('hitstun wears off', !o.hurt);
   game.mobs.length = 0;
-}
-
-// --- emotes: F1-F7 pop a face over your head (and your ghost's) ---
-{
-  arena(1); clearEmotes();
-  setKey('f2', true); step(1); setKey('f2', false);
-  check('F2 shows the sad emote over you', emoteFor(SELF, performance.now()) === 'sad');
-  check('an emote runs out after a few seconds', emoteFor(SELF, performance.now() + EMOTE_MS + 1) === null);
-  check('seven emotes, each a 9x9 face from the palette', EMOTES.length === 7 && EMOTES.every((e) => EMOTE_ART[e].length === 9
-    && EMOTE_ART[e].every((r) => r.length === 9 && [...r].every((c) => c === '.' || EMOTE_PAL[c]))));
-  check('emotes from the network are checked', cleanEmote(5) === 'love' && cleanEmote(7) === null && cleanEmote('1') === null && cleanEmote(-1) === null);
-  setEmote('peer', 'love', 0); clearEmotes('peer');
-  check('a peer leaving clears their emote', emoteFor('peer', 0) === null);
-  clearEmotes();
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---
