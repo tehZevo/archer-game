@@ -48,6 +48,9 @@ export interface SkillDef {
   passive?: boolean;
   /** Bought with SP even though it is open from Lv.1 (otherwise Lv.1 skills come free). */
   learn?: boolean;
+  /** A prerequisite skill that must be mastered (at its max rank) before this
+   *  one can be learned. The skill list shows it as locked until then. */
+  requires?: SkillKey;
   bonus1?: number;
   bonusMax?: number;
   targets1?: number;

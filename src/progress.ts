@@ -204,6 +204,14 @@ export function skillRows(): SkillRow[] {
     const slot = s.passive ? '' : base ?? AIR_FORM_KEY[k] ?? k;
     if (have === 0) {
       if (s.minLevel > player.level || (base && !(player.ranks[base] > 0))) continue;
+      // a prerequisite skill (e.g. Midair Spin needs Sky Assault) must be
+      // mastered first: the row shows what's needed until it is
+      const req = s.requires ? SKILLS[s.requires] : null;
+      if (req && player.ranks[s.requires!] < req.maxLevel) {
+        rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel, action: '',
+          need: `Needs ${req.name} at max rank (${player.ranks[s.requires!]}/${req.maxLevel}): ${s.desc}` });
+        continue;
+      }
       // an upgrade builds on its base skill: shown once the base is learned,
       // but only taken once the base is at its max rank
       const b = base ? SKILLS[base] : null;
