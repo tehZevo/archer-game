@@ -1,4 +1,4 @@
-import { CAM, ELITE, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
+import { CAM, ELITE, MOB_TYPES, P, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
 import { AREAS, areaFor, areaName, tierOf, townStage } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
@@ -124,14 +124,33 @@ export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   });
 }
 
-/** An enemy wave: every spawn zone is topped back up to its cap. */
+/** How many a zone should hold this wave: its cap, less one per HEAT_HOT
+ *  recent kills there (camping one platform empties it). */
+export const heldBy = (z: Spawn): number => Math.max(0, (z.cap ?? 1) - Math.floor((z.heat ?? 0) / P.HEAT_HOT));
+
+/** An enemy wave: every spawn zone is topped back up to its cap. Enemies a
+ *  hot zone (one you've been farming) holds back turn up on the coolest
+ *  other platforms instead, up to HEAT_EXTRA over their cap, so standing in
+ *  one spot stops paying off. Heat halves each wave. */
 export function spawnWave(): void {
-  for (const z of game.floor.spawns) {
-    const alive = game.mobs.filter((m) => m.spawn === z).length;
-    for (let i = alive; i < (z.cap ?? 1); i++) {
-      spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), Math.random() < ELITE.CHANCE);
+  const zones = game.floor.spawns;
+  const alive = (z: Spawn): number => game.mobs.filter((m) => m.spawn === z).length;
+  const add = (z: Spawn): void => spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), Math.random() < ELITE.CHANCE);
+  let moved = 0;
+  for (const z of zones) {
+    const want = heldBy(z);
+    moved += (z.cap ?? 1) - want;
+    for (let i = alive(z); i < want; i++) add(z);
+  }
+  const cool = zones.filter((z) => heldBy(z) === (z.cap ?? 1)).sort((a, b) => (a.heat ?? 0) - (b.heat ?? 0));
+  for (let pass = 0; moved > 0 && cool.length && pass < P.HEAT_EXTRA; pass++) {
+    for (const z of cool) {
+      if (moved <= 0) break;
+      if (alive(z) >= (z.cap ?? 1) + P.HEAT_EXTRA) continue;
+      add(z); moved--;
     }
   }
+  for (const z of zones) if (z.heat) z.heat = z.heat >= 0.5 ? z.heat / 2 : 0;
 }
 
 /** Replace the current floor with a freshly generated one and populate mobs. */

@@ -7,7 +7,9 @@ import type { Fx, MobType, SkillDef, SkillKey } from './types';
    trapezoidal integration so jump height is frame-rate proof.
    ============================================================ */
 export const P = {
-  WAVE_EVERY: 8,       // s between enemy waves (each tops spawn zones up to their cap)
+  WAVE_EVERY: 10,      // s between enemy waves (each tops spawn zones up to their cap; was 8)
+  HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
+  HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
   GRAVITY: 1040,       // px/s^2 (lowered from 2000)
   TERMINAL: 670,       // terminalVelocity

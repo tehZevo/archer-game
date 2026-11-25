@@ -132,6 +132,9 @@ export interface Spawn {
   maxX?: number;
   /** The platform block the zone sits on (undefined = the ground). */
   block?: number;
+  /** Recent kills here (halves every wave). A hot zone refills less and its
+   *  enemies turn up on the other platforms instead (see spawnWave). */
+  heat?: number;
 }
 
 export interface Mob {

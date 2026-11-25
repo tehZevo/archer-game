@@ -63,6 +63,7 @@ export function killMob(m: Mob): void {
   const i = game.mobs.indexOf(m);
   if (i >= 0) game.mobs.splice(i, 1);
   game.kills++;
+  if (!m.boss) m.spawn.heat = (m.spawn.heat ?? 0) + 1; // farming one platform heats it (see spawnWave)
   bump('kills');
   if (m.elite) bump('elites');
   if (m.boss) bump('bosses');

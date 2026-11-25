@@ -292,9 +292,30 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
     release(); gotoFloor(n); player.x = 4; player.invuln = 999;
     [...game.mobs].slice(0, 3).forEach(killMob);
     step(Math.round((P.WAVE_EVERY + 1) / P.STEP));
-    for (const z of game.floor.spawns) if (game.mobs.filter((m) => m.spawn === z).length > (z.cap ?? 1)) over++;
+    for (const z of game.floor.spawns) if (game.mobs.filter((m) => m.spawn === z).length > (z.cap ?? 1) + P.HEAT_EXTRA) over++;
   }
-  check('enemy waves never exceed a zone cap', over === 0, `${over} zones over`);
+  check('enemy waves never exceed a zone cap (plus the overflow from a farmed platform)', over === 0, `${over} zones over`);
+}
+
+// --- spread spawns: farming one platform moves its enemies to the others ---
+{
+  release(); gotoFloor(1); player.invuln = 999;
+  game.mobs = [];
+  const zs = game.floor.spawns.slice(0, 3);
+  game.floor.spawns = zs; zs.forEach((z) => { z.cap = 2; z.heat = 0; });
+  spawnWave();
+  check('a wave fills every zone to its cap', zs.every((z) => game.mobs.filter((m) => m.spawn === z).length === 2));
+  const hot = zs[0];
+  for (let i = 0; i < 6; i++) { const m = game.mobs.find((q) => q.spawn === hot); if (m) killMob(m); else { spawnMob(hot, MOB_TYPES[0]); killMob(game.mobs[game.mobs.length - 1]); } }
+  check('kills heat their platform', hot.heat === 6);
+  spawnWave();
+  const on = (z: typeof hot): number => game.mobs.filter((m) => m.spawn === z).length;
+  check('a farmed platform refills less', on(hot) === 0, `${on(hot)}`);
+  check('...and its enemies turn up on the other platforms', on(zs[1]) + on(zs[2]) === 6, `${on(zs[1])}+${on(zs[2])}`);
+  check('heat cools by half each wave', hot.heat === 3);
+  game.mobs = []; spawnWave(); game.mobs = []; spawnWave();
+  check('once it cools the platform fills as usual', on(hot) === 2 && hot.heat! < P.HEAT_HOT);
+  game.mobs = [];
 }
 
 // --- regen: 5% every 5s, no HP regen in combat; frozen while paused ---
