@@ -446,6 +446,7 @@ export function cast(key: SkillKey, chained = false): void {
       // striking every enemy in a wide radius (nearest first).
       player.cast = 'shoot'; player.castT = 0.36; player.castTotal = 0.36;
       player.skillPose = 'vanish';
+      player.invuln = player.castT; // you're untouchable while the storm sweeps out
       sfx.shoot();
       const face = player.face;
       const mx = player.x + face * 8, my = player.y + 13;
