@@ -2519,5 +2519,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the spin links into Glide', player.cast === 'jump' && player.cd.D > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
 }
 
+{
+  // With Sky Assault (W's upgrade) learned, W in the air is always Midair Spin
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  const m = dummy(140);
+  tap('c'); step(8);
+  tap('w');
+  check('W in the air is Midair Spin, not Sky Assault', player.cast === 'shoot' && player.skillPose === 'spin' && player.cd['W.air'] > 0 && player.hangT === 0,
+    `cast ${player.cast} pose ${player.skillPose} cd ${player.cd['W.air'].toFixed(1)}`);
+  check('the sweep hits the enemy below', m.hp < 1e6);
+  step(30);
+  check('the spin does not hover', player.onGround);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
