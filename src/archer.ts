@@ -119,6 +119,29 @@ const CLIMB = [
    '.....ollolloo...', '.....ollo.llo...', '.....obbo.obbo..', '.....obbo.obbo..', '.....oooo.oooo..', '................'],
 ];
 
+// Midair Spin: tucked tight, knees pulled up, bow held out (render.ts
+// whirls the frame round a full turn).
+const SPIN_LOWER = [
+  '....olllllloo...',
+  '....ollllllbbo..',
+  '.....oooolbbbo..',
+  '.........oooo...',
+  '................',
+  '................',
+];
+
+// Air Dive: stretched out head-first, bow reaching ahead, legs together
+// and trailing (render.ts pitches the frame down the line of the dive).
+// The second frame flutters the feet.
+const DIVE_LEGS = [
+  ['.....olllloo....', '.....olllloo....', '.....ollllo.....', '.....obbbbo.....', '.....obbbbo.....', '.....oooooo.....'],
+  ['.....olllloo....', '.....olllloo....', '.....ollllo.....', '....obbbbo......', '....obbbbo......', '....oooooo......'],
+];
+
+/** Every other pixel gone: the Tempest's shimmer as you blink out. */
+const dither = (g: string[], odd: number): string[] =>
+  g.map((r, y) => [...r].map((ch, x) => ((x + y + odd) % 2 ? '.' : ch)).join(''));
+
 /** Swap one row band of a frame: rows [from, from + band.length). */
 function withRows(base: string[], from: number, band: string[]): string[] {
   const f = base.slice();
@@ -144,7 +167,7 @@ const PRONE = [
   '..ooo.ooooooooooooo.oo..',
 ];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone';
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish';
 
 /** Frames per pose (as grids); a climb frame is mirrored for the second step. */
 export const GRIDS: Record<ArcherPose, string[][]> = {
@@ -157,11 +180,15 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   rush: [['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY]],
   barrage: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, JUMP_LEGS)],
   prone: [PRONE],
+  spin: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, SPIN_LOWER)],
+  dive: DIVE_LEGS.map((legs) => withRows(withRows(IDLE, 12, FOLLOW_BODY), 18, legs)),
+  // the release frame breaking up into a shimmer (render.ts fades it out)
+  vanish: [dither(withRows(IDLE, 12, SHOOT_BODY), 0), dither(withRows(IDLE, 12, SHOOT_BODY), 1)],
 };
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 1.2, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 1, barrage: 1, prone: 1,
+  idle: 1.2, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 1, barrage: 1, prone: 1, spin: 1, dive: 10, vanish: 20,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;

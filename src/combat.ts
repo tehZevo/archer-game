@@ -5,7 +5,8 @@ import { dropGear, gearDmg } from './gear';
 import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
-import { bossDown } from './boss';
+import { BOSS, bossDown } from './boss';
+import { addCorpse } from './deaths';
 import { questKill } from './quests';
 import { clearStatus, INFLICT, maybeInflict } from './status';
 import type { DamageOpts, DmgNum, Mob } from './types';
@@ -81,7 +82,7 @@ export function killMob(m: Mob): void {
   if (m.elite) bump('elites');
   if (m.boss) bump('bosses');
   localKill(); // shared with the instance: speeds up other players' waves
-  game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
+  addCorpse(m, m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1); // it dies its own way (deaths.ts)
   gainExp(m.exp);
   dropCoins(m);
   dropGear(m); // a rare piece of gear, scaled to the enemy's level

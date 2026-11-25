@@ -235,6 +235,9 @@ export interface Player extends Body {
   hangT: number;
   /** Spike Lift: seconds left of the steady push up. */
   liftT: number;
+  /** How the current cast draws you, over its usual pose: whirling
+   *  round (Midair Spin) or gone (Tempest). Cleared by the next cast. */
+  skillPose?: 'spin' | 'vanish' | null;
   /** Sky Assault strikes left, time to the next one, and per-strike damage / targets. */
   hangHits: number;
   hangHitT: number;
@@ -313,7 +316,7 @@ export interface Shot {
 }
 
 /** Effects are all baked animations (see fxsprites.ts). */
-export type FxKind = 'tracer' | 'death' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit';
+export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit';
 
 export interface Fx {
   type: FxKind;
