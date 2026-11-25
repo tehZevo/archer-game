@@ -1186,7 +1186,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const stock = shopStock();
   const bowRow = stock.find((r) => r.kind === 'weapon')!, plateRow = stock.find((r) => r.kind === 'armor')!;
   check('the shop stocks a weapon and an armor piece', !!bowRow.item && !!plateRow.item);
-  check('the gear is built for this town's level', bowRow.item?.lvl === mobLevel(game.floor.place), `Lv.${bowRow.item?.lvl}`);
+  check("the gear is built for this town's level", bowRow.item?.lvl === mobLevel(game.floor.place), `Lv.${bowRow.item?.lvl}`);
   wallet.coins = bowRow.price;
   shop.sel = stock.indexOf(bowRow); tap('z');
   check('buying the bow takes its price and puts it on', wallet.coins === 0 && gear.weapon?.name === bowRow.item?.name);
