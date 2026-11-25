@@ -14,7 +14,7 @@ import { initMenu, menu } from './menu';
 import { bindMenu } from './menudom';
 import { bindChat } from './chatdom';
 import { loadLayout } from './input';
-import { load, save, tickSave } from './save';
+import { hasSave, load, save, startRun, tickSave } from './save';
 const { sync } = net;
 
 declare global {
@@ -53,7 +53,9 @@ resize();
 gotoFloor(1);
 addEventListener('resize', resize);
 // saved progress loads at boot (the HUD behind the menu shows it); the floor resumes on Play
+const fresh = !hasSave();
 const resumeFloor = load();
+if (fresh) startRun(); // a new run: achievement bonuses (coins, potions, SP)
 // save when the tab is hidden or closed (mobile browsers may never fire unload)
 addEventListener('visibilitychange', () => { if (document.hidden && !menu.open) save(); });
 addEventListener('pagehide', () => { if (!menu.open) save(); });

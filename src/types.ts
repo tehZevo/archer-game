@@ -1,6 +1,17 @@
 import type { BossState } from './boss';
 export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR' | 'HA';
 
+/** A status effect (see status.ts). */
+export type StatusKind = 'poison' | 'burn' | 'chill';
+export interface Status {
+  kind: StatusKind;
+  stacks: number;
+  /** Seconds left (each new stack restarts it). */
+  t: number;
+  /** Seconds to the next damage tick. */
+  tick: number;
+}
+
 /** The four core stats, each upgraded with ability points (AP). */
 export interface CoreStats {
   dex: number; // attack power
@@ -51,8 +62,8 @@ export interface SkillRank {
 }
 
 /** Esc menu cursor; `scroll` is the first skill row shown when the list is longer than the panel. */
-/** col 2 is the SETTINGS button (top right). */
-export interface PauseMenu { col: 0 | 1 | 2; row: number; scroll?: number }
+/** col 2 is the SETTINGS button (top right), col 3 the AWARDS button (top left). */
+export interface PauseMenu { col: 0 | 1 | 2 | 3; row: number; scroll?: number }
 
 export interface JobDef {
   job: number;
@@ -121,6 +132,9 @@ export interface Spawn {
   maxX?: number;
   /** The platform block the zone sits on (undefined = the ground). */
   block?: number;
+  /** Recent kills here (halves every wave). A hot zone refills less and its
+   *  enemies turn up on the other platforms instead (see spawnWave). */
+  heat?: number;
 }
 
 export interface Mob {
@@ -159,6 +173,10 @@ export interface Mob {
   barT: number;
   anim: number;
   spawn: Spawn;
+  /** A rare, tougher spawn (see ELITE in config.ts): bigger, gold-outlined, worth more. */
+  elite?: boolean;
+  /** Status effects on it (see status.ts). */
+  effects?: Status[];
   /** Set on an area's boss: what it's doing (see boss.ts). */
   boss?: BossState;
 }
@@ -240,6 +258,8 @@ export interface Player extends Body {
   war: number;
   job: JobDef;
   ranks: Record<SkillKey, number>;
+  /** Status effects on you (see status.ts). */
+  effects: Status[];
 }
 
 export type CastName =
@@ -318,6 +338,9 @@ export interface Portal {
 /** A town NPC: stands at (x, y = the surface under their feet). */
 export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board'; name: string }
 
+/** A floor modifier (see floormods.ts). */
+export type FloorMod = 'icy';
+
 /** A procedurally generated floor: its layout, enemies and exit portal. */
 export interface Floor {
   number: number;
@@ -332,6 +355,8 @@ export interface Floor {
   /** People to talk to (towns): stand beside one and press Up. */
   npcs?: Npc[];
   town: boolean;
+  /** Modifiers this floor rolled (see floormods.ts); none on most. */
+  mods?: FloorMod[];
   /** World height for this floor: its content plus a little sky (WORLD.h while on it). */
   h: number;
 }

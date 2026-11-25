@@ -1,3 +1,4 @@
+import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
 import { passiveBonus } from './progress';
@@ -15,6 +16,9 @@ import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
+import { grip } from './floormods';
+import { updatePet } from './pets';
+import { INFLICT, maybeInflict, slowFactor, updateStatus } from './status';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
 
@@ -28,6 +32,7 @@ export function update(dt: number): void {
   if (board.open) { boardInput(); return; }
   // the settings window (from the Esc menu) sits over the paused game
   if (settingsUi.open) { settingsInput(); return; }
+  if (achUi.open) { achInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }
@@ -44,6 +49,7 @@ export function update(dt: number): void {
     if (player.combatT <= 0) player.hp = Math.min(player.hpMax, player.hp + player.hpMax * P.REGEN_FRAC);
   }
   for (const k of SKILL_ORDER) player.cd[k] = Math.max(0, player.cd[k] - dt);
+  updateStatus(player, dt);
   // skill keys
   // Basic attack during Sky Toss's link window casts the link skill
   // (Skyfall Volley, or Sky Assault once upgraded).
@@ -129,12 +135,14 @@ export function update(dt: number): void {
       player.animState = 'jump';
     } else {
       // horizontal: accel toward target speed (the classic side-scroller walk over a few frames)
-      const busy = player.cast === 'rush' ? 0.55 : 1;
-      // holding Down on the ground lies you flat: you can turn but not walk
-      const prone = player.onGround && !locked && held('down');
+      const busy = (player.cast === 'rush' ? 0.55 : 1) * slowFactor(player); // chill slows you
+      // holding Down on the ground lies you flat, but Left/Right wins: you
+      // stand straight up and walk, and lie back down when you let go
+      const walking = !locked && held('left') !== held('right');
+      const prone = player.onGround && !locked && held('down') && !walking;
       let target = 0;
-      if (!locked && held('left'))  { target = prone ? 0 : -P.WALK * busy; player.face = -1; }
-      if (!locked && held('right')) { target = prone ? 0 :  P.WALK * busy; player.face =  1; }
+      if (!locked && held('left'))  { target = -P.WALK * busy; player.face = -1; }
+      if (!locked && held('right')) { target =  P.WALK * busy; player.face =  1; }
       if (!player.onGround) {
         // Air control: holding against your motion brakes toward a standstill
         // but never turns you around; otherwise momentum is kept.
@@ -145,9 +153,12 @@ export function update(dt: number): void {
           player.vx *= 0.995;
         }
       } else if (target !== 0) {
-        player.vx += clamp(target - player.vx, -P.ACCEL * dt, P.ACCEL * dt);
+        // on ice (grip < 1) you pick up speed, turn and stop slowly
+        const a = P.ACCEL * grip() * dt;
+        player.vx += clamp(target - player.vx, -a, a);
       } else {
-        player.vx += clamp(0 - player.vx, -P.FRICTION * dt, P.FRICTION * dt);
+        const fr = P.FRICTION * grip() * dt;
+        player.vx += clamp(0 - player.vx, -fr, fr);
       }
 
 
@@ -190,6 +201,7 @@ export function update(dt: number): void {
   if (talk()) return;
   if (p && pressed('up') && !portalOpen(p.to)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
   else if (p && pressed('up')) {
+    if (p.to > game.floor.number && !game.floor.town) bump('floors'); // climbed past a combat floor
     sfx.portal();
     gotoFloor(p.to, p.area);
     return;
@@ -198,6 +210,7 @@ export function update(dt: number): void {
   updateMobs(dt);
   updateQuakes(dt);
   updateEconomy(dt); // coin piles fall and fade; X picks up, A/S drink
+  updatePet(dt); // fetches piles lying near you
   updateRush(dt); // after the mobs move, so the ones being pushed stay in front
 
   // arrows: fly, and apply their hit on arrival
@@ -232,6 +245,8 @@ export function update(dt: number): void {
 
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
+    updateStatus(m, dt, m);
+    if (!game.mobs.includes(m)) continue; // poisoned or burned to death
     if (m.hitFlash > 0) m.hitFlash -= dt;
     if (m.barT > 0) m.barT -= dt;
     m.anim += dt * ANIM_RATE;
@@ -249,9 +264,9 @@ function updateMobs(dt: number): void {
       else if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
         m.dir = Math.sign(d) || 1;
         m.vx += clamp(d * 4 - m.vx, -2400 * dt, 2400 * dt) * 0.5;
-        m.vx = clamp(m.vx, -m.spd, m.spd);
+        m.vx = clamp(m.vx, -m.spd * slowFactor(m), m.spd * slowFactor(m));
       } else {
-        m.vx += (m.dir * m.spd - m.vx) * Math.min(1, 12 * dt);
+        m.vx += (m.dir * m.spd * slowFactor(m) - m.vx) * Math.min(1, 12 * dt);
         // turn back at the end of the patrol, or on reaching the platform's edge
         // (which can come first: the map edge cuts some platforms short)
         if (Math.abs(m.x - m.home) > m.range || (m.dir > 0 && m.x >= hi - 0.5) || (m.dir < 0 && m.x <= lo + 0.5)) {
@@ -263,7 +278,7 @@ function updateMobs(dt: number): void {
         && player.y < m.y + m.h && m.y < player.y + player.h;
       if (touching && m.atkCd <= 0) {
         m.atkCd = 1.1;
-        hurtPlayer(m.dmg);
+        if (hurtPlayer(m.dmg)) maybeInflict(player, INFLICT.mob);
       }
       m.atkCd = Math.max(0, m.atkCd - dt);
     }
@@ -321,10 +336,16 @@ function pauseInput(m: PauseMenu, dt: number): void {
   // holding Up/Down keeps moving (key repeat)
   if (repeated('up', dt)) m.row = (m.row + n - 1) % n;
   if (repeated('down', dt)) m.row = (m.row + 1) % n;
-  // Left/Right steps stats -> skills -> the SETTINGS button
-  if (pressed('left')) { m.col = ((m.col + 2) % 3) as PauseMenu['col']; m.row = 0; }
-  if (pressed('right')) { m.col = ((m.col + 1) % 3) as PauseMenu['col']; m.row = 0; }
+  // Left/Right steps stats -> skills -> the SETTINGS button -> the AWARDS button
+  if (pressed('left')) { m.col = ((m.col + 3) % 4) as PauseMenu['col']; m.row = 0; }
+  if (pressed('right')) { m.col = ((m.col + 1) % 4) as PauseMenu['col']; m.row = 0; }
   if (pressed('z') || pressed('enter') || pressed(' ')) pauseSpend(m);
+}
+
+/** The achievements list: Up/Down scrolls, Esc / X / Z closes. */
+function achInput(): void {
+  for (const k of ['up', 'down', 'escape'] as const) if (pressed(k)) achKey(k);
+  if (pressed('z') || pressed('enter') || pressed(' ') || pressed('x')) achKey('escape');
 }
 
 /** The settings window's keys (X closes too, like the other windows). */
@@ -337,6 +358,7 @@ function settingsInput(): void {
 /** Spend a point on the selected stat or skill row (or open the settings). */
 export function pauseSpend(m: PauseMenu): void {
   if (m.col === 2) openSettings();
+  else if (m.col === 3) openAchievements();
   else if (m.col === 0) spendStat(STAT_KEYS[m.row]);
   else { const r = skillRows()[m.row]; if (r) spendSkill(r.key); }
 }

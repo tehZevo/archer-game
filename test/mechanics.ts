@@ -8,11 +8,11 @@ import { AREAS, areaName, isAreaEnd, isTown, lastTown, MAP_AREAS, placeName, tow
 let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
-import { FX_DUR, MOB_TYPES, P } from '../src/config';
-import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
+import { ELITE, FX_DUR, MOB_TYPES, P } from '../src/config';
+import { game, gotoFloor, mobLevel, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
-import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
+import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
@@ -30,7 +30,7 @@ import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '
 import { styled } from '../src/archer';
 import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
-import { lastTown } from '../src/world';
+import { baseOf, lastTown } from '../src/world';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
@@ -44,6 +44,13 @@ import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, 
 import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
+import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
+import { pet, PET } from '../src/pets';
+import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
+import { startRun } from '../src/save';
+import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
+import { generateFloor } from '../src/floor';
+import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
 
@@ -285,9 +292,30 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
     release(); gotoFloor(n); player.x = 4; player.invuln = 999;
     [...game.mobs].slice(0, 3).forEach(killMob);
     step(Math.round((P.WAVE_EVERY + 1) / P.STEP));
-    for (const z of game.floor.spawns) if (game.mobs.filter((m) => m.spawn === z).length > (z.cap ?? 1)) over++;
+    for (const z of game.floor.spawns) if (game.mobs.filter((m) => m.spawn === z).length > (z.cap ?? 1) + P.HEAT_EXTRA) over++;
   }
-  check('enemy waves never exceed a zone cap', over === 0, `${over} zones over`);
+  check('enemy waves never exceed a zone cap (plus the overflow from a farmed platform)', over === 0, `${over} zones over`);
+}
+
+// --- spread spawns: farming one platform moves its enemies to the others ---
+{
+  release(); gotoFloor(1); player.invuln = 999;
+  game.mobs = [];
+  const zs = game.floor.spawns.slice(0, 3);
+  game.floor.spawns = zs; zs.forEach((z) => { z.cap = 2; z.heat = 0; });
+  spawnWave();
+  check('a wave fills every zone to its cap', zs.every((z) => game.mobs.filter((m) => m.spawn === z).length === 2));
+  const hot = zs[0];
+  for (let i = 0; i < 6; i++) { const m = game.mobs.find((q) => q.spawn === hot); if (m) killMob(m); else { spawnMob(hot, MOB_TYPES[0]); killMob(game.mobs[game.mobs.length - 1]); } }
+  check('kills heat their platform', hot.heat === 6);
+  spawnWave();
+  const on = (z: typeof hot): number => game.mobs.filter((m) => m.spawn === z).length;
+  check('a farmed platform refills less', on(hot) === 0, `${on(hot)}`);
+  check('...and its enemies turn up on the other platforms', on(zs[1]) + on(zs[2]) === 6, `${on(zs[1])}+${on(zs[2])}`);
+  check('heat cools by half each wave', hot.heat === 3);
+  game.mobs = []; spawnWave(); game.mobs = []; spawnWave();
+  check('once it cools the platform fills as usual', on(hot) === 2 && hot.heat! < P.HEAT_HOT);
+  game.mobs = [];
 }
 
 // --- regen: 5% every 5s, no HP regen in combat; frozen while paused ---
@@ -457,12 +485,22 @@ check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS)
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
 check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('prone') === POSES.length - 1 && POSES[0] === 'idle');
 {
-  // holding Down on the ground lies you flat: no walking, but you can turn
+  // holding Down on the ground lies you flat; Left/Right overrides it with a normal walk
   arena(1); player.x = 300; player.vx = 0; player.face = 1;
-  setKey('down', true); setKey('left', true); step(20);
-  check('holding Down on the ground lies you flat and stops you walking', player.animState === 'prone' && player.face === -1 && Math.abs(player.x - 300) < 1);
-  setKey('left', false); setKey('down', false); step(2);
+  setKey('down', true); step(5);
+  check('holding Down on the ground lies you flat', player.animState === 'prone' && Math.abs(player.x - 300) < 1);
+  setKey('left', true); step(20);
+  const downWalk = 300 - player.x, st = player.animState;
+  setKey('left', false); step(10);
+  check('Left/Right while holding Down stands you up and walks', st === 'walk' && player.face === -1 && downWalk > 10);
+  check('letting go of Left/Right (Down still held) lies you back down', player.animState === 'prone');
+  setKey('down', false); step(2);
   check('letting go of Down stands you back up', player.animState === 'idle');
+  // the same walk as without Down
+  arena(1); player.x = 300; player.vx = 0;
+  setKey('left', true); step(20); setKey('left', false);
+  check('a walk with Down held is as fast as without', Math.abs((300 - player.x) - downWalk) < 0.01, `${(300 - player.x).toFixed(2)} vs ${downWalk.toFixed(2)}`);
+  release();
 }
 
 // --- bug: fast ground moves sank into slopes ---
@@ -653,9 +691,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let started = 0;
   const open = (): void => { initMenu(() => { started++; }, 3); };
   clearSave(); open();
-  check('menu rows: play, channel, code, new code, name, look, settings (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look,settings');
+  check('menu rows: play, channel, code, new code, name, look, settings, awards (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look,settings,awards');
   menuKey('up');
-  check('menu selection wraps around', items()[menu.sel] === 'settings');
+  check('menu selection wraps around', items()[menu.sel] === 'awards');
 
   // channel picker
   check('auto picks the busiest channel with room', autoChannel(new Map([[1, 20], [2, 5], [3, 7]])) === 3);
@@ -1432,6 +1470,218 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('escape');
   check('a second Esc resumes', !game.pause);
   Object.assign(settings, DEFAULT_SETTINGS);
+}
+
+// --- elites: rare, bigger, tougher, worth more ---
+{
+  arena();
+  const z = { x: 100, y: ground().y, types: ['Crab'] } as never;
+  spawnMob(z, MOB_TYPES[1]); spawnMob(z, MOB_TYPES[1], true);
+  const [n, e] = game.mobs.slice(-2);
+  check('an elite is bigger and tougher, and worth more EXP', !n.elite && !!e.elite
+    && e.w === Math.round(n.w * ELITE.SCALE) && e.h === Math.round(n.h * ELITE.SCALE)
+    && e.hpMax === Math.round(n.hpMax * ELITE.HP) && e.dmg > n.dmg && e.exp === n.exp * ELITE.EXP);
+  check('an elite stands on the ground like the rest', Math.abs(e.y + e.h - (n.y + n.h)) < 0.01);
+  check('an elite keeps its name (quests count it)', e.name === n.name);
+  drops.length = 0;
+  killMob(n); const one = drops.length;
+  killMob(e);
+  check(`an elite drops ${ELITE.COINS} coin piles`, one === 1 && drops.length === 1 + ELITE.COINS);
+  // waves: about 1 in 8
+  game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Crab'] }));
+  game.mobs = []; spawnWave();
+  const frac = game.mobs.filter((m) => m.elite).length / game.mobs.length;
+  check('waves roll elites about 1 in 8', frac > 0.07 && frac < 0.19, frac.toFixed(3));
+  game.mobs = []; game.floor.spawns = [];
+}
+
+// --- status effects: stacks, damage ticks, slow, and which areas carry them ---
+{
+  arena();
+  check('the starting area carries no element', areaStatus() === undefined);
+  const swamp = AREAS.find((a) => a.name === 'Swamp')!;
+  gotoFloor(baseOf(swamp.depth), swamp.id); game.mobs = []; game.floor.spawns = [];
+  check('the Swamp carries poison', areaStatus() === 'poison');
+  player.invuln = 0; player.hp = player.hpMax = 1000;
+  applyStatus(player, 'poison'); applyStatus(player, 'poison');
+  check('a second dose adds a stack', player.effects.length === 1 && player.effects[0].stacks === 2);
+  for (let i = 0; i < 5; i++) applyStatus(player, 'poison');
+  check(`stacks stop at ${MAX_STACKS}`, player.effects[0].stacks === MAX_STACKS);
+  const hp0 = player.hp;
+  updateStatus(player, 1.01);
+  check('poison ticks each second, by stacks', hp0 - player.hp === Math.round(1000 * DOT.poison.player * MAX_STACKS));
+  player.hp = 2; updateStatus(player, 1.01);
+  check('poison never takes you below 1 HP', player.hp === 1);
+  updateStatus(player, STATUS.poison.dur);
+  check('it wears off', player.effects.length === 0);
+  // chill slows you
+  player.hp = player.hpMax; applyStatus(player, 'chill');
+  check('chill slows movement', slowFactor(player) === CHILL_SLOW);
+  player.x = 100; player.vx = 0; player.y = ground().y - player.h; player.onGround = true;
+  setKey('right', true); step(30); const chilled = player.vx; release(); player.effects.length = 0; player.vx = 0;
+  setKey('right', true); step(30); const free = player.vx; release();
+  check('a chilled walk is slower', chilled < free * 0.9 && chilled > 0, `${chilled} vs ${free}`);
+  // on enemies: burn ticks off their HP and can finish them
+  const m = dummy(200, 30);
+  applyStatus(m, 'burn'); player.war = 100;
+  game.mobs = [m]; step(Math.ceil(1.05 / P.STEP));
+  check('burn hurts an enemy each second (and can kill it)', !game.mobs.includes(m));
+  // your hits inflict the area's element
+  const m2 = dummy(200); let got = false;
+  for (let i = 0; i < 40 && !got; i++) { damage(m2, 0.01); got = (m2.effects?.length ?? 0) > 0; }
+  check("your hits inflict the area's element", got && m2.effects![0].kind === 'poison');
+  // gotoFloor clears yours
+  applyStatus(player, 'burn'); gotoFloor(1, 0);
+  check('effects clear on a new floor', player.effects.length === 0);
+  game.mobs = [];
+}
+
+// --- floor modifiers: icy floors in cold areas, shared by everyone, pay more ---
+{
+  check('icy only rolls in cold areas', rollMods('Beach', () => 0).length === 0 && rollMods('Mirror Lake', () => 0).join() === 'icy' && rollMods('Mirror Lake', () => 0.99).length === 0);
+  const lake = AREAS.find((a) => a.name === 'Mirror Lake')!;
+  const stages = Array.from({ length: 6 }, (_, i) => baseOf(lake.depth) + i).filter((n) => !isTown(n));
+  const prev = net.area; net.area = lake.id;
+  const iced = stages.filter((n) => generateFloor(n).mods?.includes('icy'));
+  const again = stages.filter((n) => generateFloor(n).mods?.includes('icy'));
+  check('some cold floors roll icy, the same way every time', iced.length > 0 && iced.length < stages.length && iced.join() === again.join(), iced.join());
+  net.area = prev;
+  check('towns never roll a modifier', !generateFloor(townStage(lake.depth)).mods);
+  // the slide: on ice you take longer to stop
+  arena();
+  const slide = (): number => {
+    player.x = 60; player.vx = 0; player.y = ground().y - player.h; player.onGround = true;
+    setKey('right', true); step(20); release();
+    const x0 = player.x; step(30); return player.x - x0;
+  };
+  const dry = slide();
+  game.floor.mods = ['icy'];
+  check('grip drops on ice', grip() === ICE_GRIP);
+  const wet = slide();
+  check('you slide further on ice after letting go', wet > dry * 2, `${wet.toFixed(1)} vs ${dry.toFixed(1)}`);
+  check('the HUD names it and the coin bonus', modLine() === 'ICY +50% COINS' && coinMult() === FLOOR_MODS.icy.coins);
+  drops.length = 0; const m = dummy(100); m.level = 10; killMob(m);
+  check('coins are worth more on an icy floor', drops[0].v >= Math.round(coinValue(10, 0) * FLOOR_MODS.icy.coins));
+  game.floor.mods = undefined; drops.length = 0; game.mobs = [];
+}
+
+// --- pet: bought once, follows you, fetches coin piles lying near you ---
+{
+  arena(); drops.length = 0; flying.length = 0;
+  pet.owned = false; wallet.coins = PET.PRICE - 1;
+  check("can't buy the pet without the coins", !buy('pet') && !pet.owned);
+  wallet.coins = PET.PRICE + 5;
+  check('buying the pet takes its price', buy('pet') && pet.owned && wallet.coins === 5);
+  check('only one pet', !buy('pet') && wallet.coins === 5);
+  step(1);
+  check('it arrives at your shoulder', Math.abs(pet.x - (player.x - player.face * PET.BACK)) < 1);
+  // a pile near you: it fetches it
+  drops.push({ x: player.x + 60, y: ground().y, vy: 0, v: 7, t: COIN_LIFE, landed: true });
+  const far = { x: player.x + PET.RANGE + 60, y: ground().y, vy: 0, v: 9, t: COIN_LIFE, landed: true };
+  drops.push(far);
+  step(Math.ceil(1 / P.STEP));
+  check('the pet fetches a nearby pile into your wallet', wallet.coins === 12 && drops.length === 1, `coins ${wallet.coins} drops ${drops.length} pet ${pet.x.toFixed(0)},${pet.y.toFixed(0)} p ${player.x.toFixed(0)}`);
+  step(Math.ceil(1 / P.STEP));
+  check('it leaves piles out of its range', drops[0] === far && wallet.coins === 12);
+  check('it comes back to you', Math.abs(pet.x - (player.x - player.face * PET.BACK)) < 4);
+  // saved
+  const snap = snapshot(); pet.owned = false; apply(snap);
+  check('the pet survives a save and load', pet.owned);
+  pet.owned = false; apply({ ...snap, pet: undefined });
+  check('older saves have no pet', !pet.owned);
+  drops.length = 0; flying.length = 0; wallet.coins = 0;
+}
+
+// --- achievements: counted across runs, unlock run bonuses and a cosmetic ---
+{
+  clearAchievements();
+  arena();
+  const m = dummy(100, 1); damage(m, 10);
+  check('a kill counts and unlocks FIRST BLOOD', record.stats.kills === 1 && isDone('kill1') && game.banner?.sub === 'FIRST BLOOD');
+  const e = dummy(100, 1); e.elite = true; damage(e, 10);
+  check('an elite kill counts as an elite too', record.stats.elites === 1 && record.stats.kills === 2 && isDone('elite1'));
+  bump('bosses', 10);
+  check('the stylist offers the gold outfit only after WARDEN', isDone('boss10'));
+  check('the done list is stored apart from the save', JSON.parse((globalThis as unknown as { localStorage: Storage }).localStorage.getItem('archer-game:achievements')!).done.includes('boss10'));
+  visitArea('Beach'); visitArea('Beach'); visitArea('Forest');
+  check('areas count once each', record.areas.filter((a) => a === 'Beach').length === 1);
+  // coins earned: picking up counts
+  drops.length = 0; drops.push({ x: player.x, y: ground().y, vy: 0, v: 40, t: COIN_LIFE, landed: true });
+  const c0 = record.stats.coins; tap('x');
+  check('coins you pick up count as earned', record.stats.coins === c0 + 40);
+  // floors: climbing out through a portal
+  const f0 = record.stats.floors, up = game.floor.portal;
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('taking the way up counts a floor', record.stats.floors === f0 + 1);
+  // run bonuses
+  const b = runBonus();
+  check('run bonuses add up the unlocked rewards', b.coins === 100 && b.potions === 0 && b.sp === 0);
+  bump('kills', 500);
+  const coins0 = wallet.coins, hp0 = wallet.hp, sp0 = player.sp; startRun();
+  check('a new run starts with the bonuses', wallet.coins === coins0 + 100 && wallet.hp === hp0 + 5 && player.sp === sp0);
+  // the gold outfit is skipped until unlocked
+  clearAchievements();
+  check('the gold outfit is locked at first', [...Array(20)].reduce((l) => stepLook(l, 'outfit', 1), DEFAULT_LOOK).outfit !== GOLD_OUTFIT
+    && Array.from({ length: LOOK_COUNTS.outfit }, (_, i) => stepLook({ ...DEFAULT_LOOK, outfit: i }, 'outfit', 1).outfit).every((o) => o !== GOLD_OUTFIT));
+  bump('bosses', 10);
+  check('...and on offer once earned', stepLook({ ...DEFAULT_LOOK, outfit: GOLD_OUTFIT - 1 }, 'outfit', 1).outfit === GOLD_OUTFIT);
+  check('a bad stored record is cleaned', cleanRecord({ stats: { kills: -5, coins: 'x' }, areas: [1, 'A', 'A'], done: ['nope', 'kill1'] }).stats.kills === 0
+    && cleanRecord({ areas: [1, 'A', 'A'] }).areas.join() === 'A' && cleanRecord({ done: ['nope', 'kill1'] }).done.join() === 'kill1');
+  // the list window, from the Esc menu
+  release(); arena();
+  tap('escape'); tap('left');
+  check('Left from the stats column reaches AWARDS', game.pause?.col === 3);
+  tap('z');
+  check('Z opens the achievements list', achUi.open);
+  tap('down'); check('Down moves through the list', achUi.sel === 1);
+  tap('escape');
+  check('Esc closes it, still paused', !achUi.open && !!game.pause);
+  tap('escape');
+  check('...and the main menu has an ACHIEVEMENTS row', items().includes('awards'));
+  check(`${ACHIEVEMENTS.length} achievements, unique ids`, new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length);
+  clearAchievements(); drops.length = 0; wallet.coins = 0; wallet.hp = 0;
+  achKey('escape');
+}
+
+// --- key rebinding: swaps, what a physical key drives, storage, the window ---
+{
+  resetBinds();
+  check('by default every action is on its own key', ACTIONS.every((a) => binds[a.id] === a.id && actionFor(a.id) === a.id));
+  bindKey('z', 'j');
+  check('a rebound key drives its action', actionFor('j') === 'z' && keyName('Z') === 'J');
+  check("the action's old key does nothing now", actionFor('z') === '');
+  check('keys that are not actions pass through', actionFor('left') === 'left' && actionFor('escape') === 'escape');
+  bindKey('c', 'j');
+  check('taking a key another action had swaps them', binds.c === 'j' && binds.z === 'c' && actionFor('c') === 'z' && actionFor('j') === 'c');
+  check('arrows, Enter and Esc cannot be bound', !bindKey('z', 'left') && !bindKey('z', 'enter') && !bindKey('z', 'escape'));
+  check('the layout is saved', JSON.parse((globalThis as unknown as { localStorage: Storage }).localStorage.getItem('archer-game:keys')!).c === 'j');
+  check('a stored layout with a key used twice falls back to the defaults', cleanBinds({ ...binds, q: 'j' }).z === 'z');
+  check('a stored layout with a bad key falls back to the defaults', cleanBinds({ ...binds, q: 'enter' }).q === 'q');
+  resetBinds();
+  check('reset puts the defaults back', ACTIONS.every((a) => binds[a.id] === a.id));
+  // the window: settings -> KEYS -> pick a row -> press a key
+  openSettings(); settingsUi.sel = SETTING_ROWS.indexOf('keys'); settingsKey('enter');
+  check("the settings' KEYS row opens the keys window", keysUi.open);
+  settingsKey('down'); settingsKey('enter');
+  check('Z on an action waits for a key', keysUi.waiting && !!capture.fn);
+  settingsKey('down');
+  check('arrows do nothing while waiting', keysUi.sel === 1);
+  capture.fn!('k');
+  check('the next key binds the action', binds.c === 'k' && !keysUi.waiting && !capture.fn);
+  settingsKey('enter'); capture.fn!('escape');
+  check('Esc while waiting cancels', binds.c === 'k' && !keysUi.waiting);
+  settingsKey('enter'); capture.fn!('left');
+  check('an arrow is refused with a note', binds.c === 'k' && keysUi.note !== '');
+  keysUi.sel = KEY_ROWS - 2; settingsKey('enter');
+  check('RESET restores the default layout', binds.c === 'c');
+  settingsKey('escape');
+  check('Esc closes the keys window back to the settings', !keysUi.open && settingsUi.open);
+  settingsKey('escape');
+  // in game: the rebound key's action is what the game sees
+  bindKey('a', 'h');
+  check('the HUD and menus label the bound key', keyName('a') === 'H' && keyName('s') === 'S');
+  resetBinds();
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

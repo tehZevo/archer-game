@@ -1,10 +1,12 @@
-import { P } from './config';
+import { bump } from './achievements';
+import { ELITE, P } from './config';
 import { localKill } from './boost';
 import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
 import { bossDown } from './boss';
 import { questKill } from './quests';
+import { clearStatus, INFLICT, maybeInflict } from './status';
 import type { DamageOpts, DmgNum, Mob } from './types';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
@@ -35,6 +37,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   if (opts.launch) { target.airTime = 1.1; target.vy = -430; target.y -= 4; }
   if (target.hp <= 0) killMob(target);
+  else maybeInflict(target, INFLICT.player); // the area's element (see status.ts)
 }
 
 /** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
@@ -60,10 +63,15 @@ export function killMob(m: Mob): void {
   const i = game.mobs.indexOf(m);
   if (i >= 0) game.mobs.splice(i, 1);
   game.kills++;
+  if (!m.boss) m.spawn.heat = (m.spawn.heat ?? 0) + 1; // farming one platform heats it (see spawnWave)
+  bump('kills');
+  if (m.elite) bump('elites');
+  if (m.boss) bump('bosses');
   localKill(); // shared with the instance: speeds up other players' waves
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);
   dropCoins(m);
+  if (m.elite) for (let i = 1; i < ELITE.COINS; i++) dropCoins({ ...m, x: m.x + (i % 2 ? 6 : -6) * Math.ceil(i / 2) });
   if (m.boss) bossDown(m, dropCoins);
   questKill(m.name);
 }
@@ -107,5 +115,6 @@ export function revive(): void {
   game.player.climb = null; game.player.climbRush = false;
   game.player.fervor = 0;
   game.player.combo = 0;
+  clearStatus(game.player);
   logMsg('You were knocked out. <b>Revived at the village gate.</b>');
 }

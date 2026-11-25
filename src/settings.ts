@@ -1,9 +1,12 @@
+import { closeKeys, keysKey, keysTap, keysUi, openKeys } from './keys';
+
 /* ============================================================
    SETTINGS
    Sound volume and damage numbers, saved in
    localStorage (apart from the progress save, so a reset keeps
    them). The window opens from the main menu's SETTINGS row and
-   from the Esc menu. Up/Down picks a row, Left/Right (or Z)
+   from the Esc menu; its KEYS row opens the rebinding window
+   (see keys.ts). Up/Down picks a row, Left/Right (or Z)
    changes it; DONE, Esc or X closes. State and input only; see
    settingsdraw.ts.
    ============================================================ */
@@ -39,14 +42,14 @@ export function saveSettings(): void {
 }
 
 /* ---------------- the window ---------------- */
-export type SettingRow = 'sound' | 'dmgNums' | 'done';
-export const SETTING_ROWS: SettingRow[] = ['sound', 'dmgNums', 'done'];
+export type SettingRow = 'sound' | 'dmgNums' | 'keys' | 'done';
+export const SETTING_ROWS: SettingRow[] = ['sound', 'dmgNums', 'keys', 'done'];
 export const SETTING_NAMES: Record<SettingRow, string> = {
-  sound: 'SOUND', dmgNums: 'DAMAGE NUMBERS', done: 'DONE',
+  sound: 'SOUND', keys: 'KEYS', dmgNums: 'DAMAGE NUMBERS', done: 'DONE',
 };
 
 export const settingsUi = { open: false, sel: 0 };
-export function openSettings(): void { settingsUi.open = true; settingsUi.sel = 0; }
+export function openSettings(): void { settingsUi.open = true; settingsUi.sel = 0; closeKeys(); }
 
 /** Change a row's value: d = -1 / +1 (toggles flip either way). */
 export function stepSetting(row: SettingRow, d: number): void {
@@ -58,10 +61,12 @@ export function stepSetting(row: SettingRow, d: number): void {
 
 /** A navigation key: up, down, left, right, enter, escape. */
 export function settingsKey(k: string): void {
+  if (keysUi.open) { keysKey(k); return; }
   const n = SETTING_ROWS.length, row = SETTING_ROWS[settingsUi.sel];
+  if (k === 'enter' && row === 'keys') { openKeys(); return; }
   if (k === 'up') settingsUi.sel = (settingsUi.sel + n - 1) % n;
   else if (k === 'down') settingsUi.sel = (settingsUi.sel + 1) % n;
-  else if ((k === 'left' || k === 'right') && row !== 'done') stepSetting(row, k === 'left' ? -1 : 1);
+  else if ((k === 'left' || k === 'right') && row !== 'done' && row !== 'keys') stepSetting(row, k === 'left' ? -1 : 1);
   else if (k === 'enter' && row !== 'done') stepSetting(row, 1);
   else if (k === 'enter' || k === 'escape') settingsUi.open = false;
 }
@@ -75,10 +80,11 @@ export const settingsBox = (w: number, h: number): { x: number; y: number } =>
 /** A tap (view coords): a row's left half steps back, its right half forward;
  *  DONE (or anywhere outside the window) closes it. */
 export function settingsTap(x: number, y: number, w: number, h: number): void {
+  if (keysUi.open) { keysTap(x, y, w, h); return; }
   const b = settingsBox(w, h);
   if (x < b.x || x >= b.x + SET_W || y < b.y || y >= b.y + setH()) { settingsUi.open = false; return; }
   const i = Math.floor((y - b.y - SET_TOP + 3) / SET_ROW);
   if (i < 0 || i >= SETTING_ROWS.length) return;
   settingsUi.sel = i;
-  settingsKey(SETTING_ROWS[i] === 'done' ? 'enter' : x - b.x < SET_W / 2 ? 'left' : 'right');
+  settingsKey(SETTING_ROWS[i] === 'done' || SETTING_ROWS[i] === 'keys' ? 'enter' : x - b.x < SET_W / 2 ? 'left' : 'right');
 }

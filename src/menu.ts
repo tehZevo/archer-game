@@ -3,6 +3,7 @@ import { clearSave, hasSave, saving } from './save';
 import { cleanName, myName, NAME_MAX, setMyName } from './presence';
 import { openStylist, stylist, stylistKey } from './stylist';
 import { openSettings, settingsKey, settingsUi } from './settings';
+import { achKey, achUi, openAchievements } from './achievements';
 
 /* ============================================================
    MAIN MENU
@@ -15,7 +16,7 @@ import { openSettings, settingsKey, settingsUi } from './settings';
    and Reset progress.
    ============================================================ */
 
-export type ItemId = 'play' | 'channel' | 'code' | 'create' | 'name' | 'look' | 'settings' | 'reset';
+export type ItemId = 'play' | 'channel' | 'code' | 'create' | 'name' | 'look' | 'settings' | 'awards' | 'reset';
 
 export const menu = {
   open: true,
@@ -35,10 +36,10 @@ export const menu = {
 };
 
 /* layout, shared with the drawing and the pointer hit-test */
-export const MENU_TOP = 54, MENU_ROW = 14, MENU_X = 32, MENU_W = 176;
+export const MENU_TOP = 50, MENU_ROW = 11, MENU_X = 32, MENU_W = 176;
 
 export function items(): ItemId[] {
-  const it: ItemId[] = ['play', 'channel', 'code', 'create', 'name', 'look', 'settings'];
+  const it: ItemId[] = ['play', 'channel', 'code', 'create', 'name', 'look', 'settings', 'awards'];
   if (hasSave()) it.push('reset');
   return it;
 }
@@ -124,6 +125,9 @@ export function activate(): void {
     case 'settings':
       openSettings();
       break;
+    case 'awards':
+      openAchievements();
+      break;
     case 'reset':
       if (!menu.confirmReset) { menu.confirmReset = true; break; }
       saving.enabled = false; clearSave();
@@ -137,6 +141,7 @@ export function menuKey(k: string): void {
   if (!menu.open) return;
   if (stylist.open) { stylistKey(k); return; }
   if (settingsUi.open) { settingsKey(k); return; }
+  if (achUi.open) { achKey(k); return; }
   if (k === 'up' || k === 'down') {
     finishEdit();
     const it = items(), n = it.length;

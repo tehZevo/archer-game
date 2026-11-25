@@ -1,3 +1,4 @@
+import { bump } from './achievements';
 import { pressed } from './input';
 import { gainExp, mobLevel } from './state';
 import { mobExp } from './progress';
@@ -62,6 +63,7 @@ export function turnIn(i: number): boolean {
   quests.splice(i, 1);
   gainExp(q.exp);
   wallet.coins += q.coins;
+  bump('coins', q.coins);
   return true;
 }
 

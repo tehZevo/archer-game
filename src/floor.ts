@@ -4,6 +4,7 @@ import { AREAS, areaName, blockOf, isAreaEnd, isTown, placeName, townStage } fro
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
+import { rollMods } from './floormods';
 import type { Climbable, Floor, MobType, Platform, Portal, Spawn } from './types';
 
 // One stream per floor generation, seeded from the room name (minus its hour) so every player
@@ -258,7 +259,9 @@ export function generateFloor(n: number): Floor {
   const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: n + 1 };
   if (isAreaEnd(n)) portal.label = placeName(n + 1, net.area); // the way into the town names it
 
-  return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H });
+  // its own stream, so rolling a modifier never changes the layout
+  const mods = rollMods(areaName(net.area), seeded(hashStr(roomId(n, net.channel, net.code, net.area, '') + '-mods')));
+  return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H, ...(mods.length ? { mods } : {}) });
 }
 
 /** The full-width ground slab every floor stands on: 4 tiles, not a wall

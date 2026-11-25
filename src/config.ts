@@ -7,7 +7,9 @@ import type { Fx, MobType, SkillDef, SkillKey } from './types';
    trapezoidal integration so jump height is frame-rate proof.
    ============================================================ */
 export const P = {
-  WAVE_EVERY: 8,       // s between enemy waves (each tops spawn zones up to their cap)
+  WAVE_EVERY: 10,      // s between enemy waves (each tops spawn zones up to their cap; was 8)
+  HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
+  HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
   GRAVITY: 1040,       // px/s^2 (lowered from 2000)
   TERMINAL: 670,       // terminalVelocity
@@ -185,6 +187,10 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Null Wraith',    lvl: 40, hp: 220, ...mobSize('Null Wraith'),    spd: 100, dmg: 5, col: '#2a1a3a', fly: true, areas: ['Void Garden'] },
 ];
 
+
+/** Elites: now and then a floor enemy spawns bigger and tougher, with a gold
+ *  outline, and is worth more. Multiples of the normal enemy's stats. */
+export const ELITE = { CHANCE: 1 / 8, SCALE: 1.5, HP: 4, DMG: 1.3, EXP: 3, COINS: 3 } as const;
 
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {

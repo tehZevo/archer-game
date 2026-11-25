@@ -75,14 +75,15 @@ export function spawnBoss(): void {
   });
 }
 
-/** Hurt the player (unless they're still flashing from the last hit). */
-export function hurtPlayer(dmg: number): void {
-  if (player.invuln > 0) return;
+/** Hurt the player (unless they're still flashing from the last hit). True if it landed. */
+export function hurtPlayer(dmg: number): boolean {
+  if (player.invuln > 0) return false;
   player.hp = Math.max(0, player.hp - dmg);
   player.combatT = P.COMBAT_TIME;
   player.invuln = 1.0;
   sfx.hit();
   game.dmgNums.push({ x: player.x, y: player.y - 14, v: dmg, t: 1, crit: false, vy: -80, col: '#ff8f8f' });
+  return true;
 }
 
 /** The boss's moves for one step (instead of the usual patrol and chase). */

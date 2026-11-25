@@ -3,6 +3,8 @@ import { game, player } from './state';
 import { text } from './font';
 import { SKILLS } from './config';
 import { activeSkill } from './progress';
+import { pet, PET } from './pets';
+import { keyName } from './input';
 import { drops, FLY_T, flying, npcNear, PRICES, RESPEC_PRICES, shop, SHOP_ITEMS, TRAINER_ITEMS, TRAINER_SLOTS, trainer, wallet } from './economy';
 import { board, boardRows, isDone, QUEST_MAX, quests } from './quests';
 import type { Npc } from './types';
@@ -198,13 +200,13 @@ export const questLines = (): [string, boolean][] =>
   quests.map((q) => [isDone(q) ? `${q.mob} DONE` : `${q.mob} ${q.have}/${q.need}`, isDone(q)]);
 
 /** The wallet line for the HUD: coins, then potions with their keys. */
-export const walletLine = (): string => `${wallet.coins}G  A:HP ${wallet.hp}  S:MP ${wallet.mp}`;
+export const walletLine = (): string => `${wallet.coins}G  ${keyName('a')}:HP ${wallet.hp}  ${keyName('s')}:MP ${wallet.mp}`;
 
 /** The shop window (screen space). */
 export function drawShop(): void {
   const { w, h } = game.view;
   ctx.fillStyle = '#050a14c8'; ctx.fillRect(0, 0, w, h);
-  const bw = 168, bh = 86, bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
+  const bw = 168, bh = 100, bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
   ctx.fillStyle = '#101a2e'; ctx.fillRect(bx, by, bw, bh);
   ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
   text(ctx, 'SHOP', w / 2, by + 6, 1, GOLD, 'center');
@@ -212,11 +214,56 @@ export function drawShop(): void {
   SHOP_ITEMS.forEach((it, i) => {
     const y = by + 22 + i * 14, sel = shop.sel === i;
     if (sel) { ctx.strokeStyle = GOLD; ctx.strokeRect(bx + 4.5, y - 3.5, bw - 9, 13); }
+    if (it.kind === 'pet') {
+      text(ctx, it.name, bx + 9, y, 1, HI, 'left');
+      if (pet.owned) text(ctx, 'OWNED', bx + bw - 9, y, 1, DIM, 'right');
+      else text(ctx, `${PET.PRICE}G`, bx + bw - 9, y, 1, wallet.coins >= PET.PRICE ? GOLD : '#e07a8a', 'right');
+      return;
+    }
     const afford = wallet.coins >= PRICES[it.kind];
-    text(ctx, `${it.name} - ${it.key}`, bx + 9, y, 1, HI, 'left');
+    text(ctx, `${it.name} - ${keyName(it.key)}`, bx + 9, y, 1, HI, 'left');
     text(ctx, `x${wallet[it.kind]}`, bx + 112, y, 1, DIM, 'left');
     text(ctx, `${PRICES[it.kind]}G`, bx + bw - 9, y, 1, afford ? GOLD : '#e07a8a', 'right');
   });
   text(ctx, 'Z BUY   ESC CLOSE', w / 2, by + bh - 24, 1, DIM, 'center');
-  text(ctx, 'EACH RESTORES 40%', w / 2, by + bh - 12, 1, '#5d708f', 'center');
+  text(ctx, SHOP_ITEMS[shop.sel].desc, w / 2, by + bh - 12, 1, '#5d708f', 'center');
+}
+
+/* ---------------- the pet ---------------- */
+/** A round little gold flier, facing right; two wing frames. */
+const PET_FRAMES = [[
+  '...oo...',
+  '..oyyo..',
+  'w.oyyeyo',
+  'wwoyyyyo',
+  '.woyyyo.',
+  '...oo...',
+], [
+  '...oo...',
+  '..oyyo..',
+  '..oyyeyo',
+  'wwoyyyyo',
+  'wwoyyyo.',
+  '...oo...',
+]];
+const PET_PAL: Record<string, string> = { o: '#7a5414', y: '#ffd166', e: '#1a1a2e', w: '#eaf2ff' };
+let petSprites: HTMLCanvasElement[] | null = null;
+
+export function drawPet(): void {
+  if (!pet.owned) return;
+  petSprites ??= PET_FRAMES.map((rows) => {
+    const c = document.createElement('canvas');
+    c.width = 8; c.height = rows.length;
+    const x = c.getContext('2d') as CanvasRenderingContext2D;
+    rows.forEach((row, gy) => [...row].forEach((ch, gx) => {
+      if (PET_PAL[ch]) { x.fillStyle = PET_PAL[ch]; x.fillRect(gx, gy, 1, 1); }
+    }));
+    return c;
+  });
+  const f = petSprites[Math.floor(pet.anim * 8) % 2];
+  ctx.save();
+  ctx.translate(Math.round(pet.x), Math.round(pet.y));
+  ctx.scale(pet.face, 1);
+  ctx.drawImage(f, -4, -3);
+  ctx.restore();
 }

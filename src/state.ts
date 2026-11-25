@@ -1,10 +1,11 @@
-import { CAM, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
-import { AREAS, areaFor, tierOf, townStage } from './world';
+import { CAM, ELITE, MOB_TYPES, P, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
+import { AREAS, areaFor, areaName, tierOf, townStage } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
 import { spawnBoss } from './boss';
+import { visitArea } from './achievements';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
 } from './types';
@@ -60,6 +61,7 @@ export const player: Player = {
   war: start.war,
   job: jobForLevel(1),
   ranks,
+  effects: [],
 };
 
 export const game = {
@@ -99,32 +101,56 @@ export function mobBounds(m: Mob): [number, number] {
  *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
 export const mobLevel = (stage: number): number => Math.max(1, stage - tierOf(stage)); // one town per depth below
 
-export function spawnMob(s: Spawn, type: MobType): void {
+export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
   const level = mobLevel(game.floor.number);
   const scale = 1 + (level - 1) * 0.12;
-  const hp = Math.round(type.hp * scale);
+  const e = elite ? ELITE : { SCALE: 1, HP: 1, DMG: 1, EXP: 1 };
+  const hp = Math.round(type.hp * scale * e.HP);
+  const w = Math.round(type.w * e.SCALE), h = Math.round(type.h * e.SCALE);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
   const lo = s.minX ?? s.x - 110, hi = s.maxX ?? s.x + 110;
   game.mobs.push({
-    x: spot.x, y: spot.y - type.h, w: type.w, h: type.h,
+    x: spot.x, y: spot.y - h, w, h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: type.spd,
-    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06)),
+    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06) * e.DMG),
     fly: !!type.fly, col: type.col,
-    level, exp: mobExp(level),
+    level, exp: mobExp(level) * e.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
     spawn: s,
+    ...(elite ? { elite: true } : {}),
   });
 }
 
-/** An enemy wave: every spawn zone is topped back up to its cap. */
+/** How many a zone should hold this wave: its cap, less one per HEAT_HOT
+ *  recent kills there (camping one platform empties it). */
+export const heldBy = (z: Spawn): number => Math.max(0, (z.cap ?? 1) - Math.floor((z.heat ?? 0) / P.HEAT_HOT));
+
+/** An enemy wave: every spawn zone is topped back up to its cap. Enemies a
+ *  hot zone (one you've been farming) holds back turn up on the coolest
+ *  other platforms instead, up to HEAT_EXTRA over their cap, so standing in
+ *  one spot stops paying off. Heat halves each wave. */
 export function spawnWave(): void {
-  for (const z of game.floor.spawns) {
-    const alive = game.mobs.filter((m) => m.spawn === z).length;
-    for (let i = alive; i < (z.cap ?? 1); i++) spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]));
+  const zones = game.floor.spawns;
+  const alive = (z: Spawn): number => game.mobs.filter((m) => m.spawn === z).length;
+  const add = (z: Spawn): void => spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), Math.random() < ELITE.CHANCE);
+  let moved = 0;
+  for (const z of zones) {
+    const want = heldBy(z);
+    moved += (z.cap ?? 1) - want;
+    for (let i = alive(z); i < want; i++) add(z);
   }
+  const cool = zones.filter((z) => heldBy(z) === (z.cap ?? 1)).sort((a, b) => (a.heat ?? 0) - (b.heat ?? 0));
+  for (let pass = 0; moved > 0 && cool.length && pass < P.HEAT_EXTRA; pass++) {
+    for (const z of cool) {
+      if (moved <= 0) break;
+      if (alive(z) >= (z.cap ?? 1) + P.HEAT_EXTRA) continue;
+      add(z); moved--;
+    }
+  }
+  for (const z of zones) if (z.heat) z.heat = z.heat >= 0.5 ? z.heat / 2 : 0;
 }
 
 /** Replace the current floor with a freshly generated one and populate mobs. */
@@ -139,6 +165,7 @@ export function gotoFloor(n: number, area?: number): void {
   if (fit === null) n = townStage(AREAS[net.area].depth);
   else net.area = fit;
   game.floor = generateFloor(n);
+  visitArea(areaName(net.area));
   WORLD.h = game.floor.h;
   game.mobs.length = 0;
   game.shots.length = 0;
@@ -166,6 +193,8 @@ export function gotoFloor(n: number, area?: number): void {
   player.queued = null;
   player.hangT = 0; player.hangHits = 0;
   player.rushT = 0; player.rushCarry = [];
+  player.effects.length = 0; // effects don't follow you to another floor
+  if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');
 }
 
 /** Where the camera wants to be: the nearest position that puts the player

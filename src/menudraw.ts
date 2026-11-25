@@ -11,6 +11,8 @@ import { stylist } from './stylist';
 import { drawStylist } from './stylistdraw';
 import { settingsUi } from './settings';
 import { drawSettings } from './settingsdraw';
+import { achUi } from './achievements';
+import { drawAchievements } from './achdraw';
 
 /* The main menu, drawn on the canvas over the frozen world. */
 
@@ -23,7 +25,8 @@ const HINT: Record<ItemId, string> = {
   create: 'MAKE A CODE FOR FRIENDS',
   name: 'Z TO RENAME   ENTER SAVES',
   look: 'HAIR, SKIN AND OUTFIT',
-  settings: 'SOUND AND DAMAGE NUMBERS',
+  settings: 'SOUND, DAMAGE NUMBERS, KEYS',
+  awards: 'MILESTONES AND THEIR REWARDS',
   reset: 'ERASE YOUR SAVE: LV 1 AGAIN',
 };
 
@@ -41,8 +44,8 @@ export function drawMenu(): void {
   items().forEach((it, i) => {
     const y = MENU_TOP + i * MENU_ROW, sel = menu.sel === i;
     if (sel) {
-      ctx.fillStyle = '#16223a'; ctx.fillRect(MENU_X, y - 3, MENU_W, MENU_ROW - 1);
-      ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(MENU_X + 0.5, y - 2.5, MENU_W - 1, MENU_ROW - 2);
+      ctx.fillStyle = '#16223a'; ctx.fillRect(MENU_X, y - 2, MENU_W, MENU_ROW);
+      ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(MENU_X + 0.5, y - 1.5, MENU_W - 1, MENU_ROW - 1);
     }
     const L = MENU_X + 5, R = MENU_X + MENU_W - 5;
     // the caret blinks between '_' and a space of the same width, so the
@@ -89,6 +92,9 @@ export function drawMenu(): void {
       case 'settings':
         text(ctx, 'SETTINGS', w / 2, y, 1, HI, 'center');
         break;
+      case 'awards':
+        text(ctx, 'ACHIEVEMENTS', w / 2, y, 1, HI, 'center');
+        break;
       case 'reset':
         text(ctx, menu.confirmReset ? 'SURE? Z AGAIN TO ERASE' : 'RESET PROGRESS', w / 2, y, 1, RED, 'center');
         break;
@@ -100,4 +106,5 @@ export function drawMenu(): void {
   text(ctx, 'ARROWS MOVE   Z OR ENTER SELECT', w / 2, h - 11, 1, '#5d708f', 'center');
   if (stylist.open) drawStylist(w, h);
   if (settingsUi.open) drawSettings(w, h);
+  if (achUi.open) drawAchievements(w, h);
 }
