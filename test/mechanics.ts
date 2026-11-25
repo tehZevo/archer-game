@@ -46,6 +46,8 @@ import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
+import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
+import { startRun } from '../src/save';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
@@ -658,9 +660,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   let started = 0;
   const open = (): void => { initMenu(() => { started++; }, 3); };
   clearSave(); open();
-  check('menu rows: play, channel, code, new code, name, look, settings (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look,settings');
+  check('menu rows: play, channel, code, new code, name, look, settings, awards (no reset without a save)', items().join(',') === 'play,channel,code,create,name,look,settings,awards');
   menuKey('up');
-  check('menu selection wraps around', items()[menu.sel] === 'settings');
+  check('menu selection wraps around', items()[menu.sel] === 'awards');
 
   // channel picker
   check('auto picks the busiest channel with room', autoChannel(new Map([[1, 20], [2, 5], [3, 7]])) === 3);
@@ -1557,6 +1559,58 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   pet.owned = false; apply({ ...snap, pet: undefined });
   check('older saves have no pet', !pet.owned);
   drops.length = 0; flying.length = 0; wallet.coins = 0;
+}
+
+// --- achievements: counted across runs, unlock run bonuses and a cosmetic ---
+{
+  clearAchievements();
+  arena();
+  const m = dummy(100, 1); damage(m, 10);
+  check('a kill counts and unlocks FIRST BLOOD', record.stats.kills === 1 && isDone('kill1') && game.banner?.sub === 'FIRST BLOOD');
+  const e = dummy(100, 1); e.elite = true; damage(e, 10);
+  check('an elite kill counts as an elite too', record.stats.elites === 1 && record.stats.kills === 2 && isDone('elite1'));
+  bump('bosses', 10);
+  check('the stylist offers the gold outfit only after WARDEN', isDone('boss10'));
+  check('the done list is stored apart from the save', JSON.parse((globalThis as unknown as { localStorage: Storage }).localStorage.getItem('archer-game:achievements')!).done.includes('boss10'));
+  visitArea('Beach'); visitArea('Beach'); visitArea('Forest');
+  check('areas count once each', record.areas.filter((a) => a === 'Beach').length === 1);
+  // coins earned: picking up counts
+  drops.length = 0; drops.push({ x: player.x, y: ground().y, vy: 0, v: 40, t: COIN_LIFE, landed: true });
+  const c0 = record.stats.coins; tap('x');
+  check('coins you pick up count as earned', record.stats.coins === c0 + 40);
+  // floors: climbing out through a portal
+  const f0 = record.stats.floors, up = game.floor.portal;
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('taking the way up counts a floor', record.stats.floors === f0 + 1);
+  // run bonuses
+  const b = runBonus();
+  check('run bonuses add up the unlocked rewards', b.coins === 100 && b.potions === 0 && b.sp === 0);
+  bump('kills', 500);
+  const coins0 = wallet.coins, hp0 = wallet.hp, sp0 = player.sp; startRun();
+  check('a new run starts with the bonuses', wallet.coins === coins0 + 100 && wallet.hp === hp0 + 5 && player.sp === sp0);
+  // the gold outfit is skipped until unlocked
+  clearAchievements();
+  check('the gold outfit is locked at first', [...Array(20)].reduce((l) => stepLook(l, 'outfit', 1), DEFAULT_LOOK).outfit !== GOLD_OUTFIT
+    && Array.from({ length: LOOK_COUNTS.outfit }, (_, i) => stepLook({ ...DEFAULT_LOOK, outfit: i }, 'outfit', 1).outfit).every((o) => o !== GOLD_OUTFIT));
+  bump('bosses', 10);
+  check('...and on offer once earned', stepLook({ ...DEFAULT_LOOK, outfit: GOLD_OUTFIT - 1 }, 'outfit', 1).outfit === GOLD_OUTFIT);
+  check('a bad stored record is cleaned', cleanRecord({ stats: { kills: -5, coins: 'x' }, areas: [1, 'A', 'A'], done: ['nope', 'kill1'] }).stats.kills === 0
+    && cleanRecord({ areas: [1, 'A', 'A'] }).areas.join() === 'A' && cleanRecord({ done: ['nope', 'kill1'] }).done.join() === 'kill1');
+  // the list window, from the Esc menu
+  release(); arena();
+  tap('escape'); tap('left');
+  check('Left from the stats column reaches AWARDS', game.pause?.col === 3);
+  tap('z');
+  check('Z opens the achievements list', achUi.open);
+  tap('down'); check('Down moves through the list', achUi.sel === 1);
+  tap('escape');
+  check('Esc closes it, still paused', !achUi.open && !!game.pause);
+  tap('escape');
+  check('...and the main menu has an ACHIEVEMENTS row', items().includes('awards'));
+  check(`${ACHIEVEMENTS.length} achievements, unique ids`, new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length);
+  clearAchievements(); drops.length = 0; wallet.coins = 0; wallet.hp = 0;
+  achKey('escape');
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

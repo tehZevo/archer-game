@@ -1,3 +1,4 @@
+import { bump } from './achievements';
 import { ELITE, P } from './config';
 import { localKill } from './boost';
 import { dropCoins } from './economy';
@@ -62,6 +63,9 @@ export function killMob(m: Mob): void {
   const i = game.mobs.indexOf(m);
   if (i >= 0) game.mobs.splice(i, 1);
   game.kills++;
+  bump('kills');
+  if (m.elite) bump('elites');
+  if (m.boss) bump('bosses');
   localKill(); // shared with the instance: speeds up other players' waves
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);

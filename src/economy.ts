@@ -1,3 +1,4 @@
+import { bump } from './achievements';
 import { P, SKILLS } from './config';
 import { game, player } from './state';
 import { pressed } from './input';
@@ -91,6 +92,7 @@ export function pickUp(): number {
     }
   }
   wallet.coins += got;
+  bump('coins', got);
   if (got) sfx.coin();
   return got;
 }

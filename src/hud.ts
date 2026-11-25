@@ -20,6 +20,8 @@ import { stylist } from './stylist';
 import { drawStylist } from './stylistdraw';
 import { settingsTap, settingsUi } from './settings';
 import { drawSettings } from './settingsdraw';
+import { achUi } from './achievements';
+import { drawAchievements } from './achdraw';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
 import { STATUS } from './status';
@@ -178,7 +180,7 @@ function drawHUDItems(): void {
   drawChatLog(ey);
   if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
-  if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); return; }
+  if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); if (achUi.open) drawAchievements(w, h); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
@@ -253,6 +255,11 @@ function drawPause(): void {
   ctx.fillStyle = m.col === 2 ? '#16223a' : '#0d1526'; ctx.fillRect(sb.x, sb.y, sb.w, sb.h);
   ctx.strokeStyle = m.col === 2 ? gold : '#4a5c7a'; ctx.lineWidth = 1; ctx.strokeRect(sb.x + 0.5, sb.y + 0.5, sb.w - 1, sb.h - 1);
   text(ctx, 'SETTINGS', sb.x + sb.w / 2, sb.y + 3, 1, m.col === 2 ? gold : dim, 'center');
+  // ...and the AWARDS (achievements) button, top left
+  const ab = awardsButton();
+  ctx.fillStyle = m.col === 3 ? '#16223a' : '#0d1526'; ctx.fillRect(ab.x, ab.y, ab.w, ab.h);
+  ctx.strokeStyle = m.col === 3 ? gold : '#4a5c7a'; ctx.strokeRect(ab.x + 0.5, ab.y + 0.5, ab.w - 1, ab.h - 1);
+  text(ctx, 'AWARDS', ab.x + ab.w / 2, ab.y + 3, 1, m.col === 3 ? gold : dim, 'center');
   text(ctx, `LV ${player.level}  HP ${fmtNum(player.hp)}/${fmtNum(player.hpMax)}  MP ${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, w / 2, 23, 1, hi, 'center');
   text(ctx, `ATT ${Math.round(player.war)}  CRIT ${Math.round(critChance() * 100)}%  EXP ${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, w / 2, 32, 1, hi, 'center');
 
@@ -292,7 +299,8 @@ function drawPause(): void {
 
   // description of the selected row
   let desc = '';
-  if (m.col === 2) desc = 'Sound and damage numbers';
+  if (m.col === 2) desc = 'Sound, damage numbers and keys';
+  else if (m.col === 3) desc = 'Achievements and their rewards';
   else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
   else if (rows[m.row]) desc = rows[m.row].action || `${rows[m.row].name}: mastered`;
   desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();
@@ -318,6 +326,9 @@ function wrap(s: string, n: number): string[] {
 /** The Esc menu's SETTINGS button (screen space). */
 export const settingsButton = (w: number): { x: number; y: number; w: number; h: number } => ({ x: w - 58, y: 4, w: 52, h: 13 });
 
+/** The Esc menu's AWARDS button (screen space). */
+export const awardsButton = (): { x: number; y: number; w: number; h: number } => ({ x: 6, y: 4, w: 44, h: 13 });
+
 /** Tap/click on a pause-menu row selects it; tapping the selected row spends. */
 export function bindMenuClicks(canvas: HTMLCanvasElement): void {
   canvas.addEventListener('pointerdown', (e) => {
@@ -326,6 +337,9 @@ export function bindMenuClicks(canvas: HTMLCanvasElement): void {
     const b = canvas.getBoundingClientRect();
     const x = (e.clientX - b.left) / b.width * game.view.w, y = (e.clientY - b.top) / b.height * game.view.h;
     if (settingsUi.open) { settingsTap(x, y, game.view.w, game.view.h); return; }
+    if (achUi.open) { achUi.open = false; return; }
+    const ab = awardsButton();
+    if (x >= ab.x && x < ab.x + ab.w && y >= ab.y && y < ab.y + ab.h) { m.col = 3; m.row = 0; pauseSpend(m); return; }
     const sb = settingsButton(game.view.w);
     if (x >= sb.x && x < sb.x + sb.w && y >= sb.y && y < sb.y + sb.h) { m.col = 2; m.row = 0; pauseSpend(m); return; }
     const col = COLS.findIndex((c) => x >= c.x && x < c.x + c.w);

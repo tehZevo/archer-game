@@ -4,6 +4,7 @@ import { net } from './net';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
 import { pet } from './pets';
+import { runBonus } from './achievements';
 import { SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
 import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
@@ -129,4 +130,12 @@ let since = 0;
 export function tickSave(dt: number): void {
   since += dt;
   if (since >= SAVE_EVERY) { since = 0; save(); }
+}
+
+/** A new run (no save yet): hand out the achievements' run bonuses. */
+export function startRun(): void {
+  const b = runBonus();
+  wallet.coins += b.coins;
+  wallet.hp = Math.min(CARRY_MAX, wallet.hp + b.potions);
+  player.sp += b.sp;
 }

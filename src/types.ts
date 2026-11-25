@@ -62,8 +62,8 @@ export interface SkillRank {
 }
 
 /** Esc menu cursor; `scroll` is the first skill row shown when the list is longer than the panel. */
-/** col 2 is the SETTINGS button (top right). */
-export interface PauseMenu { col: 0 | 1 | 2; row: number; scroll?: number }
+/** col 2 is the SETTINGS button (top right), col 3 the AWARDS button (top left). */
+export interface PauseMenu { col: 0 | 1 | 2 | 3; row: number; scroll?: number }
 
 export interface JobDef {
   job: number;

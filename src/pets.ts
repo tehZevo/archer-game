@@ -1,3 +1,4 @@
+import { bump } from './achievements';
 import { game, player } from './state';
 import { drops, flying, wallet } from './economy';
 import { sfx } from './audio';
@@ -48,6 +49,7 @@ export function updatePet(dt: number): void {
     // grabbed: the coins fly to you, just like picking them up
     drops.splice(drops.indexOf(c), 1);
     wallet.coins += c.v;
+    bump('coins', c.v);
     flying.push({ x: c.x, y: c.y, v: c.v, t: 0 });
     sfx.coin();
     pet.target = null;

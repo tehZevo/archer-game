@@ -1,10 +1,11 @@
 import { CAM, ELITE, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
-import { AREAS, areaFor, tierOf, townStage } from './world';
+import { AREAS, areaFor, areaName, tierOf, townStage } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
 import { spawnBoss } from './boss';
+import { visitArea } from './achievements';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
 } from './types';
@@ -145,6 +146,7 @@ export function gotoFloor(n: number, area?: number): void {
   if (fit === null) n = townStage(AREAS[net.area].depth);
   else net.area = fit;
   game.floor = generateFloor(n);
+  visitArea(areaName(net.area));
   WORLD.h = game.floor.h;
   game.mobs.length = 0;
   game.shots.length = 0;

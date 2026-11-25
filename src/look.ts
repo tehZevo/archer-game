@@ -36,6 +36,7 @@ export const OUTFITS: readonly [string, string, string, string][] = [
   ['#9f6bd8', '#7448a8', '#2f2f5a', '#20203e'], // violet
   ['#e6e9f0', '#b4bccb', '#2a3a6e', '#1c2850'], // white and navy
   ['#3a3f4e', '#262a36', '#8a2e2e', '#5e1e1e'], // black and red
+  ['#f0c040', '#b88a20', '#7a2a8a', '#561c62'], // gold and purple (an achievement unlocks it)
 ];
 
 export const STYLE_NAMES = ['SWEPT', 'SHORT', 'LONG'] as const;
@@ -58,10 +59,15 @@ export function cleanLook(v: unknown): Look {
   return out;
 }
 
-/** Step one field of a look, wrapping around. */
+/** Options not on offer yet (set by achievements.ts): stepping skips them. */
+export const lookLocks: Partial<Record<keyof Look, (i: number) => boolean>> = {};
+
+/** Step one field of a look, wrapping around (past any locked option). */
 export function stepLook(l: Look, k: keyof Look, d: number): Look {
   const n = LOOK_COUNTS[k];
-  return { ...l, [k]: (l[k] + d + n) % n };
+  let v = l[k];
+  for (let i = 0; i < n; i++) { v = (v + d + n) % n; if (!lookLocks[k]?.(v)) break; }
+  return { ...l, [k]: v };
 }
 
 /** A short key for caching baked frames. */

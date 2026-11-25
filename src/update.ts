@@ -1,3 +1,4 @@
+import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
 import { passiveBonus } from './progress';
@@ -31,6 +32,7 @@ export function update(dt: number): void {
   if (board.open) { boardInput(); return; }
   // the settings window (from the Esc menu) sits over the paused game
   if (settingsUi.open) { settingsInput(); return; }
+  if (achUi.open) { achInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }
@@ -197,6 +199,7 @@ export function update(dt: number): void {
   if (talk()) return;
   if (p && pressed('up') && !portalOpen(p.to)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
   else if (p && pressed('up')) {
+    if (p.to > game.floor.number && !game.floor.town) bump('floors'); // climbed past a combat floor
     sfx.portal();
     gotoFloor(p.to, p.area);
     return;
@@ -331,10 +334,16 @@ function pauseInput(m: PauseMenu, dt: number): void {
   // holding Up/Down keeps moving (key repeat)
   if (repeated('up', dt)) m.row = (m.row + n - 1) % n;
   if (repeated('down', dt)) m.row = (m.row + 1) % n;
-  // Left/Right steps stats -> skills -> the SETTINGS button
-  if (pressed('left')) { m.col = ((m.col + 2) % 3) as PauseMenu['col']; m.row = 0; }
-  if (pressed('right')) { m.col = ((m.col + 1) % 3) as PauseMenu['col']; m.row = 0; }
+  // Left/Right steps stats -> skills -> the SETTINGS button -> the AWARDS button
+  if (pressed('left')) { m.col = ((m.col + 3) % 4) as PauseMenu['col']; m.row = 0; }
+  if (pressed('right')) { m.col = ((m.col + 1) % 4) as PauseMenu['col']; m.row = 0; }
   if (pressed('z') || pressed('enter') || pressed(' ')) pauseSpend(m);
+}
+
+/** The achievements list: Up/Down scrolls, Esc / X / Z closes. */
+function achInput(): void {
+  for (const k of ['up', 'down', 'escape'] as const) if (pressed(k)) achKey(k);
+  if (pressed('z') || pressed('enter') || pressed(' ') || pressed('x')) achKey('escape');
 }
 
 /** The settings window's keys (X closes too, like the other windows). */
@@ -347,6 +356,7 @@ function settingsInput(): void {
 /** Spend a point on the selected stat or skill row (or open the settings). */
 export function pauseSpend(m: PauseMenu): void {
   if (m.col === 2) openSettings();
+  else if (m.col === 3) openAchievements();
   else if (m.col === 0) spendStat(STAT_KEYS[m.row]);
   else { const r = skillRows()[m.row]; if (r) spendSkill(r.key); }
 }

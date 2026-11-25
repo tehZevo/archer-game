@@ -2,6 +2,7 @@ import { game } from './state';
 import { menu, menuKey, menuTap, menuText } from './menu';
 import { stylist, stylistTap } from './stylist';
 import { settingsTap, settingsUi } from './settings';
+import { achUi } from './achievements';
 import { actionFor, capture, normalize } from './input';
 
 /* ============================================================
@@ -58,6 +59,7 @@ export function bindMenu(canvas: HTMLCanvasElement): void {
     const x = (e.clientX - b.left) / b.width * game.view.w, y = (e.clientY - b.top) / b.height * game.view.h;
     if (stylist.open) stylistTap(x, y, game.view.w, game.view.h);
     else if (settingsUi.open) settingsTap(x, y, game.view.w, game.view.h);
+    else if (achUi.open) achUi.open = false; // any tap closes the list
     else menuTap(x, y);
     // focus inside the tap's own handler: mobile only opens a keyboard for a user gesture
     syncField();
