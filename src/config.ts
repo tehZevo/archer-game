@@ -67,6 +67,7 @@ export const P = {
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
   GLIDE_LINK: 0.6,     // s the glide-link window an aerial skill opens (covers its use time + delay)
+  SPIN_VOLLEY: 0.6,    // s the window a Midair Spin opens for a linked Plunging Volley
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them

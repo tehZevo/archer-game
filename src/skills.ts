@@ -163,10 +163,13 @@ export function cast(key: SkillKey, chained = false): void {
   // Electric Blitz links into itself: a blitz cast opens a short window in
   // which the next blitz skips the ending lag, chaining like a combo.
   // And the aerial skills (Air Dive, Midair Spin, Plunging Volley) open a
-  // glide-link window: D pressed inside it fires on the spot.
-  const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0) ||
+  // glide-link window: D pressed inside it fires on the spot. A Midair Spin
+  // also opens a window for the Plunging Volley, chaining the aerial kit.
+  // (The Q-slot window covers whichever ground rush is equipped: Sky Toss
+  // or its Electric Blitz upgrade, so the Air Dive flows into both.)
+  const linked = LINKED_SKILLS.includes(kind) || (key === 'Q' && player.combo > 0) ||
     (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0) ||
-    (kind === 'D' && player.glideLinkT > 0);
+    (kind === 'D' && player.glideLinkT > 0) || (kind === 'PV' && player.volleyLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
@@ -218,6 +221,7 @@ export function cast(key: SkillKey, chained = false): void {
     player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
     player.blitzLinkT = 0; // a linked blitz spends its own window too
     player.glideLinkT = 0; // a linked glide spends the aerial skill's window
+    player.volleyLinkT = 0; // ...and so does a linked volley spend the spin's
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
@@ -465,7 +469,8 @@ export function cast(key: SkillKey, chained = false): void {
       // hitting every enemy in reach.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       player.skillPose = 'spin';
-      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide
+      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide...
+      player.volleyLinkT = P.SPIN_VOLLEY; // ...and into a Plunging Volley
       sfx.shoot();
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);

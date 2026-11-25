@@ -295,6 +295,9 @@ export interface Player extends Body {
   /** >0 right after an aerial skill (Air Dive, Midair Spin, Plunging
    *  Volley): Glide (D) links, settling into the glide mid-combo. */
   glideLinkT: number;
+  /** >0 right after a Midair Spin: Plunging Volley (E in the air) links,
+   *  dropping straight out of the sweep. */
+  volleyLinkT: number;
   /** Progression. */
   level: number;
   exp: number;
