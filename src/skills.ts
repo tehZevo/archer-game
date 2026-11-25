@@ -87,8 +87,8 @@ export function cast(key: SkillKey): void {
   if (kind === 'D' && !airborne) return;
   // Sky Toss is a ground launcher: no mid-air use.
   if ((kind === 'Q' || kind === 'VS' || kind === 'RA') && !player.onGround) return;
-  // Plunging Volley fires down from the air: no ground use.
-  if (kind === 'E' && !airborne) return;
+  // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air.
+  // (the shared cooldown gate below covers both forms)
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
@@ -282,7 +282,21 @@ export function cast(key: SkillKey): void {
     }
 
     case 'E': {
-      // Plunging Volley: mid-air only. A small upward bump (no freeze: you
+      // Spike Lift (ground form): spikes erupt in a burst around you and
+      // throw you into the air.
+      // TODO: dedicated spike art; this reuses the rush's horn of light.
+      if (player.onGround) {
+        player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
+        sfx.jump();
+        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
+        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.4 }));
+        tg.forEach((m) => damage(m, P.SPIKE_DMG));
+        player.vy = -P.SPIKE_LIFT;
+        player.onGround = false;
+        player.cd.E = P.SPIKE_CD;
+        break;
+      }
+      // Plunging Volley (air form): a small upward bump (no freeze: you
       // keep your drift and fall right after) as arrows rain straight down
       // into a column beneath you, hitting every enemy in it (nearest first).
       player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
