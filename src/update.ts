@@ -15,6 +15,7 @@ import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
+import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -25,6 +26,8 @@ export function update(dt: number): void {
   // and the stylist's and quest board's
   if (stylist.open) { stylistInput(); return; }
   if (board.open) { boardInput(); return; }
+  // the settings window (from the Esc menu) sits over the paused game
+  if (settingsUi.open) { settingsInput(); return; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return; }
@@ -314,16 +317,26 @@ export function devInput(dt: number): void {
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {
-  const n = m.col === 0 ? STAT_KEYS.length : skillRows().length;
+  const n = m.col === 0 ? STAT_KEYS.length : m.col === 1 ? skillRows().length : 1;
   // holding Up/Down keeps moving (key repeat)
   if (repeated('up', dt)) m.row = (m.row + n - 1) % n;
   if (repeated('down', dt)) m.row = (m.row + 1) % n;
-  if (pressed('left') || pressed('right')) { m.col = m.col ? 0 : 1; m.row = 0; }
+  // Left/Right steps stats -> skills -> the SETTINGS button
+  if (pressed('left')) { m.col = ((m.col + 2) % 3) as PauseMenu['col']; m.row = 0; }
+  if (pressed('right')) { m.col = ((m.col + 1) % 3) as PauseMenu['col']; m.row = 0; }
   if (pressed('z') || pressed('enter') || pressed(' ')) pauseSpend(m);
 }
 
-/** Spend a point on the selected stat or skill row. */
+/** The settings window's keys (X closes too, like the other windows). */
+function settingsInput(): void {
+  for (const k of ['up', 'down', 'left', 'right', 'escape'] as const) if (pressed(k)) settingsKey(k);
+  if (pressed('z') || pressed('enter') || pressed(' ')) settingsKey('enter');
+  if (pressed('x')) settingsKey('escape');
+}
+
+/** Spend a point on the selected stat or skill row (or open the settings). */
 export function pauseSpend(m: PauseMenu): void {
-  if (m.col === 0) spendStat(STAT_KEYS[m.row]);
+  if (m.col === 2) openSettings();
+  else if (m.col === 0) spendStat(STAT_KEYS[m.row]);
   else { const r = skillRows()[m.row]; if (r) spendSkill(r.key); }
 }
