@@ -147,7 +147,6 @@ export function cast(key: SkillKey): void {
         // other players see the shot reach the first target (or whiff across the range)
         const near = tg.filter((m) => game.mobs.includes(m))[0];
         netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96, r.hits);
-        if (player.onGround) player.vx -= face * 40; // recoil nudge
         for (let h = 0; h < r.hits; h++) {
           const hit = (): void => {
             const live = tg.filter((m) => game.mobs.includes(m));
