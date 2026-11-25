@@ -101,7 +101,8 @@ export function cast(key: SkillKey): void {
     player.combo = 0; player.comboT = 0;
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
-    // a link also speeds up the Electric Blitz charge currently filling
+    // linked skills also shorten Tempest's long cooldown and refill a Blitz
+    player.cd.R = Math.max(0, player.cd.R - 1);
     player.blitzT = Math.max(0, player.blitzT - 1);
   }
 
@@ -330,18 +331,18 @@ export function cast(key: SkillKey): void {
     }
 
     case 'R': {
-      // Piercing Arrow: one heavy arrow down the line ahead; every enemy it
-      // passes through takes the full hit, nearest first
+      // Tempest: you vanish as an oval of energy sweeps up and around you,
+      // striking every enemy in a wide radius (nearest first).
+      // TODO: dedicated Tempest art for the sweep; this uses a muzzle flash.
       player.cast = 'shoot'; player.castT = 0.36; player.castTotal = 0.36;
       sfx.shoot();
       const face = player.face;
       const mx = player.x + face * 8, my = player.y + 13;
-      const tg = hitbox(player.x + face * P.PIERCE_RANGE / 2, my, P.PIERCE_RANGE, 28)
-        .sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx))
+      const tg = hitbox(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2)
+        .sort((a, b) => Math.abs(a.x - player.x) - Math.abs(b.x - player.x))
         .slice(0, r.targets);
       game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
-      game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: P.PIERCE_RANGE / 64 });
-      netShot(mx, my, face, P.PIERCE_RANGE);
+      netShot(mx, my, face, P.TEMPEST_R);
       tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
         if (game.mobs.includes(m)) damage(m, r.dmg);
       }));

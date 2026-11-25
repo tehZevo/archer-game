@@ -57,8 +57,8 @@ export const P = {
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
   SPIKE_R: 56,         // px radius of the burst around you
   SPIKE_LIFT: 300,     // px/s upward (about a full jump's height)
-  PIERCE_RANGE: 260,   // Piercing Arrow reach, px
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
+  TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
@@ -114,9 +114,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   E: { key: 'E', name: 'Plunging Volley', tag: 'Aerial', job: 1, minLevel: 10, maxLevel: 3,
        cd: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
        desc: 'Mid-air only: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
-       cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,
-       desc: 'A heavy arrow that pierces every enemy in a line' },
+  R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
+       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 10, targetsMax: 16,
+       desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
        cd: 0, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
