@@ -223,9 +223,9 @@ export function say(raw: string): void {
 }
 
 /** Tell the channel we released a shot (muzzle at x,y; tracer len px). */
-export function netShot(x: number, y: number, face: number, len: number): void {
+export function netShot(x: number, y: number, face: number, len: number, n = 1): void {
   if (!net.started || !peers.size) return;
-  sendShot?.({ t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len) }).catch(() => {});
+  sendShot?.({ t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len), n }).catch(() => {});
 }
 
 /** A snapshot of the connection, for the console: `archer.netStatus()`. */

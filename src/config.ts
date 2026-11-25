@@ -26,7 +26,7 @@ export const P = {
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.5,   // s Sky Assault hovers (striking) before falling
-  BARRAGE_RISE: 1.5,   // fraction of the way up to the highest launched enemy Sky Assault warps (doubled from 0.75: it now rises past them)
+  BARRAGE_UP: 64,      // px Sky Assault warps straight up: a fixed rise (a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
   Z_WINDUP: 0.10,      // s Twin Shot draws the bow before the arrows fly
@@ -44,7 +44,7 @@ export const P = {
   PLUNGE_W: 56,        // Plunging Volley: width of the column it rains into, px
   PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
-  PLUNGE_HOP: 110,     // px/s upward bump when it fires (~6px rise, no hover)
+  PLUNGE_HOP: 200,     // px/s upward bump when it fires (~19px rise; was 110, ~6px)
   PIERCE_RANGE: 260,   // Piercing Arrow reach, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
