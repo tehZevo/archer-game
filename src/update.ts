@@ -56,7 +56,8 @@ export function update(dt: number): void {
   // skill (see skills.ts) shaves time off the charge currently filling.
   if (player.blitzCharges < P.BLITZ_MAX && (player.blitzT += dt) >= P.BLITZ_CHARGE_T) {
     player.blitzCharges++;
-    player.blitzT = player.blitzCharges >= P.BLITZ_MAX ? 0 : P.BLITZ_CHARGE_T - player.blitzT;
+    player.blitzT = player.blitzCharges >= P.BLITZ_MAX ? 0 : player.blitzT - P.BLITZ_CHARGE_T;
+    player.readyT.Q = READY_FLASH; // a charge is back: the Q icon flashes
   }
   if (player.diving && player.onGround) {
     // the dive lands: roll straight into the ground rush
@@ -65,12 +66,12 @@ export function update(dt: number): void {
     player.rushT = P.RUSH_MAX; player.rushDist = 0;
     player.cast = 'rush'; player.castT = P.RUSH_MAX; player.castTotal = P.RUSH_MAX;
   }
-  for (const k of SKILL_ORDER) {
+  for (const k of Object.keys(player.cd)) {
     const was = player.cd[k];
     player.cd[k] = Math.max(0, was - dt);
     // a skill that just finished cooling off flashes on the bar
     if (was > 0 && player.cd[k] === 0) player.readyT[k] = READY_FLASH;
-    else player.readyT[k] = Math.max(0, player.readyT[k] - dt);
+    else player.readyT[k] = Math.max(0, (player.readyT[k] ?? 0) - dt);
   }
   updateStatus(player, dt);
   // F1-F7: emotes

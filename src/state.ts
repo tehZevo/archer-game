@@ -12,17 +12,14 @@ import type {
 // Index MobTypes by name so spawn zones (which store names) resolve a type.
 const MOB_TYPES_BY_NAME: Record<string, MobType> = Object.fromEntries(MOB_TYPES.map((m) => [m.n, m]));
 
-const cd: Record<SkillKey, number> = SKILL_ORDER.reduce(
-  (o, k) => ((o[k] = 0), o),
-  {} as Record<SkillKey, number>,
-);
+/** Cooldown slots: every key, plus the air forms of Q, W and E. */
+const SLOTS = [...SKILL_ORDER, 'Q.air', 'W.air', 'E.air'];
+const cd: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
+const cdMax: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 
 /** How long the ready-glow flashes after a cooldown ends. */
 export const READY_FLASH = 0.45;
-const readyT: Record<SkillKey, number> = SKILL_ORDER.reduce(
-  (o, k) => ((o[k] = 0), o),
-  {} as Record<SkillKey, number>,
-);
+const readyT: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 
 const ranks: Record<SkillKey, number> = (Object.keys(SKILLS) as SkillKey[]).reduce(
   (o, k) => ((o[k] = SKILLS[k].minLevel <= 1 ? 1 : 0), o),
@@ -51,7 +48,7 @@ export const player: Player = {
   hp: start.hpMax, hpMax: start.hpMax,
   mp: start.mpMax, mpMax: start.mpMax,
   cd,
-  readyT,
+  readyT, cdMax,
   diving: false,
   blitzCharges: P.BLITZ_MAX, blitzT: 0,
   rushGoal: P.RUSH_DIST,

@@ -64,6 +64,24 @@ export function endRush(): void {
 /** A skill's use time, shortened by Haste (+N% attack speed: time / (1 + N)). */
 export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
 
+/** Keys with an air form that cools down on its own, so using one form never
+ *  locks out the other: Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
+export const AIR_FORM_KEYS: SkillKey[] = ['Q', 'W', 'E'];
+
+/** The cooldown slot a key uses right now: its air form's ("E.air") in the
+ *  air, else its own. (Sky Assault has no air form: it stays on W.) */
+export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.climb): string {
+  return airborne && AIR_FORM_KEYS.includes(key) && activeSkill(key).key !== 'AB' ? `${key}.air` : key;
+}
+
+/** How long a skill cools down for, by the form it fires as. */
+export function formCd(kind: SkillKey, airborne: boolean): number {
+  if ((kind === 'Q' || kind === 'EB') && airborne) return P.DIVE_CD;
+  if (kind === 'W' && airborne) return P.SPIN_CD;
+  if (kind === 'E' && !airborne) return P.SPIKE_CD;
+  return SKILLS[kind].cd;
+}
+
 export function cast(key: SkillKey): void {
   const s = activeSkill(key);
   if (!isLearned(key)) return;
@@ -77,7 +95,14 @@ export function cast(key: SkillKey): void {
   if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
-  if (player.cd[key] > 0 && !linked) return;
+  // the Midair Spin is on its own cooldown even though W is a link skill,
+  // so one jump can't chain sweeps all the way up
+  const slot = cdSlot(key, airborne);
+  const spin = kind === 'W' && airborne;
+  if (player.cd[slot] > 0 && (!linked || spin)) return;
+  // Electric Blitz spends a banked charge: with none left, nothing happens
+  // (Down + Q, the strike in place, needs no charge)
+  if (kind === 'EB' && !airborne && !held('down') && player.blitzCharges <= 0) return;
   if (player.mp < r.mp) return;
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   if (player.useT > 0 && !linked) return;
@@ -92,7 +117,7 @@ export function cast(key: SkillKey): void {
   // (the shared cooldown gate below covers both forms)
 
   player.mp -= r.mp;
-  player.cd[key] = s.cd;
+  player.cd[slot] = player.cdMax[slot] = formCd(kind, airborne);
   if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.combatT = P.COMBAT_TIME; }
 
   // Fervor: skills chained off Sky Toss stack final damage. The link
@@ -103,7 +128,7 @@ export function cast(key: SkillKey): void {
     player.fervorT = 9;
     // linked skills also shorten Tempest's long cooldown and refill a Blitz
     player.cd.R = Math.max(0, player.cd.R - 1);
-    player.blitzT = Math.max(0, player.blitzT - 1);
+    if (player.blitzCharges < P.BLITZ_MAX) player.blitzT += 1;
   }
 
   switch (kind) {
@@ -224,7 +249,6 @@ export function cast(key: SkillKey): void {
         // Electric Blitz is the charged version: a faster, longer rush that
         // spends a banked charge instead of a cooldown.
         const blitz = s.key === 'EB';
-        if (blitz && player.blitzCharges <= 0) { player.cd.Q = 0.1; return; }
         player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
         player.rushT = P.RUSH_MAX;
         player.rushDist = 0;
@@ -318,7 +342,6 @@ export function cast(key: SkillKey): void {
         tg.forEach((m) => damage(m, P.SPIKE_DMG));
         player.vy = -P.SPIKE_LIFT;
         player.onGround = false;
-        player.cd.E = P.SPIKE_CD;
         break;
       }
       // Plunging Volley (air form): a small upward bump (no freeze: you

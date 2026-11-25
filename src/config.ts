@@ -49,6 +49,7 @@ export const P = {
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
+  DIVE_CD: 0.7,        // s: the dive's own cooldown (the ground rush keeps its own)
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
@@ -62,6 +63,7 @@ export const P = {
   SPIKE_R: 56,         // px radius of the burst around you
   SPIKE_LIFT: 300,     // px/s upward (about a full jump's height)
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
+  SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
@@ -110,7 +112,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 1, minLevel: 5, maxLevel: 3,
-       cd: 0.70, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
+       cd: 4.0, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
        desc: 'Launch enemies airborne, opens the link window' },
   W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 1, minLevel: 5, maxLevel: 3,
        cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 8, targetsMax: 8,
