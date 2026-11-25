@@ -189,7 +189,8 @@ function goldSilhouette(c: HTMLCanvasElement): HTMLCanvasElement {
 
 function drawMob(m: Mob): void {
   const a = SPR.mob[m.type.n];
-  const s = a?.frames[mobFrame(m, a.frames.length, a.fps)];
+  // in hitstun it holds its hurt pose (eyes shut, recoiling); a boss shows its enemy's, grown huge
+  const s = a && ((m.hurt ?? 0) > 0 && !m.dead ? a.hurt : a.frames[mobFrame(m, a.frames.length, a.fps)]);
   // a boss is its enemy grown huge; winding up an attack, it shakes and flashes
   const k = m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1, wind = windingUp(m);
   const shake = wind ? (Math.floor(performance.now() / 50) % 2 ? 1 : -1) : 0;

@@ -75,9 +75,17 @@ export function spawnBoss(): void {
   });
 }
 
-/** Hurt the player (unless they're still flashing from the last hit). True if it landed. */
-export function hurtPlayer(dmg: number): boolean {
+/** Hurt the player (unless they're still flashing from the last hit). True if it landed.
+ *  Hit by something at `fromX`, they're bumped a little up off the ground and back, away from it
+ *  (not while climbing or hovering in Sky Assault). */
+export function hurtPlayer(dmg: number, fromX?: number): boolean {
   if (player.invuln > 0) return false;
+  if (fromX !== undefined && !player.climb && player.hangT <= 0) {
+    const away = Math.sign(player.x - fromX) || -player.face;
+    player.vx = away * P.HIT_PUSH;
+    player.vy = Math.min(player.vy, -P.HIT_HOP);
+    player.onGround = false;
+  }
   player.hp = Math.max(0, player.hp - dmg);
   player.combatT = P.COMBAT_TIME;
   player.invuln = 1.0;
@@ -122,7 +130,7 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
         quakes.push({ x: m.x, y: m.y + m.h, t: QUAKE_T });
         sfx.hit();
         const feet = player.y + player.h;
-        if (player.onGround && Math.abs(d) < BOSS.QUAKE_R + m.w / 2 && Math.abs(feet - (m.y + m.h)) < 20) hurtPlayer(Math.round(m.dmg * BOSS.QUAKE_DMG));
+        if (player.onGround && Math.abs(d) < BOSS.QUAKE_R + m.w / 2 && Math.abs(feet - (m.y + m.h)) < 20) hurtPlayer(Math.round(m.dmg * BOSS.QUAKE_DMG), m.x);
         rest(m);
       }
       break;

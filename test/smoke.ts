@@ -31,6 +31,7 @@ function reset(): void {
   player.combo = 0; player.comboT = 0; player.fervor = 0; player.fervorT = 0;
   player.level = 1; player.exp = 0; player.expNext = expToNext(1); player.sp = 0;
   game.pause = null; player.ap = 0;
+  player.invuln = 999; // a wandering enemy's touch would knock you back mid-check
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
 }
 
