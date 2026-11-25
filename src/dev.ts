@@ -1,7 +1,8 @@
 import { PATHS, START_TOWN, TOWNS, townArea, townDepth, type Place } from './world';
 import { bannerMsg, player } from './state';
 import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
-import { SKILLS, SKILL_ORDER } from './config';
+import { SKILLS } from './config';
+import type { SkillKey } from './types';
 
 /* ============================================================
    DEV MODE
@@ -47,6 +48,6 @@ export const maxOut = (): void => {
   recalcStats();
   player.hp = player.hpMax;
   player.mp = player.mpMax;
-  for (const k of SKILL_ORDER) player.ranks[k] = SKILLS[k].maxLevel;
+  for (const k of Object.keys(SKILLS) as SkillKey[]) player.ranks[k] = SKILLS[k].maxLevel;
   bannerMsg('MAXED', 'LEVEL 100 - ALL SKILLS MAXED');
 };
