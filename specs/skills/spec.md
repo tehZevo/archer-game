@@ -17,3 +17,16 @@ Passives have no key and are learned and ranked through the same picks: Precisio
 Attack skills have a short use time during which no other skill or movement input works; a link skill bypasses it. Jump and Glide have no use time.
 
 Using a skill doesn't announce its name on screen.
+
+## Unlock grouping (planned)
+
+All skills unlock at one of four levels, matching the job ladder: **1, 10, 30, 60**.
+
+- **Lv.1:** the starter kit, available from character creation.
+- **Lv.10:** the second job's wave of skills.
+- **Lv.30:** Mystic Archer's group (with the job's SP bonus).
+- **Lv.60:** Adele's group (with the job's SP bonus).
+
+Which skills sit in each group is deliberately left open for now and will be decided as the build evolves; what's fixed is the cadence — four unlock moments, one per job tier. Skill upgrades (new forms, skills that build on another skill) are generally not unlockable in the same group as the skill they build on, so mastering a base skill and discovering its replacement are separate moments.
+
+SP is awarded to fund each group as it opens, sized so the skills in a group are affordable when it unlocks, with enough total SP to max most (not all) of the tree by the level cap.
