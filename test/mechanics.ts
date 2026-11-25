@@ -55,6 +55,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
+import { clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops } from '../src/gear';
 import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
@@ -464,6 +465,47 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
     `charges ${player.blitzCharges} rushT ${player.rushT.toFixed(2)}`);
   step(Math.round(P.BLITZ_CHARGE_T * 30) + 2);
   check('a charge recharges after 10s', player.blitzCharges === 1, `charges ${player.blitzCharges}`);
+}
+
+// --- Equipment: a weapon and an armor piece ---
+{
+  arena(10); player.ranks.Z = 1;
+  clearGear();
+  check('you start with nothing equipped', gear.weapon === null && gear.armor === null);
+  check('an empty slot leaves damage and damage taken unchanged', gearDmg() === 1 && gearSoak() === 0);
+
+  const bow = gearFor('weapon', 10);
+  check('gear is named by the level it is made for', bow.name === 'Long Bow' && bow.lvl === 10, bow.name);
+  check('a Lv.10 bow adds 30% to every hit', equip(bow) && Math.abs(gearDmg() - 1.30) < 0.001, `x${gearDmg().toFixed(3)}`);
+  const war0 = player.war;
+  tap('z'); step(12);
+  const hit = game.dmgNums[game.dmgNums.length - 1];
+  check('the bow multiplies the arrow that lands', hit.v > war0 * 1.29, `hit ${hit.v}`);
+
+  check('a weaker bow leaves the stronger one equipped', !equip(gearFor('weapon', 4)) && gear.weapon?.lvl === 10);
+  const better = gearFor('weapon', 20);
+  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Composite Bow', gear.weapon?.name);
+
+  const plate = gearFor('armor', 30);
+  check('armor soaks a share of what you take (capped)', equip(plate) && gearSoak() === 0.35, `soak ${gearSoak()}`);
+  player.invuln = 0;
+  hurtPlayer(100);
+  check('a 100-damage hit costs 65 with that armor on', player.hp === player.hpMax - 65, `hp ${player.hp}`);
+
+  // a kill can leave a piece behind, and walking over it puts it on
+  clearGear();
+  const slain = dummy(100);
+  for (let i = 0; i < 40 && gearDrops.length === 0; i++) { killMob(slain); slain.hp = 1e6; }
+  check('a defeated enemy can leave gear where it fell', gearDrops.length > 0 && gearDrops[0].item.lvl === slain.lvl);
+  const d = gearDrops[0];
+  player.x = d.x; player.y = d.y - player.h; player.onGround = true;
+  step(1);
+  check('walking over it equips it', gear[d.item.kind] !== null && gearDrops.length === 0);
+
+  save();
+  clearGear();
+  apply(load());
+  check('your gear survives a reload', gear.weapon?.name === 'Composite Bow' && gear.armor?.name === 'Plate Armor', `${gear.weapon?.name} / ${gear.armor?.name}`);
 }
 
 // --- E / R ---

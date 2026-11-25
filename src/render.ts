@@ -22,7 +22,7 @@ import type { Sprite } from './sprites';
 import { clamp } from './util';
 import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
-import { drawCoins, drawNpcs, drawPet } from './economydraw';
+import { drawCoins, drawGearDrops, drawNpcs, drawPet } from './economydraw';
 import { labelShadow, text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { settings } from './settings';
@@ -446,6 +446,7 @@ export function render(): void {
   drawPlayer();
   drawPet();
   drawCoins(); // in front of the player, so you can see what you're standing on
+  drawGearDrops(); // the same: you want to see what you're about to pick up
   game.fx.forEach(drawFx);
   if (settings.dmgNums) game.dmgNums.forEach(drawDmg);
   ctx.restore();

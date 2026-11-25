@@ -3,6 +3,8 @@ import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
 import { pet } from './pets';
+import { gear } from './gear';
+import type { GearItem, GearKind } from './gear';
 import { runBonus } from './achievements';
 import { SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
@@ -40,6 +42,8 @@ export interface SaveData {
   quests?: Quest[];
   /** Owns the pet (absent in older saves: no). */
   pet?: boolean;
+  /** The equipped weapon and armor (absent in older saves: nothing worn). */
+  gear?: { weapon: GearItem | null; armor: GearItem | null };
 }
 
 /** localStorage when available (absent in headless tests unless stubbed). */
@@ -56,8 +60,16 @@ export function snapshot(): SaveData {
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
     pet: pet.owned,
+    gear: { weapon: gear.weapon, armor: gear.armor },
   };
 }
+
+/** Rebuild a saved piece of gear, discarding anything malformed. */
+const cleanGear = (v: unknown, kind: GearKind): GearItem | null => {
+  const i = v as GearItem | undefined;
+  if (!i || i.kind !== kind || !i.name) return null;
+  return { kind, name: i.name, lvl: int(i.lvl, 1, 99, 1) };
+};
 
 const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
   const n = Math.floor(Number(v));
@@ -105,6 +117,8 @@ export function apply(d: unknown): Place | null {
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, START_POTIONS);
   loadQuests(s.quests);
   pet.owned = s.pet === true;
+  gear.weapon = cleanGear(s.gear?.weapon, 'weapon');
+  gear.armor = cleanGear(s.gear?.armor, 'armor');
   // resume in the saved town (the start if it's gone from the map)
   return cleanPlace({ town: s.town }) ?? START;
 }

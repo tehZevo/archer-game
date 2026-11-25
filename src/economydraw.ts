@@ -1,10 +1,11 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { labelShadow, text } from './font';
+import { labelShadow, text, textWidth } from './font';
 import { SKILLS } from './config';
 import { activeSkill } from './progress';
 import { pet, PET } from './pets';
 import { keyName } from './input';
+import { gearDrops } from './gear';
 import { drops, FLY_T, flying, npcNear, PRICES, RESPEC_PRICES, shop, SHOP_ITEMS, TRAINER_ITEMS, TRAINER_SLOTS, trainer, wallet } from './economy';
 import { board, boardRows, isDone, QUEST_MAX, quests } from './quests';
 import type { Npc } from './types';
@@ -133,6 +134,23 @@ const BOARD = [
   'WWWW....WWWW',
 ];
 let boardSprite: HTMLCanvasElement | null = null;
+
+/** Gear lying on the floor: a small crate-coloured tile with its name above
+ *  it, blinking out the way a coin pile does. */
+export function drawGearDrops(): void {
+  for (const d of gearDrops) {
+    if (d.t < 5 && Math.floor(d.t * 6) % 2 === 0) continue;
+    const x = Math.round(d.x), y = Math.round(d.y);
+    const col = d.item.kind === 'weapon' ? '#c9a26a' : '#8ea3c2';
+    ctx.fillStyle = '#00000080'; ctx.fillRect(x - 5, y - 8, 11, 11);
+    ctx.fillStyle = col; ctx.fillRect(x - 4, y - 7, 9, 9);
+    ctx.fillStyle = '#00000060'; ctx.fillRect(x - 2, y - 5, 5, 5);
+    const label = `${d.item.name} Lv.${d.item.lvl}`;
+    labelShadow(ctx);
+    text(ctx, label, x - textWidth(label) / 2, y - 18, 1, col, 'left');
+    labelShadow(ctx, false);
+  }
+}
 
 export function drawNpcs(): void {
   const near = npcNear();

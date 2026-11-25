@@ -1,6 +1,7 @@
 import { bump } from './achievements';
 import { ELITE, P } from './config';
 import { localKill } from './boost';
+import { dropGear, gearDmg } from './gear';
 import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
@@ -26,7 +27,8 @@ export const BAR_SHOW = 4;
 export const HITSTUN = 0.35, DYING_MAX = 0.6;
 
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
-  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * rand(0.92, 1.08);
+  // the weapon in hand multiplies everything the bow fires
+  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
   if (crit) dmg *= 1.5;
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Sky Toss airborne bonus
@@ -82,6 +84,7 @@ export function killMob(m: Mob): void {
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);
   dropCoins(m);
+  dropGear(m); // a rare piece of gear, scaled to the enemy's level
   if (m.elite) for (let i = 1; i < ELITE.COINS; i++) dropCoins({ ...m, x: m.x + (i % 2 ? 6 : -6) * Math.ceil(i / 2) });
   if (m.boss) bossDown(m, dropCoins);
   questKill(m.name);

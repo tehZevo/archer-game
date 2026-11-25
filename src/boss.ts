@@ -4,6 +4,7 @@ import { game, logMsg, player } from './state';
 import { areaMobs } from './floor';
 import { areaOf, isPathEnd, mobLevel } from './world';
 import { mobExp } from './progress';
+import { gearSoak } from './gear';
 import { sfx } from './audio';
 import type { Mob, MobType, Portal } from './types';
 
@@ -86,6 +87,8 @@ export function hurtPlayer(dmg: number, fromX?: number): boolean {
     player.vy = Math.min(player.vy, -P.HIT_HOP);
     player.onGround = false;
   }
+  // armor soaks a share of the hit
+  dmg = Math.max(1, Math.round(dmg * (1 - gearSoak())));
   player.hp = Math.max(0, player.hp - dmg);
   player.combatT = P.COMBAT_TIME;
   player.invuln = 1.0;
