@@ -311,14 +311,23 @@ function updateMobs(dt: number): void {
         // round there, coming back from the other side instead of parking.
         const goal = player.x + m.dir * CHASE_OVERSHOOT;
         const toGoal = goal - m.x;
-        if (Math.abs(toGoal) > CHASE_SLACK) {
+        // the sweep ends near the goal, once it is already past it (you
+        // moved), or pinned at its platform's end (the goal lies beyond it)
+        const pinned = (m.dir > 0 && m.x >= hi - 1) || (m.dir < 0 && m.x <= lo + 1);
+        if (Math.abs(toGoal) > CHASE_SLACK && Math.sign(toGoal) === m.dir && !pinned) {
           m.turn = 0;
           m.vx = m.dir * m.spd * slowFactor(m);
         } else {
           // at the far end of the sweep: stop, then set off the other way
           m.turn = (m.turn ?? 0) + dt;
           m.vx = 0;
-          if (m.turn >= CHASE_TURN) { m.dir = Math.sign(d) || m.dir; m.turn = 0; }
+          if (m.turn >= CHASE_TURN) {
+            // back toward you; pinned at an edge with you still beyond it,
+            // it sweeps back the other way instead of pressing on the edge
+            const toward = Math.sign(d) || m.dir;
+            m.dir = pinned && toward === m.dir ? -m.dir : toward;
+            m.turn = 0;
+          }
         }
       } else {
         m.vx += (m.dir * m.spd * slowFactor(m) - m.vx) * Math.min(1, 12 * dt);
@@ -346,8 +355,12 @@ function updateMobs(dt: number): void {
       // swept landing; also follows slopes up/down by STICK px. A mob only
       // ever lands on its own platform (it passes through any other), so a
       // launch can't knock it onto a different one. A boss is big enough to
-      // stride across the whole floor, so it lands on whatever is under it.
-      const home = (p: Platform): boolean => !!m.boss || p.block === m.spawn?.block;
+      // stride across the whole floor, so it lands on whatever is under it
+      // (except, slamming down at you, anything above where you stand).
+      const drop = m.boss?.dropTo;
+      const home = (p: Platform): boolean => m.boss
+        ? drop === undefined || surfaceYAt(p, m.x) >= drop - 4
+        : p.block === m.spawn?.block;
       const s = m.vy < 0 ? null : surfaceBetween(m.x, m.w, prevFeet - STICK, m.y + m.h + STICK, null, home);
       if (s) {
         m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; m.airTime = Math.min(m.airTime, 0.35);

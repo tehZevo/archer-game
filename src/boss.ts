@@ -35,7 +35,12 @@ export const BOSS = {
 } as const;
 
 export type BossAct = 'walk' | 'windCharge' | 'charge' | 'windSlam' | 'slam';
-export interface BossState { act: BossAct; t: number; cd: number; air: boolean }
+export interface BossState {
+  act: BossAct; t: number; cd: number; air: boolean;
+  /** a slam down at a player below: the feet height it drops to (it
+   *  passes through any platform above that on the way down) */
+  dropTo?: number;
+}
 
 /** Shockwaves on the ground (drawn by render; they fade over QUAKE_T). */
 export const quakes: { x: number; y: number; t: number }[] = [];
@@ -122,11 +127,18 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
           // Leap at the platform you are standing on, not always the one
           // directly above: rise to your feet (capped at the leap's reach)
           // and travel the horizontal distance in the same arc.
+          // Below it, it hops and drops down through its own platform to
+          // yours, the arc stretched by the fall.
           b.act = 'slam'; b.air = false;
-          const rise = Math.max(0, (m.y + m.h) - (player.y + player.h));
+          const feet = player.y + player.h;
+          const rise = Math.max(0, (m.y + m.h) - feet);
+          const fall = player.onGround ? Math.max(0, feet - (m.y + m.h)) : 0;
+          b.dropTo = fall > 16 ? feet : undefined;
           m.vy = -Math.min(BOSS.JUMP, Math.sqrt(2 * P.GRAVITY * (rise + 10)));
-          // airtime for that rise (up and back down), used to pace the stride
-          const t = 2 * -m.vy / P.GRAVITY;
+          // airtime for that arc (up, then down to the landing height), used
+          // to pace the stride
+          const v0 = -m.vy, drop = b.dropTo !== undefined ? fall : 0;
+          const t = (v0 + Math.sqrt(v0 * v0 + 2 * P.GRAVITY * drop)) / P.GRAVITY;
           m.vx = Math.sign(d) * clamp(Math.abs(d) / Math.max(t, 0.15), m.spd, m.spd * 3);
         }
       }
@@ -152,7 +164,7 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
 
 function rest(m: Mob): void {
   const b = m.boss!;
-  b.act = 'walk'; b.cd = BOSS.CD; m.vx = 0;
+  b.act = 'walk'; b.cd = BOSS.CD; m.vx = 0; b.dropTo = undefined;
 }
 
 

@@ -60,6 +60,7 @@ import { SKILLS as DEFS, startsLearned } from '../src/config';
 import { clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops } from '../src/gear';
 import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
+import { mobBounds } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
@@ -1608,13 +1609,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   };
   check("a slam's shockwave hurts a player on the ground nearby", slam(boss.w / 2 + 40) > 0 && quakes.length === 1);
   check('but not one well out of reach (it leaps toward you)', slam(WORLD.w - 60, 30) === 0);
+  // a wide platform above the ground for the boss to leap onto and off
+  // (floors are built from single tiles, so add one for these tests)
+  const deck: Platform = { x: WORLD.w / 2 - 60, y: ground.y - 48, w: 120, h: 16 };
+  game.floor.platforms.push(deck);
+  const onDeck = (): void => { stand(deck.x + deck.w / 2); player.y = deck.y - player.h; player.plat = deck; };
   // a slam can put the boss up on a platform above it, and it keeps chasing
   // from there (it is not tied to the ground it spawned on)
   {
     // a platform wide enough for the boss to stand on, above the ground
-    const deck = game.floor.platforms.find((q) => q !== ground && q.w > boss.w + 8 && q.y < ground.y - 20);
-    if (deck) {
-      stand(deck.x + deck.w / 2);
+    {
+      onDeck();
       boss.x = deck.x + deck.w / 2; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
       boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
       step(2);
@@ -1624,9 +1629,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // a slam aimed at a player on a high platform lands on that platform,
   // rising to their feet rather than to a fixed height
   {
-    const deck = game.floor.platforms.find((q) => q !== ground && q.w > boss.w + 8 && q.y < ground.y - 20);
-    if (deck) {
-      stand(deck.x + deck.w / 2);
+    {
+      onDeck();
       boss.x = deck.x + deck.w / 2; boss.y = ground.y - boss.h; boss.vx = boss.vy = 0;
       boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
       quakes.length = 0;
@@ -1635,6 +1639,21 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
       game.mobs.push(boss);
     }
   }
+  // and the other way: a slam from a high platform at a player below drops
+  // down through it to their level
+  {
+    {
+      const mid = deck.x + deck.w / 2, below = mid + (mid < WORLD.w / 2 ? 1 : -1) * (deck.w / 2 + 40);
+      game.mobs.splice(0, game.mobs.length, boss);
+      boss.x = mid; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
+      boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
+      stand(below); step(2);
+      boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+      for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = 1; game.mobs.splice(0, game.mobs.length, boss); stand(below); step(1); }
+      check('a slam from a platform jumps down to the player below', Math.abs(boss.y + boss.h - ground.y) < 1 && boss.boss.act === 'walk' && !boss.boss.dropTo, `feet ${(boss.y + boss.h).toFixed(1)} vs ground ${ground.y}, act ${boss.boss.act}`);
+    }
+  }
+  game.floor.platforms.splice(game.floor.platforms.indexOf(deck), 1);
   // beaten: the way up opens
   killMob(boss);
   check('beating the boss clears it', !bossAlive());
@@ -1827,6 +1846,25 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('three tiles past you, it stops to turn round', m.dir === 1 && m.vx === 0, `dir ${m.dir} vx ${m.vx.toFixed(1)}`);
   step(Math.ceil(CHASE_TURN / P.STEP));
   check('...then comes back at full speed', m.dir === -1 && Math.abs(m.vx + 60) < 1e-6, `vx ${m.vx.toFixed(1)}`);
+  game.mobs.length = 0;
+}
+
+// --- enemies never get stuck running one way (past the sweep, at an edge) ---
+{
+  arena(1, 200); player.invuln = 999;
+  // you slipped behind it mid-sweep: it is already past its goal, so it turns
+  const m = dummy(140); m.spd = 60; m.aggro = true;
+  m.x = player.x + 80; m.dir = 1; step(1);
+  check('a chasing enemy already past its turn point stops to turn', m.vx === 0, `vx ${m.vx.toFixed(1)}`);
+  step(Math.ceil(CHASE_TURN / P.STEP) + 1);
+  check('...and heads back toward you', m.dir === -1 && m.vx < 0, `dir ${m.dir} vx ${m.vx.toFixed(1)}`);
+  // you stand at the end of its platform: its turn point lies off the end,
+  // so it turns there and sweeps back instead of pressing on the edge
+  const [, hi] = mobBounds(m);
+  player.x = hi - 6; m.x = hi - 30; m.dir = 1; m.vx = 0;
+  let minX = Infinity, reached = false;
+  for (let i = 0; i < 90; i++) { step(1); if (m.x >= hi - 1) reached = true; if (reached) minX = Math.min(minX, m.x); }
+  check('an enemy chasing you at a platform end sweeps back from the edge', reached && minX < hi - 20, `reached ${reached} min ${minX.toFixed(1)} hi ${hi}`);
   game.mobs.length = 0;
 }
 
