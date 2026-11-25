@@ -17,6 +17,13 @@ const cd: Record<SkillKey, number> = SKILL_ORDER.reduce(
   {} as Record<SkillKey, number>,
 );
 
+/** How long the ready-glow flashes after a cooldown ends. */
+export const READY_FLASH = 0.45;
+const readyT: Record<SkillKey, number> = SKILL_ORDER.reduce(
+  (o, k) => ((o[k] = 0), o),
+  {} as Record<SkillKey, number>,
+);
+
 const ranks: Record<SkillKey, number> = (Object.keys(SKILLS) as SkillKey[]).reduce(
   (o, k) => ((o[k] = SKILLS[k].minLevel <= 1 ? 1 : 0), o),
   {} as Record<SkillKey, number>,
@@ -44,6 +51,7 @@ export const player: Player = {
   hp: start.hpMax, hpMax: start.hpMax,
   mp: start.mpMax, mpMax: start.mpMax,
   cd,
+  readyT,
   cast: null, castT: 0, castTotal: 0,
   invuln: 0,
   anim: 0, animState: 'idle',

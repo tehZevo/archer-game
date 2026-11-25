@@ -2,6 +2,7 @@ import { shop, trainer } from './economy';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
 import { SKILL_BAR } from './config';
+import { READY_FLASH } from './state';
 import { placeName } from './world';
 import { critChance } from './combat';
 import { ctx } from './canvas';
@@ -58,6 +59,22 @@ function hudShadow(on: boolean): void {
   ctx.shadowOffsetX = on ? k : 0; ctx.shadowOffsetY = on ? k : 0; ctx.shadowBlur = 0;
 }
 
+/** A yellow spark and frame flash around a bar icon the moment its skill
+ *  comes off cooldown (fades over READY_FLASH seconds). */
+function readyGlow(x: number, y: number, t: number): void {
+  const k = Math.min(1, t / READY_FLASH);
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.strokeStyle = '#ffd166';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - 1.5, y - 1.5, 19, 19);
+  // a four-point spark at the top-right corner
+  const sx = x + 16, sy = y - 1, r = 2 + 3 * k;
+  ctx.fillStyle = '#ffe9a8';
+  ctx.fillRect(sx - 1, sy - r, 2, r * 2 + 1);
+  ctx.fillRect(sx - r, sy - 1, r * 2 + 1, 2);
+  ctx.restore();
+}
 function drawHUD(): void {
   hudShadow(true);
   try { drawHUDItems(); } finally { hudShadow(false); }
@@ -151,6 +168,8 @@ function drawHUDItems(): void {
       ctx.fillRect(x, by, sw, 16 * frac);
       text(ctx, cd.toFixed(1), x + sw / 2, by + 5, 1, '#fff', 'center');
     }
+    // the flash that plays as the cooldown runs out, so you know you can press it
+    if (learned && player.readyT[k] > 0) readyGlow(x, by, player.readyT[k]);
     if (learned && linked) {
       text(ctx, 'LINK', x + sw / 2, by + 9, 1, '#6fd3ff', 'center');
     }
