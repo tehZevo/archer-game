@@ -72,9 +72,10 @@ export function text(
   scale = 1,
   color = '#fff',
   align: Align = 'left',
+  gap = GAP,
 ): void {
   const s = String(str).toUpperCase();
-  const total = s.length * (W * scale + GAP * scale) - GAP * scale;
+  const total = s.length * (W * scale + gap * scale) - gap * scale;
   // round the start so glyphs land on whole pixels (odd widths centre on a half pixel)
   let ox = Math.round(align === 'center' ? x - total / 2 : align === 'right' ? x - total : x);
   y = Math.round(y);
@@ -87,7 +88,7 @@ export function text(
         if (row[c] === '1') ctx.fillRect(ox + c * scale, y + r * scale, scale, scale);
       }
     }
-    ox += (W + GAP) * scale;
+    ox += (W + gap) * scale;
   }
 }
 
@@ -100,8 +101,47 @@ export function labelShadow(ctx: CanvasRenderingContext2D, on = true): void {
 }
 
 /** Width of a string in pixels at the given scale. */
-export function textWidth(str: string, scale = 1): number {
-  return String(str).length * (W * scale + GAP * scale) - GAP * scale;
+export function textWidth(str: string, scale = 1, gap = GAP): number {
+  return String(str).length * (W * scale + gap * scale) - gap * scale;
+}
+
+/** Outline text drawn glyph by glyph: each character's 1px outline is painted
+ *  with its own fill, so overlapping (tight-gap) digits keep their outlines —
+ *  each one sits on top of the previous, left to right. */
+export function outlinedText(
+  ctx: CanvasRenderingContext2D,
+  str: string,
+  x: number,
+  y: number,
+  scale: number,
+  color: string,
+  gap = GAP,
+): void {
+  const s = String(str).toUpperCase();
+  const total = textWidth(s, scale, gap);
+  y = Math.round(y);
+  // draw right-to-left so the leftmost glyph sits on top of its neighbors
+  let ox = Math.round(x - total / 2) + (s.length - 1) * (W + gap) * scale;
+  for (const ch of [...s].reverse()) {
+    const g = G[ch] || G[' '];
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      ctx.fillStyle = '#000';
+      for (let r = 0; r < H; r++) {
+        const row = g[r];
+        for (let c = 0; c < W; c++) {
+          if (row[c] === '1') ctx.fillRect(ox + dx + c * scale, y + dy + r * scale, scale, scale);
+        }
+      }
+    }
+    ctx.fillStyle = color;
+    for (let r = 0; r < H; r++) {
+      const row = g[r];
+      for (let c = 0; c < W; c++) {
+        if (row[c] === '1') ctx.fillRect(ox + c * scale, y + r * scale, scale, scale);
+      }
+    }
+    ox -= (W + gap) * scale;
+  }
 }
 
 /** Whether the font can draw a character (lower case counts: text() upper-cases). */

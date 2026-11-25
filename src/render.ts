@@ -25,7 +25,7 @@ import { clamp } from './util';
 import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
 import { drawCoins, drawGearDrops, drawNpcs, drawPet } from './economydraw';
-import { labelShadow, text, textWidth } from './font';
+import { labelShadow, outlinedText, text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { settings } from './settings';
 import { STATUS } from './status';
@@ -521,11 +521,10 @@ function drawDmg(d: DmgNum): void {
   // scale keeps damage readable at a glance
   ctx.save();
   ctx.globalAlpha = clamp(d.t, 0, 1);
-  const s = d.txt ?? String(d.v), x = Math.round(d.x), y = Math.round(d.y) - 10;
-  for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    text(ctx, s, x + ox, y + oy, 2, '#000', 'center');
-  }
-  text(ctx, s, x, y, 2, d.col, 'center');
+  const s = d.txt ?? String(d.v), y = Math.round(d.y) - 10;
+  // tight tracking: digits overlap by a column (negative gap); outlinedText
+  // centers the string on d.x
+  outlinedText(ctx, s, d.x, y, 2, d.col, -1);
   ctx.restore();
 }
 
