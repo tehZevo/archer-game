@@ -2607,8 +2607,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.ranks.HA = 3;
   check('Haste shortens the recovery by 10% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.1) < 1e-6,
     `${delayTime('EB').toFixed(4)}`);
-  player.ranks.HA = 0; player.ranks.EB = 0; player.ranks.Q = 1;}
-
+  player.ranks.HA = 0; player.ranks.EB = 0; player.ranks.Q = 1;
 }
 
 {
