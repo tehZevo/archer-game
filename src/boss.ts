@@ -1,4 +1,5 @@
 import { P, WORLD } from './config';
+import { clamp } from './util';
 import { game, logMsg, player } from './state';
 import { areaMobs } from './floor';
 import { areaOf, isPathEnd, mobLevel } from './world';
@@ -114,7 +115,17 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
       if (b.act === 'windCharge') m.dir = Math.sign(d) || m.dir;
       if (b.t <= 0) {
         if (b.act === 'windCharge') { b.act = 'charge'; b.t = BOSS.RUSH_T; }
-        else { b.act = 'slam'; b.air = false; m.vy = -BOSS.JUMP; m.vx = clampAbs(d * 1.2, m.spd * 2); }
+        else {
+          // Leap at the platform you are standing on, not always the one
+          // directly above: rise to your feet (capped at the leap's reach)
+          // and travel the horizontal distance in the same arc.
+          b.act = 'slam'; b.air = false;
+          const rise = Math.max(0, (m.y + m.h) - (player.y + player.h));
+          m.vy = -Math.min(BOSS.JUMP, Math.sqrt(2 * P.GRAVITY * (rise + 10)));
+          // airtime for that rise (up and back down), used to pace the stride
+          const t = 2 * -m.vy / P.GRAVITY;
+          m.vx = Math.sign(d) * clamp(Math.abs(d) / Math.max(t, 0.15), m.spd, m.spd * 3);
+        }
       }
       break;
     case 'charge':
@@ -141,7 +152,6 @@ function rest(m: Mob): void {
   b.act = 'walk'; b.cd = BOSS.CD; m.vx = 0;
 }
 
-const clampAbs = (v: number, max: number): number => Math.max(-max, Math.min(max, v));
 
 /** True while the boss is winding up (it flashes and shakes). */
 export const windingUp = (m: Mob): boolean => m.boss?.act === 'windCharge' || m.boss?.act === 'windSlam';
