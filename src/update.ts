@@ -322,8 +322,9 @@ function updateMobs(dt: number): void {
       m.y += (old + m.vy) * 0.5 * dt;
       // swept landing; also follows slopes up/down by STICK px. A mob only
       // ever lands on its own platform (it passes through any other), so a
-      // launch can't knock it onto a different one.
-      const home = (p: Platform): boolean => p.block === m.spawn?.block;
+      // launch can't knock it onto a different one. A boss is big enough to
+      // stride across the whole floor, so it lands on whatever is under it.
+      const home = (p: Platform): boolean => !!m.boss || p.block === m.spawn?.block;
       const s = m.vy < 0 ? null : surfaceBetween(m.x, m.w, prevFeet - STICK, m.y + m.h + STICK, null, home);
       if (s) {
         m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; m.airTime = Math.min(m.airTime, 0.35);
