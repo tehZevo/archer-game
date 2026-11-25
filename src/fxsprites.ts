@@ -28,6 +28,7 @@ export const RAMPS = {
   purple: ramp([[70, 20, 140], [120, 50, 210], [165, 100, 255], [215, 180, 255], [255, 255, 255]]),
   pink: ramp([[150, 30, 110], [230, 70, 170], [255, 130, 210], [255, 200, 235], [255, 255, 255]]),
   sky: ramp([[60, 130, 200], [110, 180, 240], [160, 215, 255], [210, 240, 255], [255, 255, 255]]),
+  orange: ramp([[150, 60, 0], [230, 110, 20], [255, 160, 60], [255, 215, 160], [255, 255, 255]]),
   red: ramp([[130, 10, 10], [210, 30, 30], [255, 80, 60], [255, 170, 150], [255, 255, 255]]),
 };
 type RampName = keyof typeof RAMPS;
@@ -435,6 +436,62 @@ function spiritAnim(): FxAnim {
   });
 }
 
+/** Plunging Volley, on the archer: an orange burst at the bow with green
+ *  motes flung off it. Origin at her middle. */
+function volleyFlareAnim(): FxAnim {
+  const S = 40, c = S / 2;
+  return anim(S, S, c, c, 5, (L, f) => {
+    const R = rng(81 + f), fade = 1 - f / 5;
+    if (f < 2) L.disc('orange', c, c + 4, 6 - f * 2, 1.2);
+    L.ring('orange', c, c + 4, 6 + f * 3, 3 + f * 1.5, 1.2, 0.9 * fade);
+    for (let i = 0; i < 6; i++) {
+      const a = R() * Math.PI * 2, d = 4 + f * 3 + R() * 4;
+      L.spark(i % 2 ? 'green' : 'lime', c + Math.cos(a) * d, c + 4 + Math.sin(a) * d * 0.7, 0.9 * fade, i === 0);
+    }
+  });
+}
+
+/** Plunging Volley's blast: a flat tornado under the archer's feet:
+ *  a low, wide whirl of orange rings sweeping out under her, with a
+ *  green-shot impact ring. Origin at the top centre (her feet). */
+function tornadoAnim(depth: number): FxAnim {
+  const W = 84, H = Math.round(depth) + 14, cx = W / 2, top = 4;
+  return anim(W, H, cx, top, 8, (L, f) => {
+    const R = rng(131 + f), fade = f < 5 ? 1 : 1 - (f - 4) / 4;
+    const reach = Math.min(1, (f + 1) / 3) * depth; // it drives down over the first frames
+    for (let k = 0; k < 5; k++) {
+      const t = k / 4, y = top + t * reach;
+      const rx = 34 - t * 16, ry = 4 - t * 1.5; // a wide, flat whirl, tapering a little
+      const spin = f * 1.3 + k * 0.55;
+      // the whole ring faintly, its front half bright: a whirl, not stacked bars
+      L.ring('orange', cx, y, rx, ry, 1.1, 0.45 * fade);
+      arc(L, 'orange', cx, y, rx, ry, 1.4, (1.2 - t * 0.3) * fade, spin, spin + 2.4);
+      if (k % 3 === 1) arc(L, 'green', cx, y, rx * 0.85, ry, 1.0, 0.9 * fade, spin + 2.8, spin + 4.2);
+    }
+    if (f >= 2) {
+      const by = top + depth, g = (f - 2) / 6;
+      L.ring('orange', cx, by, 18 + g * 20, 3 + g * 2, 1.3, 1.0 * (1 - g));
+      L.disc('lime', cx, by - 1, 4 - g * 3, 1.1 * (1 - g));
+      for (let i = 0; i < 6; i++) L.spark(i % 2 ? 'green' : 'orange', cx + (R() * 2 - 1) * (16 + f * 4), by - R() * 6, 0.9 * fade, i === 0);
+    }
+  }, 0.4);
+}
+
+/** Agile Climbing's rush: green streaks shooting up past the archer with
+ *  sparkles left behind. Origin at her feet. */
+function climbRiseAnim(): FxAnim {
+  const W = 24, H = 44, bx = W / 2, by = H - 2;
+  const lanes = [-7, 6, -2, 9, -10, 3];
+  return anim(W, H, bx, by, 6, (L, f) => {
+    const R = rng(151 + f), fade = 1 - f / 6;
+    lanes.forEach((dx, i) => {
+      const head = by - 6 - ((f * 7 + i * 9) % 34), len = 10 + (i % 3) * 3;
+      L.line(i % 2 ? 'green' : 'lime', bx + dx, head + len, bx + dx, head, 0.3, 1.1, 1.0 * fade);
+    });
+    for (let i = 0; i < 4; i++) L.spark('lime', bx + (R() * 2 - 1) * 10, by - R() * 30, 0.85 * fade, i === 0);
+  }, 0.35);
+}
+
 let cache: Record<string, FxAnim> | null = null;
 /** Lazily build every effect (needs a canvas, so not at import time). */
 export function FX(): Record<string, FxAnim> {
@@ -458,6 +515,9 @@ export function FX(): Record<string, FxAnim> {
       tempestHit: hitAnim(false, 'pink'),
       skyHit: hitAnim(false, 'sky'),
       spinHit: hitAnim(false, 'red'),
+      volleyFlare: volleyFlareAnim(),
+      tornado: tornadoAnim(20), // a flat sweeping blast under her, not a tall column
+      climbRise: climbRiseAnim(),
       rain: rainAnim(),
       rainHit: hitAnim(false, 'gold'),
       bolt: boltAnim(),

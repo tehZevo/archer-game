@@ -1543,6 +1543,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(10); player.ranks.AC = 1; onRope();
   setKey('up', true); tap('c');
   check('with it, Up + Jump rushes up the rope', player.climbRush);
+  check('...trailing green rising streaks', game.fx.some((f) => f.type === 'climbRise'));
   release();
 }
 // --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
@@ -2832,6 +2833,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the whole animation is about a second and a half', PLAYER_DEATH_T > 1 && PLAYER_DEATH_T < 2, `${PLAYER_DEATH_T}`);
   step(Math.ceil(PLAYER_DEATH_T / P.STEP));
   check('...and it clears', getPlayerDeath() === null, `${getPlayerDeath()?.age}`);
+}
+
+{
+  // Shell Barrage fires its whole burst even with nothing to hit, fanned so every bolt shows
+  arena(30); player.ranks.Z = 3; player.ranks.S = 1;
+  game.shots.length = 0;
+  tap('z');
+  check('a whiffed Shell Barrage still fires every bolt', game.shots.length === shotCount(rank('Z')), `${game.shots.length} shots`);
+  check('...fanned apart, not stacked on one line', new Set(game.shots.map((s) => Math.round(s.y))).size === game.shots.length);
+}
+
+{
+  // Plunging Volley: one orange/green flare on the archer and a single tornado
+  // blast below her, instead of a falling volley on every enemy it hits
+  arena(30); player.ranks.E = 1; player.ranks.PV = 1;
+  player.y = ground().y - player.h - 120; player.onGround = false; player.x = 140;
+  const m = dummy(140); m.y = player.y + player.h + 10;
+  game.fx.length = 0;
+  tap('e'); step(6);
+  check('the volley flares on the archer and blasts a tornado below', game.fx.some((f) => f.type === 'volleyFlare') && game.fx.some((f) => f.type === 'tornado'));
+  check('...with no rain or per-enemy hit sparks', !game.fx.some((f) => f.type === 'rain' || f.type === 'rainHit' || f.type === 'hit' || f.type === 'crit'));
+  check('...and the enemy below still takes the hits', m.hp < 1e6, `hp ${m.hp}`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

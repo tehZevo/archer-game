@@ -3,7 +3,7 @@ import { EMOTES } from './emotes';
 import { netEmote } from './net';
 import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
-import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
+import { CAM, FX_DUR, P, SKILL_ORDER, TILE, WORLD } from './config';
 import { passiveBonus } from './progress';
 import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, READY_FLASH, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
@@ -27,6 +27,9 @@ import { updateCorpses } from './deaths';
 import { INFLICT, maybeInflict, slowFactor, updateStatus } from './status';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
+
+/** Countdown to Agile Climbing's next rising-streak effect. */
+let climbFxT = 0;
 
 export function update(dt: number): void {
   // knocked out: the tombstone and ghost animation starts here, and ages on
@@ -133,9 +136,14 @@ export function update(dt: number): void {
     // (once you have Agile Climbing)
     if (!locked && pressed('c') && held('up') && player.ranks.AC > 0) { player.climbRush = true; sfx.jump(); }
     const rush = P.CLIMB_RUSH * (1 + passiveBonus('AC'));
-    if (player.climbRush) player.y -= rush * dt;
-    else if (!locked && held('up'))   player.y -= P.CLIMB * (1 + passiveBonus('AC')) * dt;
+    if (player.climbRush) {
+      player.y -= rush * dt;
+      // green streaks shoot up past her as she rushes
+      climbFxT -= dt;
+      if (climbFxT <= 0) { climbFxT = 0.1; game.fx.push({ type: 'climbRise', x: player.x, y: player.y + player.h, t: FX_DUR.climbRise }); }
+    } else if (!locked && held('up'))   player.y -= P.CLIMB * (1 + passiveBonus('AC')) * dt;
     else if (!locked && held('down')) player.y += P.CLIMB * dt;
+    if (!player.climbRush) climbFxT = 0;
     const top = r.y1 - player.h, bot = r.y2 - player.h;
     player.y = clamp(player.y, top, bot);
     player.x = r.x;

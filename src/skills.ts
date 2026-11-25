@@ -461,13 +461,14 @@ export function cast(key: SkillKey, chained = false): void {
         .sort((a, b) => a.y - b.y)
         .slice(0, r.targets);
       player.vy -= P.PLUNGE_HOP; // stacks on the current momentum, not a fixed reset
-      // the volley rains onto each target, or onto the ground below if none
-      (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x, feet + 40]])
-        .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
+      // one orange/green flare on her and a single tornado blast driving down
+      // below her (no per-enemy rain: the blast is the hit effect)
+      game.fx.push({ type: 'volleyFlare', x: player.x, y: player.y + player.h / 2, t: FX_DUR.volleyFlare });
+      game.fx.push({ type: 'tornado', x: player.x, y: feet, t: FX_DUR.tornado });
       const shots = shotCount(r);
       for (let h = 0; h < shots; h++) {
         later(0.08 + h * NUM_GAP, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit', more: h < shots - 1 }));
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { noFx: true, more: h < shots - 1 }));
         });
       }
       // the volley opens the link window, so Midair Spin (W in the air)
@@ -567,11 +568,12 @@ export function cast(key: SkillKey, chained = false): void {
       const shots = shotCount(r);
       for (let h = 0; h < shots; h++) {
         const t = tg[h % (tg.length || 1)];
+        // fanned a few px apart so every bolt of the burst reads, even on a whiff
+        const fan = (h % 2 ? 1 : -1) * Math.ceil(h / 2) * 3;
         // launched one after another from the bow
-        spawnArrow(x0, y0, t ? t.x : x0 + player.face * 200, !!t,
+        spawnArrow(x0, y0 + fan, t ? t.x : x0 + player.face * 200, !!t,
           t ? () => { if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < shots }); } : undefined,
           { speed: P.BOLT_V, sprite: 'bolt', dir: player.face, delay: h * NUM_GAP });
-        if (!t) break; // nothing to hit: one bolt is enough
       }
       break;
     }
