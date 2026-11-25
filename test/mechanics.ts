@@ -45,6 +45,7 @@ import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
+import { pet, PET } from '../src/pets';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
@@ -1529,6 +1530,33 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   drops.length = 0; const m = dummy(100); m.level = 10; killMob(m);
   check('coins are worth more on an icy floor', drops[0].v >= Math.round(coinValue(10, 0) * FLOOR_MODS.icy.coins));
   game.floor.mods = undefined; drops.length = 0; game.mobs = [];
+}
+
+// --- pet: bought once, follows you, fetches coin piles lying near you ---
+{
+  arena(); drops.length = 0; flying.length = 0;
+  pet.owned = false; wallet.coins = PET.PRICE - 1;
+  check("can't buy the pet without the coins", !buy('pet') && !pet.owned);
+  wallet.coins = PET.PRICE + 5;
+  check('buying the pet takes its price', buy('pet') && pet.owned && wallet.coins === 5);
+  check('only one pet', !buy('pet') && wallet.coins === 5);
+  step(1);
+  check('it arrives at your shoulder', Math.abs(pet.x - (player.x - player.face * PET.BACK)) < 1);
+  // a pile near you: it fetches it
+  drops.push({ x: player.x + 60, y: ground().y, vy: 0, v: 7, t: COIN_LIFE, landed: true });
+  const far = { x: player.x + PET.RANGE + 60, y: ground().y, vy: 0, v: 9, t: COIN_LIFE, landed: true };
+  drops.push(far);
+  step(Math.ceil(1 / P.STEP));
+  check('the pet fetches a nearby pile into your wallet', wallet.coins === 12 && drops.length === 1, `coins ${wallet.coins} drops ${drops.length} pet ${pet.x.toFixed(0)},${pet.y.toFixed(0)} p ${player.x.toFixed(0)}`);
+  step(Math.ceil(1 / P.STEP));
+  check('it leaves piles out of its range', drops[0] === far && wallet.coins === 12);
+  check('it comes back to you', Math.abs(pet.x - (player.x - player.face * PET.BACK)) < 4);
+  // saved
+  const snap = snapshot(); pet.owned = false; apply(snap);
+  check('the pet survives a save and load', pet.owned);
+  pet.owned = false; apply({ ...snap, pet: undefined });
+  check('older saves have no pet', !pet.owned);
+  drops.length = 0; flying.length = 0; wallet.coins = 0;
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

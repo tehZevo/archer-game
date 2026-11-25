@@ -3,6 +3,7 @@ import { areaFor, lastTown, START_AREA } from './world';
 import { net } from './net';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
+import { pet } from './pets';
 import { SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
 import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
@@ -38,6 +39,8 @@ export interface SaveData {
   potions?: { hp: number; mp: number };
   /** Active quests (absent in older saves: none). */
   quests?: Quest[];
+  /** Owns the pet (absent in older saves: no). */
+  pet?: boolean;
 }
 
 /** localStorage when available (absent in headless tests unless stubbed). */
@@ -53,6 +56,7 @@ export function snapshot(): SaveData {
     floor: game.floor.number, area: net.area,
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
+    pet: pet.owned,
   };
 }
 
@@ -87,6 +91,7 @@ export function apply(d: unknown): number | null {
   wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, 0);
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, 0);
   loadQuests(s.quests);
+  pet.owned = s.pet === true;
   // resume at the latest town on the saved branch (it also sets the area)
   const floor = int(s.floor, 1, 9999, 1);
   const at = lastTown(floor, areaFor(floor, int(s.area, 0, 9999, START_AREA)) ?? START_AREA);

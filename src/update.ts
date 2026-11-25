@@ -16,6 +16,7 @@ import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './bos
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
 import { grip } from './floormods';
+import { updatePet } from './pets';
 import { INFLICT, maybeInflict, slowFactor, updateStatus } from './status';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
@@ -204,6 +205,7 @@ export function update(dt: number): void {
   updateMobs(dt);
   updateQuakes(dt);
   updateEconomy(dt); // coin piles fall and fade; X picks up, A/S drink
+  updatePet(dt); // fetches piles lying near you
   updateRush(dt); // after the mobs move, so the ones being pushed stay in front
 
   // arrows: fly, and apply their hit on arrival

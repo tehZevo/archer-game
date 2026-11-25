@@ -7,6 +7,7 @@ import { openStylist } from './stylist';
 import { openBoard } from './quests';
 import { net } from './net';
 import { coinMult } from './floormods';
+import { buyPet } from './pets';
 import { activeSkill, recalcStats, STAT_KEYS, upgradesOf } from './progress';
 import type { Floor, Mob, Npc, SkillKey } from './types';
 
@@ -120,9 +121,11 @@ export function npcNear(): Npc | null {
 /** The shop window (open while browsing; the world waits). */
 export const shop = { open: false, sel: 0 };
 export const SHOP_ITEMS = [
-  { kind: 'hp' as const, name: 'HP POTION', key: 'A' },
-  { kind: 'mp' as const, name: 'MP POTION', key: 'S' },
+  { kind: 'hp' as const, name: 'HP POTION', key: 'A', desc: 'RESTORES 40% HP' },
+  { kind: 'mp' as const, name: 'MP POTION', key: 'S', desc: 'RESTORES 40% MP' },
+  { kind: 'pet' as const, name: 'PET', key: '', desc: 'FETCHES COINS FOR YOU' },
 ];
+export type ShopKind = (typeof SHOP_ITEMS)[number]['kind'];
 
 /* ---------------- the trainer (respec) ----------------
    From the third town (Lanternhollow) up, a trainer stands beside the
@@ -175,7 +178,8 @@ export function resetPoints(): boolean {
 }
 
 /** Buy one of an item; false if you can't afford it or can't carry more. */
-export function buy(kind: 'hp' | 'mp'): boolean {
+export function buy(kind: ShopKind): boolean {
+  if (kind === 'pet') return buyPet();
   if (wallet.coins < PRICES[kind] || wallet[kind] >= CARRY_MAX) return false;
   wallet.coins -= PRICES[kind];
   wallet[kind]++;

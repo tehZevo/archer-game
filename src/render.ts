@@ -19,7 +19,7 @@ import type { Sprite } from './sprites';
 import { clamp } from './util';
 import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
-import { drawCoins, drawNpcs } from './economydraw';
+import { drawCoins, drawNpcs, drawPet } from './economydraw';
 import { text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { settings } from './settings';
@@ -387,6 +387,7 @@ export function render(): void {
   game.shots.forEach(drawShot);
   drawGhosts();
   drawPlayer();
+  drawPet();
   drawCoins(); // in front of the player, so you can see what you're standing on
   game.fx.forEach(drawFx);
   if (settings.dmgNums) game.dmgNums.forEach(drawDmg);
