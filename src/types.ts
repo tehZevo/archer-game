@@ -69,6 +69,7 @@ export interface SkillRank {
   maxLevel: number;
 }
 
+
 /** Esc menu cursor; `scroll` is the first skill row shown when the list is longer than the panel. */
 /** col 2 is the SETTINGS button (top right), col 3 the AWARDS button (top left). */
 export interface PauseMenu { col: 0 | 1 | 2 | 3; row: number; scroll?: number }
@@ -277,6 +278,9 @@ export interface Player extends Body {
   castT: number;
   castTotal: number;
   invuln: number;
+  /** True when the current invulnerability came from a miss: it protects
+   *  without the flashing-sprite visual. */
+  invulnQuiet: boolean;
   anim: number;
   animState: 'idle' | 'walk' | 'jump' | 'climb' | 'prone';
   /** Fervor stacks from linked skills. */

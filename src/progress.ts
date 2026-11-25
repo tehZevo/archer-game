@@ -63,7 +63,7 @@ export function statsForLevel(level: number): { hpMax: number; mpMax: number; de
     hpMax: Math.round(100 * 1.05 ** n), // ~100 HP / 50 MP at Lv.1, +5% per level
     mpMax: Math.round(50 * 1.05 ** n),
     dex: 24 + n * 4,
-    war: 14 + n * 1.7, // ~18 per Twin Shot arrow at Lv.1: a Garden Snail takes ~3 casts; tracks mob HP growth
+    war: 14 + n * 2.55, // steeper per-level growth (was 1.7): damage dealt climbs 1.5x as fast
   };
 }
 
@@ -76,7 +76,7 @@ export const STAT_INFO: Record<StatKey, { name: string; desc: string }> = {
   dex: { name: 'DEX', desc: 'Attack +3%' },
   vit: { name: 'VIT', desc: 'Max HP +5%' },
   spi: { name: 'SPI', desc: 'Max MP' },
-  luk: { name: 'LUK', desc: 'Crit chance' },
+  luk: { name: 'LUK', desc: 'Crit chance +2% a point, to 100%; extra points add crit damage' },
 };
 
 export const STAT_KEYS = Object.keys(STAT_INFO) as StatKey[];
@@ -129,12 +129,18 @@ export function rank(key: SkillKey): SkillRank {
     maxLevel: s.maxLevel,
     mp: Math.round(lerp(s.mp1, s.mpMax, t)),
     dmg: lerp(s.dmg1, s.dmgMax, t) / 100,
-    // Echo Shot (a passive): the shadow archer fires alongside you, doubling
-    // (bonus1..bonusMax x) the arrows every attack skill fires.
-    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)) * (s.passive ? 1 : Math.max(1, Math.round(passiveBonus('ES')))),
+    // The skill's own shots. Echo Shot is a separate multiplier (see shots()):
+    // keeping the two apart is what lets the shadow's arrows ride the same
+    // damage-number stack as the base volley instead of colliding with it.
+    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)),
     targets: Math.round(lerp(s.targets1 ?? 1, s.targetsMax ?? 1, t)),
   };
 }
+
+/** How many arrows an attack fires: its own shots, doubled by the Echo Shot
+ *  passive's shadow archer. The shadow always procs (a minimum of one lot),
+ *  and its arrows are counted here rather than folded into `hits`. */
+export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('ES')));
 
 /** A passive's current bonus: 0 until learned, then steps up per rank. */
 export function passiveBonus(key: SkillKey): number {

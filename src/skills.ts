@@ -1,11 +1,11 @@
 import { FX_DUR, LINKED_SKILLS, P, SKILLS } from './config';
 import { game, later, mobBounds, player } from './state';
 import { held } from './input';
-import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
+import { airborneInBox, damage, hitbox, NUM_GAP, spawnArrow } from './combat';
 import { surfaceAt, surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
 import { netShot } from './net';
-import { activeSkill, isLearned, passiveBonus, rank } from './progress';
+import { activeSkill, isLearned, passiveBonus, rank, shotCount } from './progress';
 import type { SkillKey } from './types';
 
 /** Airborne enemies Sky Assault can reach: around and below the player. */
@@ -86,10 +86,11 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
       .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
     // the rush carries and hits (a Blitz strikes twice); the launch is the
     // W's job now
-    for (let h = 0; h < r.hits; h++) {
-      later(h * 0.08, () => {
+    const shots = shotCount(r);
+    for (let h = 0; h < shots; h++) {
+      later(h * NUM_GAP, () => {
         tg.filter((m) => game.mobs.includes(m)).forEach((m) => {
-          damage(m, r.dmg, { more: h < r.hits - 1 });
+          damage(m, r.dmg, { more: h < shots - 1 });
           if (!inPlace && h === 0) m.vx = face * 80; // a little follow-through drift
         });
       });
@@ -258,8 +259,9 @@ export function cast(key: SkillKey, chained = false): void {
         game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
         // other players see the shot reach the first target (or whiff across the range)
         const near = tg.filter((m) => game.mobs.includes(m))[0];
-        netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96, r.hits);
-        for (let h = 0; h < r.hits; h++) {
+        const shots = shotCount(r);
+        netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96, shots);
+        for (let h = 0; h < shots; h++) {
           const hit = (): void => {
             const live = tg.filter((m) => game.mobs.includes(m));
             // a tracer whips out to each target, or across the range on a
@@ -269,9 +271,11 @@ export function cast(key: SkillKey, chained = false): void {
               const len = Math.max(12, Math.abs(ex - mx));
               game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: len / 64 });
             }
-            live.forEach((m) => damage(m, r.dmg, { more: h < r.hits - 1 }));
+            live.forEach((m) => damage(m, r.dmg, { more: h < shots - 1 }));
           };
-          if (h === 0) hit(); else later(h * 0.08, hit);
+          // one number per arrow, spaced by the stack's own cadence so the
+          // shadow's shot lands above the base hit's, not on top of it
+          if (h === 0) hit(); else later(h * NUM_GAP, hit);
         }
       });
       break;
@@ -369,8 +373,9 @@ export function cast(key: SkillKey, chained = false): void {
       const mx = player.x + face * 8, my = player.y + 13;
       game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
       game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: -face });
-      for (let h = 0; h < r.hits; h++) {
-        later(h * 0.08, () => {
+      const shots = shotCount(r);
+      for (let h = 0; h < shots; h++) {
+        later(h * NUM_GAP, () => {
           const live = tg.filter((m) => game.mobs.includes(m));
           const sx = player.x + face * 8, sy = player.y + 13;
           // one tracer per target, or one across the range on a whiff
@@ -454,9 +459,10 @@ export function cast(key: SkillKey, chained = false): void {
       // the volley rains onto each target, or onto the ground below if none
       (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x, feet + 40]])
         .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
-      for (let h = 0; h < r.hits; h++) {
-        later(0.08 + h * 0.08, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit', more: h < r.hits - 1 }));
+      const shots = shotCount(r);
+      for (let h = 0; h < shots; h++) {
+        later(0.08 + h * NUM_GAP, () => {
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit', more: h < shots - 1 }));
         });
       }
       // the volley opens the link window, so Midair Spin (W in the air)
@@ -497,9 +503,10 @@ export function cast(key: SkillKey, chained = false): void {
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
       // the sweep cuts several times, not once
-      for (let h = 0; h < r.hits; h++) {
-        later(h * 0.08, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { more: h < r.hits - 1 }));
+      const shots = shotCount(r);
+      for (let h = 0; h < shots; h++) {
+        later(h * NUM_GAP, () => {
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { more: h < shots - 1 }));
         });
       }
       break;
@@ -551,12 +558,13 @@ export function cast(key: SkillKey, chained = false): void {
       sfx.shoot();
       const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
       const x0 = player.x + player.face * 8, y0 = player.y + 13;
-      for (let h = 0; h < r.hits; h++) {
+      const shots = shotCount(r);
+      for (let h = 0; h < shots; h++) {
         const t = tg[h % (tg.length || 1)];
         // launched one after another from the bow
         spawnArrow(x0, y0, t ? t.x : x0 + player.face * 200, !!t,
-          t ? () => { if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < r.hits }); } : undefined,
-          { speed: P.BOLT_V, sprite: 'bolt', dir: player.face, delay: h * 0.08 });
+          t ? () => { if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < shots }); } : undefined,
+          { speed: P.BOLT_V, sprite: 'bolt', dir: player.face, delay: h * NUM_GAP });
         if (!t) break; // nothing to hit: one bolt is enough
       }
       break;

@@ -19,16 +19,16 @@ import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomNa
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
-import { expBar, MAX_LEVEL } from '../src/progress';
+import { activeSkill, MAX_LEVEL, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
-import { BAR_SHOW, damage, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
+import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast, cdSlot, delayTime } from '../src/skills';
-import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, passiveBonus, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { mobLevel } from '../src/world';
 import { fmtNum } from '../src/util';
 import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/boss';
@@ -598,18 +598,18 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   // Echo Shot (passive): the shadow archer fires alongside you, doubling the
   // arrows every attack fires, permanently, once bought with SP. No timer.
   arena(20); player.ranks.Z = 1;
-  check('Twin Shot fires two arrows with no Echo Shot', rank('Z').hits === 2);
+  check('Twin Shot fires two arrows with no Echo Shot', shotCount(rank('Z')) === 2, `${shotCount(rank('Z'))}`);
   player.ranks.ES = 1;
-  check('Echo Shot doubles Twin Shot\'s arrows', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('Echo Shot doubles Twin Shot\'s arrows', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   player.ranks.Z = 3;
-  check('...and it scales with the skill\'s own rank', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('...and it scales with the skill\'s own rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   player.ranks.ES = 3;
-  check('Echo Shot stays doubled at max rank', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('Echo Shot stays doubled at max rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   check('Echo Shot unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
   player.ranks.ES = 0;
-  check("a passive's bonus is one lot of arrows until learned", rank('Z').hits === 2);
+  check("a passive's bonus is one lot of arrows until learned", shotCount(rank('Z')) === 2);
   arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
-  check('the shadow doubles a mid-air Plunging Volley too', rank('PV').hits === 4, `${rank('PV').hits}`);
+  check('the shadow doubles a mid-air Plunging Volley too', shotCount(rank('PV')) === 4, `${shotCount(rank('PV'))}`);
 }
 // --- Electric Blitz: Q's charged upgrade ---
 {
@@ -2650,6 +2650,101 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const m = dummy(140);
   tap('q'); step(24); // the slide ends and the strike lands (both hits)
   check('the Blitz rush strikes the carried enemy', m.hp < 1e6, `hp ${m.hp.toFixed(0)}`);
+}
+
+{
+  // Damage growth: both sides of the fight scale 1.5x faster per level
+  arena(1); player.stats.dex = 0; recalcStats();
+  const war1 = player.war;
+  arena(21); recalcStats();
+  check('attack grows 2.55 per level (was 1.7)', Math.abs(player.war - (14 + 20 * 2.55)) < 1e-9, `${player.war}`);
+  check('...and it is 1.5x the old per-level step', Math.abs((player.war - 14) / 20 - 1.5 * 1.7) < 1e-9);
+  check('the Lv.1 archer still starts at 14 attack', Math.abs(war1 - 14) < 1e-9, `${war1}`);
+  arena(1); spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
+  check('a Lv.1 mob hits for its base damage', game.mobs[0].dmg === MOB_TYPES[0].dmg, `${game.mobs[0].dmg}`);
+  game.mobs.length = 0; gotoPlace({ path: 'meadows', floor: 11 });
+  spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
+  check('a high-floor mob hits 1.5x harder per level than before',
+    game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * (1 + (mobLevel(game.floor.place) - 1) * 0.09)),
+    `${game.mobs[0].dmg} at floor ${game.floor.floor}`);
+  gotoPlace(START);
+}
+
+{
+  // LUK rework: 2% crit chance a point, capped at 100%, overflow to crit damage
+  arena(20); player.ranks.SA = 0; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
+  check('LUK starts at the 15% base crit', Math.abs(critChance() - 0.15) < 1e-9, `${critChance()}`);
+  player.stats.luk = 10;
+  check('each LUK point is worth 2% crit chance', Math.abs(critChance() - 0.35) < 1e-9, `${critChance()}`);
+  player.stats.luk = 42;
+  check('the base 15% counts toward the cap, so 43 points fills it', Math.abs(critChance() - 0.99) < 1e-9, `${critChance()}`);
+  player.stats.luk = 43;
+  check('...and 43 points caps it at 100%', critChance() === 1, `${critChance()}`);
+  player.stats.luk = 48;
+  check('points past the cap convert at 2% crit damage each', Math.abs(critMult() - (1.5 + 5 * 0.02)) < 1e-9, `${critMult()}`);
+  check('...counting only the overflow, not the whole stat', critOverflowPoints() === 5, `${critOverflowPoints()}`);
+  player.stats.luk = 0;
+  check('below the cap a crit still hits for 1.5x', Math.abs(critMult() - 1.5) < 1e-9);
+  // and the multiplier is the one damage() applies
+  arena(20); player.ranks.SA = 0; recalcStats();
+  const m = dummy(140); m.level = 20;
+  // the same roll on both shots (it also drives the damage's random spread):
+  // at 0 LUK it is under the 15% crit threshold, at 60 LUK it always crits
+  const saved = Math.random; Math.random = () => 0.2; // one shared random spread
+  player.stats.luk = 0; damage(m, 1); const plain = 1e6 - m.hp;
+  player.stats.luk = 60; m.hp = 1e6; damage(m, 1); const critted = 1e6 - m.hp;
+  Math.random = saved; player.stats.luk = 0; recalcStats();
+  // 60 LUK is 17 points past the 43-point cap: 1.5 + 17 x 2% = 1.84
+  const ratio = critted / plain;
+  check('a crit lands the converted multiplier (1.5 + 17 x 2%)', Math.abs(ratio / 1.84 - 1) < 0.01, `x${ratio.toFixed(3)}`);
+  player.stats.luk = 0; recalcStats();
+}
+
+{
+  // A miss grants i-frames without the flashing-sprite visual
+  arena(20); player.invuln = 0; player.invulnQuiet = false; game.dmgNums.length = 0;
+  const m = dummy(140); m.level = 35; // 15 levels above: guaranteed miss
+  const saved = Math.random; Math.random = () => 0.5;
+  damage(m, 1);
+  check('the missed attack shows a floating MISS', game.dmgNums.length === 1 && game.dmgNums[0].txt === 'MISS',
+    `${game.dmgNums.length} ${game.dmgNums[0]?.txt}`);
+  check('...as a stacked damage number, not flat text', game.dmgNums[0].col === '#ffffff' && game.dmgNums[0].vy === -12,
+    `${game.dmgNums[0].col} ${game.dmgNums[0].vy}`);
+  check('...and it procs the invulnerability delay', player.invuln > 0 && player.invuln <= MISS_IFRAMES, `${player.invuln.toFixed(2)}`);
+  check('...which is the quiet kind (no flash)', player.invulnQuiet);
+  step(1);
+  check('the i-frames tick down like a normal hit\'s', player.invuln < MISS_IFRAMES, `${player.invuln.toFixed(3)}`);
+  Math.random = saved;
+}
+
+{
+  // Plunging Volley's vertical reach is half what it was
+  check('the volley column reaches 88px below the feet (was 176)', P.PLUNGE_DEPTH === 88);
+  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  player.y = ground().y - player.h - 120; player.onGround = false; // airborne
+  const near = dummy(140); near.y = ground().y - near.h; // right below
+  const far = dummy(140); far.y = ground().y - near.h - 100; // ~100px down
+  player.x = 140;
+  tap('e'); step(2);
+  check('the volley hits an enemy directly below', near.hp < 1e6, `hp ${near.hp}`);
+  check('...and one about 100px down no longer does', far.hp === 1e6, `hp ${far.hp}`);
+}
+
+{
+  // Echo Shot's arrows always proc and stack above the base hit's number
+  arena(20); player.ranks.Z = 1; player.ranks.ES = 1;
+  const m = dummy(140); player.x = m.x - 40;
+  check('the shadow doubles the shot without changing the skill\'s own hits',
+    rank('Z').hits === 2 && shotCount(rank('Z')) === 4, `${rank('Z').hits}/${shotCount(rank('Z'))}`);
+  game.dmgNums.length = 0;
+  tap('z'); step(Math.ceil((P.Z_WINDUP + 0.4) / P.STEP)); // the whole volley lands
+  const nums = game.dmgNums.filter((d) => d.txt !== 'MISS');
+  check('every arrow shows its own number', nums.length === shotCount(rank('Z')), `${nums.length} numbers`);
+  check('the numbers stack one line apart, not in a pile',
+    new Set(nums.map((d) => Math.round(d.y))).size === nums.length, `${nums.map((d) => d.y.toFixed(0)).join(',')}`);
+  check('...in the stack\'s own NUM_GAP cadence', nums.every((d) => d.vy === -12), `${nums[0]?.vy}`);
+  check('the shadow hits for the same damage as the base arrow',
+    nums.every((d) => Math.abs(d.v - nums[0].v) <= 1), `${nums.map((d) => d.v).join(',')}`);
 }
 
 {
