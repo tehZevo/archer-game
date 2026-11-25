@@ -114,8 +114,9 @@ export function landDive(): void {
 export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
 
 /** Recovery after the animation ends: movement frees up at useT's end, a new
- *  skill waits out this delay. Links skip it (see cast). */
-export const delayTime = (kind: SkillKey): number => SKILLS[kind].delay ?? P.DELAY_TIME;
+ *  skill waits out this delay. Links skip it (see cast). Attack speed (Haste)
+ *  shortens it, the same way it shortens the use time. */
+export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DELAY_TIME) / (1 + passiveBonus('HA'));
 
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
@@ -163,10 +164,13 @@ export function cast(key: SkillKey, chained = false): void {
   // Electric Blitz links into itself: a blitz cast opens a short window in
   // which the next blitz skips the ending lag, chaining like a combo.
   // And the aerial skills (Air Dive, Midair Spin, Plunging Volley) open a
-  // glide-link window: D pressed inside it fires on the spot.
-  const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0) ||
+  // glide-link window: D pressed inside it fires on the spot. A Midair Spin
+  // also opens a window for the Plunging Volley, chaining the aerial kit.
+  // (The Q-slot window covers whichever ground rush is equipped: Sky Toss
+  // or its Electric Blitz upgrade, so the Air Dive flows into both.)
+  const linked = LINKED_SKILLS.includes(kind) || (key === 'Q' && player.combo > 0) ||
     (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0) ||
-    (kind === 'D' && player.glideLinkT > 0);
+    (kind === 'D' && player.glideLinkT > 0) || (kind === 'PV' && player.volleyLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
@@ -193,8 +197,9 @@ export function cast(key: SkillKey, chained = false): void {
   if (kind === 'EB' && !airborne && !held('down') && player.blitzCharges <= 0) return;
   if (player.mp < r.mp) return;
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
-  // ...except that Plunging Volley can cut a Sky Assault hover short, so W -> E flows
-  const fromHover = kind === 'PV' && player.hangT > 0;
+  // ...except that the airborne kit (Plunging Volley, Glide, and the Q-slot
+  // rush you land into) cuts a Sky Assault hover short, so W -> E flows
+  const fromHover = player.hangT > 0 && (kind === 'PV' || kind === 'D' || key === 'Q');
   if ((player.useT > 0 || player.recoverT > 0) && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
@@ -218,6 +223,7 @@ export function cast(key: SkillKey, chained = false): void {
     player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
     player.blitzLinkT = 0; // a linked blitz spends its own window too
     player.glideLinkT = 0; // a linked glide spends the aerial skill's window
+    player.volleyLinkT = 0; // ...and so does a linked volley spend the spin's
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
@@ -287,7 +293,10 @@ export function cast(key: SkillKey, chained = false): void {
     }
 
     case 'D': {
-      // Glide: acrobatic forward tumble; usable repeatedly in the air
+      // Glide: acrobatic forward tumble; usable repeatedly in the air.
+      // Off a Sky Assault hover it ends the hover, so the tumble carries you
+      // (the hover's own per-frame vx/vy reset would otherwise eat it).
+      player.hangT = 0; player.hangHits = 0;
       player.cast = 'jump'; player.castT = 0.18; player.castTotal = 0.18;
       sfx.glide();
       const dir = player.face;          // launch in the direction you're facing
@@ -304,6 +313,8 @@ export function cast(key: SkillKey, chained = false): void {
       // Air Dive (Q's air form, its own skill): plunge diagonally down,
       // carrying the enemies under and in front of you, and roll into the
       // ground rush on landing. (drawn in its dive pose: see localPose)
+      player.hangT = 0; player.hangHits = 0; // out of a Sky Assault hover (the
+      // dive's own momentum takes over immediately, no stuck dive pose)
       player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
       sfx.jump();
       player.vx = player.face * P.DIVE_VX;
@@ -466,7 +477,8 @@ export function cast(key: SkillKey, chained = false): void {
       // hitting every enemy in reach.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       player.skillPose = 'spin';
-      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide
+      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide...
+      player.volleyLinkT = P.SPIN_VOLLEY; // ...and into a Plunging Volley
       sfx.shoot();
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
