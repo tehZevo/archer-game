@@ -398,47 +398,33 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('send interval is fewer than 10 updates/s', SEND_MS > 100);
 }
 
-// --- branching upgrades: one branch per slot locks out the other ---
+// --- branching upgrades: the slots that still branch (Z, W) ---
 {
   arena(30);
   player.ranks.Z = 3; player.sp = 2;
   const offered = skillRows().map((r) => r.key);
-  check('Z offers both branches (Shell Barrage, Backstep Shot)', offered.includes('S') && offered.includes('BS'));
-  spendSkill('BS');
-  check('taking Backstep Shot binds it to Z at rank 1', activeSkill('Z').key === 'BS' && rank('Z').level === 1, `rank ${rank('Z').level}`);
-  check('the rival branch is locked out', !skillRows().some((r) => r.key === 'S') && !spendSkill('S') && player.ranks.S === 0);
+  check('Z offers Shell Barrage', offered.includes('S'));
+  check('the retired branches are not offered', !offered.includes('BS') && !offered.includes('VS') && !offered.includes('RA'));
+  spendSkill('S');
+  check('taking Shell Barrage binds it to Z at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
+  check('Shell Barrage is the only offer on Z', skillRows().filter((r) => r.slot === 'Z' && r.key !== 'Z').length === 1);
 }
 {
-  arena(30); player.ranks.BS = 1;
+  arena(30); player.ranks.S = 1;
   const m = dummy(140);
-  const x0 = player.x;
   tap('z'); step(10);
-  check('Backstep Shot hops backward while hitting ahead', player.x < x0 - 8 && m.hp < 1e6 && player.face === 1, `dx ${(player.x - x0).toFixed(1)}`);
+  check('Shell Barrage fires a burst that stuns ahead', m.hp < 1e6 && player.face === 1);
 }
 {
-  arena(20); player.ranks.VS = 1; player.ranks.W = 1;
+  // Sky Toss stays the launcher on Q; Sky Assault is W's upgrade
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
   const m = dummy(140);
-  const x0 = player.x, y0 = player.y;
-  tap('q'); step(6);
-  check('Vault Shot leaps up and backward', player.y < y0 - 20 && player.x < x0, `dy ${(y0 - player.y).toFixed(1)} dx ${(player.x - x0).toFixed(1)}`);
-  check('Vault Shot launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
-  const hp0 = m.hp; step(6); tap('w'); step(15);
-  check('Vault Shot opens the link window for W', m.hp < hp0);
-}
-{
-  // Rising Arrow: the other Sky Toss branch
-  arena(20); player.ranks.RA = 1; player.ranks.W = 1;
-  const m = dummy(130);
-  const x0 = player.x, y0 = player.y;
-  tap('q');
-  let gap = 0;
-  for (let i = 0; i < 8; i++) { step(1); gap = Math.max(gap, Math.abs((player.y + player.h) - (m.y + m.h))); }
-  check('Rising Arrow launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
-  check('Rising Arrow jumps straight up with it (rising together)', player.y < y0 - 40 && Math.abs(player.x - x0) < 16 && gap < 12, `dy ${(y0 - player.y).toFixed(1)} gap ${gap.toFixed(1)}`);
+  tap('q'); step(14);
+  check('Sky Toss launches the enemy ahead', m.hp < 1e6 && m.airTime > 0);
   const hp0 = m.hp; tap('w'); step(15);
-  check('Rising Arrow opens the link window for W in the air', m.hp < hp0);
-  arena(20); player.ranks.RA = 1;
-  check('Rising Arrow and Vault Shot are rival branches', !skillRows().some((r) => r.key === 'VS'));
+  check('Sky Toss opens the link window for W', m.hp < hp0);
+  arena(15); player.ranks.W = 3; player.ranks.AB = 1;
+  check('W offers Sky Assault as its upgrade', activeSkill('W').key === 'AB');
 }
 
 // --- E / R ---
