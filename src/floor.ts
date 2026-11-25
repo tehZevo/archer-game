@@ -147,6 +147,10 @@ export const groupSize = (tiles: number): number => Math.max(4, Math.min(8, 4 + 
 export const GEN_H = 640;
 const SKY_MARGIN = 2 * TILE; // clear sky kept above the portal
 const MIN_H = 180;           // never shorter than the view
+/** Towns are a few tiles taller than the view, so the camera follows you up
+ *  to the deck and loft instead of sitting still (a one-screen town left it
+ *  no room to move). */
+export const TOWN_MIN_H = MIN_H + 4 * TILE;
 
 /** Floor layouts (each floor rolls one from its own seeded stream, so the
  *  classic layout of a floor doesn't shift):
@@ -366,7 +370,7 @@ export function townFloor(n: number): Floor {
 function trim(f: Floor): Floor {
   const { platforms, ropes, ladders, spawns, portals } = f;
   const top = Math.min(...portals.map((p) => p.y - p.h), ...platforms.map((p) => p.y)) - SKY_MARGIN;
-  const shift = Math.max(0, Math.min(Math.floor(top / TILE) * TILE, GEN_H - MIN_H));
+  const shift = Math.max(0, Math.min(Math.floor(top / TILE) * TILE, GEN_H - (f.town ? TOWN_MIN_H : MIN_H)));
   for (const p of platforms) p.y -= shift;
   for (const c of [...ropes, ...ladders]) { c.y1 -= shift; c.y2 -= shift; }
   for (const s of spawns) { s.y -= shift; s.spots?.forEach((q) => { q.y -= shift; }); }
