@@ -1,3 +1,7 @@
+import { COIN_LIFE } from './economy';
+import { logMsg, player } from './state';
+import type { Mob } from './types';
+
 /* ============================================================
  * Equipment: a weapon and an armor piece, one equipped per slot.
  *
@@ -55,6 +59,43 @@ export function equip(item: GearItem): boolean {
 /** Wipe the slots back to nothing (a new run). */
 export function clearGear(): void {
   gear.weapon = null; gear.armor = null;
+}
+
+/* ---------------- Drops ----------------
+ * A defeated enemy sometimes leaves a piece behind, scaled to its own
+ * level. It lands where it fell and sits there until you walk over it;
+ * an upgrade goes straight on (see equip), a lesser piece is ignored. */
+
+export interface GearDrop {
+  item: GearItem;
+  x: number; y: number;
+  /** s left before it fades (same lifetime as a coin pile). */
+  t: number;
+}
+
+/** Roughly one enemy in twelve; a boss always leaves one. */
+export const GEAR_CHANCE = 1 / 12;
+
+export const gearDrops: GearDrop[] = [];
+
+export function dropGear(m: Mob): void {
+  if (Math.random() > (m.boss ? 1 : GEAR_CHANCE)) return;
+  const kind: GearKind = Math.random() < 0.5 ? 'weapon' : 'armor';
+  gearDrops.push({ item: gearFor(kind, m.level), x: m.x, y: m.y + m.h - 4, t: COIN_LIFE });
+}
+
+/** Fade the pieces left on the floor and pick up the ones under you. */
+export function updateGear(dt: number): void {
+  for (let i = gearDrops.length - 1; i >= 0; i--) {
+    const d = gearDrops[i];
+    d.t -= dt;
+    if (d.t <= 0) { gearDrops.splice(i, 1); continue; }
+    if (Math.abs(d.x - player.x) > 14) continue;
+    if (Math.abs(d.y - (player.y + player.h)) > 16) continue;
+    if (!equip(d.item)) continue; // not an upgrade: leave it where it lies
+    gearDrops.splice(i, 1);
+    logMsg(`Equipped ${d.item.name} Lv.${d.item.lvl}`);
+  }
 }
 
 /* The two numbers everything else reads. */

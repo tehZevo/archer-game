@@ -55,7 +55,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
-import { clearGear, equip, gear, gearDmg, gearFor, gearSoak } from '../src/gear';
+import { clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops } from '../src/gear';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
@@ -452,6 +452,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   player.invuln = 0;
   hurtPlayer(100);
   check('a 100-damage hit costs 65 with that armor on', player.hp === player.hpMax - 65, `hp ${player.hp}`);
+
+  // a kill can leave a piece behind, and walking over it puts it on
+  clearGear();
+  const slain = dummy(100);
+  for (let i = 0; i < 40 && gearDrops.length === 0; i++) { killMob(slain); slain.hp = 1e6; }
+  check('a defeated enemy can leave gear where it fell', gearDrops.length > 0 && gearDrops[0].item.lvl === slain.lvl);
+  const d = gearDrops[0];
+  player.x = d.x; player.y = d.y - player.h; player.onGround = true;
+  step(1);
+  check('walking over it equips it', gear[d.item.kind] !== null && gearDrops.length === 0);
 
   save();
   clearGear();
