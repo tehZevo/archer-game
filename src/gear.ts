@@ -1,14 +1,17 @@
 import { COIN_LIFE } from './economy';
-import { logMsg, player } from './state';
-import type { Mob } from './types';
+import { game, logMsg, player } from './state';
+import type { Floor, Mob } from './types';
 
 /* ============================================================
- * Equipment: a weapon and an armor piece, one equipped per slot.
+ * Equipment: a weapon and an armor piece, one equipped per slot,
+ * plus a small bag of spares.
  *
- * There is no bag yet, so picking up a piece simply replaces what
- * was in its slot (see equip). Gear is scaled to the level it is
- * found or bought at, so a bow picked up in the Craggy Mountains is
- * worth more than one bought on the Beach.
+ * An upgrade goes straight on and the piece it replaces goes in the
+ * bag; a lesser piece goes in the bag too, while there is room. Each
+ * piece keeps its own name and level, and the Esc menu swaps a spare
+ * back on (see wear). Gear is scaled to the level it is found or
+ * bought at, so a bow picked up in the Craggy Mountains is worth more
+ * than one bought on the Beach.
  * ============================================================ */
 
 export type GearKind = 'weapon' | 'armor';
@@ -48,23 +51,53 @@ export const gear = { weapon: null as GearItem | null, armor: null as GearItem |
 export const isUpgrade = (item: GearItem): boolean =>
   (gear[item.kind]?.lvl ?? 0) < item.lvl;
 
-/** Put a piece on, keeping it if the slot is empty or the new one is newer.
- *  Returns true when it went on (the old piece is gone: no bag to keep it in). */
+/** Spare pieces, in the order they were picked up. */
+export const BAG_SIZE = 4;
+export const bag: GearItem[] = [];
+export const bagFull = (): boolean => bag.length >= BAG_SIZE;
+
+/** Put a piece on if it is an upgrade (the old one goes in the bag, room
+ *  permitting), else stow it in the bag. False when it fit nowhere. */
 export function equip(item: GearItem): boolean {
-  if (!isUpgrade(item)) return false;
-  gear[item.kind] = item;
+  if (isUpgrade(item)) {
+    const old = gear[item.kind];
+    gear[item.kind] = item;
+    if (old && !bagFull()) bag.push(old);
+    return true;
+  }
+  if (bagFull()) return false;
+  bag.push(item);
   return true;
 }
 
-/** Wipe the slots back to nothing (a new run). */
+/** Put on the bag's i-th piece, whatever its level; what it replaces
+ *  takes its place in the bag. */
+export function wear(i: number): boolean {
+  const item = bag[i];
+  if (!item) return false;
+  const old = gear[item.kind];
+  gear[item.kind] = item;
+  if (old) bag[i] = old; else bag.splice(i, 1);
+  return true;
+}
+
+/** Take off what is in a slot, into the bag (if there is room). */
+export function unequip(kind: GearKind): boolean {
+  const item = gear[kind];
+  if (!item || bagFull()) return false;
+  gear[kind] = null; bag.push(item);
+  return true;
+}
+
+/** Wipe the slots and the bag back to nothing (a new run). */
 export function clearGear(): void {
-  gear.weapon = null; gear.armor = null;
+  gear.weapon = null; gear.armor = null; bag.length = 0;
 }
 
 /* ---------------- Drops ----------------
  * A defeated enemy sometimes leaves a piece behind, scaled to its own
  * level. It lands where it fell and sits there until you walk over it;
- * an upgrade goes straight on (see equip), a lesser piece is ignored. */
+ * an upgrade goes straight on (see equip), a lesser piece into the bag. */
 
 export interface GearDrop {
   item: GearItem;
@@ -77,6 +110,8 @@ export interface GearDrop {
 export const GEAR_CHANCE = 1 / 12;
 
 export const gearDrops: GearDrop[] = [];
+/** The floor the drops lie on: they are left behind with it, like coins. */
+let onFloor: Floor | null = null;
 
 export function dropGear(m: Mob): void {
   if (Math.random() > (m.boss ? 1 : GEAR_CHANCE)) return;
@@ -86,15 +121,17 @@ export function dropGear(m: Mob): void {
 
 /** Fade the pieces left on the floor and pick up the ones under you. */
 export function updateGear(dt: number): void {
+  if (onFloor !== game.floor) { gearDrops.length = 0; onFloor = game.floor; }
   for (let i = gearDrops.length - 1; i >= 0; i--) {
     const d = gearDrops[i];
     d.t -= dt;
     if (d.t <= 0) { gearDrops.splice(i, 1); continue; }
     if (Math.abs(d.x - player.x) > 14) continue;
     if (Math.abs(d.y - (player.y + player.h)) > 16) continue;
-    if (!equip(d.item)) continue; // not an upgrade: leave it where it lies
+    const on = isUpgrade(d.item);
+    if (!equip(d.item)) continue; // no upgrade and the bag is full: leave it lying
     gearDrops.splice(i, 1);
-    logMsg(`Equipped ${d.item.name} Lv.${d.item.lvl}`);
+    logMsg(`${on ? 'Equipped' : 'Bagged'} ${d.item.name} Lv.${d.item.lvl}`);
   }
 }
 

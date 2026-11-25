@@ -3,7 +3,7 @@ import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
 import { pet } from './pets';
-import { gear } from './gear';
+import { bag, BAG_SIZE, gear } from './gear';
 import type { GearItem, GearKind } from './gear';
 import { runBonus } from './achievements';
 import { SKILL_ORDER, SKILLS } from './config';
@@ -44,6 +44,8 @@ export interface SaveData {
   pet?: boolean;
   /** The equipped weapon and armor (absent in older saves: nothing worn). */
   gear?: { weapon: GearItem | null; armor: GearItem | null };
+  /** Spare gear (absent in older saves: an empty bag). */
+  bag?: GearItem[];
 }
 
 /** localStorage when available (absent in headless tests unless stubbed). */
@@ -61,6 +63,7 @@ export function snapshot(): SaveData {
     quests: quests.map((q) => ({ ...q })),
     pet: pet.owned,
     gear: { weapon: gear.weapon, armor: gear.armor },
+    bag: bag.map((i) => ({ ...i })),
   };
 }
 
@@ -119,6 +122,11 @@ export function apply(d: unknown): Place | null {
   pet.owned = s.pet === true;
   gear.weapon = cleanGear(s.gear?.weapon, 'weapon');
   gear.armor = cleanGear(s.gear?.armor, 'armor');
+  bag.length = 0;
+  for (const v of Array.isArray(s.bag) ? s.bag.slice(0, BAG_SIZE) : []) {
+    const i = cleanGear(v, (v as GearItem)?.kind === 'armor' ? 'armor' : 'weapon');
+    if (i) bag.push(i);
+  }
   // resume in the saved town (the start if it's gone from the map)
   return cleanPlace({ town: s.town }) ?? START;
 }

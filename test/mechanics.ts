@@ -56,7 +56,8 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
-import { clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops } from '../src/gear';
+import { bag, BAG_SIZE, clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops, unequip, wear } from '../src/gear';
+import { STAT_KEYS } from '../src/progress';
 import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
@@ -484,9 +485,26 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const hit = game.dmgNums[game.dmgNums.length - 1];
   check('the bow multiplies the arrow that lands', hit.v > war0 * 1.29, `hit ${hit.v}`);
 
-  check('a weaker bow leaves the stronger one equipped', !equip(gearFor('weapon', 4)) && gear.weapon?.lvl === 10);
+  check('a weaker bow goes in the bag, leaving the stronger one on', equip(gearFor('weapon', 4)) && gear.weapon?.lvl === 10 && bag.length === 1 && bag[0].lvl === 4);
   const better = gearFor('weapon', 20);
-  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Yew Bow', gear.weapon?.name);
+  check('a stronger bow goes on, the old one into the bag', equip(better) && gear.weapon?.name === 'Yew Bow' && bag[1]?.name === 'Long Bow' && bag[1].lvl === 10, gear.weapon?.name);
+  check('wearing a spare swaps it with the bow you had on', wear(1) && gear.weapon?.lvl === 10 && bag[1].lvl === 20);
+  check('taking a piece off puts it in the bag', unequip('weapon') && gear.weapon === null && bag.length === 3);
+  wear(2); // the Yew Bow back on
+  while (bag.length < BAG_SIZE) equip(gearFor('armor', 1));
+  equip(gearFor('armor', 2)); bag.pop(); // armor on, one bag slot free again
+  equip(gearFor('weapon', 3));
+  check('with the bag full, a lesser piece is left where it lies', !equip(gearFor('weapon', 3)) && bag.length === BAG_SIZE);
+  check('...but an upgrade still goes on', equip(gearFor('weapon', 25)) && gear.weapon?.lvl === 25);
+  // in the Esc menu the bag sits under the stats: Z wears a spare, X bins it
+  clearGear(); equip(gearFor('weapon', 20)); equip(gearFor('weapon', 7));
+  tap('escape'); game.pause!.col = 0; game.pause!.row = STAT_KEYS.length + 2;
+  tap('z');
+  check('Z on a spare in the Esc menu puts it on', gear.weapon?.lvl === 7 && bag[0]?.lvl === 20);
+  tap('x');
+  check('X on a spare throws it away', bag.length === 0 && gear.weapon?.lvl === 7 && !!game.pause);
+  tap('escape');
+  clearGear(); equip(better);
 
   const plate = gearFor('armor', 30);
   check('armor soaks a share of what you take (capped)', equip(plate) && gearSoak() === 0.35, `soak ${gearSoak()}`);
@@ -503,14 +521,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   player.x = d.x; player.y = d.y - player.h; player.onGround = true;
   step(1);
   check('walking over it equips it', gear[d.item.kind] !== null && gearDrops.length === 0);
+  // a piece left lying is gone once you leave the floor (like coins)
+  for (let i = 0; i < 80 && gearDrops.length === 0; i++) { slain.dead = false; killMob(slain); slain.hp = 1e6; }
+  const had = gearDrops.length > 0;
+  gotoPlace(climb(3)); step(1);
+  check('gear left on a floor does not follow you to the next', had && gearDrops.length === 0, `${gearDrops.length} left`);
+  arena(10);
 
   const mem: Record<string, string> = {};
   (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; } };
-  clearGear(); equip(gearFor('weapon', 20)); equip(gearFor('armor', 34));
+  clearGear(); equip(gearFor('weapon', 20)); equip(gearFor('armor', 34)); equip(gearFor('weapon', 7));
   save();
   clearGear();
   load();
   check('your gear survives a reload', gear.weapon?.name === gearFor('weapon', 20).name && gear.armor?.lvl === 34, `${gear.weapon?.name} / ${gear.armor?.name}`);
+  check('...and so does the bag', bag.length === 1 && bag[0].kind === 'weapon' && bag[0].lvl === 7 && bag[0].name === gearFor('weapon', 7).name);
   clearSave(); clearGear();
   delete (globalThis as { localStorage?: unknown }).localStorage;
 }
