@@ -339,12 +339,12 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   game.pause = null;
 }
 
-// --- progression: upgrades keep the base skill's rank ---
+// --- progression: an upgrade starts at rank 1, not its base skill's rank ---
 {
   arena(30);
   player.ranks.Z = 3; player.sp = 1;
   spendSkill('S');
-  check('upgrading Twin Shot to Shell Barrage keeps rank 3', activeSkill('Z').key === 'S' && rank('Z').level === 3);
+  check('upgrading Twin Shot to Shell Barrage starts at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
   check('movement skills are never offered for ranks', !skillRows().some((r) => (r.key === 'C' || r.key === 'D') && r.action));
 }
 
@@ -388,7 +388,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const offered = skillRows().map((r) => r.key);
   check('Z offers both branches (Shell Barrage, Backstep Shot)', offered.includes('S') && offered.includes('BS'));
   spendSkill('BS');
-  check('taking Backstep Shot binds it to Z and keeps the rank', activeSkill('Z').key === 'BS' && rank('Z').level === 3);
+  check('taking Backstep Shot binds it to Z at rank 1', activeSkill('Z').key === 'BS' && rank('Z').level === 1, `rank ${rank('Z').level}`);
   check('the rival branch is locked out', !skillRows().some((r) => r.key === 'S') && !spendSkill('S') && player.ranks.S === 0);
 }
 {
@@ -1414,6 +1414,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   };
   check("a slam's shockwave hurts a player on the ground nearby", slam(boss.w / 2 + 40) > 0 && quakes.length === 1);
   check('but not one well out of reach (it leaps toward you)', slam(WORLD.w - 60, 30) === 0);
+  // a slam can put the boss up on a platform above it, and it keeps chasing
+  // from there (it is not tied to the ground it spawned on)
+  {
+    // a platform wide enough for the boss to stand on, above the ground
+    const deck = game.floor.platforms.find((q) => q !== ground && q.w > boss.w + 8 && q.y < ground.y - 20);
+    if (deck) {
+      stand(deck.x + deck.w / 2);
+      boss.x = deck.x + deck.w / 2; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
+      boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
+      step(2);
+      check('the boss stands on a high platform with you', Math.abs(boss.y + boss.h - deck.y) < 1, `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y} (deck ${deck.x},${deck.w} ground ${ground.y})`);
+    }
+  }
   // beaten: the way up opens
   killMob(boss);
   check('beating the boss clears it', !bossAlive());

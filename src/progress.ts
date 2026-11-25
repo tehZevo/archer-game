@@ -221,8 +221,9 @@ function rivals(k: SkillKey): string {
 export function spendSkill(key: SkillKey): boolean {
   const row = skillRows().find((r) => r.key === key);
   if (player.sp <= 0 || !row || !row.action) return false;
-  const base = UPGRADES[key];
-  player.ranks[key] = row.rank > 0 ? row.rank + 1 : base ? Math.max(1, player.ranks[base] || 1) : 1;
+  // an upgrade starts at rank 1, not at its base skill's rank: the first SP
+  // on Sky Assault buys rank 1, whatever rank Skyfall Volley is at
+  player.ranks[key] = row.rank > 0 ? row.rank + 1 : 1;
   player.sp--;
   return true;
 }
