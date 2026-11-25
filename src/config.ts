@@ -25,7 +25,7 @@ export const P = {
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
-  BARRAGE_HANG: 0.5,   // s Sky Assault hovers (striking) before falling
+  BARRAGE_HANG: 0.8,   // s Sky Assault hovers (striking) before falling (longer so the strike sequence reads)
   BARRAGE_UP: 64,      // px Sky Assault warps straight up: a fixed rise (a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
