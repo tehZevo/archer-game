@@ -37,6 +37,8 @@ export interface SkillDef {
   /** Use time, s: how long a cast locks other skills and movement (attack
    *  skills default to P.USE_TIME; Jump and Glide have none). Haste shortens it. */
   use?: number;
+  /** Post-animation recovery (see delayTime); links skip it. Defaults to P.DELAY_TIME. */
+  delay?: number;
   /** Stats scale linearly from the Lv.1 value to the master value. */
   mp1: number;
   mpMax: number;
@@ -226,6 +228,8 @@ export interface Player extends Body {
   climbRush: boolean;
   /** Seconds left in the current skill's use time: no other skills or movement. */
   useT: number;
+  /** Recovery after the animation: blocks new skills, not movement. Links skip it. */
+  recoverT: number;
   /** A link skill pressed during Sky Toss, fired once Sky Toss finishes. */
   queued: SkillKey | null;
   /** Sky Assault: seconds left hovering (no gravity) while striking airborne enemies. */

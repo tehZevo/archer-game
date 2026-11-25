@@ -98,6 +98,7 @@ export function update(dt: number): void {
   if (player.superStance > 0) player.superStance -= dt;
   if (player.invuln > 0) player.invuln -= dt;
   if (player.useT > 0) player.useT -= dt;
+  if (player.recoverT > 0) player.recoverT -= dt;
   const locked = player.useT > 0; // skill use time: no movement input
   if (player.comboT > 0) { player.comboT -= dt; if (player.comboT <= 0) player.combo = 0; }
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
