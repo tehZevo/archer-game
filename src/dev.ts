@@ -1,4 +1,7 @@
 import { PATHS, START_TOWN, TOWNS, townArea, townDepth, type Place } from './world';
+import { bannerMsg, player } from './state';
+import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
+import { SKILLS, SKILL_ORDER } from './config';
 
 /* ============================================================
    DEV MODE
@@ -32,3 +35,18 @@ export const DEV_ROWS = 12;
 
 /** Room id suffix for dev sessions. */
 export const devTag = (): string => (dev.on ? '-dev' : '');
+
+/** Max the player out for testing: level 100 (with its job and a stack of
+ *  ability points) and every skill at max rank. Bound to the `\` dev key. */
+export const maxOut = (): void => {
+  player.level = MAX_LEVEL;
+  player.exp = 0;
+  player.expNext = expToNext(MAX_LEVEL);
+  player.job = jobForLevel(MAX_LEVEL);
+  player.ap += AP_PER_LEVEL;
+  recalcStats();
+  player.hp = player.hpMax;
+  player.mp = player.mpMax;
+  for (const k of SKILL_ORDER) player.ranks[k] = SKILLS[k].maxLevel;
+  bannerMsg('MAXED', 'LEVEL 100 - ALL SKILLS MAXED');
+};

@@ -3,7 +3,7 @@ const KEY_MAP: Record<string, string> = {
 };
 
 /** Keys we consume on keydown so the page doesn't scroll. */
-const PREVENT = new Set(['a', 's', 'z', 'x', 'c', 'v', 'b', 'q', 'w', 'e', 'r', 't', 'f', 'd', 'g', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', 'enter', 'escape', '[', ']', '`',
+const PREVENT = new Set(['a', 's', 'z', 'x', 'c', 'v', 'b', 'q', 'w', 'e', 'r', 't', 'f', 'd', 'g', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', 'enter', 'escape', '[', ']', '\\', '`',
   'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7']); // F1-F7 are emotes (not help, find, reload...)
 
 const keys: Record<string, boolean> = Object.create(null);
@@ -16,7 +16,7 @@ interface KeyEv extends Event { key: string; code?: string }
    QWERTY names ('z', 'q', '1', ...); keyName() gives the layout's letter. */
 const CODE_IDS: Record<string, string> = {
   Space: ' ', Enter: 'enter', NumpadEnter: 'enter', Escape: 'escape',
-  BracketLeft: '[', BracketRight: ']', Backquote: '`',
+  BracketLeft: '[', BracketRight: ']', Backslash: '\\', Backquote: '`',
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
 };
 

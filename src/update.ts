@@ -17,7 +17,7 @@ import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
 import { bag, unequip, updateGear, wear } from './gear';
-import { dev, devStops } from './dev';
+import { dev, devStops, maxOut } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
@@ -86,9 +86,10 @@ export function update(dt: number): void {
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
   // holding Jump keeps jumping: re-jump on every landing
   if (!pressed('c') && held('c') && player.onGround && !player.climb) cast('C');
-  // dev keys (?dev only): [ levels up, ] warps to the next floor
+  // dev keys (?dev only): [ levels up, ] warps to the next floor, \ maxes out
   if (dev.on && pressed('[')) gainExp(player.expNext - player.exp);
   if (dev.on && pressed(']')) { gotoPlace(nextPlace(game.floor.place)); return; }
+  if (dev.on && pressed('\\')) maxOut();
 
   // enemy waves run on the fixed step so headless tests stay deterministic
   // other players' kills in this instance make waves come faster
