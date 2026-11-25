@@ -277,6 +277,9 @@ export interface Player extends Body {
   castT: number;
   castTotal: number;
   invuln: number;
+  /** True when the current invulnerability came from a miss: it protects
+   *  without the flashing-sprite visual. */
+  invulnQuiet: boolean;
   anim: number;
   animState: 'idle' | 'walk' | 'jump' | 'climb' | 'prone';
   /** Fervor stacks from linked skills. */

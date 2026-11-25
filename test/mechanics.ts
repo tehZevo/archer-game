@@ -26,9 +26,9 @@ import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobar
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
-import { BAR_SHOW, damage, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
+import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast, cdSlot, delayTime } from '../src/skills';
-import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, passiveBonus, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { mobLevel } from '../src/world';
 import { fmtNum } from '../src/util';
 import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/boss';
@@ -2668,6 +2668,53 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * (1 + (mobLevel(game.floor.place) - 1) * 0.09)),
     `${game.mobs[0].dmg} at floor ${game.floor.floor}`);
   gotoPlace(START);
+}
+
+{
+  // LUK rework: 2% crit chance a point, capped at 100%, overflow to crit damage
+  arena(20); player.ranks.SA = 0; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
+  check('LUK starts at the 15% base crit', Math.abs(critChance() - 0.15) < 1e-9, `${critChance()}`);
+  player.stats.luk = 10;
+  check('each LUK point is worth 2% crit chance', Math.abs(critChance() - 0.35) < 1e-9, `${critChance()}`);
+  player.stats.luk = 42;
+  check('the base 15% counts toward the cap, so 43 points fills it', Math.abs(critChance() - 0.99) < 1e-9, `${critChance()}`);
+  player.stats.luk = 43;
+  check('...and 43 points caps it at 100%', critChance() === 1, `${critChance()}`);
+  player.stats.luk = 48;
+  check('points past the cap convert at 2% crit damage each', Math.abs(critMult() - (1.5 + 5 * 0.02)) < 1e-9, `${critMult()}`);
+  check('...counting only the overflow, not the whole stat', critOverflowPoints() === 5, `${critOverflowPoints()}`);
+  player.stats.luk = 0;
+  check('below the cap a crit still hits for 1.5x', Math.abs(critMult() - 1.5) < 1e-9);
+  // and the multiplier is the one damage() applies
+  arena(20); player.ranks.SA = 0; recalcStats();
+  const m = dummy(140); m.level = 20;
+  // the same roll on both shots (it also drives the damage's random spread):
+  // at 0 LUK it is under the 15% crit threshold, at 60 LUK it always crits
+  const saved = Math.random; Math.random = () => 0.2; // one shared random spread
+  player.stats.luk = 0; damage(m, 1); const plain = 1e6 - m.hp;
+  player.stats.luk = 60; m.hp = 1e6; damage(m, 1); const critted = 1e6 - m.hp;
+  Math.random = saved; player.stats.luk = 0; recalcStats();
+  // 60 LUK is 17 points past the 43-point cap: 1.5 + 17 x 2% = 1.84
+  const ratio = critted / plain;
+  check('a crit lands the converted multiplier (1.5 + 17 x 2%)', Math.abs(ratio / 1.84 - 1) < 0.01, `x${ratio.toFixed(3)}`);
+  player.stats.luk = 0; recalcStats();
+}
+
+{
+  // A miss grants i-frames without the flashing-sprite visual
+  arena(20); player.invuln = 0; player.invulnQuiet = false; game.dmgNums.length = 0;
+  const m = dummy(140); m.level = 35; // 15 levels above: guaranteed miss
+  const saved = Math.random; Math.random = () => 0.5;
+  damage(m, 1);
+  check('the missed attack shows a floating MISS', game.dmgNums.length === 1 && game.dmgNums[0].txt === 'MISS',
+    `${game.dmgNums.length} ${game.dmgNums[0]?.txt}`);
+  check('...as a stacked damage number, not flat text', game.dmgNums[0].col === '#ffffff' && game.dmgNums[0].vy === -12,
+    `${game.dmgNums[0].col} ${game.dmgNums[0].vy}`);
+  check('...and it procs the invulnerability delay', player.invuln > 0 && player.invuln <= MISS_IFRAMES, `${player.invuln.toFixed(2)}`);
+  check('...which is the quiet kind (no flash)', player.invulnQuiet);
+  step(1);
+  check('the i-frames tick down like a normal hit\'s', player.invuln < MISS_IFRAMES, `${player.invuln.toFixed(3)}`);
+  Math.random = saved;
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
