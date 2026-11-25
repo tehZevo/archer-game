@@ -47,7 +47,7 @@ export const P = {
   PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 200,     // px/s upward bump when it fires (~19px rise; was 110, ~6px)
-  PIERCE_RANGE: 260,   // Piercing Arrow reach, px
+  TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
@@ -103,9 +103,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   E: { key: 'E', name: 'Plunging Volley', tag: 'Aerial', job: 1, minLevel: 10, maxLevel: 3,
        cd: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
        desc: 'Mid-air only: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
-       cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,
-       desc: 'A heavy arrow that pierces every enemy in a line' },
+  R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
+       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 10, targetsMax: 16,
+       desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 1, minLevel: 15, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6,
        desc: 'After Sky Toss: leap up to launched enemies' },

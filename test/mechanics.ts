@@ -447,11 +447,11 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   arena(25); player.ranks.R = 1;
-  const a = dummy(130), b = dummy(250);
+  const a = dummy(130), b = dummy(170);
   tap('r'); step(15);
-  check('Piercing Arrow hits every enemy in the line', a.hp < 1e6 && b.hp < 1e6);
+  check('Tempest hits every enemy caught in the sweep', a.hp < 1e6 && b.hp < 1e6);
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
-  check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
+  check('Tempest is on a long cooldown', a.hp === hp && player.cd.R > 4);
 }
 {
   // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
