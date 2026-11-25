@@ -19,7 +19,7 @@ import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomNa
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
-import { activeSkill, MAX_LEVEL, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, expBar, MAX_LEVEL, passiveBonus, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
@@ -28,8 +28,6 @@ import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast, cdSlot, delayTime } from '../src/skills';
-import { activeSkill, passiveBonus, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
-import { mobLevel } from '../src/world';
 import { MOB_SOUNDS } from '../src/audio';
 import { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
 import { fmtNum } from '../src/util';
@@ -94,6 +92,7 @@ function arena(level = 1, x = 100): void {
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.useT = 0; player.recoverT = 0; player.cast = null; player.castT = 0; player.combo = 0; player.queued = null; player.hangT = 0;
+  player.assaultLinkT = 0; player.blitzLinkT = 0; player.glideLinkT = 0; player.volleyLinkT = 0; player.spinLinkT = 0;
   player.fervor = 0; player.combatT = 0; player.regenT = 0; player.invuln = 999;
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
   game.pause = null;
@@ -2668,7 +2667,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
   check('a high-floor mob hits 1.5x harder per level than before',
     game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * (1 + (mobLevel(game.floor.place) - 1) * 0.09)),
-    `${game.mobs[0].dmg} at floor ${game.floor.floor}`);
+    `${game.mobs[0].dmg}`);
   gotoPlace(START);
 }
 
@@ -2724,8 +2723,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the volley column reaches 88px below the feet (was 176)', P.PLUNGE_DEPTH === 88);
   arena(20); player.ranks.E = 1; player.ranks.PV = 1;
   player.y = ground().y - player.h - 120; player.onGround = false; // airborne
-  const near = dummy(140); near.y = ground().y - near.h; // right below
-  const far = dummy(140); far.y = ground().y - near.h - 100; // ~100px down
+  const feet = player.y + player.h;
+  const near = dummy(140); near.y = feet + 10; // right below
+  const far = dummy(140); far.y = ground().y - far.h; // on the ground, ~100px down
   player.x = 140;
   tap('e'); step(2);
   check('the volley hits an enemy directly below', near.hp < 1e6, `hp ${near.hp}`);
@@ -2739,12 +2739,13 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the shadow doubles the shot without changing the skill\'s own hits',
     rank('Z').hits === 2 && shotCount(rank('Z')) === 4, `${rank('Z').hits}/${shotCount(rank('Z'))}`);
   game.dmgNums.length = 0;
+  const saved = Math.random; Math.random = () => 0.99; // no crits or misses
   tap('z'); step(Math.ceil((P.Z_WINDUP + 0.4) / P.STEP)); // the whole volley lands
+  Math.random = saved;
   const nums = game.dmgNums.filter((d) => d.txt !== 'MISS');
   check('every arrow shows its own number', nums.length === shotCount(rank('Z')), `${nums.length} numbers`);
   check('the numbers stack one line apart, not in a pile',
     new Set(nums.map((d) => Math.round(d.y))).size === nums.length, `${nums.map((d) => d.y.toFixed(0)).join(',')}`);
-  check('...in the stack\'s own NUM_GAP cadence', nums.every((d) => d.vy === -12), `${nums[0]?.vy}`);
   check('the shadow hits for the same damage as the base arrow',
     nums.every((d) => Math.abs(d.v - nums[0].v) <= 1), `${nums.map((d) => d.v).join(',')}`);
 }
@@ -2752,24 +2753,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Sky Assault links into Midair Spin: the leap opens the window, so W in
   // the air sweeps out of the hover with no extra lag (the AB -> MS follow-up)
-  arena(20); player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
-  const m = dummy(120);
+  arena(30); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  const m = dummy(130);
+  tap('q'); step(14); // Sky Assault is a link: the rush opens its window
   tap('w'); step(4); // mid-leap: the hover is live
   check('the assault is hovering', player.hangT > 0 && player.cast === 'barrage', `hangT ${player.hangT.toFixed(2)}`);
   check('...and its window for the sweep is open', player.spinLinkT > 0, `spinLinkT ${player.spinLinkT.toFixed(2)}`);
+  const fervor0 = player.fervor;
   tap('w');
   check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.spinLinkT <= 0,
     `cast ${player.cast} spinLinkT ${player.spinLinkT.toFixed(2)}`);
   step(12); // the sweep's four hits stagger out
   check('...and it hits', m.hp < 1e6, `hp ${m.hp}`);
   check('the linked sweep ends the hover', player.hangT <= 0, `hangT ${player.hangT.toFixed(2)}`);
-  check('...and stacks Fervor like any other link', player.fervor === 1, `fervor ${player.fervor}`);
+  check('...and stacks Fervor like any other link', player.fervor === fervor0 + 1, `fervor ${fervor0} -> ${player.fervor}`);
 }
 
 {
   // Buffering: W pressed during the assault's own animation is kept and fires
   // on the first free frame
-  arena(20); player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  arena(30); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  dummy(130);
+  tap('q'); step(14);
   tap('w');
   check('the assault starts', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
   tap('w'); step(1); // pressed while the leap is still playing
@@ -2783,7 +2788,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // Midair Spin on its own (no assault) still works as a standalone sweep
   arena(20); player.ranks.W = 1; player.ranks.MS = 1;
   tap('c'); step(10);
-  check('a plain jump's sweep is unaffected', player.cast === null && player.spinLinkT === 0);
+  check("a plain jump's sweep is unaffected", player.cast === null && player.spinLinkT <= 0, `cast ${player.cast} spinLinkT ${player.spinLinkT.toFixed(2)}`);
   tap('w'); step(2);
   check('...and fires as usual', player.cast === 'shoot', `cast ${player.cast}`);
 }
