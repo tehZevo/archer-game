@@ -1,6 +1,6 @@
 /* ============================================================
    SETTINGS
-   Sound volume, screen shake and damage numbers, saved in
+   Sound volume and damage numbers, saved in
    localStorage (apart from the progress save, so a reset keeps
    them). The window opens from the main menu's SETTINGS row and
    from the Esc menu. Up/Down picks a row, Left/Right (or Z)
@@ -11,14 +11,12 @@
 export interface Settings {
   /** Effects volume, 0 (muted) to VOLUME_MAX. */
   sound: number;
-  /** Shake the view when you're hit or a boss slams. */
-  shake: boolean;
   /** Show damage numbers over enemies (and you). */
   dmgNums: boolean;
 }
 
 export const VOLUME_MAX = 10;
-export const DEFAULT_SETTINGS: Settings = { sound: 8, shake: true, dmgNums: true };
+export const DEFAULT_SETTINGS: Settings = { sound: 8, dmgNums: true };
 const STORE = 'archer-game:settings';
 
 /** Validate stored settings: anything missing or malformed falls back to the default. */
@@ -27,7 +25,6 @@ export function cleanSettings(v: unknown): Settings {
   const n = Math.floor(Number(o.sound));
   return {
     sound: Number.isFinite(n) ? Math.max(0, Math.min(VOLUME_MAX, n)) : DEFAULT_SETTINGS.sound,
-    shake: typeof o.shake === 'boolean' ? o.shake : DEFAULT_SETTINGS.shake,
     dmgNums: typeof o.dmgNums === 'boolean' ? o.dmgNums : DEFAULT_SETTINGS.dmgNums,
   };
 }
@@ -41,31 +38,11 @@ export function saveSettings(): void {
   try { localStorage.setItem(STORE, JSON.stringify(settings)); } catch { /* no storage */ }
 }
 
-/* ---------------- screen shake ---------------- */
-/** Seconds of shake left, and how hard (px). */
-export const shake = { t: 0, mag: 0 };
-/** Shake the view for t seconds, mag px either way (the stronger shake wins). */
-export function addShake(t: number, mag: number): void {
-  if (!settings.shake) return;
-  shake.t = Math.max(shake.t, t); shake.mag = Math.max(shake.mag, mag);
-}
-export function updateShake(dt: number): void {
-  if (shake.t > 0) shake.t = Math.max(0, shake.t - dt);
-  if (shake.t === 0) shake.mag = 0;
-}
-/** This frame's view offset (whole pixels). */
-export function shakeOffset(): { x: number; y: number } {
-  if (shake.t <= 0 || !settings.shake) return { x: 0, y: 0 };
-  const m = Math.ceil(shake.mag * Math.min(1, shake.t / 0.15));
-  const r = (): number => Math.round((Math.random() * 2 - 1) * m);
-  return { x: r(), y: r() };
-}
-
 /* ---------------- the window ---------------- */
-export type SettingRow = 'sound' | 'shake' | 'dmgNums' | 'done';
-export const SETTING_ROWS: SettingRow[] = ['sound', 'shake', 'dmgNums', 'done'];
+export type SettingRow = 'sound' | 'dmgNums' | 'done';
+export const SETTING_ROWS: SettingRow[] = ['sound', 'dmgNums', 'done'];
 export const SETTING_NAMES: Record<SettingRow, string> = {
-  sound: 'SOUND', shake: 'SCREEN SHAKE', dmgNums: 'DAMAGE NUMBERS', done: 'DONE',
+  sound: 'SOUND', dmgNums: 'DAMAGE NUMBERS', done: 'DONE',
 };
 
 export const settingsUi = { open: false, sel: 0 };
@@ -74,7 +51,6 @@ export function openSettings(): void { settingsUi.open = true; settingsUi.sel = 
 /** Change a row's value: d = -1 / +1 (toggles flip either way). */
 export function stepSetting(row: SettingRow, d: number): void {
   if (row === 'sound') settings.sound = Math.max(0, Math.min(VOLUME_MAX, settings.sound + d));
-  else if (row === 'shake') { settings.shake = !settings.shake; if (!settings.shake) { shake.t = 0; shake.mag = 0; } }
   else if (row === 'dmgNums') settings.dmgNums = !settings.dmgNums;
   else return;
   saveSettings();

@@ -15,7 +15,7 @@ import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
-import { openSettings, settingsKey, settingsUi, updateShake } from './settings';
+import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
@@ -35,7 +35,6 @@ export function update(dt: number): void {
   if (pressed('escape')) game.pause = game.pause ? null : { col: 0, row: 0 };
   if (game.pause) { pauseInput(game.pause, dt); return; }
   game.time += dt;
-  updateShake(dt);
   // Regen: 5% of max HP/MP every 5s; HP doesn't regen while in combat.
   if (player.combatT > 0) player.combatT -= dt;
   player.regenT += dt;

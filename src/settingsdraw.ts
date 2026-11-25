@@ -7,7 +7,6 @@ const GOLD = '#ffd166', HI = '#eaf2ff', DIM = '#8ea3c2';
 /** What a row shows on its right. */
 export function settingValue(row: SettingRow): string {
   if (row === 'sound') return settings.sound ? `${settings.sound}/${VOLUME_MAX}` : 'OFF';
-  if (row === 'shake') return settings.shake ? 'ON' : 'OFF';
   if (row === 'dmgNums') return settings.dmgNums ? 'ON' : 'OFF';
   return '';
 }

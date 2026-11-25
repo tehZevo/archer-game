@@ -44,7 +44,7 @@ import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, 
 import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
-import { addShake, cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, shake, shakeOffset, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
+import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
 
 let failures = 0;
@@ -1400,7 +1400,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     removeItem: (k: string) => { mem.delete(k); },
   };
   Object.assign(settings, DEFAULT_SETTINGS);
-  check('bad stored settings fall back to the defaults', JSON.stringify(cleanSettings({ sound: 'x', shake: 3 })) === JSON.stringify(DEFAULT_SETTINGS));
+  check('bad stored settings fall back to the defaults', JSON.stringify(cleanSettings({ sound: 'x', dmgNums: 3 })) === JSON.stringify(DEFAULT_SETTINGS));
   check('stored volume is clamped', cleanSettings({ sound: 99 }).sound === VOLUME_MAX && cleanSettings({ sound: -4 }).sound === 0);
   openSettings();
   const s0 = settings.sound;
@@ -1408,20 +1408,11 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('Left turns the sound down (and saves it)', settings.sound === s0 - 1 && JSON.parse(mem.get('archer-game:settings')!).sound === s0 - 1);
   for (let i = 0; i < 20; i++) settingsKey('right');
   check('the volume stops at its max', settings.sound === VOLUME_MAX);
-  settingsKey('down'); settingsKey('enter');
-  check('Z flips screen shake', settings.shake === false && settingsUi.open);
-  addShake(1, 3);
-  check('no shake while it is off', shake.t === 0 && shakeOffset().x === 0 && shakeOffset().y === 0);
-  settingsKey('right');
-  addShake(0.5, 3);
-  let moved = false; for (let i = 0; i < 20; i++) { const o = shakeOffset(); if (o.x || o.y) moved = true; if (Math.abs(o.x) > 3 || Math.abs(o.y) > 3) moved = false; }
-  check('a shake moves the view a few pixels', moved);
-  shake.t = 0; shake.mag = 0;
   settingsKey('down'); settingsKey('left');
   check('damage numbers toggle', settings.dmgNums === false);
   const b = settingsBox(320, 180);
-  settingsTap(b.x + SET_W - 10, b.y + SET_TOP + 2 * SET_ROW + 2, 320, 180);
-  check('a tap on a row changes it', settings.dmgNums === true && settingsUi.sel === 2);
+  settingsTap(b.x + SET_W - 10, b.y + SET_TOP + SET_ROW + 2, 320, 180);
+  check('a tap on a row changes it', settings.dmgNums === true && settingsUi.sel === 1);
   settingsTap(b.x + 10, b.y + SET_TOP + (SETTING_ROWS.length - 1) * SET_ROW + 2, 320, 180);
   check('tapping DONE closes the window', !settingsUi.open);
   // from the main menu

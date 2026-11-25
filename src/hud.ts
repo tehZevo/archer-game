@@ -274,7 +274,7 @@ function drawPause(): void {
 
   // description of the selected row
   let desc = '';
-  if (m.col === 2) desc = 'Sound, screen shake and damage numbers';
+  if (m.col === 2) desc = 'Sound and damage numbers';
   else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
   else if (rows[m.row]) desc = rows[m.row].action || `${rows[m.row].name}: mastered`;
   desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();

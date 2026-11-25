@@ -22,7 +22,7 @@ import { drawHUD } from './hud';
 import { drawCoins, drawNpcs } from './economydraw';
 import { text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
-import { settings, shakeOffset } from './settings';
+import { settings } from './settings';
 import type { Climbable, DmgNum, Fx, Mob, Portal, Shot } from './types';
 
 // Base (internal) resolution. The canvas backing store IS this size; everything
@@ -342,8 +342,7 @@ export function render(): void {
   const ts = tileset();
   drawBackground(ts);
   ctx.save();
-  const sh = shakeOffset();
-  ctx.translate(-Math.round(game.cam.x) + sh.x, -Math.round(game.cam.y) + sh.y);
+  ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
   drawPlatforms(ts);
   drawProps(ts);
   for (const r of game.floor.ropes) drawRope(ts, r);

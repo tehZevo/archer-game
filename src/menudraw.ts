@@ -23,7 +23,7 @@ const HINT: Record<ItemId, string> = {
   create: 'MAKE A CODE FOR FRIENDS',
   name: 'Z TO RENAME   ENTER SAVES',
   look: 'HAIR, SKIN AND OUTFIT',
-  settings: 'SOUND, SHAKE, DAMAGE NUMBERS',
+  settings: 'SOUND AND DAMAGE NUMBERS',
   reset: 'ERASE YOUR SAVE: LV 1 AGAIN',
 };
 

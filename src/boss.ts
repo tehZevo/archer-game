@@ -5,7 +5,6 @@ import { areaName, isAreaEnd } from './world';
 import { net } from './net';
 import { mobExp } from './progress';
 import { sfx } from './audio';
-import { addShake } from './settings';
 import type { Mob, MobType } from './types';
 
 /* ============================================================
@@ -83,7 +82,6 @@ export function hurtPlayer(dmg: number): void {
   player.combatT = P.COMBAT_TIME;
   player.invuln = 1.0;
   sfx.hit();
-  addShake(0.2, 2);
   game.dmgNums.push({ x: player.x, y: player.y - 14, v: dmg, t: 1, crit: false, vy: -80, col: '#ff8f8f' });
 }
 
@@ -122,7 +120,6 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
       if (b.air && m.vy === 0) {
         quakes.push({ x: m.x, y: m.y + m.h, t: QUAKE_T });
         sfx.hit();
-        addShake(0.35, 3);
         const feet = player.y + player.h;
         if (player.onGround && Math.abs(d) < BOSS.QUAKE_R + m.w / 2 && Math.abs(feet - (m.y + m.h)) < 20) hurtPlayer(Math.round(m.dmg * BOSS.QUAKE_DMG));
         rest(m);
