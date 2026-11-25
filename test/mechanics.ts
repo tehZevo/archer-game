@@ -2642,7 +2642,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('Sky Assault strikes 4 (not 8) at max', SKILLS.AB.hits1 === 4 && SKILLS.AB.hitsMax === 4);
   check('Midair Spin sweeps 4 hits at 200%', SKILLS.MS.hits1 === 4 && SKILLS.MS.hitsMax === 4 && SKILLS.MS.dmg1 === 200 && SKILLS.MS.dmgMax === 200);
   check('Electric Blitz strikes twice', SKILLS.EB.hits1 === 2 && SKILLS.EB.hitsMax === 2);
-  check('Tempest storms 8 hits at 300% each', SKILLS.R.hits1 === 8 && SKILLS.R.hitsMax === 8 && SKILLS.R.dmg1 === 300 && SKILLS.R.dmgMax === 300);
+  check('Tempest storms up to 8 hits at 140-200% each', SKILLS.R.hitsMax === 8 && SKILLS.R.dmg1 === 140 && SKILLS.R.dmgMax === 200);
   check('Air Dive lands one Sky Toss-strength hit', SKILLS.AD.hits1 === 1 && SKILLS.AD.dmg1 === 250 && SKILLS.AD.dmgMax === 400);
   // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
   arena(20); player.ranks.Q = 3; player.ranks.EB = 3;
