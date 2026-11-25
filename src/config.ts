@@ -26,7 +26,7 @@ export const P = {
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.8,   // s Sky Assault hovers (striking) before falling (longer so the strike sequence reads)
-  BARRAGE_UP: 64,      // px Sky Assault warps straight up: a fixed rise (a launched enemy peaks ~90px up, so it stays in the strike box)
+  BARRAGE_UP: 43,      // px Sky Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
   Z_WINDUP: 0.10,      // s Twin Shot draws the bow before the arrows fly
@@ -44,13 +44,13 @@ export const P = {
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
   BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
+  BLITZ_LINK: 0.8,     // s the self-link window stays open after a blitz (covers its use time + delay)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
   BLITZ_DIST: 96,      // px the blitz travels
   // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
-  DIVE_CD: 0.7,        // s: the dive's own cooldown (the ground rush keeps its own)
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
@@ -66,6 +66,7 @@ export const P = {
   SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
+  GLIDE_LINK: 0.6,     // s the glide-link window an aerial skill opens (covers its use time + delay)
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
@@ -125,7 +126,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
   AD: { key: 'AD', name: 'Air Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
-       cd: P.DIVE_CD, mp1: 3, mpMax: 4, dmg1: 0, dmgMax: 0, requires: 'Q',
+       cd: 0, mp1: 3, mpMax: 4, dmg1: 0, dmgMax: 0, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   MS: { key: 'MS', name: 'Midair Spin', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIN_CD, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, targets1: 8, targetsMax: 8, requires: 'AB',
@@ -137,7 +138,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 10, targetsMax: 16,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 0, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
+       cd: 3, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6, requires: 'W',
