@@ -53,6 +53,8 @@ export const player: Player = {
   cd,
   readyT,
   diving: false,
+  blitzCharges: P.BLITZ_MAX, blitzT: 0,
+  rushGoal: P.RUSH_DIST,
   cast: null, castT: 0, castTotal: 0,
   invuln: 0,
   anim: 0, animState: 'idle',

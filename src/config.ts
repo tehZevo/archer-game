@@ -40,6 +40,11 @@ export const P = {
   RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up
   RUSH_GRAB_BACK: 10, // ...and px behind, so an enemy you just passed still counts
   RUSH_HIT: 0.4,      // the slide hits each enemy once as it scoops them up, at this share of Sky Toss's damage
+  // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
+  BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
+  BLITZ_MAX: 2,        // charges banked at full
+  BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
+  BLITZ_DIST: 96,      // px the blitz travels
   // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
@@ -51,7 +56,13 @@ export const P = {
   PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 200,     // px/s upward bump when it fires (~19px rise; was 110, ~6px)
-  PIERCE_RANGE: 260,   // Piercing Arrow reach, px
+  // Spike Lift: E's ground form. Spikes erupt around you and throw you up.
+  SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
+  SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
+  SPIKE_R: 56,         // px radius of the burst around you
+  SPIKE_LIFT: 300,     // px/s upward (about a full jump's height)
+  SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
+  TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
@@ -89,7 +100,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   Z: { key: 'Z', name: 'Twin Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
        cd: 0, use: 0.5, mp1: 2, mpMax: 3, dmg1: 159, dmgMax: 220, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 3,
        desc: 'Hits the closest enemies in range twice' },
-  AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
+  AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
         desc: 'Climb ropes and ladders faster' },
   C: { key: 'C', name: 'Jump', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
@@ -107,9 +118,12 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   E: { key: 'E', name: 'Plunging Volley', tag: 'Aerial', job: 1, minLevel: 10, maxLevel: 3,
        cd: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
        desc: 'Mid-air only: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
-       cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,
-       desc: 'A heavy arrow that pierces every enemy in a line' },
+  R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
+       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 10, targetsMax: 16,
+       desc: 'A storm sweeps up and around you, striking every enemy it passes' },
+  EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
+       cd: 0, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
+       desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 1, minLevel: 15, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6,
        desc: 'After Sky Toss: leap up to launched enemies' },

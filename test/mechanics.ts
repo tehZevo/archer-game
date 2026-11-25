@@ -55,6 +55,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
+import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
@@ -436,14 +437,48 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
 }
+{
+  // Midair Spin: W's air form sweeps the enemies around you
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
+  const m = dummy(140);
+  tap('c'); step(8);
+  const hp0 = m.hp; tap('w'); step(4);
+  check('Midair Spin sweeps the enemies around you in the air', m.hp < hp0 && m.airTime === 0, `hp ${m.hp}`);
+}
+
+// --- Electric Blitz: Q's charged upgrade ---
+{
+  arena(20); player.ranks.Q = 3; player.ranks.EB = 1;
+  check('Electric Blitz replaces Sky Toss on Q', activeSkill('Q').key === 'EB');
+  check('it starts with two charges', player.blitzCharges === P.BLITZ_MAX);
+  const m = dummy(140);
+  const RUSH = 22; // the whole slide, from cast to the strike at its end
+  tap('q'); step(RUSH);
+  check('the blitz spends a charge and carries the enemy', player.blitzCharges === 1 && m.hp < 1e6,
+    `charges ${player.blitzCharges} hp ${m.hp}`);
+  tap('q'); step(RUSH);
+  check('the second charge works', player.blitzCharges === 0 && m.hp < 1e6,
+    `charges ${player.blitzCharges} hp ${m.hp}`);
+  tap('q'); step(1);
+  check('with no charges Q does nothing', player.blitzCharges === 0 && player.rushT === 0,
+    `charges ${player.blitzCharges} rushT ${player.rushT.toFixed(2)}`);
+  step(Math.round(P.BLITZ_CHARGE_T * 30) + 2);
+  check('a charge recharges after 10s', player.blitzCharges === 1, `charges ${player.blitzCharges}`);
+}
 
 // --- E / R ---
 {
+  // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air
   arena(10); player.ranks.E = 1;
-  const under = dummy(100), beside = dummy(170);
+  const near = dummy(140);
   tap('e');
-  check('Plunging Volley does nothing on the ground', player.cd.E === 0 && under.hp === 1e6);
-  // jump, then fire at the top of the jump
+  check('Spike Lift drives spikes into the enemies around you', near.hp < 1e6);
+  check('Spike Lift throws you into the air', !player.onGround && player.vy < 0);
+  step(2);
+  check('Spike Lift is on a long cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
+  // the air form, once you are back on your feet with the cooldown cleared
+  step(40); player.cd.E = 0;
+  const under = dummy(100), beside = dummy(170);
   tap('c'); step(8);
   const yTop = player.y; player.vx = 40; tap('e'); step(1);
   check('Plunging Volley bumps you up (a clear hop)', player.y < yTop - 4 && player.y > yTop - 20 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
@@ -457,11 +492,23 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   arena(25); player.ranks.R = 1;
-  const a = dummy(130), b = dummy(250);
+  const a = dummy(130), b = dummy(170);
   tap('r'); step(15);
-  check('Piercing Arrow hits every enemy in the line', a.hp < 1e6 && b.hp < 1e6);
+  check('Tempest hits every enemy caught in the sweep', a.hp < 1e6 && b.hp < 1e6);
   const hp = a.hp; player.useT = 0; tap('r'); step(5);
-  check('Piercing Arrow is on a long cooldown', a.hp === hp && player.cd.R > 4);
+  check('Tempest is on a long cooldown', a.hp === hp && player.cd.R > 4);
+}
+{
+  // ready-glow: the bar icon flashes the moment a cooldown runs out
+  arena(20); player.ranks.Q = 1;
+  tap('q');
+  check('casting starts the cooldown with no glow', player.cd.Q > 0 && player.readyT.Q === 0);
+  for (let i = 0; i < 200 && player.cd.Q > 0; i++) step(1);
+  check('the glow flashes as the cooldown ends', player.cd.Q === 0 && player.readyT.Q > 0, `cd ${player.cd.Q.toFixed(2)} readyT ${player.readyT.Q.toFixed(2)}`);
+  step(8);
+  check('the glow fades as the flash plays out', player.readyT.Q > 0 && player.readyT.Q < READY_FLASH, `readyT ${player.readyT.Q.toFixed(2)}`);
+  step(10);
+  check('the glow is gone once the flash is over', player.readyT.Q === 0);
 }
 {
   // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
@@ -618,7 +665,9 @@ check('new poses go on the end of the networked list (older clients read them as
   mem['archer-game:save'] = JSON.stringify({ ...snapshot(), town: 'atlantis' });
   check('a save in a town gone from the map resumes at the start', samePlace(load(), START));
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
-  check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply({ v: 2, level: 50 }) === null && apply('junk') === null);
+  check('a corrupt save is ignored', apply('junk') === null);
+  check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 3 }, town: 'mossgate' }) !== null
+    && player.level === 50 && player.ap === 3 && player.ranks.Z === 3);
   apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, town: 0 });
   check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.S + player.ranks.BS === 1);
   clearSave();
@@ -1113,7 +1162,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 2 && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 3 && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
@@ -1412,7 +1461,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const boss = bs[0];
   check('the boss is one of its enemies, grown huge and much tougher',
     boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
-  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)) === 'Giant Enemy Crab', bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)));
+  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType('Tide Pools')) === 'Giant Enemy Crab', bossType('Tide Pools'));
   const hp0 = player.hpMax;
   player.hpMax = player.hp = 1e7;
   const ground = game.floor.platforms[0];
@@ -1690,9 +1739,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 // --- enemies move at half their old speed ---
 {
   arena();
-  spawnMob({ x: 100, y: ground().y, types: ['Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Crab')!);
+  spawnMob({ x: 100, y: ground().y, types: ['Enemy Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Enemy Crab')!);
   const m = game.mobs[game.mobs.length - 1];
-  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
+  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Enemy Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
   game.mobs.length = 0;
 }
 
