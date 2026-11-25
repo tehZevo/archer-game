@@ -16,8 +16,17 @@ const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
 /** Fervor's per-stack bonus grows with the passive's rank. */
 export const fervorMult = (): number => 1 + (0.08 + passiveBonus('IR')) * game.player.fervor;
-/** Base 15% crit, raised by LUK and the Precision passive. */
-export const critChance = (): number => 0.15 + game.player.stats.luk * 0.004 + passiveBonus('SA');
+/** Base 15% crit, raised 2% a point by LUK and the Precision passive. */
+export const CRIT_PER_POINT = 0.02;
+export const critChance = (): number =>
+  Math.min(1, 0.15 + game.player.stats.luk * CRIT_PER_POINT + passiveBonus('SA'));
+/** LUK points spent past the 100% crit chance cap (the base 15% counts
+ *  toward it, so the cap is reached well before 50 points). */
+export const critOverflowPoints = (): number =>
+  Math.max(0, game.player.stats.luk - Math.ceil((1 - 0.15 - passiveBonus('SA')) / CRIT_PER_POINT));
+/** Crits hit for 1.5x, plus 2% for every LUK point past the cap. */
+export const CRIT_BASE = 1.5;
+export const critMult = (): number => CRIT_BASE + critOverflowPoints() * 0.02;
 /** Built-in damage bonus, raised by the Power Surge passive. */
 export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
 
@@ -33,18 +42,25 @@ export const BAR_SHOW = 4;
 /** Seconds an enemy flinches after a hit; and the longest a death can wait on
  *  an attack's remaining hits. */
 export const HITSTUN = 0.35, DYING_MAX = 0.6;
+/** Brief i-frames a missed attack grants (see the miss branch of damage). */
+export const MISS_IFRAMES = 0.35;
 
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   // the higher-level target dodges more (see missChance)
   target.aggro = true;
   if (Math.random() < missChance(game.player.level, target.level)) {
-    game.dmgNums.push({ x: target.x, y: target.y - 14, v: 0, t: 1, vy: -60, crit: false, txt: 'MISS', col: '#cfcfcf' });
+    // the MISS rides the same floating-number treatment as a hit
+    game.dmgNums.push(stackedNum(target, 0, false, 'MISS'));
+    // and it buys a moment of safety: the same i-frames a hit would grant,
+    // without the flashing sprite (the shot is spent, you're not re-hit)
+    game.player.invuln = Math.max(game.player.invuln, MISS_IFRAMES);
+    game.player.invulnQuiet = true;
     return;
   }
   // the weapon in hand multiplies everything the bow fires
   let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
-  if (crit) dmg *= 1.5;
+  if (crit) dmg *= critMult();
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Sky Toss airborne bonus
   dmg = Math.round(dmg);
   target.hp -= dmg;
@@ -73,7 +89,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
  *  pause longer than NUM_RESET starts a new stack. */
 export const NUM_GAP = 0.125, NUM_LINE = 9, NUM_MAX = 8;
 const NUM_RESET = 0.4;
-function stackedNum(m: Mob, v: number, crit: boolean): DmgNum {
+export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string): DmgNum {
   const now = game.time;
   const fresh = m.numAt === undefined || now - m.numAt > NUM_RESET;
   const k = fresh ? 0 : ((m.numK ?? 0) + 1) % NUM_MAX;
@@ -82,7 +98,7 @@ function stackedNum(m: Mob, v: number, crit: boolean): DmgNum {
   return {
     // a slow drift (it was 70px/s): fast enough to feel alive, slow enough that
     // a number doesn't rise into the line the next one appears on
-    x: m.x, y: m.y - 8 - k * NUM_LINE, v, t: 1, crit, delay: at - now,
+    x: m.x, y: m.y - 8 - k * NUM_LINE, v, t: 1, crit, delay: at - now, txt,
     vy: -12, col: crit ? '#ffd166' : '#ffffff',
   };
 }

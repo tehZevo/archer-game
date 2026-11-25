@@ -26,6 +26,7 @@ export const P = {
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.8,   // s Sky Assault hovers (striking) before falling (longer so the strike sequence reads)
+  ASSAULT_SPIN_LINK: 0.35, // s of extra link window Sky Assault keeps open for Midair Spin after the hover
   BARRAGE_UP: 43,      // px Sky Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
@@ -55,7 +56,7 @@ export const P = {
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
   PLUNGE_W: 56,        // Plunging Volley: width of the column it rains into, px
-  PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
+  PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 150,     // px/s added to your current momentum (stacks: a falling cast lifts less)
   // Spike Lift: E's ground form. Spikes erupt around you and throw you up.
