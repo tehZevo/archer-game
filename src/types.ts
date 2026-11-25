@@ -225,6 +225,8 @@ export interface Player extends Body {
   /** Sky Assault: seconds left hovering (no gravity) while striking airborne enemies. */
   /** Sky Toss slide: seconds left (0 = not rushing). The strike lands when it ends. */
   rushT: number;
+  /** px of the slide's fixed distance already covered. */
+  rushDist: number;
   /** Enemies the slide is pushing along, at their distance ahead of the player. */
   rushCarry: { m: Mob; off: number }[];
   hangT: number;
