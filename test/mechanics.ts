@@ -2456,5 +2456,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('Midair Spin fires near the jump apex', player.mp < mp0 && player.cd['W.air'] > 0, `cd ${player.cd['W.air'].toFixed(1)}`);
 }
 
+{
+  // The world's vertical bounds: a big (or stacked) hop stops at the top
+  arena(20);
+  player.y = -40; player.vy = -100; player.onGround = false;
+  step(1);
+  check('the world clamps the player from above', player.y >= 0, `y ${player.y.toFixed(1)}`);
+  player.y = WORLD.h; player.onGround = false; player.vy = 0;
+  step(1);
+  check('...and from below', player.y <= WORLD.h - player.h, `y ${player.y.toFixed(1)}`);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

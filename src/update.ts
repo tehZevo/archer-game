@@ -206,6 +206,9 @@ export function update(dt: number): void {
       integrate(player, dt);
       // clamp to the world before colliding, so the ground test uses the final x
       player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2);
+      // ...and vertically: chained aerial hops (Plunging Volley's stacked
+      // momentum) can't carry you off the top of the map
+      player.y = clamp(player.y, 0, WORLD.h - player.h);
       collideGround(player, prevFeet, prevX);
       landDive(); // an Air Dive touching down rolls into the rush this same frame
 
