@@ -64,7 +64,7 @@ export const PROPS: Record<string, Prop[]> = {
     (p) => { disc(p, 12, B - 4, 6, '#56687a'); p(6, B - 4, '#3e4c5a', 13, 4); p(9, B - 9, '#5aa85e', 2, 4); p(14, B - 8, '#2e7a4a', 1, 4); }, // a weedy boulder
     (p) => { p(8, B - 3, '#f08a3a', 9, 1); p(12, B - 7, '#f08a3a', 1, 7); p(10, B - 1, '#f08a3a'); p(14, B - 1, '#f08a3a'); }, // a big starfish
   ],
-  Beach: [
+  'Sunlit Shore': [
     (p) => { // a palm
       for (let y = 0; y < 22; y++) p(11 + Math.round(Math.sin(y / 7) * 2), B - y - 1, y % 4 ? '#a87a4a' : '#8a5a34', 3, 1);
       for (const [dx, dy] of [[-7, 2], [-4, 0], [4, 0], [7, 2], [-2, -2], [3, -2]]) p(12 + Math.min(dx, 0), B - 23 + dy, '#4f9a44', Math.abs(dx) + 1, 2);
@@ -72,35 +72,35 @@ export const PROPS: Record<string, Prop[]> = {
     },
     (p) => { p(6, B - 6, '#e8c98a', 12, 6); p(8, B - 10, '#e8c98a', 8, 4); p(10, B - 13, '#e8c98a', 4, 3); p(11, B - 15, '#e8643c', 1, 3); p(12, B - 15, '#ff9f6b', 2, 1); p(9, B - 4, '#bf9353', 2, 2); }, // a sandcastle
   ],
-  Forest: [
+  'Whispering Woods': [
     (p) => { disc(p, 12, B - 6, 7, '#2e6a2e'); disc(p, 9, B - 8, 4, '#3f8a3a'); disc(p, 15, B - 5, 4, '#245a26'); p(14, B - 9, '#e8643c'); p(8, B - 5, '#e8643c'); }, // a berry bush
     (p) => { p(8, B - 8, '#6a4a2a', 9, 8); p(8, B - 8, '#8a6a44', 9, 2); p(10, B - 7, '#a88a60', 5, 1); shroom(p, 18, 3, 2, '#e8dcc8', '#c8503a', '#fff'); }, // a stump
   ],
-  Meadow: [
+  'Sunny Meadows': [
     (p) => { disc(p, 12, B - 7, 8, '#e8c060'); p(4, B - 4, '#c89a40', 17, 4); for (let x = 6; x < 19; x += 3) p(x, B - 12 + (x % 2), '#f4dc8a', 1, 3); }, // a haystack
     (p) => { for (const x of [4, 18]) p(x, B - 12, '#a87a4a', 2, 12); p(2, B - 10, '#c89a64', 20, 2); p(2, B - 5, '#c89a64', 20, 2); }, // a fence
   ],
-  Riverbank: [
+  'Misty Riverbank': [
     (p) => { for (const [x, h] of [[6, 14], [9, 20], [12, 17], [15, 22], [18, 12]]) { p(x, B - h, '#5a8a3a', 1, h); p(x, B - h, '#6a3e1e', 1, 4); } }, // cattails
     (p) => { disc(p, 12, B - 4, 6, '#6a7a6a'); p(6, B - 3, '#4a5a4a', 13, 3); disc(p, 11, B - 11, 3, '#5aa84a'); p(10, B - 12, '#fff'); p(12, B - 12, '#fff'); }, // a frog on a rock
   ],
-  Hills: [
+  'Rolling Hills': [
     (p) => { disc(p, 10, B - 5, 6, '#8a8a7a'); disc(p, 16, B - 4, 4, '#7a7a6a'); p(6, B - 8, '#a8a898', 4, 1); }, // rocks
     (p) => { p(11, B - 20, '#8a6a44', 2, 20); p(5, B - 19, '#c89a64', 14, 5); p(16, B - 18, '#c89a64', 3, 3); p(7, B - 17, '#6a4a2a', 7, 1); }, // a signpost
   ],
-  Cave: [
+  'Echoing Caves': [
     (p) => { shard(p, 10, 22, 4, '#5a5870', '#3e3c50'); shard(p, 16, 12, 3, '#4e4c62', '#34324a'); }, // stalagmites
     (p) => { shard(p, 12, 16, 3, '#6ae0d8', '#2fa8a0'); shard(p, 8, 9, 2, '#9ff3ea', '#3fbfb4'); }, // a glowing crystal
   ],
-  Swamp: [
+  'Murky Swamp': [
     (p) => lanternPost(p, '#3a2e22', '#b8e070', '#f0ffc0'), // a will-o'-lamp
     (p) => { p(11, B - 22, '#3a2e22', 2, 22); p(7, B - 18, '#3a2e22', 4, 1); p(6, B - 21, '#3a2e22', 1, 3); p(13, B - 14, '#3a2e22', 5, 1); p(17, B - 17, '#3a2e22', 1, 3); }, // a dead sapling
   ],
-  Mountain: [
+  'Craggy Mountains': [
     (p) => pine(p, '#2e5a3a', '#1e4a2e', '#f4f8fc'),
     (p) => { p(8, B - 4, '#8a8a9a', 8, 4); p(9, B - 8, '#9a9aaa', 6, 4); p(10, B - 11, '#aaaabc', 4, 3); p(10, B - 12, '#f4f8fc', 4, 1); }, // a cairn
   ],
-  Sky: [
+  'Endless Sky': [
     (p) => lanternPost(p, '#c8a040', '#fff0a0', '#ffffff'), // a golden lamp
     (p) => { disc(p, 12, B - 6, 6, '#ffffff'); disc(p, 7, B - 4, 4, '#f0f4fc'); disc(p, 17, B - 4, 4, '#e4ecf8'); }, // a cloud puff
   ],

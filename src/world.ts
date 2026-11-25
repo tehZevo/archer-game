@@ -18,42 +18,42 @@ interface Plan { area: string; town: string; up?: Plan[] }
 
 // The root is a town alone (no combat floors below it): the Harbor, where a
 // new game starts, a calm dock whose way up leads to the Beach.
-const PLAN: Plan = { area: 'Harbor', town: 'Saltwick', up: [
-  { area: 'Beach', town: 'Driftwood Rest', up: [
-    { area: 'Forest', town: 'Mossgate', up: [
-      { area: 'Cave', town: 'Fernwick', up: [
-        { area: 'Mushroom Grotto', town: 'Sporehollow' },
-        { area: 'Crystal Caverns', town: 'Glimmerdeep', up: [
-          { area: 'Clockwork Spire', town: 'Gearholm' },
+const PLAN: Plan = { area: 'Harbor', town: 'Saltwick Port', up: [
+  { area: 'Sunlit Shore', town: 'Driftwood Rest', up: [
+    { area: 'Whispering Woods', town: 'Mossgate Village', up: [
+      { area: 'Echoing Caves', town: 'Fernwick Hamlet', up: [
+        { area: 'Mushroom Grotto', town: 'Sporehollow Camp' },
+        { area: 'Crystal Caverns', town: 'Glimmerdeep Town', up: [
+          { area: 'Clockwork Spire', town: 'Gearholm City' },
         ] },
       ] },
-      { area: 'Riverbank', town: 'Reedmouth', up: [
-        { area: 'Sunken Ruins', town: 'Tidewatch', up: [
+      { area: 'Misty Riverbank', town: 'Reedmouth Village', up: [
+        { area: 'Sunken Ruins', town: 'Tidewatch Outpost', up: [
           // the Tide Pools are a tough coastal branch, far from the start
-          { area: 'Tide Pools', town: 'Wrackhaven' },
+          { area: 'Tide Pools', town: 'Wrackhaven Cove' },
         ] },
-        { area: 'Mirror Lake', town: 'Stillwater', up: [
-          { area: 'Starfall Observatory', town: 'Thistledown' },
+        { area: 'Mirror Lake', town: 'Stillwater Town', up: [
+          { area: 'Starfall Observatory', town: 'Thistledown Station' },
         ] },
       ] },
     ] },
-    { area: 'Meadow', town: 'Lanternhollow', up: [
-      { area: 'Hills', town: 'Emberfold', up: [
-        { area: 'Mountain', town: 'Highcrag', up: [
-          { area: 'Sky', town: 'Cloudharbor', up: [
-            { area: 'Sky Reef', town: 'Windrest' },
-            { area: 'Summit', town: 'Summit' },
+    { area: 'Sunny Meadows', town: 'Lanternhollow Town', up: [
+      { area: 'Rolling Hills', town: 'Emberfold Village', up: [
+        { area: 'Craggy Mountains', town: 'Highcrag Hold', up: [
+          { area: 'Endless Sky', town: 'Cloudharbor Town', up: [
+            { area: 'Sky Reef', town: 'Windrest Camp' },
+            { area: 'Frozen Summit', town: 'Summit Lodge' },
           ] },
         ] },
-        { area: 'Old Keep', town: 'Hollowmere', up: [
-          { area: 'Chapel Spire', town: 'Bellcourt' },
+        { area: 'Old Keep', town: 'Hollowmere Town', up: [
+          { area: 'Chapel Spire', town: 'Bellcourt Abbey' },
         ] },
       ] },
-      { area: 'Swamp', town: 'Willowmere', up: [
-        { area: 'Dreamwood', town: 'Duskmeadow', up: [
-          { area: 'Void Garden', town: 'Nullhaven' },
+      { area: 'Murky Swamp', town: 'Willowmere Village', up: [
+        { area: 'Dreamwood', town: 'Duskmeadow Hamlet', up: [
+          { area: 'Void Garden', town: 'Nullhaven Refuge' },
         ] },
-        { area: 'Ember Wastes', town: 'Ashen Gate' },
+        { area: 'Ember Wastes', town: 'Ashen Gate Fort' },
       ] },
     ] },
   ] },

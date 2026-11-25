@@ -42,9 +42,9 @@ const classic: Tileset = {
   },
 };
 
-/* ---------------- Beach: layered sand, shells, sea grass, driftwood ---------------- */
+/* ---------------- Sunlit Shore: layered sand, shells, sea grass, driftwood ---------------- */
 const beach: Tileset = {
-  name: 'Beach',
+  name: 'Sunlit Shore',
   sky: ['#2f6f9e', '#4d93c2', '#2a5f8a'],
   fill(x, y, v) {
     // wavy strata of sand, with a darker seam every other band
@@ -96,9 +96,9 @@ const beach: Tileset = {
   },
 };
 
-/* ---------------- Forest: dark loam and roots, thick grass, vines, log ladders ---------------- */
+/* ---------------- Whispering Woods: dark loam and roots, thick grass, vines, log ladders ---------------- */
 const forest: Tileset = {
-  name: 'Forest',
+  name: 'Whispering Woods',
   sky: ['#1c3a2c', '#2a573a', '#173024'],
   fill(x, y, v) {
     let col = hash(x >> 1, y >> 1, v + 3) < 0.25 ? '#553a25' : '#4a3220';
@@ -157,12 +157,12 @@ const forest: Tileset = {
   },
 };
 
-/* ---------------- Cave: cobbled stone, chipped edges, stalactites, chains ---------------- */
+/* ---------------- Echoing Caves: cobbled stone, chipped edges, stalactites, chains ---------------- */
 // Stone cells: a few points per variant, wrapped so the pattern tiles.
 const CELLS = [0, 1, 2, 3].map((v) => Array.from({ length: 5 }, (_, i) => [hash(i, v, 21) * 16, hash(v, i, 22) * 16]));
 const STONE = ['#4a4856', '#545262', '#403e4c', '#5a5868', '#4e4c5a'];
 const cave: Tileset = {
-  name: 'Cave',
+  name: 'Echoing Caves',
   sky: ['#0e0c16', '#1a1726', '#0b0a12'],
   fill(x, y, v) {
     let d1 = 99, d2 = 99, c1 = 0;
@@ -284,7 +284,7 @@ const clockwork: Tileset = {
 };
 
 export const TILESETS: Record<string, Tileset> = {
-  Classic: classic, Beach: beach, Forest: forest, Cave: cave, 'Clockwork Spire': clockwork,
+  Classic: classic, 'Sunlit Shore': beach, 'Whispering Woods': forest, 'Echoing Caves': cave, 'Clockwork Spire': clockwork,
   ...NATURE, ...MYSTIC, ...LATE,
 };
 /** The tileset an area is drawn with (areas without their own yet use Classic). */

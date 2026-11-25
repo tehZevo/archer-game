@@ -11,7 +11,7 @@ import type { FloorMod } from './types';
    ============================================================ */
 
 export const FLOOR_MODS: Record<FloorMod, { areas: string[]; chance: number; label: string; coins: number }> = {
-  icy: { areas: ['Mirror Lake', 'Mountain', 'Summit', 'Sky Reef'], chance: 0.4, label: 'ICY', coins: 1.5 },
+  icy: { areas: ['Mirror Lake', 'Craggy Mountains', 'Frozen Summit', 'Sky Reef'], chance: 0.4, label: 'ICY', coins: 1.5 },
 };
 /** On ice, how much of your usual grip (acceleration and friction) you keep. */
 export const ICE_GRIP = 0.2;
