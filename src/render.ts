@@ -23,7 +23,7 @@ import { clamp } from './util';
 import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
 import { drawCoins, drawNpcs, drawPet } from './economydraw';
-import { text, textWidth } from './font';
+import { labelShadow, text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { settings } from './settings';
 import { STATUS } from './status';
@@ -182,8 +182,10 @@ function drawPortal(p: Portal): void {
     // a way up from town also says the level it's meant for (under the name),
     // coloured by how you measure up
     const ly = Math.round(p.y - s.h - (p.lvl ? 18 : 9));
+    labelShadow(ctx);
     text(ctx, p.label, Math.round(lx), ly, 1, down ? '#8fe3c4' : '#e6d6ff', 'center');
     if (p.lvl) text(ctx, `LV.${p.lvl}+`, Math.round(lx), ly + 9, 1, levelCol(p.lvl), 'center');
+    labelShadow(ctx, false);
   }
 }
 

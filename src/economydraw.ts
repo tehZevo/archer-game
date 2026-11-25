@@ -1,6 +1,6 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { text } from './font';
+import { labelShadow, text } from './font';
 import { SKILLS } from './config';
 import { activeSkill } from './progress';
 import { pet, PET } from './pets';
@@ -146,7 +146,9 @@ function drawNpc(n: Npc, near: boolean): void {
     : (trainerSprite ??= bakeGrid(TRAINER));
   const bob = n.kind === 'board' ? 0 : Math.round(Math.sin(performance.now() / 500) * 0.6);
   ctx.drawImage(sprite, Math.round(n.x - 6), Math.round(n.y - sprite.height + 1 + bob));
+  labelShadow(ctx);
   text(ctx, near ? `UP: ${n.name}` : n.name, Math.round(n.x), Math.round(n.y - sprite.height - 8), 1, near ? GOLD : '#e6d6ff', 'center');
+  labelShadow(ctx, false);
 }
 
 /** The trainer's window (screen space): the three skill slots, each showing

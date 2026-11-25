@@ -91,6 +91,14 @@ export function text(
   }
 }
 
+/** A hard 1px black shadow (down and right) so world labels read on bright art,
+ *  the same treatment the HUD uses. */
+export function labelShadow(ctx: CanvasRenderingContext2D, on = true): void {
+  const k = ctx.getTransform().a; // offsets are in canvas pixels, not game pixels
+  ctx.shadowColor = on ? '#000' : 'transparent';
+  ctx.shadowOffsetX = on ? k : 0; ctx.shadowOffsetY = on ? k : 0; ctx.shadowBlur = 0;
+}
+
 /** Width of a string in pixels at the given scale. */
 export function textWidth(str: string, scale = 1): number {
   return String(str).length * (W * scale + GAP * scale) - GAP * scale;
