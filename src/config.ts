@@ -187,7 +187,35 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Meteor Golem',   lvl: 36, hp: 360, ...mobSize('Meteor Golem'),   spd: 45,  dmg: 6, col: '#6a4a3a', areas: ['Starfall Observatory'] },
   { n: 'Void Blossom',   lvl: 40, hp: 300, ...mobSize('Void Blossom'),   spd: 30,  dmg: 6, col: '#8a4ad8', areas: ['Void Garden'] },
   { n: 'Null Wraith',    lvl: 40, hp: 220, ...mobSize('Null Wraith'),    spd: 100, dmg: 5, col: '#2a1a3a', fly: true, areas: ['Void Garden'] },
+
+  // variants: cousins of an area's enemies at about the same level, with their own
+  // look and stats. They live wherever their base (`of`) does unless they list their
+  // own areas, and turn up in its place VARIANT_CHANCE of the time (see pickVariant).
+  { n: 'Red Snail',       of: 'Garden Snail',   lvl: 2,  hp: 210, w: 17, h: 14,                   spd: 44,  dmg: 3, col: '#f07a5a' },
+  { n: 'Blue Crab',       of: 'Crab',           lvl: 3,  hp: 160, w: 20, h: 13,                   spd: 92,  dmg: 3, col: '#4a8ae8' },
+  { n: 'Wild Boar',     of: 'Boar',           lvl: 9,  hp: 340, w: 23, h: 18,                   spd: 70,  dmg: 5, col: '#8a5a3a', areas: ['Whispering Woods'] },
+  { n: 'Storm Gull',      of: 'Gull',           lvl: 5,  hp: 170, w: 18, h: 12,                   spd: 105, dmg: 3, col: '#8a94a8', fly: true, areas: ['Endless Sky'] },
+  { n: 'Horned Beetle',   of: 'Beetle',         lvl: 7,  hp: 260, ...mobSize('Horned Beetle'),   spd: 50,  dmg: 4, col: '#8a5a2a' },
+  { n: 'Brown Hare',      of: 'Rabbit',         lvl: 7,  hp: 150, ...mobSize('Brown Hare'),      spd: 115, dmg: 3, col: '#a8784a' },
+  { n: 'Poison Frog',     of: 'Frog',           lvl: 11, hp: 170, ...mobSize('Poison Frog'),     spd: 85,  dmg: 5, col: '#3a6ae0' },
+  { n: 'Ram',             of: 'Goat',           lvl: 11, hp: 340, ...mobSize('Ram'),             spd: 68,  dmg: 5, col: '#8a8478' },
+  { n: 'Ember Crawler',   of: 'Rock Crawler',   lvl: 16, hp: 300, ...mobSize('Ember Crawler'),   spd: 55,  dmg: 5, col: '#8a2a1a' },
+  { n: 'Bog Slime',       of: 'Slime',          lvl: 15, hp: 320, ...mobSize('Bog Slime'),       spd: 42,  dmg: 4, col: '#7a5a8a' },
+  { n: 'Toadstool',       of: 'Mushling',       lvl: 19, hp: 360, ...mobSize('Toadstool'),       spd: 45,  dmg: 5, col: '#d83a3a' },
+  { n: 'Quartz Golem',    of: 'Crystal Golem',  lvl: 20, hp: 300, ...mobSize('Quartz Golem'),    spd: 50,  dmg: 6, col: '#e8dce8' },
+  { n: 'Ruin Sentinel',   of: 'Ruin Guardian',  lvl: 25, hp: 400, ...mobSize('Ruin Sentinel'),   spd: 40,  dmg: 6, col: '#8a7a4a' },
+  { n: 'Blue Jelly',      of: 'Jellyfish',      lvl: 25, hp: 170, ...mobSize('Blue Jelly'),      spd: 65,  dmg: 4, col: '#70a8f0', fly: true },
+  { n: 'Windup Captain',  of: 'Windup Soldier', lvl: 25, hp: 340, ...mobSize('Windup Captain'),  spd: 62,  dmg: 6, col: '#3a5aa8' },
+  { n: 'Ghost Fox',       of: 'Shadow Fox',     lvl: 31, hp: 220, ...mobSize('Ghost Fox'),       spd: 125, dmg: 5, col: '#d8e4f0' },
+  { n: 'Dark Reflection', of: 'Reflection',     lvl: 31, hp: 280, ...mobSize('Dark Reflection'), spd: 95,  dmg: 6, col: '#2a3a5a' },
+  { n: 'Comet Golem',     of: 'Meteor Golem',   lvl: 37, hp: 330, ...mobSize('Comet Golem'),     spd: 58,  dmg: 6, col: '#4a5a7a' },
+  { n: 'Thorn Blossom',   of: 'Void Blossom',   lvl: 41, hp: 340, ...mobSize('Thorn Blossom'),   spd: 30,  dmg: 7, col: '#d83a5a' },
 ];
+// a variant without its own areas lives wherever its base does
+for (const m of MOB_TYPES) if (m.of && !m.areas) m.areas = MOB_TYPES.find((b) => b.n === m.of)?.areas;
+
+/** How often a spawning enemy turns up as one of its variants instead (if it has any here). */
+export const VARIANT_CHANCE = 0.3;
 
 
 /** Elites: now and then a floor enemy spawns bigger and tougher, with a gold

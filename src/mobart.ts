@@ -236,6 +236,33 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
   // Void Garden
   'Void Blossom': { look: L(18, 18, '#8a4ad8', '#3a1a5a', '#d8a0ff', '#f0d8ff', '#2a0e4a'), plan: bloom },
   'Null Wraith': { look: L(14, 18, '#2a1a3a', '#120a1a', '#5a3a7a', '#d8a0ff', '#8a4ad8'), plan: blob({ tentacles: true, hood: true }) },
+
+  // variants: a cousin of an area's enemy, with its own look (see MOB_TYPES' `of`)
+  'Horned Beetle': { look: L(18, 12, '#8a5a2a', '#4a2a10', '#e8b870', '#fff0a0', '#e8c040'), plan: bug({ spikes: true }) },
+  'Brown Hare': { look: L(15, 16, '#a8784a', '#6a4a2a', '#e8d0b0', '#1a1010', '#f0b0a0'), plan: hopper({ ears: true }) },
+  'Poison Frog': { look: L(16, 11, '#3a6ae0', '#1a2a6a', '#f0e040', '#101010', '#f0e040'), plan: hopper({ mouth: true }) },
+  Ram: { look: L(22, 18, '#8a8478', '#4a4438', '#c8c0b0', '#101010', '#e8d8a0'), plan: quad({ horns: true }) },
+  'Ember Crawler': { look: L(18, 12, '#8a2a1a', '#4a140a', '#ff8a3a', '#ffe070', '#ffb040'), plan: bug({ spikes: true }) },
+  'Bog Slime': { look: L(18, 14, '#7a5a8a', '#4a3a5a', '#c8a8d8', '#1a1020', '#a8c060'), plan: blob({ drip: true, spots: true }) },
+  Toadstool: { look: L(20, 22, '#d83a3a', '#6a4a4a', '#f0e4d0', '#1a1010', '#ffffff'), plan: biped({ cap: true }) },
+  'Quartz Golem': { look: L(18, 24, '#e8dce8', '#a898b0', '#ffffff', '#ff70b0', '#ffb0d8'), plan: biped({ crystal: true, arms: true }) },
+  'Ruin Sentinel': { look: L(18, 22, '#8a7a4a', '#5a4a2a', '#c8b070', '#ff6a5a', '#7af0e0'), plan: biped({ helm: true, arms: true }) },
+  'Blue Jelly': { look: L(14, 15, '#70a8f0', '#3a6ac0', '#e0f0ff', '#1a2a5a', '#c8e0ff'), plan: blob({ tentacles: true }) },
+  'Windup Captain': { look: L(20, 21, '#3a5aa8', '#1a2a6a', '#6a8ae8', '#101010', '#f0d060'), plan: biped({ helm: true, key: true, arms: true }) },
+  'Ghost Fox': { look: L(20, 15, '#d8e4f0', '#8a9ab8', '#ffffff', '#5ac8ff', '#a8d8ff'), plan: quad({ ears: true, tail: true, snout: true }) },
+  'Dark Reflection': { look: L(12, 22, '#2a3a5a', '#141a2e', '#4a5a8a', '#ff4a5a', '#8a9ac8'), plan: biped({}) },
+  'Comet Golem': { look: L(20, 22, '#4a5a7a', '#2a3248', '#7a8ab0', '#7af0ff', '#5ad8ff'), plan: biped({ rocky: true, arms: true }) },
+  'Thorn Blossom': { look: L(18, 18, '#d83a5a', '#1a4a2a', '#ff90a8', '#fff0a0', '#5a1a2a'), plan: bloom },
+};
+
+/** Hand-drawn enemies (sprites.ts) and their palette-swapped variants: each
+ *  maps the base's exact colours to its own. */
+export const DRAWN = ['Garden Snail', 'Boar', 'Wisp', 'Iron Hog', 'Crab', 'Hermit Crab', 'Gull'];
+export const RECOLOR: Record<string, { base: string; map: Record<string, string> }> = {
+  'Red Snail': { base: 'Garden Snail', map: { '#5fb8f0': '#f07a5a', '#3f86c4': '#b8402a' } },
+  'Blue Crab': { base: 'Crab', map: { '#e8643c': '#4a8ae8', '#ff9a6a': '#9ac8ff', '#b8401f': '#2a4aa8', '#3a1208': '#0e1a3a' } },
+  'Wild Boar': { base: 'Boar', map: { '#c56f9f': '#5a3a24', '#e79ac4': '#8a5a3a', '#d07fae': '#6a4228', '#ffffff': '#f0e0b0' } },
+  'Storm Gull': { base: 'Gull', map: { '#f4f7fc': '#8a94a8', '#9aa6b8': '#3a4458', '#f0c040': '#e8e070' } },
 };
 
 /** Paint frame `f` of an enemy: 0 or 1 for its walk cycle, HURT for its hit pose. */
@@ -246,3 +273,6 @@ export function paintMob(name: string, f: number, p: MobPaint): void {
 
 /** An enemy's box (sprite and hitbox). */
 export const mobSize = (name: string): { w: number; h: number } => ({ w: MOB_ART[name].look.w, h: MOB_ART[name].look.h });
+
+/** Does this enemy have art (painted, hand-drawn, or a palette swap of one)? */
+export const hasMobArt = (name: string): boolean => !!MOB_ART[name] || DRAWN.includes(name) || !!RECOLOR[name];

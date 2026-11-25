@@ -9,15 +9,15 @@ import { AREAS, areaName, isAreaEnd, isTown, lastTown, MAP_AREAS, placeName, tow
 let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
-import { ELITE, FX_DUR, MOB_TYPES, P } from '../src/config';
+import { ELITE, FX_DUR, MOB_TYPES, P, VARIANT_CHANCE } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
-import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
-import { HURT, MOB_ART, paintMob } from '../src/mobart';
+import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
+import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
@@ -1548,6 +1548,31 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   m.x = player.x + 15;
   m.x = player.x + 1; step(1);
   check('...standing still on top of you instead of flipping back and forth', m.vx === 0);
+  game.mobs.length = 0;
+}
+
+// --- enemy variants: cousins of an area's enemies that turn up in their place ---
+{
+  const variants = MOB_TYPES.filter((m) => m.of);
+  check('there are enemy variants', variants.length >= 15);
+  check('every enemy has art (painted, hand-drawn or a palette swap)', MOB_TYPES.every((m) => hasMobArt(m.n)), MOB_TYPES.filter((m) => !hasMobArt(m.n)).map((m) => m.n).join(', '));
+  check('every palette swap is of a hand-drawn enemy', Object.values(RECOLOR).every((r) => DRAWN.includes(r.base)));
+  check('every variant is of a real (non-variant) enemy and lives somewhere it does',
+    variants.every((v) => { const b = MOB_TYPES.find((m) => m.n === v.of); return b && !b.of && v.areas?.length && v.areas.every((a) => b.areas?.includes(a)); }));
+  const withSet = [...new Set(MOB_TYPES.flatMap((m) => m.areas ?? []))].filter((a) => a !== '*');
+  const bare = withSet.filter((a) => !variants.some((v) => v.areas!.includes(a)));
+  check('every area with its own enemies has a variant or two', bare.length === 0, bare.join(', '));
+  check('variants are never one of a floor\'s two types', withSet.every((a) => areaMobs(a).every((m) => !m.of)));
+  const snail = MOB_TYPES.find((m) => m.n === 'Garden Snail')!;
+  check('usually the enemy itself spawns', pickVariant(snail, 'Sunlit Shore', VARIANT_CHANCE + 0.01) === snail);
+  check('now and then its variant does instead', pickVariant(snail, 'Sunlit Shore', 0).n === 'Red Snail');
+  const gull = MOB_TYPES.find((m) => m.n === 'Gull')!;
+  check('a variant only turns up in its own areas', pickVariant(gull, 'Sunlit Shore', 0) === gull && pickVariant(gull, 'Endless Sky', 0).n === 'Storm Gull');
+  gotoFloor(2, 0); game.mobs.length = 0;
+  for (const z of game.floor.spawns) z.types = ['Garden Snail'];
+  const rnd = Math.random; Math.random = () => 0.01;
+  try { spawnWave(); } finally { Math.random = rnd; }
+  check('waves spawn variants', game.mobs.length > 0 && game.mobs.every((m) => m.type.of), game.mobs.map((m) => m.name).join(', '));
   game.mobs.length = 0;
 }
 
