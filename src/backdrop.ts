@@ -126,34 +126,34 @@ export const BACKDROPS: Record<string, Backdrop> = {
     mid: (p) => { ridges(p, 100, 8, 12, '#2e5a7a50', 41); scatter(4, 42, (x, _y, _r, i) => { const by = 100 + (i % 2) * 128; p(x, by - 14, '#2e5a7a50', 6, 14); p(x + 1, by - 22, '#f4f7fc50', 4, 8); }); }, // sea stacks and a lighthouse or two
     particles: { kind: 'bubbles', cols: ['#bfefff', '#ffffff'], n: 6 },
   },
-  Beach: {
+  'Sunlit Shore': {
     far: CLOUDS('#ffffff22', 6, 6, 3),
     mid: (p) => { // distant islands with palms
       ridges(p, 90, 6, 10, '#1e5a7a60', 4);
       scatter(3, 5, (x, y, r, i) => { const by = 90 + (i % 2) * 128 - 6; p(x, by - 10, '#1e5a7a60', 2, 10); blob(p, x + 1, by - 11, 4, '#1e5a7a60'); void y; void r; });
     },
   },
-  Forest: {
+  'Whispering Woods': {
     far: (p) => scatter(7, 6, (x, _y, r, i) => trunk(p, x, 3 + Math.round(r * 3), '#0e2a1c80', i + 10)),
     mid: (p) => scatter(4, 7, (x, y, r, i) => { trunk(p, x, 6 + Math.round(r * 4), '#0a2216a0', i + 20); blob(p, x + 4, y, 14, '#123a24a0'); }),
     particles: { kind: 'leaves', cols: ['#7ab84a', '#c8a040', '#5a9a3a'], n: 10 },
   },
-  Cave: {
+  'Echoing Caves': {
     far: (p) => scatter(6, 8, (x, _y, r) => pillar(p, x, 6 + Math.round(r * 8), '#1e1c2a90', '#26243490', 9, false)),
     mid: (p) => scatter(8, 9, (x, y, r) => { for (let i = 0; i < 18 + r * 20; i++) p(x - Math.max(0, 6 - i / 4), y + i, '#0a0910b0', Math.max(1, 12 - i / 2), 1); }),
     particles: { kind: 'fireflies', cols: ['#3fbfb4', '#9ff3ea'], n: 6 },
   },
-  Swamp: {
+  'Murky Swamp': {
     far: (p) => scatter(6, 10, (x, _y, r, i) => trunk(p, x, 2 + Math.round(r * 3), '#0e1a1480', i + 30)),
     mid: (p) => { for (let i = 0; i < 3; i++) p(0, 40 + i * 85, '#8aa88a18', LAYER, 14 + i * 4); },
     particles: { kind: 'fireflies', cols: ['#d8f070', '#a8d040'], n: 10 },
   },
-  Mountain: {
+  'Craggy Mountains': {
     far: (p) => ridges(p, 60, 22, 30, '#a8c0dc50', 11),
     mid: (p) => { ridges(p, 120, 26, 40, '#5a708c70', 12); ridges(p, 118, 26, 3, '#ffffff50', 12); },
     particles: { kind: 'snow', cols: ['#ffffff', '#e4eef8'], n: 22 },
   },
-  Sky: {
+  'Endless Sky': {
     far: CLOUDS('#ffffff30', 7, 6, 13),
     mid: (p) => { scatter(3, 14, (x, y, r) => island(p, x, y, 26 + Math.round(r * 20), '#6ab84a90', '#5a6a8a90')); CLOUDS('#ffffff40', 3, 10, 15)(p); },
     particles: { kind: 'glints', cols: ['#ffe070', '#ffffff'], n: 6 },
@@ -162,12 +162,12 @@ export const BACKDROPS: Record<string, Backdrop> = {
     far: (p) => scatter(5, 16, (x, y, r) => gearShape(p, x, y, 14 + Math.round(r * 14), '#5a3e2060', '#20170e')),
     mid: (p) => { scatter(3, 17, (x) => { p(x, 0, '#7a828a50', 5, LAYER); p(x + 1, 0, '#a8b0c050', 1, LAYER); }); scatter(3, 18, (x, y, r) => gearShape(p, x, y, 8 + Math.round(r * 6), '#8a6a3080', '#2e2216')); },
   },
-  Meadow: {
+  'Sunny Meadows': {
     far: CLOUDS('#ffffff38', 5, 7, 19),
     mid: (p) => { ridges(p, 110, 10, 24, '#6ab84a50', 20); scatter(20, 21, (x, _y, r) => p(x, 104 + (r < 0.5 ? 0 : 128) + r * 10, r < 0.3 ? '#ff8ac080' : '#ffffff80')); },
     particles: { kind: 'petals', cols: ['#ff8ac0', '#ffffff', '#ffe070'], n: 8 },
   },
-  Riverbank: {
+  'Misty Riverbank': {
     far: (p) => ridges(p, 80, 14, 26, '#3a7a6a40', 22),
     mid: (p) => scatter(2, 23, (x) => { // waterfalls
       p(x, 0, '#7ac0e070', 12, LAYER);
@@ -175,7 +175,7 @@ export const BACKDROPS: Record<string, Backdrop> = {
     }),
     particles: { kind: 'fireflies', cols: ['#6ad8f0'], n: 4 },
   },
-  Hills: {
+  'Rolling Hills': {
     far: (p) => ridges(p, 70, 12, 20, '#6a9a5a40', 24),
     mid: (p) => {
       ridges(p, 130, 14, 26, '#4a7a3a60', 25, 1);

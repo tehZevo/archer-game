@@ -33,9 +33,9 @@ export const CHILL_SLOW = 0.8;
 
 /** Which element each area carries. */
 export const AREA_STATUS: Record<string, StatusKind> = {
-  'Swamp': 'poison', 'Void Garden': 'poison',
+  'Murky Swamp': 'poison', 'Void Garden': 'poison',
   'Mushroom Grotto': 'burn', 'Ember Wastes': 'burn',
-  'Mirror Lake': 'chill', 'Summit': 'chill',
+  'Mirror Lake': 'chill', 'Frozen Summit': 'chill',
 };
 /** The element of the area you're in (none in towns). */
 export const areaStatus = (): StatusKind | undefined =>

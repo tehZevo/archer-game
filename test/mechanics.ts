@@ -575,18 +575,18 @@ check('new poses go on the end of the networked list (older clients read them as
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
   const areaId = (name: string): number => AREAS.find((a) => a.name === name)!.id;
-  arena(35); gotoFloor(11, areaId('Forest')); // Mossgate
+  arena(35); gotoFloor(11, areaId('Whispering Woods')); // Mossgate
   player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.BS = 3; player.ranks.E = 2;
   save();
   const want = JSON.stringify(snapshot());
   arena(1); player.ap = 0; player.sp = 0; player.ranks.BS = 0; player.ranks.E = 0;
   const floor = load();
-  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 11 }) === want && floor === 11 && net.area === areaId('Forest'));
+  check('save round-trips level, EXP, points, stats, ranks and the branch taken', JSON.stringify({ ...snapshot(), floor: 11 }) === want && floor === 11 && net.area === areaId('Whispering Woods'));
   const at = (n: number, a: string): string => { const t = lastTown(n, areaId(a)); return `${t.stage}:${AREAS[t.area].name}`; };
   check('you resume on the latest town on your branch (the Harbor before the Beach\'s town)',
-    at(11, 'Forest') === '11:Forest' && at(10, 'Meadow') === '5:Beach' && at(3, 'Beach') === '1:Harbor' && at(1, 'Harbor') === '1:Harbor');
-  gotoFloor(8, areaId('Meadow')); save(); arena(1); gotoFloor(1, 0);
-  check('a save on the floors of an area resumes in the town below it', load() === 5 && net.area === areaId('Beach'));
+    at(11, 'Whispering Woods') === '11:Whispering Woods' && at(10, 'Sunny Meadows') === '5:Sunlit Shore' && at(3, 'Sunlit Shore') === '1:Harbor' && at(1, 'Harbor') === '1:Harbor');
+  gotoFloor(8, areaId('Sunny Meadows')); save(); arena(1); gotoFloor(1, 0);
+  check('a save on the floors of an area resumes in the town below it', load() === 5 && net.area === areaId('Sunlit Shore'));
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply({ v: 1, level: 50 }) === null && apply('junk') === null);
   apply({ v: 2, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, floor: 0 });
@@ -838,7 +838,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     player.x = pt.x; player.y = pt.y - player.h; player.vx = 0; player.vy = 0; player.onGround = true; player.climb = null;
   };
   const areaId = (name: string): number => AREAS.find((a) => a.name === name)!.id;
-  const beach = areaId('Beach'), forest = areaId('Forest'), meadow = areaId('Meadow');
+  const beach = areaId('Sunlit Shore'), forest = areaId('Whispering Woods'), meadow = areaId('Sunny Meadows');
   release(); gotoFloor(5, beach); // Driftwood Rest
   const f = game.floor, layout = JSON.stringify(f.platforms);
   net.channel = 3; gotoFloor(5, beach); const other = JSON.stringify(game.floor.platforms); net.channel = 1;
@@ -1051,10 +1051,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   const areaId = (name: string): number => AREAS.find((a) => a.name === name)!.id;
   check('an area\'s floors are followed by a town', isTown(1) && !isTown(2) && !isTown(4) && isTown(5) && !isTown(6) && isTown(11));
-  check('the game starts in the Harbor, a town below the Beach', AREAS[0].name === 'Harbor' && AREAS[0].town === 'Saltwick' && AREAS[0].up.length === 1 && AREAS[AREAS[0].up[0]].name === 'Beach');
+  check('the game starts in the Harbor, a town below the Beach', AREAS[0].name === 'Harbor' && AREAS[0].town === 'Saltwick Port' && AREAS[0].up.length === 1 && AREAS[AREAS[0].up[0]].name === 'Sunlit Shore');
   check('the Tide Pools are a high branch, past the Sunken Ruins', AREAS[areaId('Tide Pools')].depth >= 5 && AREAS[AREAS[areaId('Tide Pools')].parent].name === 'Sunken Ruins');
-  check('places read as area + floor within it', placeName(1, 0) === 'Saltwick' && placeName(2, areaId('Beach')) === 'Beach 1' && placeName(7, areaId('Forest')) === 'Forest 2');
-  check('every area has its own town, all named apart', placeName(11, areaId('Forest')) === 'Mossgate' && placeName(11, areaId('Meadow')) === 'Lanternhollow'
+  check('places read as area + floor within it', placeName(1, 0) === 'Saltwick Port' && placeName(2, areaId('Sunlit Shore')) === 'Sunlit Shore 1' && placeName(7, areaId('Whispering Woods')) === 'Whispering Woods 2');
+  check('every area has its own town, all named apart', placeName(11, areaId('Whispering Woods')) === 'Mossgate Village' && placeName(11, areaId('Sunny Meadows')) === 'Lanternhollow Town'
     && new Set(AREAS.map((a) => a.town)).size === AREAS.length);
   check('the tower is a strict tree: one parent each, no cycles, depths step by one',
     AREAS.every((a) => a.id === 0 ? a.parent === -1 : AREAS[a.parent].up.includes(a.id) && AREAS[a.parent].depth === a.depth - 1)
@@ -1063,16 +1063,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('branches can end (a town with no way up)', AREAS.some((a) => a.up.length === 0 && a.depth < 6));
   check('the floor before a town is the area end (the boss floor, later)', isAreaEnd(4) && isAreaEnd(10) && isAreaEnd(16) && !isAreaEnd(5) && !isAreaEnd(1));
 
-  release(); gotoFloor(5, areaId('Beach'));
+  release(); gotoFloor(5, areaId('Sunlit Shore'));
   const [l, r, d] = game.floor.portals.map((p) => p.label);
-  check('town portals are labelled with where they go', l === 'Forest 1' && r === 'Meadow 1' && d === 'Saltwick', `${l} | ${r} | ${d}`);
-  gotoFloor(10, areaId('Meadow'));
-  check('the way into a town is labelled with its own name', game.floor.portal.label === 'Lanternhollow');
-  check('the HUD place follows your area', placeName(game.floor.number, net.area) === 'Meadow 5');
+  check('town portals are labelled with where they go', l === 'Whispering Woods 1' && r === 'Sunny Meadows 1' && d === 'Saltwick Port', `${l} | ${r} | ${d}`);
+  gotoFloor(10, areaId('Sunny Meadows'));
+  check('the way into a town is labelled with its own name', game.floor.portal.label === 'Lanternhollow Town');
+  check('the HUD place follows your area', placeName(game.floor.number, net.area) === 'Sunny Meadows 5');
   gotoFloor(townStage(AREAS[areaId('Mushroom Grotto')].depth), areaId('Mushroom Grotto'));
   check('a town at the end of a branch has only its way down', game.floor.portals.length === 1 && game.floor.portals[0].to < game.floor.number);
   gotoFloor(game.floor.number + 1);
-  check('nothing lies above the end of a branch (a warp past it stays in its town)', game.floor.town && placeName(game.floor.number, net.area) === 'Sporehollow');
+  check('nothing lies above the end of a branch (a warp past it stays in its town)', game.floor.town && placeName(game.floor.number, net.area) === 'Sporehollow Camp');
   net.area = 0; release();
 }
 
@@ -1141,9 +1141,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
-  check('every area on the map has a tileset (Classic until it gets its own)', ['Beach', 'Forest', 'Cave', 'Swamp', 'Mountain', 'Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
+  check('every area on the map has a tileset (Classic until it gets its own)', ['Sunlit Shore', 'Whispering Woods', 'Echoing Caves', 'Murky Swamp', 'Craggy Mountains', 'Endless Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
   check('Clockwork Spire is on the map', MAP_AREAS.includes('Clockwork Spire'));
-  const fallback = ['Old Keep', 'Ember Wastes', 'Sky Reef', 'Chapel Spire', 'Summit']; // no sets of their own yet
+  const fallback = ['Old Keep', 'Ember Wastes', 'Sky Reef', 'Chapel Spire', 'Frozen Summit']; // no sets of their own yet
   const own = MAP_AREAS.filter((a) => !fallback.includes(a));
   check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
@@ -1159,7 +1159,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     withSets.filter((a) => !PROPS[a] || !BACKDROPS[a]).join(', '));
   check('every prop paints only inside its canvas', Object.values(PROPS).every((ps) => ps.every((p) => inside(p, PROP_W, PROP_H))));
   let placed = 0;
-  for (let i = 0; i < 400; i++) { const k = propAt('Forest', i, 7); if (k !== null) { placed++; if (k < 0 || k >= PROPS.Forest.length) placed = -999; } }
+  for (let i = 0; i < 400; i++) { const k = propAt('Whispering Woods', i, 7); if (k !== null) { placed++; if (k < 0 || k >= PROPS['Whispering Woods'].length) placed = -999; } }
   check('props stand on a few tops, not most', placed > 20 && placed < 90, `${placed}/400`);
   check('backdrop particles stay in view', Object.values(BACKDROPS).every((b) => !b.particles || particlesAt(b.particles, 3.7, 240, 180).every((q) => q.x >= -20 && q.x <= 240 && q.y >= -20 && q.y <= 180)));
   const hex = /^#[0-9a-f]{6}$/;
@@ -1247,7 +1247,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // enemies: two types per floor from the area's set; each platform fields one or both
-  const beach = areaMobs('Beach').map((m) => m.n);
+  const beach = areaMobs('Sunlit Shore').map((m) => m.n);
   check('the Beach has its own enemies (snail, crab, hermit crab, gull)', ['Garden Snail', 'Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
   check('areas without a set use the general pool', areaMobs('Old Keep').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Old Keep').length >= 2);
   const withOwn = Object.keys(TILESETS).filter((a) => !['Classic', 'Harbor'].includes(a)); // the Harbor is only a town
@@ -1520,7 +1520,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   arena();
   check('the starting area carries no element', areaStatus() === undefined);
-  const swamp = AREAS.find((a) => a.name === 'Swamp')!;
+  const swamp = AREAS.find((a) => a.name === 'Murky Swamp')!;
   gotoFloor(baseOf(swamp.depth), swamp.id); game.mobs = []; game.floor.spawns = [];
   check('the Swamp carries poison', areaStatus() === 'poison');
   player.invuln = 0; player.hp = player.hpMax = 1000;
@@ -1559,7 +1559,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 // --- floor modifiers: icy floors in cold areas, shared by everyone, pay more ---
 {
-  check('icy only rolls in cold areas', rollMods('Beach', () => 0).length === 0 && rollMods('Mirror Lake', () => 0).join() === 'icy' && rollMods('Mirror Lake', () => 0.99).length === 0);
+  check('icy only rolls in cold areas', rollMods('Sunlit Shore', () => 0).length === 0 && rollMods('Mirror Lake', () => 0).join() === 'icy' && rollMods('Mirror Lake', () => 0.99).length === 0);
   const lake = AREAS.find((a) => a.name === 'Mirror Lake')!;
   const stages = Array.from({ length: 6 }, (_, i) => baseOf(lake.depth) + i).filter((n) => !isTown(n));
   const prev = net.area; net.area = lake.id;
@@ -1624,8 +1624,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   bump('bosses', 10);
   check('the stylist offers the gold outfit only after WARDEN', isDone('boss10'));
   check('the done list is stored apart from the save', JSON.parse((globalThis as unknown as { localStorage: Storage }).localStorage.getItem('archer-game:achievements')!).done.includes('boss10'));
-  visitArea('Beach'); visitArea('Beach'); visitArea('Forest');
-  check('areas count once each', record.areas.filter((a) => a === 'Beach').length === 1);
+  visitArea('Sunlit Shore'); visitArea('Sunlit Shore'); visitArea('Whispering Woods');
+  check('areas count once each', record.areas.filter((a) => a === 'Sunlit Shore').length === 1);
   // coins earned: picking up counts
   drops.length = 0; drops.push({ x: player.x, y: ground().y, vy: 0, v: 40, t: COIN_LIFE, landed: true });
   const c0 = record.stats.coins; tap('x');
@@ -1667,7 +1667,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 // --- town ways up show the level they're meant for ---
 {
-  const forest = AREAS.find((a) => a.name === 'Forest')!;
+  const forest = AREAS.find((a) => a.name === 'Whispering Woods')!;
   gotoFloor(townStage(forest.depth), forest.id);
   const ups = game.floor.portals.filter((p) => p.to > game.floor.number);
   check('each way up from a town shows the level of the enemies there', ups.length > 0 && ups.every((p) => p.lvl === mobLevel(p.to)));

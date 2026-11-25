@@ -18,9 +18,9 @@ const flower = (p: Paint, x: number, y: number, h: number, petal: string, mid: s
   p(x - 1, y - h - 1, petal, 3, 1); p(x, y - h - 2, petal, 1, 3); p(x, y - h - 1, mid);
 };
 
-/* ---------------- Swamp: black peat, slimy moss, cattails, dripping ooze ---------------- */
+/* ---------------- Murky Swamp: black peat, slimy moss, cattails, dripping ooze ---------------- */
 const swamp: Tileset = {
-  name: 'Swamp',
+  name: 'Murky Swamp',
   sky: ['#1a2420', '#2a3a2c', '#121a16'],
   fill(x, y, v) {
     // peat: dark mud in soft blotches, with bubbles and sunken bits
@@ -84,9 +84,9 @@ const swamp: Tileset = {
   },
 };
 
-/* ---------------- Mountain: slanted rock strata, snow caps, drifts, icicles ---------------- */
+/* ---------------- Craggy Mountains: slanted rock strata, snow caps, drifts, icicles ---------------- */
 const mountain: Tileset = {
-  name: 'Mountain',
+  name: 'Craggy Mountains',
   sky: ['#3a5478', '#6a88ac', '#2e4462'],
   fill(x, y, v) {
     // tilted strata of grey rock
@@ -142,12 +142,12 @@ const mountain: Tileset = {
   },
 };
 
-/* ---------------- Sky: cloud blocks, billowing undersides, golden ropes ---------------- */
+/* ---------------- Endless Sky: cloud blocks, billowing undersides, golden ropes ---------------- */
 // puffs inside the cloud: big soft circles, shaded only along their lower-right rim
 const PUFFS = [0, 1, 2, 3].map((v) => Array.from({ length: 2 }, (_, i) =>
   [hash(i, v, 70) * 16, hash(v, i, 71) * 16, 4 + hash(i, i + v, 72) * 3] as const));
 const sky: Tileset = {
-  name: 'Sky',
+  name: 'Endless Sky',
   sky: ['#2e64b0', '#4a86cc', '#7aaee0'],
   fill(x, y, v) {
     for (const [cx, cy, r] of PUFFS[v]) {
@@ -194,9 +194,9 @@ const sky: Tileset = {
   },
 };
 
-/* ---------------- Meadow: bright clover turf, rich loam, flowers, straw rope ---------------- */
+/* ---------------- Sunny Meadows: bright clover turf, rich loam, flowers, straw rope ---------------- */
 const meadow: Tileset = {
-  name: 'Meadow',
+  name: 'Sunny Meadows',
   sky: ['#5aa0d8', '#9ccaec', '#d8ecf8'],
   fill(x, y, v) {
     // soft brown loam in loose horizontal bands, with pebbles and roots
@@ -252,9 +252,9 @@ const meadow: Tileset = {
   },
 };
 
-/* ---------------- Riverbank: wet clay, river pebbles, reeds, bamboo ladders ---------------- */
+/* ---------------- Misty Riverbank: wet clay, river pebbles, reeds, bamboo ladders ---------------- */
 const riverbank: Tileset = {
-  name: 'Riverbank',
+  name: 'Misty Riverbank',
   sky: ['#3a7aa0', '#6aa4c0', '#a8d0d8'],
   fill(x, y, v) {
     // grey-brown clay with fine sediment lines and a few smooth river pebbles
@@ -312,9 +312,9 @@ const riverbank: Tileset = {
   },
 };
 
-/* ---------------- Hills: windswept grass, chalky soil with boulders, pegged rope ---------------- */
+/* ---------------- Rolling Hills: windswept grass, chalky soil with boulders, pegged rope ---------------- */
 const hills: Tileset = {
-  name: 'Hills',
+  name: 'Rolling Hills',
   sky: ['#4a8ac4', '#8cc0e4', '#e8f0e0'],
   fill(x, y, v) {
     // pale chalky soil, with a big embedded boulder in some tiles
@@ -484,6 +484,6 @@ const harbor: Tileset = {
 };
 
 export const NATURE: Record<string, Tileset> = {
-  Swamp: swamp, Mountain: mountain, Sky: sky, Meadow: meadow, Riverbank: riverbank, Hills: hills,
+  'Murky Swamp': swamp, 'Craggy Mountains': mountain, 'Endless Sky': sky, 'Sunny Meadows': meadow, 'Misty Riverbank': riverbank, 'Rolling Hills': hills,
   'Tide Pools': tidePools, Harbor: harbor,
 };
