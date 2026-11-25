@@ -146,11 +146,13 @@ export function cast(key: SkillKey, chained = false): void {
   const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
-  const linked = LINKED_SKILLS.includes(kind);
+  // Tempest is a link too, but only off the end of a Sky Assault hover (see
+  // update's hang block): it stays a standalone skill the rest of the time.
+  const linked = LINKED_SKILLS.includes(kind) || (kind === 'R' && player.assaultLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
-  if (linked && player.combo <= 0 && kind !== 'MS') return;
+  if (LINKED_SKILLS.includes(kind) && player.combo <= 0 && kind !== 'MS') return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   // Input buffering: a link pressed during the source skill's post-animation
@@ -195,6 +197,7 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
+    player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's long cooldown and refill a Blitz

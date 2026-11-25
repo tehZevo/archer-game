@@ -526,6 +526,20 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('E fires straight out of the hover', player.hangT === 0 && player.cast === 'barrage' && player.useT > 0);
 }
 {
+  // Sky Assault -> R: the hover's end opens the link window for Tempest
+  arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
+  dummy(130);
+  tap('q'); step(14); tap('w');
+  step(40); // the 0.8s hover plays out and you drop back to the ground
+  check('the Sky Assault hover ends on the ground', player.onGround && player.hangT <= 0,
+    `onGround ${player.onGround} hangT ${player.hangT.toFixed(2)}`);
+  check('landing the assault opens the link window', player.assaultLinkT > 0, `t ${player.assaultLinkT.toFixed(2)}`);
+  tap('r');
+  check('Tempest links out of the landed Sky Assault', player.cast === 'shoot' && player.castT > 0,
+    `cast ${player.cast} castT ${player.castT.toFixed(2)}`);
+  check('the linked Tempest consumes the window', player.assaultLinkT <= 0, `t ${player.assaultLinkT.toFixed(2)}`);
+}
+{
   // Q rushes chain into Z: pressed mid-slide, Twin Shot fires as the slide ends
   arena(20); player.ranks.Q = 1; player.ranks.W = 0;
   dummy(200);
