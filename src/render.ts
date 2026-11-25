@@ -470,10 +470,14 @@ const ECHO_TINT = '#7fb8ff';
 
 function drawPlayer(): void {
   if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, player.invuln > 0 ? 0.8 : 1);
-  // Echo Shot: the shadow archer stands behind you, mirroring your shot.
-  if (player.cast && isLearned('ES')) {
+  // Echo Shot: the shadow archer is a permanent companion at your side,
+  // mirroring your pose. It fires (adds its extra hits) when you attack, and
+  // stands ready the rest of the time.
+  if (isLearned('ES')) {
     const t = performance.now() / 1000;
-    drawArcher(myLook(), player.x - player.face * 14, player.y + player.h, player.face, 'shoot', t, 0.45, player.castTotal - player.castT, ECHO_TINT);
+    const pose = player.cast ? 'shoot' : localPose();
+    drawArcher(myLook(), player.x - player.face * 14, player.y + player.h, player.face, pose, t, 0.45,
+      player.cast ? player.castTotal - player.castT : undefined, ECHO_TINT);
   }
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
