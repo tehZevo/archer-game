@@ -340,6 +340,8 @@ export interface DmgNum {
   delay?: number;
   vy: number;
   crit: boolean;
+  /** Shown instead of the number (a missed attack reads "MISS"). */
+  txt?: string;
   col: string;
 }
 
