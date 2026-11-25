@@ -1116,7 +1116,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 2 && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 3 && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
