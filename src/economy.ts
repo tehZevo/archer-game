@@ -22,8 +22,9 @@ import type { Floor, Mob, Npc, SkillKey } from './types';
    is local (enemies are local too) and saved.
    ============================================================ */
 
-/** What you carry (saved). */
-export const wallet = { coins: 0, hp: 0, mp: 0 };
+/** What you carry (saved). You start with a small kit of potions. */
+export const START_POTIONS = 3;
+export const wallet = { coins: 0, hp: START_POTIONS, mp: START_POTIONS };
 
 /** A pile of coins on the floor. */
 export interface Coin { x: number; y: number; vy: number; v: number; t: number; landed: boolean }

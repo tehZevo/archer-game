@@ -1,5 +1,5 @@
 import { cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES, emoteFor, setEmote } from '../src/emotes';
-import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
+import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, START_POTIONS, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
 import { areaOf, isPathEnd, isTown, lastTown, MAP_AREAS, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, samePlace, START, TOWNS, townDepth, type Place } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
@@ -623,7 +623,7 @@ check('new poses go on the end of the networked list (older clients read them as
   check('a save in a town gone from the map resumes at the start', samePlace(load(), START));
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply({ v: 2, level: 50 }) === null && apply('junk') === null);
-  apply({ v: 3, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, town: 0 });
+  apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, town: 0 });
   check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.S + player.ranks.BS === 1);
   clearSave();
   check('reset forgets the save', !hasSave() && samePlace(load(), START));
@@ -1128,7 +1128,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   wallet.coins = 77; wallet.hp = 3; wallet.mp = 4; save();
   wallet.coins = 0; wallet.hp = 0; wallet.mp = 0; load();
   check('coins and potions are saved', wallet.coins === 77 && wallet.hp === 3 && wallet.mp === 4);
-  check('an older save without them starts empty', apply({ ...JSON.parse(mem[Object.keys(mem)[0]]), coins: undefined, potions: undefined }) !== null && wallet.coins === 0 && wallet.hp === 0);
+  check('an older save without them starts with the starting kit', apply({ ...JSON.parse(mem[Object.keys(mem)[0]]), coins: undefined, potions: undefined }) !== null && wallet.coins === 0 && wallet.hp === START_POTIONS && wallet.mp === START_POTIONS);
   delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
