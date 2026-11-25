@@ -23,6 +23,7 @@ import { drawSettings } from './settingsdraw';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { keyName } from './input';
 import { STATUS } from './status';
+import { modLine } from './floormods';
 import { text, textWidth } from './font';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
@@ -104,6 +105,9 @@ function drawHUDItems(): void {
   }
   text(ctx, placeName(game.floor.number, net.area), pad, ly, 1, '#8ea3c2', 'left');
   ly += 9;
+  // this floor's modifier, if it rolled one
+  const mod = modLine();
+  if (mod) { text(ctx, mod, pad, ly, 1, '#8fd8ff', 'left'); ly += 9; }
   // other players' kills are speeding up our waves
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
   // coins and potions

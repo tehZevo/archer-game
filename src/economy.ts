@@ -6,6 +6,7 @@ import { sfx } from './audio';
 import { openStylist } from './stylist';
 import { openBoard } from './quests';
 import { net } from './net';
+import { coinMult } from './floormods';
 import { activeSkill, recalcStats, STAT_KEYS, upgradesOf } from './progress';
 import type { Floor, Mob, Npc, SkillKey } from './types';
 
@@ -45,7 +46,7 @@ export function coinValue(level: number, r = Math.random()): number {
 
 export function dropCoins(m: Mob): void {
   sameFloor();
-  drops.push({ x: m.x, y: m.y + m.h - 6, vy: -150, v: coinValue(m.level), t: COIN_LIFE, landed: false });
+  drops.push({ x: m.x, y: m.y + m.h - 6, vy: -150, v: Math.round(coinValue(m.level) * coinMult()), t: COIN_LIFE, landed: false });
 }
 
 let potT = 0;

@@ -335,6 +335,9 @@ export interface Portal {
 /** A town NPC: stands at (x, y = the surface under their feet). */
 export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board'; name: string }
 
+/** A floor modifier (see floormods.ts). */
+export type FloorMod = 'icy';
+
 /** A procedurally generated floor: its layout, enemies and exit portal. */
 export interface Floor {
   number: number;
@@ -349,6 +352,8 @@ export interface Floor {
   /** People to talk to (towns): stand beside one and press Up. */
   npcs?: Npc[];
   town: boolean;
+  /** Modifiers this floor rolled (see floormods.ts); none on most. */
+  mods?: FloorMod[];
   /** World height for this floor: its content plus a little sky (WORLD.h while on it). */
   h: number;
 }

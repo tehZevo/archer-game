@@ -15,6 +15,7 @@ import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
+import { grip } from './floormods';
 import { INFLICT, maybeInflict, slowFactor, updateStatus } from './status';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
@@ -147,9 +148,12 @@ export function update(dt: number): void {
           player.vx *= 0.995;
         }
       } else if (target !== 0) {
-        player.vx += clamp(target - player.vx, -P.ACCEL * dt, P.ACCEL * dt);
+        // on ice (grip < 1) you pick up speed, turn and stop slowly
+        const a = P.ACCEL * grip() * dt;
+        player.vx += clamp(target - player.vx, -a, a);
       } else {
-        player.vx += clamp(0 - player.vx, -P.FRICTION * dt, P.FRICTION * dt);
+        const fr = P.FRICTION * grip() * dt;
+        player.vx += clamp(0 - player.vx, -fr, fr);
       }
 
 

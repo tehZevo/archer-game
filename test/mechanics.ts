@@ -45,6 +45,8 @@ import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
+import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
+import { generateFloor } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -1498,6 +1500,35 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   applyStatus(player, 'burn'); gotoFloor(1, 0);
   check('effects clear on a new floor', player.effects.length === 0);
   game.mobs = [];
+}
+
+// --- floor modifiers: icy floors in cold areas, shared by everyone, pay more ---
+{
+  check('icy only rolls in cold areas', rollMods('Beach', () => 0).length === 0 && rollMods('Mirror Lake', () => 0).join() === 'icy' && rollMods('Mirror Lake', () => 0.99).length === 0);
+  const lake = AREAS.find((a) => a.name === 'Mirror Lake')!;
+  const stages = Array.from({ length: 6 }, (_, i) => baseOf(lake.depth) + i).filter((n) => !isTown(n));
+  const prev = net.area; net.area = lake.id;
+  const iced = stages.filter((n) => generateFloor(n).mods?.includes('icy'));
+  const again = stages.filter((n) => generateFloor(n).mods?.includes('icy'));
+  check('some cold floors roll icy, the same way every time', iced.length > 0 && iced.length < stages.length && iced.join() === again.join(), iced.join());
+  net.area = prev;
+  check('towns never roll a modifier', !generateFloor(townStage(lake.depth)).mods);
+  // the slide: on ice you take longer to stop
+  arena();
+  const slide = (): number => {
+    player.x = 60; player.vx = 0; player.y = ground().y - player.h; player.onGround = true;
+    setKey('right', true); step(20); release();
+    const x0 = player.x; step(30); return player.x - x0;
+  };
+  const dry = slide();
+  game.floor.mods = ['icy'];
+  check('grip drops on ice', grip() === ICE_GRIP);
+  const wet = slide();
+  check('you slide further on ice after letting go', wet > dry * 2, `${wet.toFixed(1)} vs ${dry.toFixed(1)}`);
+  check('the HUD names it and the coin bonus', modLine() === 'ICY +50% COINS' && coinMult() === FLOOR_MODS.icy.coins);
+  drops.length = 0; const m = dummy(100); m.level = 10; killMob(m);
+  check('coins are worth more on an icy floor', drops[0].v >= Math.round(coinValue(10, 0) * FLOOR_MODS.icy.coins));
+  game.floor.mods = undefined; drops.length = 0; game.mobs = [];
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

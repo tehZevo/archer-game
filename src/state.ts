@@ -173,6 +173,7 @@ export function gotoFloor(n: number, area?: number): void {
   player.hangT = 0; player.hangHits = 0;
   player.rushT = 0; player.rushCarry = [];
   player.effects.length = 0; // effects don't follow you to another floor
+  if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');
 }
 
 /** Where the camera wants to be: the nearest position that puts the player
