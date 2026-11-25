@@ -16,7 +16,7 @@ import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
-import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, type Layout } from '../src/floor';
+import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
@@ -49,6 +49,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
+import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
@@ -817,8 +818,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     release(); gotoFloor(n);
     const f = game.floor, g = f.platforms[0], top = Math.min(...f.portals.map((p) => p.y - p.h));
     hs.push(f.h);
-    if (WORLD.h !== f.h || g.h !== 4 * TILE || g.y + g.h !== f.h || top < 2 * TILE || (top > 3 * TILE && f.h > 180) || f.h < 180) ok = false; // a short floor (the Harbor) is padded to the view
+    if (WORLD.h !== f.h || g.h !== 4 * TILE || g.y + g.h !== f.h || top < 2 * TILE || (top > 3 * TILE && !f.town && f.h > 180) || f.h < (f.town ? TOWN_MIN_H : 180)) ok = false; // towns get extra sky (see TOWN_MIN_H)
     if (f.platforms.some((p) => p.y < 0) || f.ropes.some((c) => c.y1 < 0)) ok = false;
+  }
+  // towns are taller than the view, so climbing to the deck moves the camera
+  {
+    release(); gotoFloor(1, 0); game.view.w = 240; game.view.h = 180; // the Harbor: one level, the shortest town
+    const deck = Math.min(...game.floor.platforms.filter((p) => p.block === 1).map((p) => p.y));
+    player.x = 40; player.y = ground().y - player.h; player.onGround = true; player.climb = null;
+    game.cam.y = cameraTarget().y; const low = game.cam.y;
+    player.y = deck - player.h; const high = cameraTarget().y;
+    check('in town the camera follows you up onto the deck', game.floor.h >= TOWN_MIN_H && high < low, `cam ${low} -> ${high}, h ${game.floor.h}`);
   }
   check('each floor is ground (4 tiles) up to its portal plus 2-3 tiles of sky', ok, `heights ${[...new Set(hs)].join(',')}`);
   game.view.w = 240; game.view.h = 180;
