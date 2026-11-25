@@ -19,7 +19,7 @@ import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomNa
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
-import { expBar, MAX_LEVEL } from '../src/progress';
+import { activeSkill, MAX_LEVEL, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
@@ -598,18 +598,18 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   // Echo Shot (passive): the shadow archer fires alongside you, doubling the
   // arrows every attack fires, permanently, once bought with SP. No timer.
   arena(20); player.ranks.Z = 1;
-  check('Twin Shot fires two arrows with no Echo Shot', rank('Z').hits === 2);
+  check('Twin Shot fires two arrows with no Echo Shot', shotCount(rank('Z')) === 2, `${shotCount(rank('Z'))}`);
   player.ranks.ES = 1;
-  check('Echo Shot doubles Twin Shot\'s arrows', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('Echo Shot doubles Twin Shot\'s arrows', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   player.ranks.Z = 3;
-  check('...and it scales with the skill\'s own rank', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('...and it scales with the skill\'s own rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   player.ranks.ES = 3;
-  check('Echo Shot stays doubled at max rank', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('Echo Shot stays doubled at max rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   check('Echo Shot unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
   player.ranks.ES = 0;
-  check("a passive's bonus is one lot of arrows until learned", rank('Z').hits === 2);
+  check("a passive's bonus is one lot of arrows until learned", shotCount(rank('Z')) === 2);
   arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
-  check('the shadow doubles a mid-air Plunging Volley too', rank('PV').hits === 4, `${rank('PV').hits}`);
+  check('the shadow doubles a mid-air Plunging Volley too', shotCount(rank('PV')) === 4, `${shotCount(rank('PV'))}`);
 }
 // --- Electric Blitz: Q's charged upgrade ---
 {
@@ -2715,6 +2715,36 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(1);
   check('the i-frames tick down like a normal hit\'s', player.invuln < MISS_IFRAMES, `${player.invuln.toFixed(3)}`);
   Math.random = saved;
+}
+
+{
+  // Plunging Volley's vertical reach is half what it was
+  check('the volley column reaches 88px below the feet (was 176)', P.PLUNGE_DEPTH === 88);
+  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  player.y = ground().y - player.h - 120; player.onGround = false; // airborne
+  const near = dummy(140); near.y = ground().y - near.h; // right below
+  const far = dummy(140); far.y = ground().y - near.h - 100; // ~100px down
+  player.x = 140;
+  tap('e'); step(2);
+  check('the volley hits an enemy directly below', near.hp < 1e6, `hp ${near.hp}`);
+  check('...and one about 100px down no longer does', far.hp === 1e6, `hp ${far.hp}`);
+}
+
+{
+  // Echo Shot's arrows always proc and stack above the base hit's number
+  arena(20); player.ranks.Z = 1; player.ranks.ES = 1;
+  const m = dummy(140); player.x = m.x - 40;
+  check('the shadow doubles the shot without changing the skill\'s own hits',
+    rank('Z').hits === 2 && shotCount(rank('Z')) === 4, `${rank('Z').hits}/${shotCount(rank('Z'))}`);
+  game.dmgNums.length = 0;
+  tap('z'); step(Math.ceil((P.Z_WINDUP + 0.4) / P.STEP)); // the whole volley lands
+  const nums = game.dmgNums.filter((d) => d.txt !== 'MISS');
+  check('every arrow shows its own number', nums.length === shotCount(rank('Z')), `${nums.length} numbers`);
+  check('the numbers stack one line apart, not in a pile',
+    new Set(nums.map((d) => Math.round(d.y))).size === nums.length, `${nums.map((d) => d.y.toFixed(0)).join(',')}`);
+  check('...in the stack\'s own NUM_GAP cadence', nums.every((d) => d.vy === -12), `${nums[0]?.vy}`);
+  check('the shadow hits for the same damage as the base arrow',
+    nums.every((d) => Math.abs(d.v - nums[0].v) <= 1), `${nums.map((d) => d.v).join(',')}`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

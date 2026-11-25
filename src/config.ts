@@ -55,7 +55,7 @@ export const P = {
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
   PLUNGE_W: 56,        // Plunging Volley: width of the column it rains into, px
-  PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
+  PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 150,     // px/s added to your current momentum (stacks: a falling cast lifts less)
   // Spike Lift: E's ground form. Spikes erupt around you and throw you up.
