@@ -61,6 +61,55 @@ export function endRush(): void {
   rushStrike?.();
 }
 
+/**
+ * The ground rush (Q on the ground, and the Air Dive's landing): slide
+ * forward, scooping up the enemies in the way and pushing them along; the
+ * strike lands when the slide ends: out of time, slowed, or at a platform
+ * edge (see updateRush). In place (Down + Q) it strikes at once. Electric
+ * Blitz is the charged version: a faster, longer slide that spends a banked
+ * charge (`blitz`). Opens the link window.
+ */
+export function groundRush(inPlace: boolean, blitz: boolean): void {
+  const r = rank('Q');
+  player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
+  sfx.shoot();
+  const face = player.face;
+  rushStrike = (): void => {
+    rushStrike = null;
+    const carried = player.rushCarry.map((c) => c.m);
+    player.rushCarry = [];
+    const cx = inPlace ? player.x : player.x + face * 24;
+    const near = hitbox(cx, player.y + player.h / 2, 96, 64).filter((m) => !carried.includes(m));
+    const tg = [...carried, ...near].filter((m) => game.mobs.includes(m)).slice(0, r.targets);
+    // a horn of light erupts under each target (or ahead, if none)
+    (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
+      .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
+    tg.forEach((m) => {
+      // the rush carries and hits; the launch is the W's job now
+      damage(m, r.dmg);
+      if (!inPlace) m.vx = face * 80; // a little follow-through drift
+    });
+  };
+  if (inPlace) rushStrike();
+  else {
+    player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
+    player.rushT = P.RUSH_MAX;
+    player.rushDist = 0;
+    player.rushGoal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
+    player.rushCarry = [];
+    if (blitz) player.blitzCharges--;
+  }
+  player.combo = 1.1; player.comboT = 1.1;
+}
+
+/** The Air Dive touched down: roll straight into the real ground rush (its
+ *  slide, strike and link window), with no pause. */
+export function landDive(): void {
+  if (!player.diving || !player.onGround) return;
+  player.diving = false;
+  groundRush(false, false);
+}
+
 /** A skill's use time, shortened by Haste (+N% attack speed: time / (1 + N)). */
 export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
 
@@ -82,7 +131,8 @@ export function formCd(kind: SkillKey, airborne: boolean): number {
   return SKILLS[kind].cd;
 }
 
-export function cast(key: SkillKey): void {
+/** `chained`: fired off the end of a Q rush (see the Z chain below), so the rush's use time doesn't hold it. */
+export function cast(key: SkillKey, chained = false): void {
   const s = activeSkill(key);
   if (!isLearned(key)) return;
   const r = rank(key);
@@ -95,6 +145,10 @@ export function cast(key: SkillKey): void {
   if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
+  // Q rushes chain into Twin Shot: Z pressed during the rush fires the moment
+  // it ends, and right after it (while its link window is open) at once
+  if (kind === 'Z' && !chained && (player.rushT > 0 || (player.cast === 'rush' && player.castT > 0))) { player.queued = 'Z'; return; }
+  if (kind === 'Z' && player.combo > 0) chained = true;
   // the Midair Spin is on its own cooldown even though W is a link skill,
   // so one jump can't chain sweeps all the way up
   const slot = cdSlot(key, airborne);
@@ -105,7 +159,9 @@ export function cast(key: SkillKey): void {
   if (kind === 'EB' && !airborne && !held('down') && player.blitzCharges <= 0) return;
   if (player.mp < r.mp) return;
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
-  if (player.useT > 0 && !linked) return;
+  // ...except that Plunging Volley can cut a Sky Assault hover short, so W -> E flows
+  const fromHover = kind === 'E' && airborne && player.hangT > 0;
+  if (player.useT > 0 && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return;
@@ -119,6 +175,7 @@ export function cast(key: SkillKey): void {
   player.mp -= r.mp;
   player.cd[slot] = player.cdMax[slot] = formCd(kind, airborne);
   if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.combatT = P.COMBAT_TIME; }
+  player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift itself starts a new one below)
 
   // Fervor: skills chained off Sky Toss stack final damage. The link
   // consumes the window, so it can't be chained again without another Sky Toss.
@@ -216,46 +273,11 @@ export function cast(key: SkillKey): void {
         player.vy = P.DIVE_VY;
         player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
         player.diving = true;
+        rushStrike = null; // (a strike left over from an earlier rush must not land now)
         player.combo = 1.1; player.comboT = 1.1;
         break;
       }
-      player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
-      sfx.shoot();
-      // Down + Q strikes in place. Otherwise slide forward, scooping up the
-      // enemies in the way and pushing them along; the strike (and the launch)
-      // lands when the slide ends: out of time, slowed, or at a platform edge
-      // (see updateRush).
-      const inPlace = held('down');
-      const face = player.face;
-      rushStrike = (): void => {
-        rushStrike = null;
-        const carried = player.rushCarry.map((c) => c.m);
-        player.rushCarry = [];
-        const cx = inPlace ? player.x : player.x + face * 24;
-        const near = hitbox(cx, player.y + player.h / 2, 96, 64).filter((m) => !carried.includes(m));
-        const tg = [...carried, ...near].filter((m) => game.mobs.includes(m)).slice(0, r.targets);
-        // a horn of light erupts under each target (or ahead, if none)
-        (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
-          .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
-        tg.forEach((m) => {
-          // the rush carries and hits; the launch is the W's job now
-          damage(m, r.dmg);
-          if (!inPlace) m.vx = face * 80; // a little follow-through drift
-        });
-      };
-      if (inPlace) rushStrike();
-      else {
-        // Electric Blitz is the charged version: a faster, longer rush that
-        // spends a banked charge instead of a cooldown.
-        const blitz = s.key === 'EB';
-        player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
-        player.rushT = P.RUSH_MAX;
-        player.rushDist = 0;
-        player.rushGoal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
-        player.rushCarry = [];
-        if (blitz) player.blitzCharges--;
-      }
-      player.combo = 1.1; player.comboT = 1.1;
+      groundRush(held('down'), s.key === 'EB');
       break;
     }
 
@@ -339,10 +361,11 @@ export function cast(key: SkillKey): void {
         const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
         tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.4 }));
         tg.forEach((m) => damage(m, P.SPIKE_DMG));
-        player.vy = -P.SPIKE_LIFT;
+        player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
         player.onGround = false;
         break;
       }
+      player.hangT = 0; player.hangHits = 0; // out of a Sky Assault hover
       // Plunging Volley (air form): a small upward bump (no freeze: you
       // keep your drift and fall right after) as arrows rain straight down
       // into a column beneath you, hitting every enemy in it (nearest first).

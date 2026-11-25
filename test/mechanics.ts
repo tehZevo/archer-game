@@ -439,9 +439,23 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('c'); step(6);
   const y0 = player.y;
   tap('q'); step(2);
-  check('Air Dive plunges you down and forward', player.y > y0 + 4 && player.diving && player.vx !== 0, `dy ${(player.y - y0).toFixed(1)}`);
+  check('Air Dive plunges you down and forward', player.y > y0 + 4 && player.vx !== 0, `dy ${(player.y - y0).toFixed(1)}`);
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
+  // from higher up: the landing frame itself starts the rush, a real one (it strikes)
+  arena(20); player.ranks.Q = 1;
+  const m = dummy(180);
+  player.y -= 60; player.onGround = false; player.vy = 0;
+  tap('q');
+  let landed = -1, rushing = -1;
+  for (let i = 0; i < 30 && rushing < 0; i++) {
+    step(1);
+    if (landed < 0 && player.onGround) landed = i;
+    if (player.onGround && player.rushT > 0) rushing = i;
+  }
+  check('the rush starts the moment the dive lands', landed >= 0 && rushing === landed, `landed ${landed} rush ${rushing}`);
+  step(20);
+  check('...and its strike lands, opening the link window', m.hp < 1e6 && player.combo > 0);
 }
 {
   // Midair Spin: W's air form sweeps the enemies around you
@@ -452,6 +466,38 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Midair Spin sweeps the enemies around you in the air', m.hp < hp0 && m.airTime === 0, `hp ${m.hp}`);
 }
 
+{
+  // Spike Lift lifts you steadily (no snappy pop) to about a jump's height
+  arena(10); player.ranks.E = 1;
+  tap('e');
+  const ys: number[] = [];
+  for (let i = 0; i < 30 && !(i > 2 && player.onGround); i++) { ys.push(player.y); step(1); }
+  const y0 = ground().y - player.h, peak = y0 - Math.min(...ys), firstStep = ys[0] - ys[1];
+  check('Spike Lift rises about a jump\'s height', peak > 30 && peak < 50, `peak ${peak.toFixed(1)}`);
+  check('...at a steady pace, slower than a jump\'s pop', firstStep < 300 * P.STEP && firstStep > 0, `first step ${firstStep.toFixed(1)}px`);
+}
+{
+  // Sky Assault -> E: Plunging Volley cuts the hover short instead of waiting it out
+  arena(20); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 1; player.ranks.E = 1;
+  dummy(130);
+  tap('q'); step(14); tap('w'); step(3);
+  check('Sky Assault hovers', player.hangT > 0);
+  tap('e');
+  check('E fires straight out of the hover', player.hangT === 0 && player.cast === 'barrage' && player.cd['E.air'] > 0);
+}
+{
+  // Q rushes chain into Z: pressed mid-slide, Twin Shot fires as the slide ends
+  arena(20); player.ranks.Q = 1; player.ranks.W = 0;
+  dummy(200);
+  tap('q'); step(2); tap('z');
+  check('Z pressed during the rush waits for it', player.queued === 'Z' && player.cast === 'rush');
+  let fired = -1;
+  for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'shoot') fired = i; }
+  check('...and fires as soon as the slide ends, with no use-time wait', fired >= 0 && player.rushT <= 0, `after ${fired} frames`);
+  arena(20); player.ranks.Q = 1; player.ranks.W = 0;
+  tap('q'); for (let i = 0; i < 30 && (player.rushT > 0 || player.cast === 'rush'); i++) step(1);
+  check('right after the rush, Z fires at once too', player.useT > 0 && (tap('z'), player.cast === 'shoot'));
+}
 // --- Electric Blitz: Q's charged upgrade ---
 {
   arena(20); player.ranks.Q = 3; player.ranks.EB = 1;

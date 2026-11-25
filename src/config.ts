@@ -61,7 +61,8 @@ export const P = {
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
   SPIKE_R: 56,         // px radius of the burst around you
-  SPIKE_LIFT: 300,     // px/s upward (about a full jump's height)
+  SPIKE_RISE_V: 130,   // px/s: the spikes push you up at this steady speed...
+  SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
