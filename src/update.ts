@@ -191,6 +191,9 @@ export function update(dt: number): void {
       }
       // Spike Lift: the spikes push you up steadily, against gravity
       if (player.liftT > 0) { player.liftT -= dt; player.vy = -P.SPIKE_RISE_V - P.GRAVITY * dt; }
+      // Midair Spin: the sweep holds you steady, so you don't fall
+      // straight through the animation
+      if (player.cast === 'shoot' && player.skillPose === 'spin' && !player.onGround) player.vy = 0;
       const prevFeet = player.y + player.h, prevX = player.x;
       integrate(player, dt);
       // clamp to the world before colliding, so the ground test uses the final x
