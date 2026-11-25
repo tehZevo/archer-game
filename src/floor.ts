@@ -1,6 +1,6 @@
 import { MOB_TYPES, VARIANT_CHANCE, WORLD, TILE } from './config';
 import { net, roomId } from './net';
-import { AREAS, areaName, blockOf, isAreaEnd, isTown, placeName, tierOf, townStage } from './world';
+import { areaOf, isPathEnd, isTown, nextPlace, pathById, pathsFrom, pathsInto, placeKey, placeName, townDepth, townIndex, type LayoutMix, type Place } from './world';
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
@@ -9,7 +9,7 @@ import type { Climbable, Decor, DecorKind, Floor, MobType, Npc, Platform, Portal
 
 // One stream per floor generation, seeded from the room name (minus its hour) so every player
 // in a channel gets the same layout (reseeded at the top of generateFloor).
-let rng = seeded(hashStr(roomId(1, net.channel, net.code, net.area, '')));
+let rng = seeded(hashStr('eurekaland'));
 const rand = (a: number, b: number): number => a + rng() * (b - a);
 const randInt = (a: number, b: number): number => Math.floor(rand(a, b + 1));
 /** Snap a coordinate to the tile grid. */
@@ -136,8 +136,8 @@ export function pickVariant(type: MobType, area: string, r = Math.random()): Mob
 /** A floor's two enemy types, picked from its area's set (same for everyone
  *  in the room: own seeded stream, so layouts don't shift). Each platform
  *  then fields one of them or both (see generateFloor). */
-export function floorMobs(_n: number, seed: () => number): [string, string] {
-  const pool = areaMobs(areaName(net.area)).map((m) => m.n);
+export function floorMobs(place: Place, seed: () => number): [string, string] {
+  const pool = areaMobs(areaOf(place)).map((m) => m.n);
   const a = Math.floor(seed() * pool.length);
   const b = (a + 1 + Math.floor(seed() * (pool.length - 1))) % pool.length;
   return [pool[a], pool[b]];
@@ -177,22 +177,25 @@ export const LAYOUTS = {
 };
 export type Layout = keyof typeof LAYOUTS;
 
-export function pickLayout(seed: () => number): Layout {
+/** Roll a layout by a path's own mix of them (LAYOUTS' weights when it has none). */
+export function pickLayout(seed: () => number, mix?: LayoutMix): Layout {
   const ks = Object.keys(LAYOUTS) as Layout[];
-  let r = seed() * ks.reduce((a, k) => a + LAYOUTS[k].weight, 0);
-  for (const k of ks) { r -= LAYOUTS[k].weight; if (r < 0) return k; }
-  return 'stack';
+  const w = (k: Layout): number => (mix ? mix[k] ?? 0 : LAYOUTS[k].weight);
+  let r = seed() * ks.reduce((a, k) => a + w(k), 0);
+  for (const k of ks) { r -= w(k); if (r < 0) return k; }
+  return ks.find((k) => w(k) > 0) ?? 'stack';
 }
 
-export function generateFloor(n: number): Floor {
+export function generateFloor(place: Place): Floor {
   // layouts don't change with the hour: seeded from the room id without it
-  rng = seeded(hashStr(roomId(n, net.channel, net.code, net.area, '')));
-  if (isTown(n)) return trim(townFloor(n));
+  const seedId = roomId(placeKey(place), net.channel, net.code, '');
+  rng = seeded(hashStr(seedId));
+  if (isTown(place)) return trim(townFloor(place.town));
   const ground = groundSlab();
   const groundY = ground.y;
 
-  const mrng = seeded(hashStr(roomId(n, net.channel, net.code, net.area, '') + '-mobs'));
-  const pair = floorMobs(n, mrng);
+  const mrng = seeded(hashStr(seedId + '-mobs'));
+  const pair = floorMobs(place, mrng);
   /** A platform fields one of the floor's two enemies (half the time) or both. */
   const zoneTypes = (): string[] => (mrng() < 0.5 ? [pair[mrng() < 0.5 ? 0 : 1]] : [...pair]);
   const platforms: Platform[] = [ground];
@@ -200,7 +203,7 @@ export function generateFloor(n: number): Floor {
   const ladders: Climbable[] = [];
   const spawns: Spawn[] = [];
 
-  const layout = pickLayout(seeded(hashStr(roomId(n, net.channel, net.code, net.area, '') + '-layout')));
+  const layout = pickLayout(seeded(hashStr(seedId + '-layout')), pathById(place.path)?.layouts);
   const L = LAYOUTS[layout];
   const COUNT = L.count;     // platforms per floor (was 14, then 7: floors halved twice)
   const step = 3 * TILE;     // summit to the next block's base (+0-1 tile): 2-3 tiles of headroom
@@ -302,12 +305,12 @@ export function generateFloor(n: number): Floor {
   }
 
   // The exit portal sits centred on the highest platform's walkable top tile.
-  const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: n + 1 };
-  if (isAreaEnd(n)) portal.label = placeName(n + 1, net.area); // the way into the town names it
+  const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: nextPlace(place) };
+  if (isPathEnd(place)) portal.label = placeName(portal.to); // the way into the town names it
 
   // its own stream, so rolling a modifier never changes the layout
-  const mods = rollMods(areaName(net.area), seeded(hashStr(roomId(n, net.channel, net.code, net.area, '') + '-mods')));
-  return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H, layout, ...(mods.length ? { mods } : {}) });
+  const mods = rollMods(areaOf(place), seeded(hashStr(seedId + '-mods')));
+  return trim({ place, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H, layout, ...(mods.length ? { mods } : {}) });
 }
 
 /** The full-width ground slab every floor stands on: 4 tiles, not a wall
@@ -317,10 +320,10 @@ function groundSlab(): Platform {
   return { x: 0, y: snap(GEN_H - h), w: WORLD.w, h, ground: true };
 }
 
-/** Town layouts, picked by area id (so each town is always the same): see townFloor. */
+/** Town layouts, picked by the town's index in TOWNS (so each town is always the same): see townFloor. */
 export const TOWN_PLANS = ['plaza', 'loft', 'market', 'terrace'] as const;
 export type TownPlan = typeof TOWN_PLANS[number];
-export const townPlanFor = (areaId: number): TownPlan => TOWN_PLANS[areaId % TOWN_PLANS.length];
+export const townPlanFor = (index: number): TownPlan => TOWN_PLANS[index % TOWN_PLANS.length];
 
 /**
  * A town (the stop after each area's floors, see world.ts): a designed
@@ -336,14 +339,17 @@ export const townPlanFor = (areaId: number): TownPlan => TOWN_PLANS[areaId % TOW
  * Every level has two tiles (32px) of headroom under the next one up. Houses,
  * lamps, benches and the like (decor) are drawn behind; they never collide.
  */
-export function townFloor(n: number): Floor {
+export function townFloor(town: string): Floor {
   const ground = groundSlab(), G = ground.y, T = TILE;
-  const here = AREAS[net.area], plan = townPlanFor(here.id);
-  const P = (x: number, y: number, to: number, label: string, area: number): Portal =>
-    ({ x, y, w: 40, h: 56, to, label, area });
+  const plan = townPlanFor(townIndex(town));
+  const P = (x: number, y: number, to: Place, label: string): Portal => ({ x, y, w: 40, h: 56, to, label });
+  // ways up at the ends of the ground (more than two paths up would share the right end)
   const upX = [2 * T, WORLD.w - 2 * T];
   // ...labelled with where they lead, and the level of the enemies on the first floor up there
-  const ups = here.up.map((a, i) => ({ ...P(upX[i], G, n + 1, placeName(n + 1, a), a), lvl: Math.max(1, n + 1 - tierOf(n + 1)) }));
+  const ups = pathsFrom(town).map((p, i) => {
+    const to: Place = { path: p.id, floor: 1 };
+    return { ...P(upX[Math.min(i, upX.length - 1)] - Math.max(0, i - 1) * 44, G, to, placeName(to)), lvl: p.lvl[0] };
+  });
   const platforms: Platform[] = [ground], ladders: Climbable[] = [], ropes: Climbable[] = [];
   const npcs: Npc[] = [], decor: Decor[] = [];
   let blockId = 0;
@@ -360,7 +366,7 @@ export function townFloor(n: number): Floor {
   const rope = (col: number, top: number, bottom: number): void => { ropes.push({ x: at(col), y1: top, y2: bottom }); };
   const npc = (kind: Npc['kind'], x: number, y: number): void => {
     const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS' }[kind];
-    if (kind !== 'trainer' || blockOf(n) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
+    if (kind !== 'trainer' || townDepth(town) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
   };
   const deco = (kind: DecorKind, x: number, y: number, flip = false): void => { decor.push({ x, y, kind, ...(flip ? { flip } : {}) }); };
   let downAt: { x: number; y: number };
@@ -407,11 +413,15 @@ export function townFloor(n: number): Floor {
     deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
     downAt = { x: at(12) + T / 2, y: high.top };
   }
-  // the first town (the Harbor) is the bottom of the world: no way down
-  const down = here.parent >= 0 ? [P(downAt.x, downAt.y, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)] : [];
+  // a way down to the start of every path that ends here, side by side (the
+  // start town is the bottom of the world: none)
+  const down = pathsInto(town).map((p, i) => {
+    const to: Place = { town: p.from };
+    return { ...P(downAt.x + i * 44, downAt.y, to, placeName(to)), down: true };
+  });
   if (down.length) deco('sign', downAt.x - 30, downAt.y);
   return {
-    number: n, town: true, h: GEN_H, layout: plan,
+    place: { town }, town: true, h: GEN_H, layout: plan,
     platforms, ladders, ropes, spawns: [],
     portal: ups[0] ?? down[0], portals: [...ups, ...down],
     npcs, decor,

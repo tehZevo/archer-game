@@ -6,8 +6,7 @@ import { surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
 import { openStylist } from './stylist';
 import { openBoard } from './quests';
-import { net } from './net';
-import { placeName } from './world';
+import { lastTown, placeName } from './world';
 import { coinMult } from './floormods';
 import { buyPet } from './pets';
 import { activeSkill, recalcStats, STAT_KEYS, upgradesOf } from './progress';
@@ -196,8 +195,8 @@ export function talk(): boolean {
   if (!n) return false;
   if (n.kind === 'shop') { shop.open = true; shop.sel = 0; }
   if (n.kind === 'trainer') { trainer.open = true; trainer.sel = 0; }
-  if (n.kind === 'stylist') openStylist(placeName(game.floor.number, net.area));
-  if (n.kind === 'board') openBoard(game.floor.number, net.area);
+  if (n.kind === 'stylist') openStylist(placeName(game.floor.place));
+  if (n.kind === 'board') openBoard(lastTown(game.floor.place));
   return true;
 }
 

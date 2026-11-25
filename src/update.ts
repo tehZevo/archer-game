@@ -1,10 +1,11 @@
+import { nextPlace } from './world';
 import { EMOTES } from './emotes';
 import { netEmote } from './net';
 import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
 import { passiveBonus } from './progress';
-import { cameraTarget, gainExp, game, gotoFloor, logMsg, mobBounds, player, spawnWave } from './state';
+import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, killMob, revive } from './combat';
@@ -64,7 +65,7 @@ export function update(dt: number): void {
   if (!pressed('c') && held('c') && player.onGround && !player.climb) cast('C');
   // dev keys (?dev only): [ levels up, ] warps to the next floor
   if (dev.on && pressed('[')) gainExp(player.expNext - player.exp);
-  if (dev.on && pressed(']')) { gotoFloor(game.floor.number + 1); return; }
+  if (dev.on && pressed(']')) { gotoPlace(nextPlace(game.floor.place)); return; }
 
   // enemy waves run on the fixed step so headless tests stay deterministic
   // other players' kills in this instance make waves come faster
@@ -203,11 +204,11 @@ export function update(dt: number): void {
   const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
   // Up beside a town NPC talks to them (before the portals: they never overlap)
   if (talk()) return;
-  if (p && pressed('up') && !portalOpen(p.to)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
+  if (p && pressed('up') && !portalOpen(p)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
   else if (p && pressed('up')) {
-    if (p.to > game.floor.number && !game.floor.town) bump('floors'); // climbed past a combat floor
+    if (!p.down && !game.floor.town) bump('floors'); // climbed past a combat floor
     sfx.portal();
-    gotoFloor(p.to, p.area);
+    gotoPlace(p.to);
     return;
   }
 
@@ -353,7 +354,7 @@ export function devInput(dt: number): void {
   if (repeated('up', dt)) dev.sel = (dev.sel + n - 1) % n;
   if (repeated('down', dt)) dev.sel = (dev.sel + 1) % n;
   if (pressed('escape')) dev.open = false;
-  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; const s = devStops()[dev.sel]; gotoFloor(s.stage, s.area); }
+  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; const s = devStops()[dev.sel]; gotoPlace(s.place); }
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {

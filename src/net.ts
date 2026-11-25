@@ -2,7 +2,7 @@ import { cleanEmote, clearEmotes, EMOTES, setEmote, type Emote } from './emotes'
 import { joinRoom } from 'trystero';
 import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
-import { isTown } from './world';
+import { isTownId, placeKey, START_TOWN } from './world';
 import { devTag } from './dev';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
@@ -13,11 +13,12 @@ import { cleanLook, myLook, watchLook, type Look } from './look';
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
 
-// One room per floor; players spread across numbered channels.
+// One room per place; players spread across numbered channels.
 const APP_ID = 'tehZevo/archer-game';
-/** Public rooms are per floor + channel; a private instance (net.code) is one room per floor. */
-export const roomId = (floor: number, channel: number, code = net.code, area = net.area, hour = net.hour): string =>
-  (code ? `eurekaland-f${floor}-p${code}` : `eurekaland-f${floor}-c${channel}`) + areaTag(area) + hourTag(floor, hour) + devTag();
+/** Public rooms are per place + channel; a private instance (net.code) is one
+ *  room per place. `place` is a place key (see placeKey in world.ts). */
+export const roomId = (place: string, channel: number, code = net.code, hour = net.hour): string =>
+  (code ? `eurekaland-${place}-p${code}` : `eurekaland-${place}-c${channel}`) + hourTag(place, hour) + devTag();
 /* Rooms by hour: a floor's rooms are tagged with the UTC hour you entered
    it (e.g. -h2026112414), so peers left over from earlier sessions are left
    behind. The hour is fixed when you join a floor's room (through a portal,
@@ -26,10 +27,7 @@ export const roomId = (floor: number, channel: number, code = net.code, area = n
    so everyone passing through meets there. (The lobby, counts only, has none.) */
 /** The UTC hour stamp for a time: YYYYMMDDHH. */
 export const hourStamp = (ms: number): string => new Date(ms).toISOString().slice(0, 13).replace(/[-T]/g, '');
-const hourTag = (floor: number, hour: string): string => (hour && !isTown(floor) ? `-h${hour}` : '');
-/** Area suffix: none for the first area (its original ids); every other area,
- *  and its own town, has its own rooms. */
-const areaTag = (area: number): string => (area > 0 ? `-a${area}` : '');
+const hourTag = (place: string, hour: string): string => (hour && !isTownId(place) ? `-h${hour}` : '');
 
 /* ---------------- private instances ---------------- */
 /** Letters for instance codes: no I or O, which read as 1 and 0. */
@@ -58,15 +56,15 @@ export const looks = new Map<string, Look>();
 /** Players in this channel or instance, you included. */
 export const playerCount = (): number => peers.size + 1;
 export const net = {
-  channel: 1, floor: 0, joined: false,
+  channel: 1, joined: false,
+  /** The place key of the room we're in ('' before the first). */
+  place: '',
   /** Private instance code ('' = public channels). */
   code: '',
   /** Nothing connects until the player starts from the main menu. */
   started: false,
   /** Why multiplayer is off, if it is ('' = fine). */
   offline: '',
-  /** The area (branch of the tower) you're in: an index into AREAS (world.ts). */
-  area: 0,
   /** The UTC hour stamp of the floor room we're in (see hourStamp). */
   hour: '',
 };
@@ -75,12 +73,12 @@ type Room = ReturnType<typeof joinRoom>;
 
 /* ---------------- lobby ----------------
    One small room shared by everyone (menu or playing): each player posts
-   the public floor + channel they're on, so the menu can show how busy
+   the public place + channel they're on, so the menu can show how busy
    each channel is. Nobody appears as a ghost here; it's counts only. */
 /** (dev sessions get their own lobby, see dev.ts) */
 const lobbyId = (): string => 'eurekaland-lobby' + devTag();
 export const LOBBY_MAX = 100;
-interface At { f: number; c: number }
+interface At { p: string; c: number }
 let lobby: Room | null = null;
 let lobbyAt: UserState<At> | null = null;
 let posted = '';
@@ -108,18 +106,18 @@ export function joinLobby(): void {
   if (lobby || !canConnect()) return;
   try {
     lobby = joinRoom({ appId: APP_ID, maxUsers: LOBBY_MAX, identity: 'none' }, lobbyId());
-    lobbyAt = lobby.makeUserState<At>('at', { f: 0, c: 0 });
+    lobbyAt = lobby.makeUserState<At>('at', { p: '', c: 0 });
     lobby.onError((err) => console.warn('[net] lobby error:', err.code, err.message, err));
     lobby.onPeerJoin((ctx) => log('lobby peer joined', ctx.userId.slice(0, 8)));
     log('joined the lobby');
   } catch (e) { console.warn('[net] lobby failed', e); lobby = null; lobbyAt = null; }
 }
 
-/** Players on each public channel of a floor, as the lobby reports them. */
-export function lobbyCounts(floor: number): Map<number, number> {
+/** Players on each public channel of a place (by key), as the lobby reports them. */
+export function lobbyCounts(place: string): Map<number, number> {
   const m = new Map<number, number>();
   for (const v of Object.values(lobbyAt?.getAll() ?? {})) {
-    if (!v || v.f !== floor || !(v.c > 0) || v.c > 99) continue;
+    if (!v || v.p !== place || !(v.c > 0) || v.c > 99) continue;
     m.set(v.c, (m.get(v.c) ?? 0) + 1);
   }
   return m;
@@ -127,8 +125,8 @@ export function lobbyCounts(floor: number): Map<number, number> {
 
 /** Post where we are (public channels only; a private instance posts nothing). */
 function postLobby(): void {
-  const at: At = net.started && !net.code ? { f: net.floor, c: net.channel } : { f: 0, c: 0 };
-  const key = `${at.f}:${at.c}`;
+  const at: At = net.started && !net.code ? { p: net.place, c: net.channel } : { p: '', c: 0 };
+  const key = `${at.p}:${at.c}`;
   if (key !== posted && lobbyAt) { posted = key; lobbyAt.set(at); }
 }
 let room: Room | null = null;
@@ -159,14 +157,15 @@ function connect(channel: number): void {
   clearEmotes();
   resetBoost();
   net.channel = channel;
-  // a new floor takes the current hour; a channel hop on the same floor keeps it
-  if (net.floor !== game.floor.number || !net.hour) net.hour = hourStamp(Date.now());
-  net.floor = game.floor.number;
+  // a new place takes the current hour; a channel hop on the same place keeps it
+  const here = placeKey(game.floor.place);
+  if (net.place !== here || !net.hour) net.hour = hourStamp(Date.now());
+  net.place = here;
   // identity: 'none' gives each tab its own userId; the default persists one
   // per browser, so two tabs in a profile would share a slot and overwrite
   // each other's positions.
-  room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL, identity: 'none' }, roomId(net.floor, channel));
-  log('joining', roomId(net.floor, channel));
+  room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL, identity: 'none' }, roomId(net.place, channel));
+  log('joining', roomId(net.place, channel));
   pos = room.makeUserState<Packet>('pos', { t: Math.round(performance.now()), f: player.face, s: [[0, Math.round(player.x), Math.round(player.y), 0, 0, 0]] });
   pos.onChange((val, meta) => {
     if (meta.self) return;
@@ -244,11 +243,11 @@ export function netEmote(kind: Emote): void {
 /** A snapshot of the connection, for the console: `archer.netStatus()`. */
 export function netStatus(): Record<string, unknown> {
   return {
-    started: net.started, offline: net.offline, room: room ? roomId(net.floor, net.channel) : null,
+    started: net.started, offline: net.offline, room: room ? roomId(net.place, net.channel) : null,
     connectedPeers: room ? Object.keys(room.getPeers()).length : 0,
     ghosts: peers.size, names: [...names.values()],
     lobbyPeers: lobby ? Object.keys(lobby.getPeers()).length : 0,
-    lobbyCounts: Object.fromEntries(lobbyCounts(net.floor || 1)),
+    lobbyCounts: Object.fromEntries(lobbyCounts(net.place || START_TOWN)),
   };
 }
 
@@ -262,7 +261,7 @@ export function localPose(): Pose {
 export function sync(): void {
   // changing floors moves us to that floor's rooms, keeping the channel number
   if (!net.started || !canConnect()) return;
-  if (!room || game.floor.number !== net.floor) connect(net.channel);
+  if (!room || placeKey(game.floor.place) !== net.place) connect(net.channel);
   postLobby();
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);
   if (p) pos?.set(p);

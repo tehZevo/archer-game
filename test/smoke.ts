@@ -2,13 +2,13 @@
 // No DOM required: runtime.ts falls back to stubs.
 
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
-import { game, player, gainExp, gotoFloor } from '../src/state';
+import { game, player, gainExp, gotoPlace } from '../src/state';
+import { nextPlace, placeKey, START } from '../src/world';
 import { setKey, clearPressed } from '../src/input';
 import { update } from '../src/update';
 import { ICON_GLYPHS } from '../src/icons';
 import { SKILLS } from '../src/config';
 import { rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
-import { net } from '../src/net';
 
 let failures = 0;
 function check(name: string, cond: boolean): void {
@@ -22,7 +22,7 @@ function step(n = 1): void {
 }
 
 function reset(): void {
-  gotoFloor(2); // Beach 1: stage 1 is the Harbor, a town
+  gotoPlace({ path: 'shore', floor: 1 }); // Beach 1, the first floor above the Harbor
   player.x = 160; player.y = game.floor.platforms[0].y - player.h;
   player.vx = 0; player.vy = 0;
   player.onGround = true; player.climb = null;
@@ -135,22 +135,22 @@ check('Skyfall Volley not known until picked', !isLearned('W'));
 
 // --- 11. portal ascends to the next floor ---
 reset();
-const floor0 = game.floor.number;
+const floor0 = game.floor.place;
 player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
 player.onGround = true;
 setKey('up', true);
 step(1);
-check('portal advances the floor', game.floor.number === floor0 + 1);
+check('portal advances the floor', placeKey(game.floor.place) === placeKey(nextPlace(floor0)));
 setKey('up', false);
 
 // --- 12. the game starts in a town (the Harbor) whose way up leads to the Beach ---
-gotoFloor(1, 0);
-check('stage 1 (the Harbor) is a town', game.floor.town === true && game.mobs.length === 0);
+gotoPlace(START);
+check('the start (the Harbor) is a town', game.floor.town === true && game.mobs.length === 0);
 player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
 player.onGround = true;
 setKey('up', true);
 step(1);
-check('town portal leads on to the next area', game.floor.number === 2 && net.area === 1);
+check('town portal leads on to the next area', placeKey(game.floor.place) === 'shore-1');
 setKey('up', false);
 
 // every skill (bases, upgrades, passives) has its own 14x14 icon glyph

@@ -4,7 +4,7 @@ import { text } from './font';
 import { autoChannel, disabled, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
-import { placeName } from './world';
+import { placeKey, placeName } from './world';
 import { archerFrame, archerFrames, ARCHER_W } from './archer';
 import { myLook } from './look';
 import { stylist } from './stylist';
@@ -37,10 +37,10 @@ export function drawMenu(): void {
   // without multiplayer (no WebCrypto on this page) say so up front
   if (net.offline) text(ctx, 'LOCAL ONLY - NO MULTIPLAYER', w / 2, 28, 1, '#ff9f6b', 'center');
   else text(ctx, 'CLIMB THE TOWER', w / 2, 28, 1, DIM, 'center');
-  text(ctx, hasSave() ? `LV ${player.level} · ${placeName(menu.floor, net.area).toUpperCase()}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
+  text(ctx, hasSave() ? `LV ${player.level} · ${placeName(menu.place).toUpperCase()}` : 'A NEW ADVENTURE', w / 2, 38, 1, HI, 'center');
 
   const blink = Math.floor(performance.now() / 400) % 2 === 0;
-  const counts = lobbyCounts(menu.floor);
+  const counts = lobbyCounts(placeKey(menu.place));
   items().forEach((it, i) => {
     const y = MENU_TOP + i * MENU_ROW, sel = menu.sel === i;
     if (sel) {
