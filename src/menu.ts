@@ -1,3 +1,4 @@
+import { placeKey, START, type Place } from './world';
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net, newCode, parseCode } from './net';
 import { clearSave, hasSave, saving } from './save';
 import { cleanName, myName, NAME_MAX, setMyName } from './presence';
@@ -31,8 +32,8 @@ export const menu = {
   note: '',
   /** Reset progress asks once more before erasing. */
   confirmReset: false,
-  /** Floor Play resumes on (channel counts are for this floor). */
-  floor: 1,
+  /** Where Play resumes (channel counts are for this place). */
+  place: START as Place,
 };
 
 /* layout, shared with the drawing and the pointer hit-test */
@@ -48,14 +49,14 @@ export const disabled = (it: ItemId): boolean => !!net.offline && (it === 'code'
 const cur = (): ItemId => items()[menu.sel];
 
 /** Channels on offer: auto, then 1..N, always one beyond the highest busy one (up to 9). */
-export function channelChoices(counts = lobbyCounts(menu.floor)): number[] {
+export function channelChoices(counts = lobbyCounts(placeKey(menu.place))): number[] {
   const top = Math.max(0, ...counts.keys());
   const n = Math.min(9, Math.max(3, top + 1));
   return [0, ...Array.from({ length: n }, (_, i) => i + 1)];
 }
 
 /** Auto: the busiest channel that still has room, so players meet up; else 1. */
-export function autoChannel(counts = lobbyCounts(menu.floor)): number {
+export function autoChannel(counts = lobbyCounts(placeKey(menu.place))): number {
   let best = 0, most = 0;
   for (const [c, n] of counts) if (n < MAX_PER_CHANNEL && (n > most || (n === most && c < best))) { best = c; most = n; }
   return best || 1;
@@ -64,10 +65,10 @@ export function autoChannel(counts = lobbyCounts(menu.floor)): number {
 let onStart: () => void = () => {};
 
 /** Set up the menu; `start` runs once the player picks how to play. */
-export function initMenu(start: () => void, floor: number): void {
+export function initMenu(start: () => void, place: Place): void {
   onStart = start;
   menu.open = true; menu.edit = null; menu.note = ''; menu.confirmReset = false; menu.channel = 0;
-  menu.floor = floor;
+  menu.place = place;
   menu.name = myName();
   menu.code = typeof location !== 'undefined' ? parseCode(location.hash.slice(1)) : '';
   // a share link lands on the code row: Enter joins

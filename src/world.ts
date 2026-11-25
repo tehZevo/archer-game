@@ -1,155 +1,191 @@
 /* ============================================================
    WORLD MAP
-   The tower is a tree of areas. Each area is a run of floors with its
-   own town at the top, and a town's portals lead up into its child
-   areas (two where the path forks, one, or none at the top of a branch).
-   No two areas share a town, and paths never rejoin or cycle. A town's
-   way down returns to its parent area's town.
+   The world is towns joined by paths. A town is a junction: no path owns
+   it, and any number of paths may start or end there (the map is a graph;
+   today's happens to be a tree). A path is a run of combat floors climbed
+   one way, from its start town up to its end town. Each town keeps a
+   direct way back down to the start town of every path that ends there.
 
-   Where you are is two plain numbers: the stage (depth in the tower,
-   used for room ids, mob levels and floor layouts) and the area id
-   (`net.area`, an index into AREAS) that says which branch you're on.
-   Every area at the same depth has the same height (see TIER_FLOORS), so
-   a stage number on its own gives the depth and the floor within it.
+   Where you are is a Place: a town on its own, or a path and a floor on it
+   (from 1). Towns and paths have short fixed ids (lowercase letters) that
+   room names, floor seeds, saves and portals use, so a place's id never
+   shifts when the map grows.
+
+   Each path declares its own floor count, the level range its enemies
+   climb through, and its own mix of the shared floor layouts (stack,
+   zigzag, open: see LAYOUTS in floor.ts).
    ============================================================ */
 
-/** One area in the plan: its name, its town's name, and the areas above it. */
-interface Plan { area: string; town: string; up?: Plan[] }
-
-// The root is a town alone (no combat floors below it): the Harbor, where a
-// new game starts, a calm dock whose way up leads to the Beach.
-const PLAN: Plan = { area: 'Harbor', town: 'Saltwick Port', up: [
-  { area: 'Sunlit Shore', town: 'Driftwood Rest', up: [
-    { area: 'Whispering Woods', town: 'Mossgate Village', up: [
-      { area: 'Echoing Caves', town: 'Fernwick Hamlet', up: [
-        { area: 'Mushroom Grotto', town: 'Sporehollow Camp' },
-        { area: 'Crystal Caverns', town: 'Glimmerdeep Town', up: [
-          { area: 'Clockwork Spire', town: 'Gearholm City' },
-        ] },
-      ] },
-      { area: 'Misty Riverbank', town: 'Reedmouth Village', up: [
-        { area: 'Sunken Ruins', town: 'Tidewatch Outpost', up: [
-          // the Tide Pools are a tough coastal branch, far from the start
-          { area: 'Tide Pools', town: 'Wrackhaven Cove' },
-        ] },
-        { area: 'Mirror Lake', town: 'Stillwater Town', up: [
-          { area: 'Starfall Observatory', town: 'Thistledown Station' },
-        ] },
-      ] },
-    ] },
-    { area: 'Sunny Meadows', town: 'Lanternhollow Town', up: [
-      { area: 'Rolling Hills', town: 'Emberfold Village', up: [
-        { area: 'Craggy Mountains', town: 'Highcrag Hold', up: [
-          { area: 'Endless Sky', town: 'Cloudharbor Town', up: [
-            { area: 'Sky Reef', town: 'Windrest Camp' },
-            { area: 'Frozen Summit', town: 'Summit Lodge' },
-          ] },
-        ] },
-        { area: 'Old Keep', town: 'Hollowmere Town', up: [
-          { area: 'Chapel Spire', town: 'Bellcourt Abbey' },
-        ] },
-      ] },
-      { area: 'Murky Swamp', town: 'Willowmere Village', up: [
-        { area: 'Dreamwood', town: 'Duskmeadow Hamlet', up: [
-          { area: 'Void Garden', town: 'Nullhaven Refuge' },
-        ] },
-        { area: 'Ember Wastes', town: 'Ashen Gate Fort' },
-      ] },
-    ] },
-  ] },
-] };
-
-export interface Area {
-  id: number;
+/** A town: its id, its name, and (only where no path leads in) the area whose look it takes. */
+export interface Town {
+  id: string;
   name: string;
-  town: string;
-  depth: number;
-  /** the area below (whose town leads here); -1 for the first area */
-  parent: number;
-  /** the areas this one's town leads up into, left to right */
-  up: number[];
+  /** The area it takes its tileset and enemies (for quests) from: the path
+   *  leading into it unless set (the start town has no path in). */
+  area?: string;
 }
 
-/** Every area in the tower, depth-first from the first one (id 0). */
-export const AREAS: Area[] = [];
-(function flatten(p: Plan, depth: number, parent: number): number {
-  const a: Area = { id: AREAS.length, name: p.area, town: p.town, depth, parent, up: [] };
-  AREAS.push(a);
-  a.up = (p.up ?? []).map((c) => flatten(c, depth + 1, a.id));
-  return a.id;
-})(PLAN, 0, -1);
+/** Layout weights for a path's floors (missing layouts never roll). */
+export type LayoutMix = Partial<Record<'stack' | 'zigzag' | 'open', number>>;
 
-/** The first area, where a new game starts. */
-export const START_AREA = 0;
+/** A path: floors climbed from one town up to another. */
+export interface Path {
+  id: string;
+  /** Its area name ("Whispering Woods"): the tileset, enemies and status effects. */
+  name: string;
+  from: string;
+  to: string;
+  floors: number;
+  /** Enemy level on its first floor and its last, spread evenly between. */
+  lvl: [number, number];
+  layouts: LayoutMix;
+}
 
-/** Floors per depth. Lower areas are shorter, so the climb picks up speed. */
-export const TIER_FLOORS: readonly number[] = [0, 3, 5, 5, 6, 7, 8]; // the Harbor has none: it's just its town
+export type Place = { town: string } | { path: string; floor: number };
 
-/** The deepest depth any branch reaches. */
-export const TOP_BLOCK = TIER_FLOORS.length - 1;
+// Towns in map order (left branches first): the order picks each town's
+// layout and palette (see townPlanFor, townPal).
+export const TOWNS: readonly Town[] = [
+  // the start: a calm dock whose way up leads to the Beach
+  { id: 'saltwick', name: 'Saltwick Port', area: 'Harbor' },
+  { id: 'driftwood', name: 'Driftwood Rest' },
+  { id: 'mossgate', name: 'Mossgate Village' },
+  { id: 'fernwick', name: 'Fernwick Hamlet' },
+  { id: 'sporehollow', name: 'Sporehollow Camp' },
+  { id: 'glimmerdeep', name: 'Glimmerdeep Town' },
+  { id: 'gearholm', name: 'Gearholm City' },
+  { id: 'reedmouth', name: 'Reedmouth Village' },
+  { id: 'tidewatch', name: 'Tidewatch Outpost' },
+  { id: 'wrackhaven', name: 'Wrackhaven Cove' },
+  { id: 'stillwater', name: 'Stillwater Town' },
+  { id: 'thistledown', name: 'Thistledown Station' },
+  { id: 'lanternhollow', name: 'Lanternhollow Town' },
+  { id: 'emberfold', name: 'Emberfold Village' },
+  { id: 'highcrag', name: 'Highcrag Hold' },
+  { id: 'cloudharbor', name: 'Cloudharbor Town' },
+  { id: 'windrest', name: 'Windrest Camp' },
+  { id: 'summitlodge', name: 'Summit Lodge' },
+  { id: 'hollowmere', name: 'Hollowmere Town' },
+  { id: 'bellcourt', name: 'Bellcourt Abbey' },
+  { id: 'willowmere', name: 'Willowmere Village' },
+  { id: 'duskmeadow', name: 'Duskmeadow Hamlet' },
+  { id: 'nullhaven', name: 'Nullhaven Refuge' },
+  { id: 'ashengate', name: 'Ashen Gate Fort' },
+];
 
-const clampTier = (tier: number): number => Math.max(0, Math.min(tier, TOP_BLOCK));
+// A town's ways up are its paths in this order, left to right.
+export const PATHS: readonly Path[] = [
+  { id: 'shore', name: 'Sunlit Shore', from: 'saltwick', to: 'driftwood', floors: 3, lvl: [1, 3], layouts: { stack: 3, open: 2 } },
+  { id: 'woods', name: 'Whispering Woods', from: 'driftwood', to: 'mossgate', floors: 5, lvl: [4, 8], layouts: { stack: 5, zigzag: 3, open: 1 } },
+  { id: 'caves', name: 'Echoing Caves', from: 'mossgate', to: 'fernwick', floors: 5, lvl: [9, 13], layouts: { stack: 3, zigzag: 5 } },
+  { id: 'grotto', name: 'Mushroom Grotto', from: 'fernwick', to: 'sporehollow', floors: 6, lvl: [14, 19], layouts: { stack: 4, zigzag: 3, open: 1 } },
+  { id: 'crystal', name: 'Crystal Caverns', from: 'fernwick', to: 'glimmerdeep', floors: 6, lvl: [14, 19], layouts: { stack: 2, zigzag: 5 } },
+  { id: 'clockwork', name: 'Clockwork Spire', from: 'glimmerdeep', to: 'gearholm', floors: 7, lvl: [20, 26], layouts: { stack: 2, zigzag: 6 } },
+  { id: 'riverbank', name: 'Misty Riverbank', from: 'mossgate', to: 'reedmouth', floors: 5, lvl: [9, 13], layouts: { stack: 3, open: 4 } },
+  { id: 'ruins', name: 'Sunken Ruins', from: 'reedmouth', to: 'tidewatch', floors: 6, lvl: [14, 19], layouts: { stack: 5, zigzag: 2, open: 2 } },
+  { id: 'tidepools', name: 'Tide Pools', from: 'tidewatch', to: 'wrackhaven', floors: 7, lvl: [20, 26], layouts: { stack: 2, open: 5 } },
+  { id: 'mirror', name: 'Mirror Lake', from: 'reedmouth', to: 'stillwater', floors: 6, lvl: [14, 19], layouts: { stack: 2, open: 5 } },
+  { id: 'starfall', name: 'Starfall Observatory', from: 'stillwater', to: 'thistledown', floors: 7, lvl: [20, 26], layouts: { stack: 3, zigzag: 4 } },
+  { id: 'meadows', name: 'Sunny Meadows', from: 'driftwood', to: 'lanternhollow', floors: 5, lvl: [4, 8], layouts: { stack: 3, open: 5 } },
+  { id: 'hills', name: 'Rolling Hills', from: 'lanternhollow', to: 'emberfold', floors: 5, lvl: [9, 13], layouts: { stack: 5, open: 3 } },
+  { id: 'crags', name: 'Craggy Mountains', from: 'emberfold', to: 'highcrag', floors: 6, lvl: [14, 19], layouts: { stack: 4, zigzag: 4 } },
+  { id: 'sky', name: 'Endless Sky', from: 'highcrag', to: 'cloudharbor', floors: 7, lvl: [20, 26], layouts: { zigzag: 4, open: 3 } },
+  { id: 'reef', name: 'Sky Reef', from: 'cloudharbor', to: 'windrest', floors: 8, lvl: [27, 34], layouts: { stack: 2, zigzag: 3, open: 3 } },
+  { id: 'summit', name: 'Frozen Summit', from: 'cloudharbor', to: 'summitlodge', floors: 8, lvl: [27, 34], layouts: { stack: 3, zigzag: 5 } },
+  { id: 'keep', name: 'Old Keep', from: 'emberfold', to: 'hollowmere', floors: 6, lvl: [14, 19], layouts: { stack: 6, zigzag: 2 } },
+  { id: 'chapel', name: 'Chapel Spire', from: 'hollowmere', to: 'bellcourt', floors: 7, lvl: [20, 26], layouts: { stack: 2, zigzag: 6 } },
+  { id: 'swamp', name: 'Murky Swamp', from: 'lanternhollow', to: 'willowmere', floors: 5, lvl: [9, 13], layouts: { stack: 3, open: 4 } },
+  { id: 'dreamwood', name: 'Dreamwood', from: 'willowmere', to: 'duskmeadow', floors: 6, lvl: [14, 19], layouts: { stack: 4, zigzag: 2, open: 2 } },
+  { id: 'void', name: 'Void Garden', from: 'duskmeadow', to: 'nullhaven', floors: 7, lvl: [20, 26], layouts: { stack: 3, zigzag: 3, open: 3 } },
+  { id: 'wastes', name: 'Ember Wastes', from: 'willowmere', to: 'ashengate', floors: 6, lvl: [14, 19], layouts: { stack: 3, open: 5 } },
+];
 
-/** Stages in a depth's block: its floors, then its town. */
-export const blockSize = (tier: number): number => TIER_FLOORS[clampTier(tier)] + 1;
+const TOWN_BY_ID = new Map(TOWNS.map((t) => [t.id, t]));
+const PATH_BY_ID = new Map(PATHS.map((p) => [p.id, p]));
 
-/** The first stage of a depth's block (the sum of all blocks below it). */
-export const baseOf = (tier: number): number => {
-  let base = 1;
-  for (let t = 0; t < clampTier(tier); t++) base += blockSize(t);
-  return base;
-};
+/** Where a new game starts. */
+export const START_TOWN = 'saltwick';
+export const START: { town: string } = { town: START_TOWN };
 
-/** The depth a stage belongs to (0 = the first area). */
-export const tierOf = (n: number): number => {
-  let tier = 0;
-  while (tier < TOP_BLOCK && n >= baseOf(tier + 1)) tier++;
-  return tier;
-};
-export const blockOf = tierOf;
+export const townById = (id: string): Town => TOWN_BY_ID.get(id) ?? TOWN_BY_ID.get(START_TOWN)!;
+export const pathById = (id: string): Path | undefined => PATH_BY_ID.get(id);
+export const isTownId = (id: string): boolean => TOWN_BY_ID.has(id);
 
-/** Floor within its area, from 1. */
-export const localFloor = (n: number): number => n - baseOf(tierOf(n)) + 1;
+/** A town's index in TOWNS (picks its layout and palette). */
+export const townIndex = (id: string): number => Math.max(0, TOWNS.findIndex((t) => t.id === id));
 
-/** A town is the last stage of its depth's block. */
-export const isTown = (n: number): boolean => localFloor(n) === blockSize(tierOf(n));
+/** The paths a town leads up into, left to right. */
+export const pathsFrom = (town: string): Path[] => PATHS.filter((p) => p.from === town);
+/** The paths that end at a town (each gives it a way back down to the path's start). */
+export const pathsInto = (town: string): Path[] => PATHS.filter((p) => p.to === town);
 
-/** The last floor of an area, right before its town (the boss floor, later). */
-export const isAreaEnd = (n: number): boolean => localFloor(n) === TIER_FLOORS[clampTier(tierOf(n))];
+/** The area a town takes its look from. */
+export const townArea = (id: string): string => townById(id).area ?? pathsInto(id)[0]?.name ?? 'Harbor';
 
-/** The stage number of the towns at a depth. */
-export const townStage = (tier: number): number => baseOf(clampTier(tier)) + TIER_FLOORS[clampTier(tier)];
-
-const areaAt = (area: number): Area => AREAS[area] ?? AREAS[START_AREA];
-
-/** An area's name ("Forest"). */
-export const areaName = (area: number): string => areaAt(area).name;
-
-/** What players call a stage: "Forest 3", or the area's town's name. */
-export const placeName = (n: number, area: number): string =>
-  isTown(n) ? areaAt(area).town : `${areaAt(area).name} ${localFloor(n)}`;
-
-/** Every area name in the tower, in plan order (each once). */
-export const MAP_AREAS: readonly string[] = [...new Set(AREAS.map((a) => a.name))];
-
-/** Fit an area to a stage: walk down to the area at the stage's depth, or up
- *  its leftmost branch. Returns null if the branch ends below that depth. */
-export function areaFor(n: number, area: number): number | null {
-  let a = areaAt(area);
-  const tier = tierOf(n);
-  while (a.depth > tier) a = AREAS[a.parent];
-  while (a.depth < tier) {
-    if (!a.up.length) return null;
-    a = AREAS[a.up[0]];
+/** Steps up from the start to each town (fewest paths climbed). */
+const DEPTH = new Map<string, number>([[START_TOWN, 0]]);
+for (let q = [START_TOWN]; q.length;) {
+  const next: string[] = [];
+  for (const t of q) for (const p of pathsFrom(t)) {
+    if (!DEPTH.has(p.to)) { DEPTH.set(p.to, DEPTH.get(t)! + 1); next.push(p.to); }
   }
-  return a.id;
+  q = next;
+}
+/** How many paths up from the start a town is (the start is 0). */
+export const townDepth = (id: string): number => DEPTH.get(id) ?? 0;
+
+export const isTown = (p: Place): p is { town: string } => 'town' in p;
+
+/** A place's short id, for room names and seeds: "woods-3", or a town's own id. */
+export const placeKey = (p: Place): string => (isTown(p) ? p.town : `${p.path}-${p.floor}`);
+
+export const samePlace = (a: Place, b: Place): boolean => placeKey(a) === placeKey(b);
+
+/** Read a place back from untrusted data (a save, a dev command): null if it isn't one. */
+export function cleanPlace(v: unknown): Place | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  if (typeof o.town === 'string') return isTownId(o.town) ? { town: o.town } : null;
+  const path = typeof o.path === 'string' ? pathById(o.path) : undefined;
+  const floor = Number(o.floor);
+  return path && Number.isInteger(floor) && floor >= 1 && floor <= path.floors ? { path: path.id, floor } : null;
 }
 
-/** Towns are the save points: the latest town at or below a stage on a
- *  branch (the start of the tower before the first town). */
-export function lastTown(n: number, area: number): { stage: number; area: number } {
-  const a = areaAt(area);
-  if (isTown(n)) return { stage: n, area: a.id };
-  if (a.parent < 0) return { stage: 1, area: START_AREA };
-  return { stage: townStage(a.depth - 1), area: a.parent };
+/** The area a place is in ("Whispering Woods"): its tileset, enemies and status effects. */
+export const areaOf = (p: Place): string => (isTown(p) ? townArea(p.town) : pathById(p.path)?.name ?? 'Harbor');
+
+/** What players call a place: "Whispering Woods 3", or the town's name. */
+export const placeName = (p: Place): string => (isTown(p) ? townById(p.town).name : `${areaOf(p)} ${p.floor}`);
+
+/** The last floor of a path, right before its end town: the boss floor. */
+export const isPathEnd = (p: Place): boolean => !isTown(p) && p.floor === pathById(p.path)?.floors;
+
+/** Where a place's way up leads: the next floor, the path's end town, or
+ *  (from a town) the first floor of its leftmost path. */
+export function nextPlace(p: Place): Place {
+  if (isTown(p)) {
+    const up = pathsFrom(p.town)[0];
+    return up ? { path: up.id, floor: 1 } : p;
+  }
+  const path = pathById(p.path)!;
+  return p.floor < path.floors ? { path: path.id, floor: p.floor + 1 } : { town: path.to };
 }
+
+/** The level of a path floor's enemies: its path's range, spread evenly over
+ *  its floors. In a town, the level of the floors just around it. */
+export function mobLevel(p: Place): number {
+  if (isTown(p)) {
+    const up = pathsFrom(p.town)[0], into = pathsInto(p.town)[0];
+    return up ? up.lvl[0] : into ? into.lvl[1] : 1;
+  }
+  const path = pathById(p.path);
+  if (!path) return 1;
+  const [lo, hi] = path.lvl;
+  return path.floors > 1 ? Math.round(lo + (hi - lo) * (p.floor - 1) / (path.floors - 1)) : lo;
+}
+
+/** Towns are the save points: a town itself, or the town a path floor started from. */
+export const lastTown = (p: Place): string => (isTown(p) ? p.town : pathById(p.path)?.from ?? START_TOWN);
+
+/** Every area name in the world, in map order (each once). */
+export const MAP_AREAS: readonly string[] = [...new Set([townArea(START_TOWN), ...PATHS.map((p) => p.name)])];

@@ -1,7 +1,6 @@
 import { CAM, ELITE, MOB_TYPES, P, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
-import { AREAS, areaFor, areaName, tierOf, townStage } from './world';
+import { areaOf, mobLevel, START, type Place } from './world';
 import { generateFloor, pickVariant } from './floor';
-import { net } from './net';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
 import { spawnBoss } from './boss';
@@ -66,7 +65,7 @@ export const player: Player = {
 
 export const game = {
   player,
-  floor: generateFloor(1),
+  floor: generateFloor(START),
   mobs: [] as Mob[],
   shots: [] as Shot[],
   fx: [] as Fx[],
@@ -96,14 +95,11 @@ export function mobBounds(m: Mob): [number, number] {
   return [lo, hi];
 }
 
-/** The level of the enemies on a stage, which sets the EXP (see mobExp) and
- *  coins they're worth: one per combat floor climbed (towns don't count), so
- *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
-export const mobLevel = (stage: number): number => Math.max(1, stage - tierOf(stage)); // one town per depth below
+export { mobLevel } from './world';
 
 export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
-  const level = mobLevel(game.floor.number);
+  const level = mobLevel(game.floor.place);
   const scale = 1 + (level - 1) * 0.12;
   const e = elite ? ELITE : { SCALE: 1, HP: 1, DMG: 1, EXP: 1 };
   const hp = Math.round(type.hp * scale * e.HP);
@@ -135,7 +131,7 @@ export const heldBy = (z: Spawn): number => Math.max(0, (z.cap ?? 1) - Math.floo
 export function spawnWave(): void {
   const zones = game.floor.spawns;
   const alive = (z: Spawn): number => game.mobs.filter((m) => m.spawn === z).length;
-  const area = areaName(net.area);
+  const area = areaOf(game.floor.place);
   const add = (z: Spawn): void => spawnMob(z, pickVariant(mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), area), Math.random() < ELITE.CHANCE);
   let moved = 0;
   for (const z of zones) {
@@ -158,15 +154,9 @@ export function spawnWave(): void {
 /** How far either side of the ground's centre a player can arrive, px. */
 export const SPAWN_SPREAD = 64;
 
-export function gotoFloor(n: number, area?: number): void {
-  if (area !== undefined) net.area = area; // picked at a town: the floors above follow it
-  // keep the area in step with the stage (dev warps step across towns); a
-  // branch that ends below the stage stops at its own town
-  const fit = areaFor(n, net.area);
-  if (fit === null) n = townStage(AREAS[net.area].depth);
-  else net.area = fit;
-  game.floor = generateFloor(n);
-  visitArea(areaName(net.area));
+export function gotoPlace(place: Place): void {
+  game.floor = generateFloor(place);
+  visitArea(areaOf(place));
   WORLD.h = game.floor.h;
   game.mobs.length = 0;
   game.shots.length = 0;
