@@ -87,7 +87,7 @@ function arena(level = 1, x = 100): void {
   release();
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
   player.level = level; player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats();
-  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['Z', 'C', 'D', 'Q'].includes(k) ? 1 : 0;
+  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['Z', 'C', 'D', 'Q', 'AD'].includes(k) ? 1 : 0;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.useT = 0; player.cast = null; player.castT = 0; player.combo = 0; player.queued = null; player.hangT = 0;
@@ -437,7 +437,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Air Dive: Q's air form plunges down and rolls into the ground rush
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   tap('c'); step(6);
   const y0 = player.y;
   tap('q'); step(2);
@@ -445,7 +445,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
   // from higher up: the landing frame itself starts the rush, a real one (it strikes)
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   const m = dummy(180);
   player.y -= 60; player.onGround = false; player.vy = 0;
   tap('q');
@@ -461,7 +461,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Midair Spin: W's air form sweeps the enemies around you
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
   const m = dummy(140);
   tap('c'); step(8);
   const hp0 = m.hp; tap('w'); step(4);
@@ -480,7 +480,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Sky Assault -> E: Plunging Volley cuts the hover short instead of waiting it out
-  arena(20); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 1; player.ranks.E = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 1; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Sky Assault hovers', player.hangT > 0);
@@ -599,7 +599,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- E / R ---
 {
   // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air
-  arena(10); player.ranks.E = 1;
+  arena(10); player.ranks.E = 1; player.ranks.PV = 1;
   const near = dummy(140);
   tap('e');
   check('Spike Lift drives spikes into the enemies around you', near.hp < 1e6);
@@ -630,7 +630,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Midair Spin (W in the air): one sweep per 4s, and no extra rise
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
   tap('c'); let apex0 = player.y;
   for (let i = 0; i < 30; i++) { step(1); apex0 = Math.min(apex0, player.y); }
   step(40);
@@ -646,7 +646,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Q: the ground rush cools down for 4s; the Air Dive keeps its own short one
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   tap('q');
   check('the ground rush has a 4s cooldown', SKILLS.Q.cd === 4 && player.cdMax.Q === 4);
   step(40); player.cd.Q = 0;
@@ -2259,16 +2259,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const ready = (): void => { for (const k of Object.keys(player.cd)) player.cd[k] = 0; player.useT = 0; player.mp = 999; };
   const fxOf = (t: string): boolean => game.fx.some((f) => f.type === t);
   const air = (): void => { player.y -= 40; player.vy = 0; player.onGround = false; };
-  arena(30); player.ranks.E = 1; player.ranks.W = 1; player.ranks.R = 1;
+  arena(30); player.ranks.E = 1; player.ranks.W = 1; player.ranks.MS = 1; player.ranks.R = 1;
   ready(); game.fx.length = 0; tap('e');
   check('Spike Lift erupts spikes from the ground', fxOf('spikes') && !fxOf('rush'));
-  arena(30); player.ranks.W = 1; ready(); air(); game.fx.length = 0; tap('w');
+  arena(30); player.ranks.W = 1; player.ranks.MS = 1; ready(); air(); game.fx.length = 0; tap('w');
   check('the Midair Spin whirls blades round you and spins the archer', fxOf('spin') && localPose() === 'spin');
   arena(30); player.ranks.R = 1; ready(); game.fx.length = 0; tap('r');
   check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
   step(15);
   check('...and she is back once it ends', localPose() !== 'vanish');
-  arena(30); ready(); air(); tap('q');
+  arena(30); player.ranks.AD = 1; ready(); air(); tap('q');
   check('the Air Dive draws its dive pose', player.diving && localPose() === 'dive');
   release();
 }
