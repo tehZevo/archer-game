@@ -1,12 +1,16 @@
 /* ============================================================
    LOOK
-   How your archer looks: a hair style, hair colour, skin tone and
-   outfit, each a plain index into the lists below. It's kept on this
+   How your archer looks: a body type, hair style, hair colour, skin
+   tone and outfit, each a plain index into the lists below. The first
+   BASIC styles and colours are open to everyone; the rest are each
+   offered by one town's stylist (see townlooks.ts). It's kept on this
    device (like your name) and sent to the other players in the room
    along with your name, so they see you as you made yourself.
    ============================================================ */
 
-export interface Look { style: number; hair: number; skin: number; outfit: number }
+export interface Look { body: number; style: number; hair: number; skin: number; outfit: number }
+
+export const BODY_NAMES = ['FEMALE', 'MALE'] as const;
 
 /** Hair colours: [hair, shadow]. */
 export const HAIR_COLS: readonly [string, string][] = [
@@ -17,6 +21,28 @@ export const HAIR_COLS: readonly [string, string][] = [
   ['#dfe4ec', '#a6aec0'], // silver
   ['#f29ac0', '#c46a92'], // pink
   ['#6fd8c8', '#3e9e92'], // teal
+  // the rest are offered by town stylists (townlooks.ts)
+  ['#a8442a', '#7a2e1c'], // auburn
+  ['#f4f0e0', '#c8c0a8'], // platinum
+  ['#3a4a8a', '#262f5e'], // navy
+  ['#c0a0f0', '#8a70c0'], // lavender
+  ['#a0f0c0', '#68b88a'], // mint
+  ['#f0a040', '#c07020'], // orange
+  ['#c02040', '#88142c'], // crimson
+  ['#4a8a3a', '#2e5e24'], // moss
+  ['#80c8ff', '#4a90d0'], // sky
+  ['#ffffff', '#c8d0e0'], // snow
+  ['#6a3a20', '#48240f'], // chestnut
+  ['#ffd040', '#d0a020'], // gold
+  ['#8040c0', '#582890'], // violet
+  ['#e0c898', '#b09a6a'], // sand
+  ['#e06080', '#a84060'], // rose
+  ['#7080a0', '#4a5470'], // slate
+  ['#ff6020', '#c03a10'], // ember
+  ['#c87838', '#985020'], // copper
+  ['#ffc0a0', '#d89878'], // peach
+  ['#4a2a6a', '#2e1a44'], // void
+  ['#b0aca8', '#7a7672'], // ash
 ];
 
 /** Skin tones: [skin, shadow]. */
@@ -39,14 +65,18 @@ export const OUTFITS: readonly [string, string, string, string][] = [
   ['#f0c040', '#b88a20', '#7a2a8a', '#561c62'], // gold and purple (an achievement unlocks it)
 ];
 
-export const STYLE_NAMES = ['SWEPT', 'SHORT', 'LONG'] as const;
+/** Hair styles (see archer.ts); CROP onward are cut for the male build, but anyone can wear them. */
+export const STYLE_NAMES = ['SWEPT', 'SHORT', 'LONG', 'CROP', 'SPIKY', 'SLICKED', 'BUN', 'PONYTAIL'] as const;
 
-export const LOOK_KEYS = ['style', 'hair', 'skin', 'outfit'] as const;
+/** How many styles and hair colours everyone has; the rest come from town stylists. */
+export const BASIC: Partial<Record<keyof Look, number>> = { style: 4, hair: 7 };
+
+export const LOOK_KEYS = ['body', 'style', 'hair', 'skin', 'outfit'] as const;
 export const LOOK_COUNTS: Record<keyof Look, number> = {
-  style: STYLE_NAMES.length, hair: HAIR_COLS.length, skin: SKINS.length, outfit: OUTFITS.length,
+  body: BODY_NAMES.length, style: STYLE_NAMES.length, hair: HAIR_COLS.length, skin: SKINS.length, outfit: OUTFITS.length,
 };
 
-export const DEFAULT_LOOK: Look = { style: 0, hair: 0, skin: 0, outfit: 0 };
+export const DEFAULT_LOOK: Look = { body: 0, style: 0, hair: 0, skin: 0, outfit: 0 };
 
 /** A look with every field a whole number in range (bad or missing → 0). */
 export function cleanLook(v: unknown): Look {
@@ -62,16 +92,17 @@ export function cleanLook(v: unknown): Look {
 /** Options not on offer yet (set by achievements.ts): stepping skips them. */
 export const lookLocks: Partial<Record<keyof Look, (i: number) => boolean>> = {};
 
-/** Step one field of a look, wrapping around (past any locked option). */
-export function stepLook(l: Look, k: keyof Look, d: number): Look {
+/** Step one field of a look, wrapping around, past any option that's locked
+ *  or (if `offered` is given) not on offer here. */
+export function stepLook(l: Look, k: keyof Look, d: number, offered?: (k: keyof Look, i: number) => boolean): Look {
   const n = LOOK_COUNTS[k];
   let v = l[k];
-  for (let i = 0; i < n; i++) { v = (v + d + n) % n; if (!lookLocks[k]?.(v)) break; }
+  for (let i = 0; i < n; i++) { v = (v + d + n) % n; if (!lookLocks[k]?.(v) && (offered?.(k, v) ?? true)) break; }
   return { ...l, [k]: v };
 }
 
 /** A short key for caching baked frames. */
-export const lookKey = (l: Look): string => `${l.style}.${l.hair}.${l.skin}.${l.outfit}`;
+export const lookKey = (l: Look): string => `${l.body}.${l.style}.${l.hair}.${l.skin}.${l.outfit}`;
 
 /** Palette overrides for a look (the archer's palette letters). */
 export function lookPalette(l: Look): Record<string, string> {

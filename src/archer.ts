@@ -167,10 +167,10 @@ export const POSE_FPS: Record<ArcherPose, number> = {
 export const ARCHER_W = 16, ARCHER_H = 24;
 
 /* Hair styles: the swept-back default is in the grids above. The others
-   redraw the back of the head (rows 8-11; ears and face stay) and, for long
-   hair, let it fall down the back over the cape (only cape pixels change,
-   so the bow, arms and quiver stay on top). */
-const SHORT_HEAD: Record<number, string> = {
+   redraw rows of the head (ears and face stay) and some let hair fall down
+   the back over the cape (only cape pixels change, so the bow, arms and
+   quiver stay on top). Climbing shows the back of the head. */
+const SHORT_BACK: Record<number, string> = {
   8: '..oohhHSsssso...',
   9: '...oooooSSoo....',
   10: '..oCccoostto....',
@@ -181,27 +181,67 @@ const LONG_HEAD: Record<number, string> = {
   10: '..ohhhhHostto...',
   11: '..ohhhHHttttgo..',
 };
-/** Long hair over the cape: [row, first column, hair letters] (side view). */
-const LONG_BACK: [number, number, string][] = [[12, 2, 'ohhH'], [13, 2, 'ohhH'], [14, 3, 'ohH'], [15, 3, 'oo']];
-/** ...and seen from behind while climbing. */
-const LONG_CLIMB: [number, number, string][] = [[10, 5, 'HhhhhH'], [11, 6, 'hhhh'], [12, 6, 'Hhhh'], [13, 7, 'HH']];
+interface Style {
+  /** Whole rows of the head, side view. */
+  head?: Record<number, string>;
+  /** Hair over the cape: [row, first column, hair letters] (side view)... */
+  back?: [number, number, string][];
+  /** ...and seen from behind while climbing (whole rows, then cape cells). */
+  climbRows?: Record<number, string>;
+  climb?: [number, number, string][];
+}
+/** By STYLE_NAMES index: SWEPT, SHORT, LONG, CROP, SPIKY, SLICKED, BUN, PONYTAIL. */
+const STYLES: Style[] = [
+  {},
+  { head: SHORT_BACK },
+  { head: LONG_HEAD,
+    back: [[12, 2, 'ohhH'], [13, 2, 'ohhH'], [14, 3, 'ohH'], [15, 3, 'oo']],
+    climb: [[10, 5, 'HhhhhH'], [11, 6, 'hhhh'], [12, 6, 'Hhhh'], [13, 7, 'HH']] },
+  // CROP: close to the head all round
+  { head: { ...SHORT_BACK, 1: '................', 2: '......oooooo....', 5: '...ohhhHssssso..' },
+    climbRows: { 1: '................', 2: '.....oooooooo...' } },
+  // SPIKY: tufts standing up off the crown
+  { head: { ...SHORT_BACK, 0: '....o...o...o...', 1: '...oho.oho.oho..', 2: '...ohhohhhohhoo.', 3: '...ohhhgggggho..' },
+    climbRows: { 0: '....o..o..o..o..', 1: '...ohoohoohooho.' } },
+  // SLICKED: combed flat and back, a sharp edge behind
+  { head: { ...SHORT_BACK, 1: '......ooooooo...', 2: '....oohhhhhhhoo.', 3: '...ohhhgggggho..', 4: '..ohhhhhhhhhhho.', 5: '.ohhhhhHssssso..' } },
+  // BUN: tied up high at the back
+  { head: { ...SHORT_BACK, 0: '..ooo...........', 1: '.ohhHooooooo....', 2: '.oHhhohhhhhhoo..', 3: '..ooohhgggggho..' },
+    climbRows: { 0: '......oooo......', 1: '.....ohhHhoo....' } },
+  // PONYTAIL: tied at the nape, swinging down the back
+  { head: { ...SHORT_BACK, 8: '.ohhhhHSsssso...', 9: '.ohhooooSSoo....', 10: '.ohHccoostto....', 11: '.ohHcccottttgo..' },
+    back: [[12, 1, 'ohH'], [13, 1, 'oH'], [14, 2, 'o']],
+    climb: [[10, 6, 'HhhH'], [11, 7, 'hh'], [12, 7, 'hH']] },
+];
 
-/** A frame's grid with a hair style applied. */
-export function styled(grid: string[], pose: ArcherPose, style: number): string[] {
-  // crouched low, and lying flat: the hair's out of sight, so keep the drawn grid
-  if (!style || pose === 'rush' || pose === 'prone') return grid;
+/** The male build: a squarer jaw and brows (cells of the side-view head, only
+ *  over the face, so every hair style keeps them). The female build is the
+ *  grids as drawn, with a lash over the eye. */
+const MALE_FACE: [number, number, string, string][] = [[5, 10, 'HH', 's'], [8, 12, 'so', 'o.'], [9, 10, 'SSo', 'o.']];
+const FEMALE_FACE: [number, number, string, string][] = [[5, 12, 'e', 's']];
+
+/** A frame's grid with a hair style and body type applied. */
+export function styled(grid: string[], pose: ArcherPose, style: number, body = 0): string[] {
+  if (pose === 'prone') return grid; // lying flat: too small to show
   const g = grid.slice();
   const put = (row: number, col: number, s: string, only: string): void => {
     const r = [...g[row]];
     [...s].forEach((ch, i) => { if (only.includes(r[col + i])) r[col + i] = ch; });
     g[row] = r.join('');
   };
+  const st = STYLES[style] ?? STYLES[0];
   if (pose === 'climb') {
-    if (style === 2) for (const [row, col, s] of LONG_CLIMB) put(row, col, s, 'cC');
+    for (const [row, r] of Object.entries(st.climbRows ?? {})) g[+row] = r;
+    for (const [row, col, s] of st.climb ?? []) put(row, col, s, 'cC');
     return g;
   }
-  for (const [row, s] of Object.entries(style === 1 ? SHORT_HEAD : LONG_HEAD)) g[+row] = s;
-  if (style === 2) for (const [row, col, s] of LONG_BACK) put(row, col, s, 'cCo.');
+  // crouched low (the head drawn 2 rows down): the hair's out of sight, but the face shows
+  const top = pose === 'rush' ? 2 : 0;
+  if (!top) {
+    for (const [row, r] of Object.entries(st.head ?? {})) g[+row] = r;
+    for (const [row, col, s] of st.back ?? []) put(row, col, s, 'cCo.');
+  }
+  for (const [row, col, s, only] of body ? MALE_FACE : FEMALE_FACE) put(row + top, col, s, only);
   return g;
 }
 
@@ -225,7 +265,7 @@ export function bakeArcher(look: Look = DEFAULT_LOOK): Record<ArcherPose, HTMLCa
   const pal = { ...PAL, ...lookPalette(look) };
   const out = {} as Record<ArcherPose, HTMLCanvasElement[]>;
   for (const p of Object.keys(GRIDS) as ArcherPose[]) {
-    const grids = GRIDS[p].map((g) => styled(g, p, look.style));
+    const grids = GRIDS[p].map((g) => styled(g, p, look.style, look.body));
     out[p] = grids.map((g) => bake(g, false, pal));
     if (p === 'climb') out[p].push(bake(grids[0], true, pal));
   }
