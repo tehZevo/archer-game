@@ -393,6 +393,9 @@ export function cast(key: SkillKey, chained = false): void {
           tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit', more: h < r.hits - 1 }));
         });
       }
+      // the volley opens the link window, so Midair Spin (W in the air)
+      // follows the rain without waiting for it to land
+      if (tg.length) { player.combo = 1.4; player.comboT = 1.4; }
       break;
     }
 
