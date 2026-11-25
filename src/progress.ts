@@ -1,6 +1,7 @@
 import type { JobDef, PauseMenu, SkillDef, SkillKey, SkillRank, StatKey } from './types';
 import { SKILLS, SKILL_ORDER } from './config';
 import { player } from './state';
+import { fmtNum } from './util';
 
 /* ============================================================
    EXPERIENCE
@@ -29,6 +30,13 @@ export const mobExp = (m: number, mul = 1): number =>
 
 /** EXP needed to go from level `l` to the next. */
 export const expToNext = (l: number): number => Math.round(killsToLevel(l) * mobExp(clampLv(l)));
+
+/** The HUD's EXP bar readout: at max level it shows the level (LV.100) and
+ *  the bar stays full, since there is no next level to progress toward. */
+export const expBar = (): { text: string; pct: number } =>
+  player.level >= MAX_LEVEL
+    ? { text: `LV.${player.level}`, pct: 1 }
+    : { text: `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, pct: player.exp / player.expNext };
 
 /* ---------------- job advancement ----------------
    Archer is created already wielding her 1st Job skills, so the tree opens

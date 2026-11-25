@@ -67,6 +67,7 @@ export const P = {
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
   GLIDE_LINK: 0.6,     // s the glide-link window an aerial skill opens (covers its use time + delay)
+  SPIN_VOLLEY: 0.6,    // s the window a Midair Spin opens for a linked Plunging Volley
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
@@ -115,13 +116,13 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
-       cd: 0, use: 0.5, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
+       cd: 0, use: 0.5, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
        desc: 'Launch enemies airborne, opens the link window' },
   W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
-       cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 8, targetsMax: 8,
+       cd: 0.50, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 6, targets1: 4, targetsMax: 4,
        desc: 'Airborne-only volley after Sky Toss' },
   E: { key: 'E', name: 'Spike Lift', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: P.SPIKE_CD, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
+       cd: P.SPIKE_CD, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
@@ -135,10 +136,10 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 10, targetsMax: 16,
+       cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 8, targetsMax: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 3, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
+       cd: 3, use: 0.5, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6, requires: 'W',

@@ -111,6 +111,7 @@ export function update(dt: number): void {
   if (player.assaultLinkT > 0) player.assaultLinkT -= dt;
   if (player.blitzLinkT > 0) player.blitzLinkT -= dt;
   if (player.glideLinkT > 0) player.glideLinkT -= dt;
+  if (player.volleyLinkT > 0) player.volleyLinkT -= dt;
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 
