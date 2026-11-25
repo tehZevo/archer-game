@@ -93,6 +93,11 @@ export function update(dt: number): void {
   // (a chained Twin Shot also waits out the slide itself)
   const busy = player.recoverT > 0; // the animation's recovery: a live link window cuts it short
   const window = player.combo > 0 || player.blitzLinkT > 0; // Q's link, or a blitz's self-link
+  // A buffered skill aims where you're holding when it fires, not where you
+  // faced when you pressed it: keep facing live while the current skill locks
+  // your movement (mashing Q left, Q right zips you back and forth).
+  const aimDir = held('left') ? -1 : held('right') ? 1 : 0;
+  if (player.queued && aimDir !== 0) player.face = aimDir as 1 | -1;
   if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && !window)) {
     const k = player.queued; player.queued = null;
     cast(k, k === 'Z');

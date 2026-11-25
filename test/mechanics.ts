@@ -2532,5 +2532,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the spin does not hover', player.onGround);
 }
 
+{
+  // A buffered skill fires in the direction held when it releases, not when
+  // it was pressed: Q left, Q right zips you back and forth
+  arena(20); player.ranks.Q = 1;
+  dummy(150);
+  setKey('left', true);
+  tap('q'); step(1); // the first rush slides left...
+  setKey('left', false); setKey('right', true);
+  tap('q'); // ...and the next one is buffered while the right key is held
+  step(10); // the first rush (0.34s) ends and the buffered one fires
+  check('the buffered rush fires right', player.face === 1 && player.vx > 0, `face ${player.face} vx ${player.vx.toFixed(0)}`);
+  setKey('right', false);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
