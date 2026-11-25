@@ -499,6 +499,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.Q = 1; player.ranks.W = 0;
   tap('q'); for (let i = 0; i < 30 && (player.rushT > 0 || player.cast === 'rush'); i++) step(1);
   check('right after the rush, Z fires at once too', player.useT > 0 && (tap('z'), player.cast === 'shoot'));
+  // the chain skips the ending lag once: a second Z right after is a fresh
+  // shot (its own use time), not a free extra use while the window is open
+  arena(20); player.ranks.Q = 1; player.ranks.W = 0;
+  dummy(200);
+  tap('q'); for (let i = 0; i < 30 && (player.rushT > 0 || player.cast === 'rush'); i++) step(1);
+  tap('z'); step(1);
+  check('the chained Z consumes the link window', player.combo === 0);
+  const cast1 = player.cast;
+  tap('z');
+  check('a second Z right after is a fresh shot, not a free extra', player.cast === 'shoot' && cast1 === 'shoot');
 }
 {
   // Level-based miss rate: 5% per level the target is above the attacker,
