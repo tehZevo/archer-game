@@ -11,6 +11,7 @@ import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
 import { areaName } from './world';
 import { drawBackdrop } from './backdropdraw';
 import { PROP_H, PROP_W, propAt, propsFor } from './props';
+import { BACK_DECOR, DECOR_SIZE, paintDecor, townPal } from './towndecor';
 import { localPose, looks, names, net, peers } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
@@ -129,6 +130,24 @@ function drawProps(ts: Tileset): void {
     if (i === null || !clear(x + TS / 2, y)) return;
     ctx.drawImage(cs[i], x + TS / 2 - PROP_W / 2, y - PROP_H);
   });
+}
+
+/** Town decor, baked per kind, palette and facing (see towndecor.ts). */
+const decorCanvases = new Map<string, HTMLCanvasElement>();
+function drawDecor(back: boolean): void {
+  const pal = townPal(net.area);
+  for (const d of game.floor.decor ?? []) {
+    if (BACK_DECOR.has(d.kind) !== back) continue;
+    const key = `${d.kind}.${net.area}.${d.flip ? 1 : 0}`, { w, h } = DECOR_SIZE[d.kind];
+    let c = decorCanvases.get(key);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d')!;
+      paintDecor(d.kind, pal, (x, y, col, pw = 1, ph = 1) => { g.fillStyle = col; g.fillRect(x, y, pw, ph); }, d.flip);
+      decorCanvases.set(key, c);
+    }
+    ctx.drawImage(c, Math.round(d.x - w / 2), Math.round(d.y - h));
+  }
 }
 
 /** Tile a 16x16 sprite vertically between y1 and y2 at an integer x. */
@@ -409,8 +428,10 @@ export function render(): void {
   drawBackground(ts);
   ctx.save();
   ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
+  drawDecor(true); // buildings stand behind the town's levels...
   drawPlatforms(ts);
   drawProps(ts);
+  drawDecor(false); // ...street furniture on them
   for (const r of game.floor.ropes) drawRope(ts, r);
   for (const l of game.floor.ladders) drawLadder(ts, l);
   drawDecorations(ts);

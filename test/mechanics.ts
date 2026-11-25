@@ -54,7 +54,7 @@ import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD
 import { startRun } from '../src/save';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
-import { generateFloor } from '../src/floor';
+import { generateFloor, TOWN_PLANS } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -878,25 +878,54 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const deckTop = Math.min(...deck.map((p) => p.y));
   check('the plaza deck is reached by a ladder and a rope from the ground',
     game.floor.ladders[0].y1 === deckTop && game.floor.ropes[0].y1 === deckTop && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
-  // two-level towns: a loft over the deck, up a ladder, with the way down on it
-  let lofts = 0, flat = 0, loftsOk = true;
+  // Driftwood Rest is a two-level town: a loft over the deck, up a ladder, with the way down on it
+  {
+    const fl = game.floor, dk = fl.platforms.filter((p) => p.block === 1), lf = fl.platforms.filter((p) => p.block === 2);
+    const dTop = Math.min(...dk.map((p) => p.y)), dn = fl.portals.find((q) => q.to < fl.number)!;
+    const lTop = Math.min(...lf.map((p) => p.y)), lBottom = Math.max(...lf.map((p) => p.y + p.h)), lad = fl.ladders[1];
+    check('a loft holds the way down, up a ladder from the deck, with headroom under it', fl.layout === 'loft'
+      && dn.y === lTop && lf.some((p) => !p.inner && p.y === lTop && dn.x >= p.x && dn.x <= p.x + p.w)
+      && !!lad && lad.y1 === lTop && lad.y2 === dTop && dTop - lBottom >= player.h + 4);
+  }
+  // every town, whatever its layout
+  const plans = new Set<string>(), bad: string[] = [];
   for (const a of AREAS) {
     gotoFloor(townStage(a.depth), a.id);
-    const fl = game.floor, dk = fl.platforms.filter((p) => p.block === 1), lf = fl.platforms.filter((p) => p.block === 2);
-    const dTop = Math.min(...dk.map((p) => p.y)), dn = fl.portals.find((q) => q.to < fl.number);
-    if (!dn) continue; // the Harbor: no way down
-    if (!lf.length) { flat++; if (dn.y !== dTop) loftsOk = false; continue; }
-    lofts++;
-    const lTop = Math.min(...lf.map((p) => p.y)), lBottom = Math.max(...lf.map((p) => p.y + p.h));
-    const lad = fl.ladders[1];
-    const ok = dn.y === lTop && lf.some((p) => !p.inner && p.y === lTop && dn.x >= p.x && dn.x <= p.x + p.w)
-      && lad && lad.y1 === lTop && lad.y2 === dTop
-      && dTop - lBottom >= player.h + 4 // you can walk the deck under it
-      && Math.abs(lad.x - dn.x) >= dn.w / 2 + 10 + 7; // climbing off the ladder isn't standing in the portal
-    if (!ok) { loftsOk = false; check(`${a.town}'s loft`, false); break; }
+    const fl = game.floor, tops = fl.platforms.filter((p) => !p.inner);
+    plans.add(fl.layout ?? '');
+    // what you can reach from the ground by walking along levels and climbing
+    const blockAt = (x: number, y: number): number | undefined => tops.find((p) => p.y === y && x >= p.x && x <= p.x + p.w)?.block ?? (tops.some((p) => p.ground && p.y === y) ? 0 : undefined);
+    const reach = new Set<number>([0]);
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const c of [...fl.ladders, ...fl.ropes]) {
+        const lo = blockAt(c.x, c.y2), hi = blockAt(c.x, c.y1);
+        if (lo === undefined || hi === undefined) { bad.push(`${a.town}: a climbable at ${c.x} doesn't join two levels`); continue; }
+        for (const [u, v] of [[lo, hi], [hi, lo]]) if (reach.has(u) && !reach.has(v)) { reach.add(v); grew = true; }
+      }
+    }
+    for (const q of [...fl.portals, ...(fl.npcs ?? [])]) {
+      const b = blockAt(q.x, q.y);
+      if (b === undefined || !reach.has(b)) bad.push(`${a.town}: ${'kind' in q ? q.kind : q.label} can't be reached`);
+    }
+    // headroom: wherever one level is over another, you can walk under it
+    for (const u of tops) for (const v of tops) {
+      if (u === v || u.block === v.block || u.x >= v.x + v.w || v.x >= u.x + u.w || u.y >= v.y) continue;
+      const under = fl.platforms.filter((p) => p.block === u.block && p.x === u.x).reduce((m, p) => Math.max(m, p.y + p.h), 0);
+      if (v.y - under < player.h + 4) bad.push(`${a.town}: no headroom at x ${v.x}`);
+    }
+    // climbing off a ladder or rope never lands you in a portal
+    for (const q of fl.portals) for (const c of [...fl.ladders, ...fl.ropes]) {
+      if ((c.y1 === q.y || c.y2 === q.y) && Math.abs(c.x - q.x) < q.w / 2 + 10 + 7) bad.push(`${a.town}: a climbable by ${q.label}`);
+    }
+    // people on the same level stand far enough apart for their names not to overlap
+    for (const u of fl.npcs ?? []) for (const v of fl.npcs ?? []) if (u !== v && u.y === v.y && Math.abs(u.x - v.x) < 44) bad.push(`${a.town}: ${u.kind} and ${v.kind} crowd each other`);
+    // decorations stand on something
+    for (const d of fl.decor ?? []) if (blockAt(d.x, d.y) === undefined) bad.push(`${a.town}: a ${d.kind} in mid-air at ${d.x}`);
+    if (!(fl.decor ?? []).some((d) => d.kind === 'house' || d.kind === 'tower')) bad.push(`${a.town}: no buildings`);
   }
-  check("some towns have a second level and some don't", lofts > 0 && flat > 0, `${lofts} two-level, ${flat} one-level`);
-  check("a loft holds the way down, up a ladder from the deck, with headroom under it", loftsOk);
+  check('towns come in every layout', TOWN_PLANS.every((p) => plans.has(p)), [...plans].join(', '));
+  check('in every town, every portal and person can be reached by walking and climbing; levels have headroom; climbables are clear of portals; decorations stand on something; there are buildings', bad.length === 0, bad.slice(0, 4).join('; '));
   gotoFloor(5, beach);
   check('every area has its own rooms, its town too (the first area keeps the plain ids)',
     roomId(11, 1, '', forest) !== roomId(11, 1, '', meadow) && roomId(6, 1, '', forest) !== roomId(6, 1, '', meadow) && !roomId(1, 1, '', 0).includes('-a'));
