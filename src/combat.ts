@@ -20,6 +20,12 @@ export const critChance = (): number => 0.15 + game.player.stats.luk * 0.004 + p
 /** Built-in damage bonus, raised by the Power Surge passive. */
 export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
 
+/** Level-based miss rate: each level the target stands above the attacker
+ *  adds 5% to the chance of missing it (capped), and the same in reverse.
+ *  Applies to the archer's shots and to the mobs' contact hits alike. */
+export const missChance = (attackerLvl: number, targetLvl: number): number =>
+  Math.max(0, Math.min(0.75, 0.05 * (targetLvl - attackerLvl)));
+
 /** Seconds the enemy HP bar stays up after a hit. */
 export const BAR_SHOW = 4;
 
@@ -28,6 +34,12 @@ export const BAR_SHOW = 4;
 export const HITSTUN = 0.35, DYING_MAX = 0.6;
 
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
+  // the higher-level target dodges more (see missChance)
+  target.aggro = true;
+  if (Math.random() < missChance(game.player.level, target.level)) {
+    game.dmgNums.push({ x: target.x, y: target.y - 14, v: 0, t: 1, vy: -60, crit: false, txt: 'MISS', col: '#cfcfcf' });
+    return;
+  }
   // the weapon in hand multiplies everything the bow fires
   let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();

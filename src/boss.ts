@@ -5,6 +5,7 @@ import { areaMobs } from './floor';
 import { areaOf, isPathEnd, mobLevel } from './world';
 import { mobExp } from './progress';
 import { gearSoak } from './gear';
+import { missChance } from './combat';
 import { sfx } from './audio';
 import type { Mob, MobType, Portal } from './types';
 
@@ -83,9 +84,11 @@ export function spawnBoss(): void {
 
 /** Hurt the player (unless they're still flashing from the last hit). True if it landed.
  *  Hit by something at `fromX`, they're bumped a little up off the ground and back, away from it
- *  (not while climbing or hovering in Sky Assault). */
-export function hurtPlayer(dmg: number, fromX?: number): boolean {
+ *  (not while climbing or hovering in Sky Assault). The attacker's level sets
+ *  how often it misses (see missChance). */
+export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolean {
   if (player.invuln > 0) return false;
+  if (Math.random() < missChance(attackerLvl, player.level)) return false;
   if (fromX !== undefined && !player.climb && player.hangT <= 0) {
     const away = Math.sign(player.x - fromX) || -player.face;
     player.vx = away * P.HIT_PUSH;
@@ -155,7 +158,7 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
         quakes.push({ x: m.x, y: m.y + m.h, t: QUAKE_T });
         sfx.hit();
         const feet = player.y + player.h;
-        if (player.onGround && Math.abs(d) < BOSS.QUAKE_R + m.w / 2 && Math.abs(feet - (m.y + m.h)) < 20) hurtPlayer(Math.round(m.dmg * BOSS.QUAKE_DMG), m.x);
+        if (player.onGround && Math.abs(d) < BOSS.QUAKE_R + m.w / 2 && Math.abs(feet - (m.y + m.h)) < 20) hurtPlayer(Math.round(m.dmg * BOSS.QUAKE_DMG), m.x, m.level);
         rest(m);
       }
       break;

@@ -25,7 +25,7 @@ import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobar
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
-import { BAR_SHOW, damage, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
+import { BAR_SHOW, damage, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast, cdSlot } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { mobLevel } from '../src/world';
@@ -501,6 +501,37 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('right after the rush, Z fires at once too', player.useT > 0 && (tap('z'), player.cast === 'shoot'));
 }
 {
+  // Level-based miss rate: 5% per level the target is above the attacker,
+  // the same in reverse; applies to shots and to contact hits alike.
+  check('an even match never misses', missChance(10, 10) === 0);
+  check('each level above adds 5%', missChance(10, 12) === 0.1 && missChance(10, 11) === 0.05);
+  check('being above the target misses nothing', missChance(10, 8) === 0);
+  check('the rate caps at 75%', missChance(1, 100) === 0.75);
+  arena(10);
+  const m = dummy(140);
+  const roll = (r: number): boolean => {
+    m.hp = 1e6; const saved = Math.random; Math.random = () => r; damage(m, 1); Math.random = saved;
+    return m.hp < 1e6;
+  };
+  m.level = 10;
+  check('a shot at an even-levelled enemy lands on any roll', roll(0.99));
+  m.level = 12; // two above: 10% miss
+  check('a 10% roll at two levels above misses', !roll(0.05) && roll(0.15));
+  m.level = 40;
+  check('the cap bites at thirty levels up', !roll(0.7) && roll(0.8));
+  check('a miss still wakes the enemy', (m.hp = 1e6, roll(0.01), m.aggro === true));
+}
+{
+  // the mobs' contact hits miss the same way
+  arena(20);
+  player.invuln = 0;
+  const saved = Math.random; Math.random = () => 0.05;
+  check('a mob two levels below the archer misses on a 10% roll', !hurtPlayer(10, 0, 18) && player.hp === player.hpMax);
+  Math.random = saved;
+  player.invuln = 0;
+  check('...and lands when the roll clears', hurtPlayer(10, 0, 18) && player.hp === player.hpMax - 10);
+  player.hp = player.hpMax; player.invuln = 0;
+  check('a mob two levels above lands on any roll', hurtPlayer(10, 0, 22) && player.hp === player.hpMax - 10);
   // Echo Shot (passive): the shadow archer's extra hits ride on every attack,
   // permanently, once bought with SP. No timer.
   arena(20); player.ranks.Z = 1;
@@ -582,7 +613,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const plate = gearFor('armor', 30);
   check('armor soaks a share of what you take (capped)', equip(plate) && gearSoak() === 0.35, `soak ${gearSoak()}`);
   player.invuln = 0;
-  hurtPlayer(100);
+  hurtPlayer(100, undefined, player.level);
   check('a 100-damage hit costs 65 with that armor on', player.hp === player.hpMax - 65, `hp ${player.hp}`);
 
   // a kill can leave a piece behind, and walking over it puts it on
@@ -2211,7 +2242,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('it is only a little bump, and you land again', player.onGround && peak > 3 && peak < 16, `peak ${peak.toFixed(1)}px`);
   check('you end up a little way back from the enemy', x0 - player.x > 8 && x0 - player.x < 50, `moved ${(x0 - player.x).toFixed(1)}px`);
   arena(1, 120); player.invuln = 0;
-  hurtPlayer(1, player.x - 10);
+  hurtPlayer(1, player.x - 10, player.level);
   check('hit from behind, you are pushed the other way', player.vx > 0);
   arena(1, 120); player.invuln = 0;
   hurtPlayer(1);

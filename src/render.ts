@@ -516,7 +516,7 @@ function drawDmg(d: DmgNum): void {
   // pixel font with a 1px black outline (d.y is the old text baseline)
   ctx.save();
   ctx.globalAlpha = clamp(d.t, 0, 1);
-  const s = String(d.v), x = Math.round(d.x), y = Math.round(d.y) - 7;
+  const s = d.txt ?? String(d.v), x = Math.round(d.x), y = Math.round(d.y) - 7;
   for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     text(ctx, s, x + ox, y + oy, 1, '#000', 'center');
   }
