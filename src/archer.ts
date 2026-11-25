@@ -153,18 +153,23 @@ const IDLE = [...HEAD, ...IDLE_BODY];
 // idle breathing: the second frame sinks the upper body a pixel onto the legs
 const IDLE2 = ['................', ...IDLE.slice(0, 17), ...IDLE.slice(18)];
 
-/** Lying flat (holding Down on the ground): a wider 24px frame, head
- *  forward, bow tucked under the chin. */
+/** Lying flat (holding Down on the ground): a wider 24px frame, on her
+ *  belly with the full-size head propped up over the bow hand (the same
+ *  head as standing, so the sprite keeps its proportions). */
 const PRONE = [
-  ...Array(16).fill('........................'),
-  '................oooo....',
-  '...............ohhhho...',
-  '..............ohhggggo..',
-  '..ooo..ooooooohhhhsseo..',
-  '.obbbooollllTTtttHsssso.',
-  '.obbbollllTTTttgtoSSoxw.',
-  '.obbboollllTTTTTCcooxwW.',
-  '..ooo.ooooooooooooo.oo..',
+  ...Array(12).fill('........................'),
+  '..............oooooo....',
+  '.............ohhhhhhoo..',
+  '............ohhgggggho..',
+  '...........ohhhhhhhhhho.',
+  '..........ohhhhHssssso..',
+  '........ookhhhHsssseso..',
+  '.........okkhhHsssssso..',
+  '..ooo..ooooohhHSsssso...',
+  '.obbbooocCcohhhoSSoo....',
+  '.obbbolllTTTTttosssoxw..',
+  '.obbboolllTTTTTTTCoxwW..',
+  '..ooo.ooooooooooooooooo.',
 ];
 
 export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish';
@@ -249,7 +254,7 @@ const FEMALE_FACE: [number, number, string, string][] = [[5, 12, 'e', 's']];
 
 /** A frame's grid with a hair style and body type applied. */
 export function styled(grid: string[], pose: ArcherPose, style: number, body = 0): string[] {
-  if (pose === 'prone') return grid; // lying flat: too small to show
+  if (pose === 'prone') return grid; // lying flat: the head's drawn shifted, so the side-view styles don't map onto it
   const g = grid.slice();
   const put = (row: number, col: number, s: string, only: string): void => {
     const r = [...g[row]];

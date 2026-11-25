@@ -865,6 +865,12 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 
 // --- archer sprite sheet ---
 check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS).every(([p, fs]) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === (p === 'prone' ? 24 : 16)))));
+{
+  // lying flat keeps the standing head's size (it used to shrink to 4 rows)
+  const headRows = (g: string[]): number => g.filter((r) => /[hs]/.test(r)).length;
+  check('the prone head is as tall as the standing one', headRows(GRIDS.prone[0]) >= headRows(GRIDS.idle[0].slice(0, 10)) - 1,
+    `${headRows(GRIDS.prone[0])} vs ${headRows(GRIDS.idle[0].slice(0, 10))}`);
+}
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
 check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('vanish') === POSES.length - 1 && POSES.indexOf('prone') === 7 && POSES[0] === 'idle');
 {
@@ -1544,6 +1550,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(10); player.ranks.AC = 1; onRope();
   setKey('up', true); tap('c');
   check('with it, Up + Jump rushes up the rope', player.climbRush);
+  check('...trailing green rising streaks', game.fx.some((f) => f.type === 'climbRise'));
   release();
 }
 // --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
@@ -2852,6 +2859,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('each enemy\'s death animation is its own', new Set(sig).size === names.length, `${new Set(sig).size}/${names.length}`);
   check('the same enemy always bakes the same sheet', bakeDeathSheet(names[0], DEATHS[names[0]], src).frames[4].px.join() === sheets[0].frames[4].px.join());
   check('a death\'s age picks its frame, holding the last', deathFrame(0) === 0 && deathFrame(DEATH_T / 2) === DEATH_FRAMES / 2 && deathFrame(DEATH_T * 2) === DEATH_FRAMES - 1);
+}
+
+{
+  // Shell Barrage fires its whole burst even with nothing to hit, fanned so every bolt shows
+  arena(30); player.ranks.Z = 3; player.ranks.S = 1;
+  game.shots.length = 0;
+  tap('z');
+  check('a whiffed Shell Barrage still fires every bolt', game.shots.length === shotCount(rank('Z')), `${game.shots.length} shots`);
+  check('...fanned apart, not stacked on one line', new Set(game.shots.map((s) => Math.round(s.y))).size === game.shots.length);
+}
+
+{
+  // Plunging Volley: one orange/green flare on the archer and a single tornado
+  // blast below her, instead of a falling volley on every enemy it hits
+  arena(30); player.ranks.E = 1; player.ranks.PV = 1;
+  player.y = ground().y - player.h - 120; player.onGround = false; player.x = 140;
+  const m = dummy(140); m.y = player.y + player.h + 10;
+  game.fx.length = 0;
+  tap('e'); step(6);
+  check('the volley flares on the archer and blasts a tornado below', game.fx.some((f) => f.type === 'volleyFlare') && game.fx.some((f) => f.type === 'tornado'));
+  check('...with no rain or per-enemy hit sparks', !game.fx.some((f) => f.type === 'rain' || f.type === 'rainHit' || f.type === 'hit' || f.type === 'crit'));
+  check('...and the enemy below still takes the hits', m.hp < 1e6, `hp ${m.hp}`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

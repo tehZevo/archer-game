@@ -358,6 +358,9 @@ function vanishAlpha(s: number): number {
   return 1;
 }
 
+/** Air Dive's colour: its afterimages wash yellow. */
+const DIVE_TINT = '#ffe14d';
+
 /** Afterimages trailing an Air Dive, back along the line of the dive. */
 function drawDiveTrail(look: Look, x: number, feet: number, face: number, t: number, alpha: number, tint?: string): void {
   const len = Math.hypot(P.DIVE_VX, P.DIVE_VY), ux = (face * P.DIVE_VX) / len, uy = P.DIVE_VY / len;
@@ -447,7 +450,7 @@ const ECHO_TINT = '#7fb8ff';
 const invulnAlpha = (): number => (player.invuln > 0 && !player.invulnQuiet ? 0.8 : 1);
 
 function drawPlayer(): void {
-  if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha());
+  if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha(), DIVE_TINT);
   // Echo Shot: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and
   // stands ready the rest of the time.
