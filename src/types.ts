@@ -1,6 +1,6 @@
 import type { Place } from './world';
 import type { BossState } from './boss';
-export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR' | 'HA';
+export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'EB' | 'SA' | 'PP' | 'IR' | 'HA';
 
 /** A status effect (see status.ts). */
 export type StatusKind = 'poison' | 'burn' | 'chill';
@@ -248,6 +248,13 @@ export interface Player extends Body {
   /** Counts down right after a skill's cooldown finishes, driving the
    *  yellow ready-glow on its bar icon (see hud.ts). */
   readyT: Record<SkillKey, number>;
+  /** True while an Air Dive is in flight; the landing rolls into the rush. */
+  diving: boolean;
+  /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
+  blitzCharges: number;
+  blitzT: number;
+  /** px the current rush slide travels (Sky Toss vs Electric Blitz). */
+  rushGoal: number;
   cast: CastName | null;
   castT: number;
   castTotal: number;
