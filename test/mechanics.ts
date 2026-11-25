@@ -19,6 +19,7 @@ import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomNa
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
+import { expBar, MAX_LEVEL } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
@@ -2530,6 +2531,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the sweep hits the enemy below', m.hp < 1e6);
   step(30);
   check('the spin does not hover', player.onGround);
+}
+
+{
+  // EXP bar at max level: reads LV.100 and stays full
+  arena(20);
+  player.level = 99; player.exp = 500; player.expNext = 1000;
+  check('below max level the bar shows exp/expNext', expBar().text === '500/1K' || expBar().text.includes('/'), expBar().text);
+  player.level = MAX_LEVEL;
+  check('at max level the bar reads LV.100', expBar().text === `LV.${MAX_LEVEL}`, expBar().text);
+  check('...and the bar stays full', expBar().pct === 1);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

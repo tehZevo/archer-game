@@ -517,14 +517,15 @@ function drawFx(f: Fx): void {
 
 function drawDmg(d: DmgNum): void {
   if (d.delay && d.delay > 0) return;
-  // pixel font with a 1px black outline (d.y is the old text baseline)
+  // pixel font with a black outline (d.y is the old text baseline); the 2x
+  // scale keeps damage readable at a glance
   ctx.save();
   ctx.globalAlpha = clamp(d.t, 0, 1);
-  const s = d.txt ?? String(d.v), x = Math.round(d.x), y = Math.round(d.y) - 7;
+  const s = d.txt ?? String(d.v), x = Math.round(d.x), y = Math.round(d.y) - 10;
   for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-    text(ctx, s, x + ox, y + oy, 1, '#000', 'center');
+    text(ctx, s, x + ox, y + oy, 2, '#000', 'center');
   }
-  text(ctx, s, x, y, 1, d.col, 'center');
+  text(ctx, s, x, y, 2, d.col, 'center');
   ctx.restore();
 }
 
