@@ -102,6 +102,7 @@ export function update(dt: number): void {
   if (player.recoverT > 0) player.recoverT -= dt;
   const locked = player.useT > 0; // skill use time: no movement input
   if (player.comboT > 0) { player.comboT -= dt; if (player.comboT <= 0) player.combo = 0; }
+  if (player.assaultLinkT > 0) player.assaultLinkT -= dt;
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 
@@ -148,6 +149,11 @@ export function update(dt: number): void {
     if (player.hangT > 0) {
       // Sky Assault: hover in place, striking airborne enemies at intervals
       player.hangT -= dt;
+      if (player.hangT <= 0) {
+        // the hover ends here: landing opens the link window, so Tempest
+        // (R) fires as a finisher on the Q -> W -> AB chain
+        player.assaultLinkT = 1.1;
+      }
       player.vx = 0; player.vy = 0;
       player.hangHitT -= dt;
       if (player.hangHits > 0 && player.hangHitT <= 0) {
