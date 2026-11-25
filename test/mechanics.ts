@@ -25,7 +25,7 @@ import { BAR_SHOW, damage, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
-import { BOSS, bossAlive, hurtPlayer, quakes } from '../src/boss';
+import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/boss';
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
 import { styled } from '../src/archer';
@@ -1318,7 +1318,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // enemies: two types per floor from the area's set; each platform fields one or both
   const beach = areaMobs('Sunlit Shore').map((m) => m.n);
-  check('the Beach has its own enemies (snail, crab, hermit crab, gull)', ['Garden Snail', 'Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
+  check('the Beach has its own enemies (snail, enemy crab, hermit crab, gull)', ['Garden Snail', 'Enemy Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
   check('areas without a set use the general pool', areaMobs('Old Keep').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Old Keep').length >= 2);
   const withOwn = Object.keys(TILESETS).filter((a) => !['Classic', 'Harbor'].includes(a)); // the Harbor is only a town
   check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
@@ -1387,6 +1387,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const boss = bs[0];
   check('the boss is one of its enemies, grown huge and much tougher',
     boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
+  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)) === 'Giant Enemy Crab', bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)));
   const hp0 = player.hpMax;
   player.hpMax = player.hp = 1e7;
   const ground = game.floor.platforms[0];
@@ -1544,7 +1545,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const snap = snapshot();
   loadQuests([]); apply(snap);
   check('quests survive a save and load', quests.length === 1 && quests[0].mob === 'Garden Snail' && quests[0].have === 1);
-  loadQuests([{ mob: 3 }, null, { mob: 'Crab', need: -5, have: 99, exp: 'x', coins: 1 }]);
+  loadQuests([{ mob: 3 }, null, { mob: 'Enemy Crab', need: -5, have: 99, exp: 'x', coins: 1 }]);
   check('malformed saved quests are dropped or clamped', quests.length === 1 && quests[0].need === 1 && quests[0].have === 1 && quests[0].exp === 0);
   loadQuests([]);
 }
@@ -1635,7 +1636,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 // --- elites: rare, bigger, tougher, worth more ---
 {
   arena();
-  const z = { x: 100, y: ground().y, types: ['Crab'] } as never;
+  const z = { x: 100, y: ground().y, types: ['Enemy Crab'] } as never;
   spawnMob(z, MOB_TYPES[1]); spawnMob(z, MOB_TYPES[1], true);
   const [n, e] = game.mobs.slice(-2);
   check('an elite is bigger and tougher, and worth more EXP', !n.elite && !!e.elite
@@ -1648,7 +1649,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   killMob(e);
   check(`an elite drops ${ELITE.COINS} coin piles`, one === 1 && drops.length === 1 + ELITE.COINS);
   // waves: about 1 in 25
-  game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Crab'] }));
+  game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Enemy Crab'] }));
   game.mobs = []; spawnWave();
   const frac = game.mobs.filter((m) => m.elite).length / game.mobs.length;
   check('waves roll elites rarely, about 1 in 25', ELITE.CHANCE === 1 / 25 && frac > 0.01 && frac < 0.09, frac.toFixed(3));
