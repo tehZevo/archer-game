@@ -8,7 +8,10 @@ import { openStylist } from './stylist';
 import { openBoard } from './quests';
 import { lastTown, placeName } from './world';
 import { coinMult } from './floormods';
-import { buyPet } from './pets';
+import { buyPet, PET } from './pets';
+import { equip, gearFor, weaponBonus, armorSoak } from './gear';
+import type { GearItem } from './gear';
+import { mobLevel } from './world';
 import { activeSkill, recalcStats, STAT_KEYS, upgradesOf } from './progress';
 import type { Floor, Mob, Npc, SkillKey } from './types';
 
@@ -123,12 +126,40 @@ export function npcNear(): Npc | null {
 
 /** The shop window (open while browsing; the world waits). */
 export const shop = { open: false, sel: 0 };
-export const SHOP_ITEMS = [
-  { kind: 'hp' as const, name: 'HP POTION', key: 'A', desc: 'RESTORES 40% HP' },
-  { kind: 'mp' as const, name: 'MP POTION', key: 'S', desc: 'RESTORES 40% MP' },
-  { kind: 'pet' as const, name: 'PET', key: '', desc: 'FETCHES COINS FOR YOU' },
-];
-export type ShopKind = (typeof SHOP_ITEMS)[number]['kind'];
+/** A line in the shop window. Potions and the pet are always stocked; the
+ *  gear rows are made for the town you are standing in (see shopStock). */
+export interface ShopRow {
+  kind: ShopKind;
+  name: string;
+  /** The key that drinks it, shown next to a potion. */
+  key: string;
+  desc: string;
+  /** Coins it costs. */
+  price: number;
+  /** Gear rows carry the actual piece on offer. */
+  item?: GearItem;
+}
+
+export type ShopKind = 'hp' | 'mp' | 'weapon' | 'armor' | 'pet';
+
+/** Gear costs more the higher up the tower it is made for. */
+export const gearPrice = (lvl: number): number => 40 + lvl * 25;
+
+/** The shopkeeper's stock: potions and the pet, plus a weapon and an armor
+ *  piece built for this town's level, so each town sells its own tier. */
+export function shopStock(): ShopRow[] {
+  const lvl = mobLevel(game.floor.place);
+  const bow = gearFor('weapon', lvl), plate = gearFor('armor', lvl);
+  return [
+    { kind: 'hp', name: 'HP POTION', key: 'A', desc: 'RESTORES 40% HP', price: PRICES.hp },
+    { kind: 'mp', name: 'MP POTION', key: 'S', desc: 'RESTORES 40% MP', price: PRICES.mp },
+    { kind: 'weapon', name: bow.name, key: '', price: gearPrice(bow.lvl), item: bow,
+      desc: `+${Math.round(weaponBonus(bow) * 100)}% DAMAGE - LV.${bow.lvl}` },
+    { kind: 'armor', name: plate.name, key: '', price: gearPrice(plate.lvl), item: plate,
+      desc: `SOAKS ${Math.round(armorSoak(plate) * 100)}% DAMAGE - LV.${plate.lvl}` },
+    { kind: 'pet', name: 'PET', key: '', desc: 'FETCHES COINS FOR YOU', price: PET.PRICE },
+  ];
+}
 
 /* ---------------- the trainer (respec) ----------------
    From the third town (Lanternhollow) up, a trainer stands beside the
@@ -182,10 +213,20 @@ export function resetPoints(): boolean {
 
 /** Buy one of an item; false if you can't afford it or can't carry more. */
 export function buy(kind: ShopKind): boolean {
+  const row = shopStock().find((r) => r.kind === kind);
+  if (!row) return false;
   if (kind === 'pet') return buyPet();
-  if (wallet.coins < PRICES[kind] || wallet[kind] >= CARRY_MAX) return false;
-  wallet.coins -= PRICES[kind];
-  wallet[kind]++;
+  if (wallet.coins < row.price) return false;
+  // gear goes straight on: there is no bag to put it in (see gear.ts)
+  if (row.item) {
+    wallet.coins -= row.price;
+    equip(row.item);
+    return true;
+  }
+  const pot = kind as 'hp' | 'mp';
+  if (wallet[pot] >= CARRY_MAX) return false;
+  wallet.coins -= row.price;
+  wallet[pot]++;
   return true;
 }
 
@@ -203,10 +244,10 @@ export function talk(): boolean {
 
 /** Shop input: Up/Down pick, Z/Enter buys, Esc or X closes. */
 export function shopInput(): void {
-  const n = SHOP_ITEMS.length;
+  const stock = shopStock(), n = stock.length;
   if (pressed('up')) shop.sel = (shop.sel + n - 1) % n;
   if (pressed('down')) shop.sel = (shop.sel + 1) % n;
-  if (pressed('z') || pressed('enter') || pressed(' ')) buy(SHOP_ITEMS[shop.sel].kind);
+  if (pressed('z') || pressed('enter') || pressed(' ')) buy(stock[shop.sel].kind);
   if (pressed('escape') || pressed('x')) shop.open = false;
 }
 
