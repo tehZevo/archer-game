@@ -16,7 +16,7 @@ import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
-import { areaMobs, floorMobs, groupSize, TOWN_PLANS, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
+import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
@@ -51,7 +51,7 @@ import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD
 import { startRun } from '../src/save';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
-import { generateFloor } from '../src/floor';
+import { generateFloor, TOWN_PLANS } from '../src/floor';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
