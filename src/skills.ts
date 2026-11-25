@@ -149,9 +149,11 @@ export function cast(key: SkillKey, chained = false): void {
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   // Q rushes chain into Twin Shot: Z pressed during the rush fires the moment
-  // it ends, and right after it (while its link window is open) at once
+  // it ends, and right after it (while its link window is open) at once. The
+  // chain skips the rush's ending lag once, so it grants one quick shot, not
+  // repeated uses while the window is open.
   if (kind === 'Z' && !chained && (player.rushT > 0 || (player.cast === 'rush' && player.castT > 0))) { player.queued = 'Z'; return; }
-  if (kind === 'Z' && player.combo > 0) chained = true;
+  if (kind === 'Z' && player.combo > 0) { chained = true; player.combo = 0; player.comboT = 0; }
   // the Midair Spin is on its own cooldown even though W is a link skill,
   // so one jump can't chain sweeps all the way up
   const slot = cdSlot(key, airborne);
