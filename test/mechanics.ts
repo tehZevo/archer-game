@@ -407,6 +407,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('send interval is fewer than 10 updates/s', SEND_MS > 100);
 }
 
+{
+  // The air forms show the key they're used on (Q, W, E), not AD/MS/PV.
+  arena(30);
+  player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
+  const rows = skillRows();
+  const ad = rows.find((r) => r.key === 'AD'), ms = rows.find((r) => r.key === 'MS'), pv = rows.find((r) => r.key === 'PV');
+  check('Air Dive shows on the Q key', !!ad && ad.slot === 'Q', ad?.slot);
+  check('Midair Spin shows on the W key', !!ms && ms.slot === 'W', ms?.slot);
+  check('Plunging Volley shows on the E key', !!pv && pv.slot === 'E', pv?.slot);
+}
 // --- branching upgrades: the slots that still branch (Z, W) ---
 {
   arena(30);

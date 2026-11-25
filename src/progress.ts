@@ -168,6 +168,11 @@ export const SKILL_PICK_EVERY = 5;
  *  several upgrades is a branch: taking one locks the others out for good. */
 const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q', EB: 'Q' };
 
+// The air forms of Q, W and E (Air Dive, Midair Spin, Plunging Volley) are
+// their own skills, but on the list they show the key they're used on, not
+// their own abbreviation.
+const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 'E' };
+
 // TODO: Vault Shot, Rising Arrow and Backstep Shot stay in the game's code
 // (their cast cases, stats and icons) but are off the acquirable list for now;
 // reconsider bringing them back once the Q/W combo (rush, then launch) is in.
@@ -195,7 +200,7 @@ export function skillRows(): SkillRow[] {
     const s = SKILLS[k], have = player.ranks[k] || 0, base = UPGRADES[k];
     const upgradedAway = Object.entries(UPGRADES).some(([u, b]) => b === k && player.ranks[u as SkillKey] > 0);
     if (upgradedAway || branchLocked(k)) continue;
-    const slot = s.passive ? '' : base ?? k;
+    const slot = s.passive ? '' : base ?? AIR_FORM_KEY[k] ?? k;
     if (have === 0) {
       if (s.minLevel > player.level || (base && !(player.ranks[base] > 0))) continue;
       // an upgrade builds on its base skill: shown once the base is learned,
