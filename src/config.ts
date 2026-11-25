@@ -26,7 +26,7 @@ export const P = {
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.8,   // s Sky Assault hovers (striking) before falling (longer so the strike sequence reads)
-  BARRAGE_UP: 64,      // px Sky Assault warps straight up: a fixed rise (a launched enemy peaks ~90px up, so it stays in the strike box)
+  BARRAGE_UP: 43,      // px Sky Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
   Z_WINDUP: 0.10,      // s Twin Shot draws the bow before the arrows fly
@@ -51,7 +51,6 @@ export const P = {
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
-  DIVE_CD: 0.7,        // s: the dive's own cooldown (the ground rush keeps its own)
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
@@ -126,7 +125,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
   AD: { key: 'AD', name: 'Air Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
-       cd: P.DIVE_CD, mp1: 3, mpMax: 4, dmg1: 0, dmgMax: 0, requires: 'Q',
+       cd: 0, mp1: 3, mpMax: 4, dmg1: 0, dmgMax: 0, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   MS: { key: 'MS', name: 'Midair Spin', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIN_CD, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, targets1: 8, targetsMax: 8, requires: 'AB',
