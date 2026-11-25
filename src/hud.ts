@@ -1,7 +1,7 @@
 import { shop, trainer } from './economy';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
-import { SKILL_BAR } from './config';
+import { P, SKILL_BAR } from './config';
 import { READY_FLASH } from './state';
 import { placeName } from './world';
 import { critChance } from './combat';
@@ -167,6 +167,14 @@ function drawHUDItems(): void {
       ctx.fillStyle = '#000a';
       ctx.fillRect(x, by, sw, 16 * frac);
       text(ctx, cd.toFixed(1), x + sw / 2, by + 5, 1, '#fff', 'center');
+    }
+    // Electric Blitz banks charges rather than cooling down: show how many
+    // are in the bank (a lit pip each) so you know you have one to spend.
+    if (learned && s.key === 'EB') {
+      for (let c = 0; c < P.BLITZ_MAX; c++) {
+        ctx.fillStyle = c < player.blitzCharges ? '#6fd3ff' : '#0007';
+        ctx.fillRect(x + 1 + c * 4, by + 12, 3, 3);
+      }
     }
     // the flash that plays as the cooldown runs out, so you know you can press it
     if (learned && player.readyT[k] > 0) readyGlow(x, by, player.readyT[k]);

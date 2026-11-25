@@ -40,6 +40,11 @@ export const P = {
   RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up
   RUSH_GRAB_BACK: 10, // ...and px behind, so an enemy you just passed still counts
   RUSH_HIT: 0.4,      // the slide hits each enemy once as it scoops them up, at this share of Sky Toss's damage
+  // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
+  BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
+  BLITZ_MAX: 2,        // charges banked at full
+  BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
+  BLITZ_DIST: 96,      // px the blitz travels
   BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
   BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
   VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
@@ -106,6 +111,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   R: { key: 'R', name: 'Piercing Arrow', tag: 'Finisher', job: 1, minLevel: 25, maxLevel: 3,
        cd: 6.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 6, targetsMax: 12,
        desc: 'A heavy arrow that pierces every enemy in a line' },
+  EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 1, minLevel: 20, maxLevel: 3,
+       cd: 0, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
+       desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 1, minLevel: 15, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6,
        desc: 'After Sky Toss: leap up to launched enemies' },
