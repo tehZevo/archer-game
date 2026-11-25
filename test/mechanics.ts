@@ -55,6 +55,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
+import { clearGear, equip, gear, gearDmg, gearFor, gearSoak } from '../src/gear';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
@@ -425,6 +426,57 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('the rush opens the link window, and W launches and shoots it', m.hp < hp0 && m.airTime > 0);
   arena(15); player.ranks.W = 3; player.ranks.AB = 1;
   check('W offers Sky Assault as its upgrade', activeSkill('W').key === 'AB');
+}
+
+// --- Electric Blitz: Q's charged upgrade ---
+{
+  arena(20); player.ranks.Q = 3; player.ranks.EB = 1;
+  check('Electric Blitz replaces Sky Toss on Q', activeSkill('Q').key === 'EB');
+  check('it starts with two charges', player.blitzCharges === P.BLITZ_MAX);
+  const m = dummy(140);
+  const RUSH = 22; // the whole slide, from cast to the strike at its end
+  tap('q'); step(RUSH);
+  check('the blitz spends a charge and carries the enemy', player.blitzCharges === 1 && m.hp < 1e6,
+    `charges ${player.blitzCharges} hp ${m.hp}`);
+  tap('q'); step(RUSH);
+  check('the second charge works', player.blitzCharges === 0 && m.hp < 1e6,
+    `charges ${player.blitzCharges} hp ${m.hp}`);
+  tap('q'); step(1);
+  check('with no charges Q does nothing', player.blitzCharges === 0 && player.rushT === 0,
+    `charges ${player.blitzCharges} rushT ${player.rushT.toFixed(2)}`);
+  step(Math.round(P.BLITZ_CHARGE_T * 30) + 2);
+  check('a charge recharges after 10s', player.blitzCharges === 1, `charges ${player.blitzCharges}`);
+}
+
+// --- Equipment: a weapon and an armor piece ---
+{
+  arena(10); player.ranks.Z = 1;
+  clearGear();
+  check('you start with nothing equipped', gear.weapon === null && gear.armor === null);
+  check('an empty slot leaves damage and damage taken unchanged', gearDmg() === 1 && gearSoak() === 0);
+
+  const bow = gearFor('weapon', 10);
+  check('gear is named by the level it is made for', bow.name === 'Long Bow' && bow.lvl === 10, bow.name);
+  check('a Lv.10 bow adds 30% to every hit', equip(bow) && Math.abs(gearDmg() - 1.30) < 0.001, `x${gearDmg().toFixed(3)}`);
+  const war0 = player.war;
+  tap('z'); step(12);
+  const hit = game.dmgNums[game.dmgNums.length - 1];
+  check('the bow multiplies the arrow that lands', hit.v > war0 * 1.29, `hit ${hit.v}`);
+
+  check('a weaker bow leaves the stronger one equipped', !equip(gearFor('weapon', 4)) && gear.weapon?.lvl === 10);
+  const better = gearFor('weapon', 20);
+  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Composite Bow', gear.weapon?.name);
+
+  const plate = gearFor('armor', 30);
+  check('armor soaks a share of what you take (capped)', equip(plate) && gearSoak() === 0.35, `soak ${gearSoak()}`);
+  player.invuln = 0;
+  hurtPlayer(100);
+  check('a 100-damage hit costs 65 with that armor on', player.hp === player.hpMax - 65, `hp ${player.hp}`);
+
+  save();
+  clearGear();
+  apply(load());
+  check('your gear survives a reload', gear.weapon?.name === 'Composite Bow' && gear.armor?.name === 'Plate Armor', `${gear.weapon?.name} / ${gear.armor?.name}`);
 }
 
 // --- E / R ---
@@ -1402,7 +1454,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const boss = bs[0];
   check('the boss is one of its enemies, grown huge and much tougher',
     boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
-  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)) === 'Giant Enemy Crab', bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)));
+  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType('Tide Pools')) === 'Giant Enemy Crab', bossType('Tide Pools'));
   const hp0 = player.hpMax;
   player.hpMax = player.hp = 1e7;
   const ground = game.floor.platforms[0];
@@ -1680,9 +1732,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 // --- enemies move at half their old speed ---
 {
   arena();
-  spawnMob({ x: 100, y: ground().y, types: ['Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Crab')!);
+  spawnMob({ x: 100, y: ground().y, types: ['Enemy Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Enemy Crab')!);
   const m = game.mobs[game.mobs.length - 1];
-  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
+  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Enemy Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
   game.mobs.length = 0;
 }
 

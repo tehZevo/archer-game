@@ -15,6 +15,7 @@ import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
+import { gear } from './gear';
 import { dev, DEV_ROWS, devStops } from './dev';
 import { bossAlive } from './boss';
 import { stylist } from './stylist';
@@ -299,6 +300,10 @@ function drawPause(): void {
     text(ctx, `${player.stats[k]}`, x + 40, y, 1, hi, 'left');
     if (player.ap) text(ctx, '+', x + COLS[0].w - 3, y, 1, gold, 'right');
   });
+  // what you're wearing: one piece per slot (there's no bag to keep spares)
+  const gy = TOP + STAT_KEYS.length * ROW + 4;
+  text(ctx, `WEAPON ${gear.weapon ? `${gear.weapon.name} Lv.${gear.weapon.lvl}` : '-'}`, COLS[0].x + 2, gy, 1, hi, 'left');
+  text(ctx, `ARMOR ${gear.armor ? `${gear.armor.name} Lv.${gear.armor.lvl}` : '-'}`, COLS[0].x + 2, gy + ROW, 1, hi, 'left');
   const rows = skillRows();
   // a long skill list scrolls (the cursor stays in view) instead of running
   // into the description below; little arrows show there is more
