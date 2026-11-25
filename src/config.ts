@@ -151,7 +151,7 @@ export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
 
 /* ---------------- mobs ---------------- */
 export const MOB_TYPES: MobType[] = [
-  { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Tide Pools', 'Beach'] },
+  { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Beach'] },
   { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Tide Pools', 'Beach'] },
   { n: 'Hermit Crab',  lvl: 3,  hp: 240,  w: 18, h: 16, spd: 40,  dmg: 3,  col: '#e8b48a', areas: ['Beach'] },
   { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 2,  col: '#f4f7fc', fly: true, areas: ['Beach', 'Sky'] },
@@ -174,7 +174,7 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Crystal Golem',  lvl: 19, hp: 340, ...mobSize('Crystal Golem'),  spd: 40,  dmg: 5, col: '#7a6ac8', areas: ['Crystal Caverns'] },
   { n: 'Shard Bat',      lvl: 19, hp: 170, ...mobSize('Shard Bat'),      spd: 110, dmg: 4, col: '#5a44b0', fly: true, areas: ['Crystal Caverns'] },
   { n: 'Ruin Guardian',  lvl: 24, hp: 340, ...mobSize('Ruin Guardian'),  spd: 45,  dmg: 5, col: '#5a7a7a', areas: ['Sunken Ruins'] },
-  { n: 'Jellyfish',      lvl: 24, hp: 190, ...mobSize('Jellyfish'),      spd: 50,  dmg: 4, col: '#e8a0d8', fly: true, areas: ['Sunken Ruins'] },
+  { n: 'Jellyfish',      lvl: 24, hp: 190, ...mobSize('Jellyfish'),      spd: 50,  dmg: 4, col: '#e8a0d8', fly: true, areas: ['Sunken Ruins', 'Tide Pools'] },
   { n: 'Windup Soldier', lvl: 24, hp: 280, ...mobSize('Windup Soldier'), spd: 70,  dmg: 5, col: '#a83a3a', areas: ['Clockwork Spire'] },
   { n: 'Clockwork Bird', lvl: 24, hp: 180, ...mobSize('Clockwork Bird'), spd: 115, dmg: 4, col: '#a8803a', fly: true, areas: ['Clockwork Spire'] },
   { n: 'Dream Moth',     lvl: 30, hp: 190, ...mobSize('Dream Moth'),     spd: 90,  dmg: 4, col: '#c8b0e8', fly: true, areas: ['Dreamwood'] },

@@ -54,6 +54,12 @@ function shroom(p: PropPaint, cx: number, h: number, r: number, stem: string, ca
 /* ---------------- per area ---------------- */
 export const PROPS: Record<string, Prop[]> = {
   Classic: [(p) => lanternPost(p, '#4a3a2a', '#ffd070', '#fff4c0')],
+  Harbor: [
+    (p) => { p(5, B - 10, '#8e6442', 14, 10); p(5, B - 10, '#b08a5e', 14, 1); p(5, B - 6, '#6e4a30', 14, 1); p(5, B - 10, '#5a3e28', 1, 10); p(18, B - 10, '#5a3e28', 1, 10); p(9, B - 8, '#3a3a40', 6, 1); }, // a cargo crate
+    (p) => { for (let y = 0; y < 12; y++) p(7 - (y % 11 ? 1 : 0), B - 12 + y, y === 2 || y === 9 ? '#3a3e48' : '#9a6e4a', 11 + (y % 11 ? 2 : 0), 1); p(9, B - 12, '#7a5638', 7, 1); }, // a barrel
+    (p) => lanternPost(p, '#3a2a1e', '#ffd070', '#fff4c0'), // a dock lamp
+    (p) => { p(10, B - 14, '#6e4a30', 4, 14); p(10, B - 14, '#9a6e4a', 1, 14); p(9, B - 15, '#5a3e28', 6, 1); for (const y of [B - 10, B - 7]) p(8, y, '#c8a06a', 8, 2); }, // a mooring post wound with rope
+  ],
   'Tide Pools': [
     (p) => { disc(p, 12, B - 4, 6, '#56687a'); p(6, B - 4, '#3e4c5a', 13, 4); p(9, B - 9, '#5aa85e', 2, 4); p(14, B - 8, '#2e7a4a', 1, 4); }, // a weedy boulder
     (p) => { p(8, B - 3, '#f08a3a', 9, 1); p(12, B - 7, '#f08a3a', 1, 7); p(10, B - 1, '#f08a3a'); p(14, B - 1, '#f08a3a'); }, // a big starfish
