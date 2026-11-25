@@ -146,7 +146,9 @@ export function cast(key: SkillKey, chained = false): void {
   const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
-  const linked = LINKED_SKILLS.includes(kind);
+  // The grounded Sky Toss counts as a link while a window is open (the Air
+  // Dive's, chiefly): it fires off the dive without the use-time wait.
+  const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
