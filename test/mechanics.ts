@@ -2077,10 +2077,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   applyStatus(m, 'burn'); player.war = 100;
   game.mobs = [m]; step(Math.ceil(1.05 / P.STEP));
   check('burn hurts an enemy each second (and can kill it)', !game.mobs.includes(m));
-  // your hits inflict the area's element
+  // your hits no longer inflict the area's element (mobs' contact hits do)
   const m2 = dummy(200); let got = false;
   for (let i = 0; i < 40 && !got; i++) { damage(m2, 0.01); got = (m2.effects?.length ?? 0) > 0; }
-  check("your hits inflict the area's element", got && m2.effects![0].kind === 'poison');
+  check("your hits don't inflict the area's element", !got);
   // gotoPlace clears yours
   applyStatus(player, 'burn'); gotoPlace(climb(1));
   check('effects clear on a new floor', player.effects.length === 0);
