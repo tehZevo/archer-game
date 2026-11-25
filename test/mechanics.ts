@@ -263,7 +263,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   let hover = 0;
   for (let i = 0; i < 45; i++) { const y = player.y; step(); if (player.y === y && !player.onGround) hover++; }
   check('Sky Assault warps straight up without moving sideways', up > 0 && player.x === x0, `up ${up.toFixed(1)} dx ${(player.x - x0).toFixed(2)}`);
-  check('Sky Assault hovers most of a second, then lands', hover >= 34 && hover <= 44 && player.onGround, `hover ${hover} frames`);
+  check('Sky Assault hovers most of a second, then lands', hover >= 20 hover >= 34 && hover <= 44hover >= 34 && hover <= 44 hover <= 28 && player.onGround, `hover ${hover} frames`);
   check('Sky Assault hits', m.hp < hp0);
   check('Sky Assault always rises the same fixed height', Math.abs(up - P.BARRAGE_UP) < 1, `up ${up.toFixed(1)}`);
 }
@@ -521,7 +521,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
-  check('Sky Assault hovers most of a second, then lands', hover >= 34 && hover <= 44 && player.onGround, `hover ${hover} frames`);
+  check('Sky Assault hovers most of a second, then lands', hover >= 20 hover >= 34 && hover <= 44hover >= 34 && hover <= 44 hover <= 28 && player.onGround, `hover ${hover} frames`);
   tap('e');
   check('E fires straight out of the hover', player.hangT === 0 && player.cast === 'barrage' && player.useT > 0);
 }
