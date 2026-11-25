@@ -40,6 +40,9 @@ import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
 import { BACKDROPS, particlesAt } from '../src/backdrop';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
 import { dev, devStops } from '../src/dev';
+import { BASIC } from '../src/look';
+import { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src/townlooks';
+import { openStylist, STYLIST_ROWS } from '../src/stylist';
 import { devInput } from '../src/update';
 import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
 import { say } from '../src/net';
@@ -1395,38 +1398,52 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('stepping a look wraps around', stepLook(DEFAULT_LOOK, 'style', -1).style === LOOK_COUNTS.style - 1);
   check('the elf ear follows the skin tone', lookPalette({ ...DEFAULT_LOOK, skin: 3 }).k === lookPalette({ ...DEFAULT_LOOK, skin: 3 }).s);
   const poses = Object.keys(GRIDS) as (keyof typeof GRIDS)[];
-  check('the default hair style leaves the sprites as drawn', poses.every((p) => GRIDS[p].every((g) => styled(g, p, 0) === g)));
-  for (const st of [1, 2]) {
+  const diff = (a: string[], b: string[]): number => a.reduce((n, r, y) => n + [...r].filter((ch, x) => ch !== b[y][x]).length, 0);
+  check('the default hair style leaves the sprites as drawn (the female build adds only a lash)', poses.every((p) => GRIDS[p].every((g) => diff(styled(g, p, 0), g) <= 1)));
+  for (let st = 1; st < LOOK_COUNTS.style; st++) for (const body of [0, 1]) {
     const ok = poses.every((p) => GRIDS[p].every((g) => {
-      const s = styled(g, p, st);
+      const s = styled(g, p, st, body);
       // same size, and below the head only cape, outline or empty pixels change
       return s.length === g.length && s.every((r, y) => r.length === g[y].length)
         && s.every((r, y) => y < 12 || [...r].every((ch, x) => ch === g[y][x] || 'cCo.'.includes(g[y][x])));
     }));
-    check(`hair style ${st}: frames keep their size; the body, bow and arms are untouched`, ok);
+    if (!ok) check(`hair style ${st}, body ${body}: frames keep their size; the body, bow and arms are untouched`, ok);
   }
+  check('every hair style and build keeps frames their size, and the body, bow and arms untouched', true);
+  check('every hair style looks different', new Set(Array.from({ length: LOOK_COUNTS.style }, (_, st) => styled(GRIDS.idle[0], 'idle', st).join())).size === LOOK_COUNTS.style);
+  check('the male build changes the face', poses.filter((p) => p !== 'prone' && p !== 'climb').every((p) => diff(styled(GRIDS[p][0], p, 0, 1), styled(GRIDS[p][0], p, 0, 0)) >= 3));
+  // town stylists: each town offers its own extra, which seeing unlocks everywhere
+  const towns = AREAS.map((a) => a.town);
+  check('every town\'s stylist has an extra', towns.every((t) => TOWN_LOOKS[t]?.length), towns.filter((t) => !TOWN_LOOKS[t]?.length).join(', '));
+  const extras = Object.values(TOWN_LOOKS).flat().map((e) => `${e.k}:${e.i}`);
+  check('extras are real, not basic, and each offered by one town', new Set(extras).size === extras.length
+    && Object.values(TOWN_LOOKS).flat().every((e) => e.i < LOOK_COUNTS[e.k] && !isBasic(e.k, e.i)));
+  const allExtras = (['style', 'hair'] as const).flatMap((k) => Array.from({ length: LOOK_COUNTS[k] }, (_, i) => `${k}:${i}`).filter((x) => !isBasic(x.split(':')[0] as 'style', +x.split(':')[1])));
+  check('every extra style and colour can be found in some town', allExtras.every((x) => extras.includes(x)), allExtras.filter((x) => !extras.includes(x)).join(', '));
   check('long hair shows down the back', styled(GRIDS.idle[0], 'idle', 2).join() !== styled(GRIDS.idle[0], 'idle', 1).join());
   // the menu's LOOK row opens the stylist; keys go to it until it closes
   const mem = new Map<string, string>();
   (globalThis as { localStorage?: unknown }).localStorage ??= { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); }, removeItem: (k: string) => { mem.delete(k); } };
-  setMyLook(DEFAULT_LOOK);
+  setMyLook(DEFAULT_LOOK); clearUnlocks();
   initMenu(() => {}, 1);
   menu.sel = items().indexOf('look'); menuKey('enter');
   check('LOOK in the menu opens the stylist', stylist.open && stylist.sel === 0);
   menuKey('right');
-  check('Right changes the picked row (hair style)', myLook().style === 1);
+  check('Right changes the picked row (body)', myLook().body === 1);
+  menuKey('down'); menuKey('right');
+  check('...the next row down is the hair style', myLook().style === 1);
   menuKey('down'); menuKey('left');
-  check('Left steps back, wrapping (hair colour)', myLook().hair === LOOK_COUNTS.hair - 1);
-  check('the look is kept on this device', cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === LOOK_COUNTS.hair - 1);
+  check('Left steps back, wrapping past the colours not unlocked yet (hair colour)', myLook().hair === BASIC.hair! - 1);
+  check('the look is kept on this device', cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === BASIC.hair! - 1);
   menuKey('escape');
   check('Esc closes the stylist, not the menu', !stylist.open && menu.open);
   // taps: a row's left half steps back, its right half forward
   stylistKey('escape'); stylist.open = true; stylist.sel = 0;
   const b = stylistBox(320, 180), rowY = (i: number): number => b.y + ST_TOP + i * 14 + 3;
   const sk = myLook().skin;
-  stylistTap(b.x + ST_ROWS_W - 10, rowY(2), 320, 180);
-  check('tapping the right half of a row steps it forward', myLook().skin === (sk + 1) % LOOK_COUNTS.skin && stylist.sel === 2);
-  stylistTap(b.x + 10, rowY(2), 320, 180);
+  stylistTap(b.x + ST_ROWS_W - 10, rowY(3), 320, 180);
+  check('tapping the right half of a row steps it forward', myLook().skin === (sk + 1) % LOOK_COUNTS.skin && stylist.sel === 3);
+  stylistTap(b.x + 10, rowY(3), 320, 180);
   check('tapping the left half steps it back', myLook().skin === sk);
   stylistTap(2, 2, 320, 180);
   check('tapping outside the window closes it', !stylist.open);
@@ -1441,9 +1458,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   check('Up beside the stylist opens the window', stylist.open);
   tap('right');
-  check('arrows change your look there too', myLook().style === 1);
+  check('arrows change your look there too', myLook().body === 1);
+  const town = placeName(game.floor.number, net.area), extra = TOWN_LOOKS[town][0];
+  check('the town stylist knows which town it is in, and says its looks are new', stylist.town === town && stylist.fresh > 0);
+  setMyLook({ ...DEFAULT_LOOK, [extra.k]: extra.i - 1 });
+  stylist.sel = STYLIST_ROWS.indexOf(extra.k === 'style' ? 'HAIR' : 'HAIR COLOUR'); tap('right');
+  check('it offers its own extra', myLook()[extra.k] === extra.i, `${extra.k} ${myLook()[extra.k]} want ${extra.i}`);
   tap('x');
   check('X closes it', !stylist.open && !game.pause);
+  check('seeing it unlocked the extra for good (the menu offers it now)', isUnlocked(extra.k, extra.i) && offeredAt(null)(extra.k, extra.i));
+  openStylist(town);
+  check('a second visit has nothing new', stylist.fresh === 0);
+  stylist.open = false; clearUnlocks();
+  check('without the unlock the menu skips it', !offeredAt(null)(extra.k, extra.i) && offeredAt(town)(extra.k, extra.i));
   setMyLook(DEFAULT_LOOK);
   release();
   // quests: every town has a board posting kill quests for the areas above it
