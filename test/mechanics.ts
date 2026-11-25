@@ -15,7 +15,7 @@ import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
-import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
+import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, type Layout } from '../src/floor';
 import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
@@ -540,15 +540,31 @@ check('new poses go on the end of the networked list (older clients read them as
   tap('c');
   for (let i = 0; i < 40; i++) { step(1); apex = Math.max(apex, y0 - player.y); }
   check('a jump rises about 35px (25% lower than 46.5)', apex > 32 && apex < 38, `apex ${apex.toFixed(1)}`);
-  for (const n of [1, 2, 4]) {
+  const seen = new Set<string>();
+  const bad: string[] = [];
+  for (let n = 1; n <= 25; n++) {
+    if (isTown(n)) continue;
     gotoFloor(n);
-    const blocks = new Set(game.floor.platforms.filter((p) => p.block !== undefined).map((p) => p.block)).size;
-    const span = game.floor.platforms[0].y - game.floor.portal.y;
-    check(`floor ${n}: 4 platforms, about half the last climb`, blocks === 4 && span > 250 && span < 450 && game.floor.portal.y > 60, `blocks ${blocks} span ${span}`);
-    const narrow = [...new Set(game.floor.platforms.filter((p) => p.block !== undefined).map((p) => p.block))]
-      .filter((b) => new Set(game.floor.platforms.filter((p) => p.block === b).map((p) => p.x)).size < 12);
-    check(`floor ${n}: every platform is at least 12 tiles wide`, narrow.length === 0, `narrow blocks ${narrow.join(',')}`);
+    const f = game.floor, L = LAYOUTS[f.layout as Layout];
+    seen.add(f.layout!);
+    const ids = [...new Set(f.platforms.filter((p) => p.block !== undefined).map((p) => p.block))];
+    const span = f.platforms[0].y - f.portal.y;
+    if (ids.length !== L.count || span < 150 || span > 500) bad.push(`floor ${n} (${f.layout}): ${ids.length} blocks, span ${span}`);
+    for (const b of ids) {
+      const w = new Set(f.platforms.filter((p) => p.block === b).map((p) => p.x)).size;
+      if (w < L.minW || w > L.maxW) bad.push(`floor ${n} block ${b}: ${w} wide`);
+    }
+    if (f.layout === 'zigzag') {
+      const mid = ids.map((b) => { const xs = f.platforms.filter((p) => p.block === b).map((p) => p.x); return (Math.min(...xs) + Math.max(...xs)) / 2; });
+      if (mid.some((m, i) => i && (m < WORLD.w / 2) === (mid[i - 1] < WORLD.w / 2))) bad.push(`floor ${n}: zigzag doesn't switch sides`);
+    }
+    // no climb's foot meets another climb's top in the same column
+    const cs = [...f.ropes, ...f.ladders];
+    if (cs.some((a) => cs.some((b) => a !== b && Math.abs(a.x - b.x) < TILE && a.y2 >= b.y1 - 1 && a.y1 < b.y1)))
+      bad.push(`floor ${n}: stacked climbs`);
   }
+  check('floors 1-25 use every layout (stack, zigzag, open)', seen.size === Object.keys(LAYOUTS).length, [...seen].join(','));
+  check('each layout keeps its block count, widths and span; zigzags switch sides; climbs never stack', bad.length === 0, bad.slice(0, 6).join('; '));
 }
 
 // --- save / load ---
@@ -762,7 +778,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(90);
   const strays = game.mobs.filter((m) => {
     const z = m.spawn!;
-    const plat = game.floor.platforms.find((p) => !p.inner && m.x >= p.x && m.x < p.x + p.w && Math.abs(p.y - (m.y + m.h)) < 6);
+    const plat = game.floor.platforms.find((p) => !p.inner && m.x >= p.x && m.x < p.x + p.w && Math.abs(surfaceYAt(p, m.x) - (m.y + m.h)) < 6);
     const offEdge = m.x < (z.minX ?? 0) - 16 || m.x > (z.maxX ?? 320) + 16;
     return offEdge || !m.fly && (!plat || plat.block !== z.block);
   });

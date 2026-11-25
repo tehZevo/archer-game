@@ -148,6 +148,26 @@ export const GEN_H = 640;
 const SKY_MARGIN = 2 * TILE; // clear sky kept above the portal
 const MIN_H = 180;           // never shorter than the view
 
+/** Floor layouts (each floor rolls one from its own seeded stream, so the
+ *  classic layout of a floor doesn't shift):
+ *  - stack: 4 wide blocks, each placed near the one below (the classic climb);
+ *  - zigzag: 5 narrow blocks that switch sides, a switchback up the screen;
+ *  - open: 3 long, low blocks spanning most of the map, with more enemies
+ *    roaming the ground. */
+export const LAYOUTS = {
+  stack:  { weight: 5, count: 4, minW: 12, maxW: 24, shapes: SHAPES, groundCap: 4 },
+  zigzag: { weight: 3, count: 5, minW: 7, maxW: 10, shapes: ['flat', 'low', 'ledge', 'hill', 'shelf', 'dip', 'waves'], groundCap: 4 },
+  open:   { weight: 2, count: 3, minW: 20, maxW: 24, shapes: ['low', 'flat', 'shelf', 'waves', 'dip', 'hill'], groundCap: 6 },
+};
+export type Layout = keyof typeof LAYOUTS;
+
+export function pickLayout(seed: () => number): Layout {
+  const ks = Object.keys(LAYOUTS) as Layout[];
+  let r = seed() * ks.reduce((a, k) => a + LAYOUTS[k].weight, 0);
+  for (const k of ks) { r -= LAYOUTS[k].weight; if (r < 0) return k; }
+  return 'stack';
+}
+
 export function generateFloor(n: number): Floor {
   // layouts don't change with the hour: seeded from the room id without it
   rng = seeded(hashStr(roomId(n, net.channel, net.code, net.area, '')));
@@ -164,7 +184,9 @@ export function generateFloor(n: number): Floor {
   const ladders: Climbable[] = [];
   const spawns: Spawn[] = [];
 
-  const COUNT = 4;          // platforms per floor (was 14, then 7: floors halved twice)
+  const layout = pickLayout(seeded(hashStr(roomId(n, net.channel, net.code, net.area, '') + '-layout')));
+  const L = LAYOUTS[layout];
+  const COUNT = L.count;     // platforms per floor (was 14, then 7: floors halved twice)
   const step = 3 * TILE;     // summit to the next block's base (+0-1 tile): 2-3 tiles of headroom
   const startY = groundY - step;
 
@@ -176,10 +198,27 @@ export function generateFloor(n: number): Floor {
     // clamped a body half-width from the map edges and a grab reaches
     // 6.5px, so the outermost tile column on each side is out of reach.
     const reachable = (t: Platform, dx: number) => t.x + dx >= TILE && t.x + dx + 2 * TILE <= WORLD.w;
+    // The surface a climb hanging at cx from height y lands on: the first
+    // walkable top below it (an earlier, lower block or the ground).
+    const below = platforms.filter((p) => !p.inner);
+    const landingAt = (cx: number, y: number) => {
+      let best: Platform = ground, bestY = ground.y;
+      for (const p of below) {
+        if (cx < p.x || cx >= p.x + p.w) continue;
+        const sy = surfaceYAt(p, cx);
+        if (sy > y && sy < bestY) { best = p; bestY = sy; }
+      }
+      return { p: best, y: bestY };
+    };
+    // Never stack climbs: a column where this one's foot would meet (or
+    // overlap) the top of a climb further down reads as one long rope.
+    const stacked = (cx: number, y: number) => [...ropes, ...ladders].some((c) =>
+      Math.abs(c.x - cx) < TILE && landingAt(cx, y).y >= c.y1 - 1);
+    const hangs = (t: Platform, dx: number) => reachable(t, dx) && !stacked(t.x + dx + TILE / 2, t.y);
     let shape: Shape, minY: number, x: number;
     for (;;) {
-      const kind = SHAPES[randInt(0, SHAPES.length - 1)];
-      const width = randInt(12, 24); // 12-24 tiles wide (the map is 20)
+      const kind = L.shapes[randInt(0, L.shapes.length - 1)];
+      const width = randInt(L.minW, L.maxW); // stack: 12-24 tiles wide (the map is 20)
       shape = makeShape(kind, 0, y, width, rand(0, 1) < 0.5);
       // The walkable summit: flat tiles on the block's highest row (slope
       // tiles share that row's y but their surface is lower).
@@ -192,34 +231,25 @@ export function generateFloor(n: number): Floor {
       // summit tile must be reachable for the rope. Pick the valid position
       // nearest a random target; if none exists, try another shape.
       const EDGE = width >= 12 ? 4 * TILE : 0;
-      const target = prev.x + rand(-160, 160);
+      // zigzag: hug alternate sides of the map; otherwise near the last block
+      const target = layout === 'zigzag'
+        ? (i % 2 ? WORLD.w - shape.w - rand(0, 2) * TILE : rand(0, 2) * TILE)
+        : prev.x + rand(-160, 160);
       let best: number | null = null;
       for (let cx = -EDGE; cx <= WORLD.w - shape.w + EDGE; cx += TILE) {
         const visible = Math.min(cx + shape.w, WORLD.w) - Math.max(cx, 0);
-        if (visible < 6 * TILE || !summit.some((t) => reachable(t, cx))) continue;
+        if (visible < 6 * TILE || !summit.some((t) => hangs(t, cx))) continue;
         if (best === null || Math.abs(cx - target) < Math.abs(best - target)) best = cx;
       }
       if (best !== null) { x = best; break; }
     }
     shape.tiles.forEach((t) => { t.x += x; t.block = i + 1; platforms.push(t); });
-    const tops = shape.tiles.filter((t) => t.y === minY && !t.slope && reachable(t, 0));
+    const tops = shape.tiles.filter((t) => t.y === minY && !t.slope && hangs(t, 0));
 
     // Rope/ladder hangs from a summit tile, centred on it, down through its
-    // own block to the first walkable surface of anything below (an earlier,
-    // lower platform or the ground). Prefer summit columns that land on a flat
-    // tile so the bottom of the rope is easy to catch.
-    const placed = new Set<Platform>(shape.tiles);
-    const below = platforms.filter((p) => !p.inner && !placed.has(p));
-    const landing = (t: Platform) => {
-      const cx = t.x + TILE / 2;
-      let best: Platform = ground, bestY = ground.y;
-      for (const p of below) {
-        if (cx < p.x || cx >= p.x + p.w) continue;
-        const sy = surfaceYAt(p, cx);
-        if (sy > t.y && sy < bestY) { best = p; bestY = sy; }
-      }
-      return { p: best, y: bestY };
-    };
+    // own block to the first walkable surface below. Prefer summit columns
+    // that land on a flat tile so the bottom of the rope is easy to catch.
+    const landing = (t: Platform) => landingAt(t.x + TILE / 2, t.y);
     const flatLanding = tops.filter((t) => !landing(t).p.slope);
     const pool = flatLanding.length ? flatLanding : tops;
     const top = pool[randInt(0, pool.length - 1)];
@@ -248,11 +278,11 @@ export function generateFloor(n: number): Floor {
     y = minY - step - TILE * randInt(0, 1); // stays on the 16px grid
   }
 
-  // The ground slab is one zone holding up to 4 enemies.
+  // The ground slab is one zone holding up to 4 enemies (6 on open floors).
   {
     const spots: { x: number; y: number }[] = [];
     for (let x = 48; x <= WORLD.w - 48; x += TILE) spots.push({ x, y: ground.y });
-    spawns.push({ x: WORLD.w / 2, y: ground.y, types: [...pair], spots, cap: 4, minX: 24, maxX: WORLD.w - 24 });
+    spawns.push({ x: WORLD.w / 2, y: ground.y, types: [...pair], spots, cap: L.groundCap, minX: 24, maxX: WORLD.w - 24 });
   }
 
   // The exit portal sits centred on the highest platform's walkable top tile.
@@ -261,7 +291,7 @@ export function generateFloor(n: number): Floor {
 
   // its own stream, so rolling a modifier never changes the layout
   const mods = rollMods(areaName(net.area), seeded(hashStr(roomId(n, net.channel, net.code, net.area, '') + '-mods')));
-  return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H, ...(mods.length ? { mods } : {}) });
+  return trim({ number: n, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H, layout, ...(mods.length ? { mods } : {}) });
 }
 
 /** The full-width ground slab every floor stands on: 4 tiles, not a wall
