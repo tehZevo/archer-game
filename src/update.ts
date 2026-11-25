@@ -51,6 +51,12 @@ export function update(dt: number): void {
     player.mp = Math.min(player.mpMax, player.mp + player.mpMax * P.REGEN_FRAC);
     if (player.combatT <= 0) player.hp = Math.min(player.hpMax, player.hp + player.hpMax * P.REGEN_FRAC);
   }
+  // Electric Blitz banks its charges: one refills every 10s, and a linked
+  // skill (see skills.ts) shaves time off the charge currently filling.
+  if (player.blitzCharges < P.BLITZ_MAX && (player.blitzT += dt) >= P.BLITZ_CHARGE_T) {
+    player.blitzCharges++;
+    player.blitzT = player.blitzCharges >= P.BLITZ_MAX ? 0 : P.BLITZ_CHARGE_T - player.blitzT;
+  }
   for (const k of SKILL_ORDER) {
     const was = player.cd[k];
     player.cd[k] = Math.max(0, was - dt);

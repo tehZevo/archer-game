@@ -52,7 +52,7 @@ export function updateRush(dt: number): void {
   }
   // the slide covers its fixed distance: contact with an enemy slows you, but
   // the slide keeps going until the distance (or the ground, or the clock) ends
-  if (player.rushDist >= P.RUSH_DIST || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
+  if (player.rushDist >= player.rushGoal || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 
 /** End a Sky Toss slide now and land its strike. */
@@ -101,6 +101,8 @@ export function cast(key: SkillKey): void {
     player.combo = 0; player.comboT = 0;
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
+    // a link also speeds up the Electric Blitz charge currently filling
+    player.blitzT = Math.max(0, player.blitzT - 1);
   }
 
   switch (kind) {
@@ -176,6 +178,8 @@ export function cast(key: SkillKey): void {
       break;
     }
 
+    // Electric Blitz is the same rush, just faster and longer (see below).
+    case 'EB':
     case 'Q': {
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
@@ -203,10 +207,16 @@ export function cast(key: SkillKey): void {
       };
       if (inPlace) rushStrike();
       else {
-        player.vx = face * P.RUSH_SLIDE_V;
+        // Electric Blitz is the charged version: a faster, longer rush that
+        // spends a banked charge instead of a cooldown.
+        const blitz = s.key === 'EB';
+        if (blitz && player.blitzCharges <= 0) { player.cd.Q = 0.1; return; }
+        player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
         player.rushT = P.RUSH_MAX;
         player.rushDist = 0;
+        player.rushGoal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
         player.rushCarry = [];
+        if (blitz) player.blitzCharges--;
       }
       player.combo = 1.1; player.comboT = 1.1;
       break;
