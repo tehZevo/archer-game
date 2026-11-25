@@ -34,9 +34,10 @@ export const expToNext = (l: number): number => Math.round(killsToLevel(l) * mob
    Archer is created already wielding her 1st Job skills, so the tree opens
    at Lv.1 and advances twice more before the Lv.100 cap. */
 export const JOBS: JobDef[] = [
-  { job: 1, level: 1, name: 'Archer',      title: '1st Job', sp: 0 },
-  { job: 2, level: 30, name: 'Mystic Archer', title: '2nd Job', sp: 5 },
-  { job: 3, level: 60, name: 'Adele',         title: '3rd Job', sp: 5 },
+  { job: 1, level: 1,  name: 'Archer',         title: '1st Job', sp: 10 },
+  { job: 2, level: 10, name: 'Sky Archer',     title: '2nd Job', sp: 14 },
+  { job: 3, level: 30, name: 'Mystic Archer',  title: '3rd Job', sp: 16 },
+  { job: 4, level: 60, name: 'Adele',          title: '4th Job', sp: 14 },
 ];
 
 export function jobForLevel(level: number): JobDef {
