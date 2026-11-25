@@ -21,6 +21,10 @@ export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
 /** Seconds the enemy HP bar stays up after a hit. */
 export const BAR_SHOW = 4;
 
+/** Seconds an enemy flinches after a hit; and the longest a death can wait on
+ *  an attack's remaining hits. */
+export const HITSTUN = 0.22, DYING_MAX = 0.6;
+
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   let dmg = game.player.war * mult * passiveDmg() * fervorMult() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
@@ -31,13 +35,18 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   target.hitFlash = 0.14;
   target.barT = BAR_SHOW;
   target.aggro = true;
+  target.hurt = HITSTUN;
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);
   game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: hx, y: hy, t: opts.fx === 'stunHit' ? 0.3 : crit && !opts.fx ? 0.28 : 0.24, face: -game.player.face }); // streaks point back at the shooter
   game.dmgNums.push(stackedNum(target, dmg, crit));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   if (opts.launch) { target.airTime = 1.1; target.vy = -430; target.y -= 4; }
-  if (target.hp <= 0) killMob(target);
-  else maybeInflict(target, INFLICT.player); // the area's element (see status.ts)
+  if (target.hp <= 0) {
+    // overkill from a multi-hit attack: the rest of its hits still land (and
+    // show their numbers) before it dies
+    if (opts.more) target.dying = DYING_MAX;
+    else killMob(target);
+  } else if (target.dying === undefined) maybeInflict(target, INFLICT.player); // the area's element (see status.ts)
 }
 
 /** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
@@ -60,6 +69,8 @@ function stackedNum(m: Mob, v: number, crit: boolean): DmgNum {
 }
 
 export function killMob(m: Mob): void {
+  if (m.dead) return;
+  m.dead = true;
   const i = game.mobs.indexOf(m);
   if (i >= 0) game.mobs.splice(i, 1);
   game.kills++;

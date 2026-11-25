@@ -169,6 +169,14 @@ export interface Mob {
   /** Set once the player attacks it; only then does it chase the player. */
   aggro: boolean;
   hitFlash: number;
+  /** Seconds of hitstun left: it flinches and stops in place (see HITSTUN). */
+  hurt?: number;
+  /** Set when a multi-hit attack drops its HP to 0 with hits still to land:
+   *  it stays (inert) to take them, and dies on the last one (or when this
+   *  failsafe timer runs out). */
+  dying?: number;
+  /** Already killed: killMob ignores it after the first time. */
+  dead?: boolean;
   /** Seconds left to show the HP bar; set on each hit, so undamaged enemies show none. */
   barT: number;
   anim: number;
@@ -319,6 +327,9 @@ export interface DamageOpts {
   airborne?: boolean;
   stun?: boolean;
   launch?: boolean;
+  /** More hits of the same attack are still to land on this target: if this
+   *  one kills it, its death waits for them (see Mob.dying). */
+  more?: boolean;
 }
 
 /** A warp pad that sends the player to the next floor (or home on a town). */

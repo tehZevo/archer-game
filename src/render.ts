@@ -2,6 +2,7 @@ import { FX } from './fxsprites';
 import { ELITE, FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
+import { HITSTUN } from './combat';
 import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
 import * as TB from './tilebake';
@@ -200,7 +201,11 @@ function drawMob(m: Mob): void {
 
   if (s) {
     // sprites face right: mirror them when the enemy heads left
-    ctx.translate(Math.round(m.x) + shake, Math.round(m.y + bob));
+    // hitstun: knocked a couple of pixels away from the player and squashed
+    // down onto its feet, easing back as the flinch wears off
+    const f = m.hurt ? m.hurt / HITSTUN : 0, away = Math.sign(m.x - player.x) || 1;
+    ctx.translate(Math.round(m.x) + shake + Math.round(away * 2 * f), Math.round(m.y + bob));
+    if (f) { const sq = 0.14 * f; ctx.translate(0, s.h * k * sq); ctx.scale(1 + sq, 1 - sq); }
     ctx.scale(m.dir < 0 ? -k : k, k);
     if (m.elite) {
       // a 1px (screen) gold outline: the silhouette nudged each way, under the sprite

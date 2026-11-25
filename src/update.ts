@@ -5,7 +5,7 @@ import { passiveBonus } from './progress';
 import { cameraTarget, gainExp, game, gotoFloor, logMsg, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
-import { damage, revive } from './combat';
+import { damage, killMob, revive } from './combat';
 import { barrageTargets, cast, updateRush } from './skills';
 import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { sfx } from './audio';
@@ -130,7 +130,7 @@ export function update(dt: number): void {
         player.hangHitT = P.BARRAGE_HANG / 7; // 6 strikes spread through the hover
         player.hangHits--;
         game.fx.push({ type: 'swoosh', x: player.x + player.face * 10, y: player.y + player.h, t: 0.2, face: player.hangHits % 2 ? -player.face : player.face });
-        barrageTargets().slice(0, player.hangTargets).forEach((m) => damage(m, player.hangDmg, { airborne: true }));
+        barrageTargets().slice(0, player.hangTargets).forEach((m) => damage(m, player.hangDmg, { airborne: true, more: player.hangHits > 0 }));
       }
       player.animState = 'jump';
     } else {
@@ -249,10 +249,18 @@ function updateMobs(dt: number): void {
     if (!game.mobs.includes(m)) continue; // poisoned or burned to death
     if (m.hitFlash > 0) m.hitFlash -= dt;
     if (m.barT > 0) m.barT -= dt;
+    if (m.hurt) m.hurt = Math.max(0, m.hurt - dt);
+    if (m.dying !== undefined) {
+      // dead, waiting on its attacker's last hits: frozen where it was struck
+      m.dying -= dt; m.vx = 0; m.vy = 0;
+      if (m.dying <= 0) killMob(m);
+      continue;
+    }
     m.anim += dt * ANIM_RATE;
     if (m.boss) { m.stun = 0; m.airTime = 0; } // bosses shrug off stuns and launches
     if (m.stun > 0) { m.stun -= dt; m.vx *= 0.8; }
     else if (m.airTime > 0) { m.airTime -= dt; m.vx *= 0.9; }
+    else if ((m.hurt ?? 0) > 0 && !m.boss) m.vx *= 0.7; // hitstun: flinch in place (bosses only flash)
     else {
       const d = player.x - m.x;
       const [lo, hi] = mobBounds(m);
