@@ -137,7 +137,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 8.0, mp1: 10, mpMax: 14, dmg1: 700, dmgMax: 1000, targets1: 10, targetsMax: 16,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 0, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
+       cd: 3, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0.60, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 6, hitsMax: 8, targets1: 6, targetsMax: 6, requires: 'W',

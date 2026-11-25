@@ -601,18 +601,20 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.Q = 3; player.ranks.EB = 1;
   check('Electric Blitz replaces Sky Toss on Q', activeSkill('Q').key === 'EB');
   check('it starts with two charges', player.blitzCharges === P.BLITZ_MAX);
+  check('the blitz cools down for 3s', SKILLS.EB.cd === 3);
   const m = dummy(140);
   const RUSH = 22; // the whole slide, from cast to the strike at its end
   tap('q'); step(RUSH);
   check('the blitz spends a charge and carries the enemy', player.blitzCharges === 1 && m.hp < 1e6,
     `charges ${player.blitzCharges} hp ${m.hp}`);
+  step(90); // the 3s cooldown clears
   tap('q'); step(RUSH);
   check('the second charge works', player.blitzCharges === 0 && m.hp < 1e6,
     `charges ${player.blitzCharges} hp ${m.hp}`);
   tap('q'); step(1);
   check('with no charges Q does nothing', player.blitzCharges === 0 && player.rushT === 0,
     `charges ${player.blitzCharges} rushT ${player.rushT.toFixed(2)}`);
-  check('...and no ready-glow flashes (nothing came off cooldown)', player.readyT.Q === 0 && player.cd.Q === 0);
+  check('...and no ready-glow flashes (nothing came off cooldown)', player.readyT.Q === 0 && player.cd.Q > 0, `cd ${player.cd.Q.toFixed(1)}`);
   for (let i = 0; i < P.BLITZ_CHARGE_T * 30 + 2 && player.blitzCharges === 0; i++) step(1);
   check('a charge recharges after 10s', player.blitzCharges === 1, `charges ${player.blitzCharges}`);
   check('the recharged charge flashes the icon', player.readyT.Q > 0);
