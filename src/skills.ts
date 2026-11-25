@@ -114,8 +114,9 @@ export function landDive(): void {
 export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
 
 /** Recovery after the animation ends: movement frees up at useT's end, a new
- *  skill waits out this delay. Links skip it (see cast). */
-export const delayTime = (kind: SkillKey): number => SKILLS[kind].delay ?? P.DELAY_TIME;
+ *  skill waits out this delay. Links skip it (see cast). Attack speed (Haste)
+ *  shortens it, the same way it shortens the use time. */
+export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DELAY_TIME) / (1 + passiveBonus('HA'));
 
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
