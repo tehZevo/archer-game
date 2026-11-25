@@ -52,7 +52,7 @@ export function updateRush(dt: number): void {
   }
   // the slide covers its fixed distance: contact with an enemy slows you, but
   // the slide keeps going until the distance (or the ground, or the clock) ends
-  if (player.rushDist >= P.RUSH_DIST || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
+  if (player.rushDist >= player.rushGoal || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 
 /** End a Sky Toss slide now and land its strike. */
@@ -71,8 +71,9 @@ export function cast(key: SkillKey): void {
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
   const linked = LINKED_SKILLS.includes(kind);
-  // Link skills only work right after Sky Toss, once per Sky Toss.
-  if (linked && player.combo <= 0) return;
+  // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
+  // Spin is the exception: W in the air is a standalone sweep.
+  if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   if (player.cd[key] > 0 && !linked) return;
@@ -87,8 +88,8 @@ export function cast(key: SkillKey): void {
   if (kind === 'D' && !airborne) return;
   // Sky Toss is a ground launcher: no mid-air use.
   if ((kind === 'Q' || kind === 'VS' || kind === 'RA') && !player.onGround) return;
-  // Plunging Volley fires down from the air: no ground use.
-  if (kind === 'E' && !airborne) return;
+  // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air.
+  // (the shared cooldown gate below covers both forms)
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
@@ -100,8 +101,9 @@ export function cast(key: SkillKey): void {
     player.combo = 0; player.comboT = 0;
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
-    // linked skills also shorten Tempest's long cooldown
+    // linked skills also shorten Tempest's long cooldown and refill a Blitz
     player.cd.R = Math.max(0, player.cd.R - 1);
+    player.blitzT = Math.max(0, player.blitzT - 1);
   }
 
   switch (kind) {
@@ -177,6 +179,8 @@ export function cast(key: SkillKey): void {
       break;
     }
 
+    // Electric Blitz is the same rush, just faster and longer (see below).
+    case 'EB':
     case 'Q': {
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
@@ -204,10 +208,16 @@ export function cast(key: SkillKey): void {
       };
       if (inPlace) rushStrike();
       else {
-        player.vx = face * P.RUSH_SLIDE_V;
+        // Electric Blitz is the charged version: a faster, longer rush that
+        // spends a banked charge instead of a cooldown.
+        const blitz = s.key === 'EB';
+        if (blitz && player.blitzCharges <= 0) { player.cd.Q = 0.1; return; }
+        player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
         player.rushT = P.RUSH_MAX;
         player.rushDist = 0;
+        player.rushGoal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
         player.rushCarry = [];
+        if (blitz) player.blitzCharges--;
       }
       player.combo = 1.1; player.comboT = 1.1;
       break;
@@ -284,7 +294,21 @@ export function cast(key: SkillKey): void {
     }
 
     case 'E': {
-      // Plunging Volley: mid-air only. A small upward bump (no freeze: you
+      // Spike Lift (ground form): spikes erupt in a burst around you and
+      // throw you into the air.
+      // TODO: dedicated spike art; this reuses the rush's horn of light.
+      if (player.onGround) {
+        player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
+        sfx.jump();
+        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
+        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.4 }));
+        tg.forEach((m) => damage(m, P.SPIKE_DMG));
+        player.vy = -P.SPIKE_LIFT;
+        player.onGround = false;
+        player.cd.E = P.SPIKE_CD;
+        break;
+      }
+      // Plunging Volley (air form): a small upward bump (no freeze: you
       // keep your drift and fall right after) as arrows rain straight down
       // into a column beneath you, hitting every enemy in it (nearest first).
       player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;

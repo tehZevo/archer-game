@@ -113,6 +113,23 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '....AAA..AAA..',
   ],
   // Sky Toss: a horn of light bursting up from the ground
+  // Electric Blitz: a lightning bolt
+  EB: [
+    '.......aa.....',
+    '......aaaa....',
+    '.....aaaaa....',
+    '....aaaaaa....',
+    '...aaaaaaaa...',
+    '..aaaaaaaaa...',
+    '....aaaaaa....',
+    '.....aaaa.....',
+    '......aaa.....',
+    '.....aaa......',
+    '....aaa.......',
+    '...aaa........',
+    '..aaa.........',
+    '..............',
+  ],
   Q: [
     '......aa......',
     '.....aaaa.....',
