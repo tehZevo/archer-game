@@ -122,9 +122,10 @@ export const delayTime = (kind: SkillKey): number => SKILLS[kind].delay ?? P.DEL
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };
 
 /** The cooldown slot a key uses right now: its air form's ("E.air") in the
- *  air, else its own. (Sky Assault has no air form: it stays on W.) */
+ *  air, else its own. (Sky Assault is W's ground-only upgrade: W in the air
+ *  is always Midair Spin, on the W.air slot.) */
 export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.climb): string {
-  return airborne && AIR_FORM[key] && activeSkill(key).key !== 'AB' ? `${key}.air` : key;
+  return airborne && AIR_FORM[key] ? `${key}.air` : key;
 }
 
 /** How long a skill cools down for: its own cd, which is per-form now that
@@ -138,9 +139,9 @@ export function cast(key: SkillKey, chained = false): void {
   const ground = activeSkill(key);
   const airborne = !player.onGround && !player.climb;
   // In the air the key fires its own skill (Air Dive, Midair Spin, Plunging
-  // Volley), with its own rank, MP cost and use time. Sky Assault is the
-  // exception: it has no air form, so W keeps hovering.
-  const airKey = airborne && ground.key !== 'AB' ? AIR_FORM[key] : undefined;
+  // Volley), with its own rank, MP cost and use time. Sky Assault is W's
+  // ground-only upgrade: W in the air is always Midair Spin.
+  const airKey = airborne ? AIR_FORM[key] : undefined;
   const s = airKey ? SKILLS[airKey] : ground;
   if (!isLearned(s.key)) return;
   const r = rank(s.key);
