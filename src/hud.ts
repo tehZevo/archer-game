@@ -14,7 +14,7 @@ import { drawMenu } from './menudraw';
 import { drawMinimap } from './minimapdraw';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
-import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
+import { activeSkill, expBar, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
 import { armorSoak, bag, gear, weaponBonus } from './gear';
 import type { GearItem } from './gear';
@@ -199,7 +199,7 @@ function drawHUDItems(): void {
   const bw = 74, bgap = 3, y = h - 14;
   bar(pad, y, bw, 'HP', `${fmtNum(player.hp)}/${fmtNum(player.hpMax)}`, player.hp / player.hpMax, '#3fbf72');
   bar(pad + bw + bgap, y, bw, 'MP', `${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, player.mp / player.mpMax, '#3f8fd6');
-  bar(pad + 2 * (bw + bgap), y, bw, 'EXP', `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, player.exp / player.expNext, '#ffd166');
+  bar(pad + 2 * (bw + bgap), y, bw, 'EXP', expBar().text, expBar().pct, '#ffd166');
 
   // status effects on you, over the HP bar: a coloured pip and "POISON x2 4s" each
   let ey = y;

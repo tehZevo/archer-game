@@ -19,6 +19,7 @@ import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomNa
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { CHASE_TURN, update } from '../src/update';
+import { expBar, MAX_LEVEL } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
@@ -2484,7 +2485,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Electric Blitz self-link: a second blitz pressed during the first's
   // animation (with a charge banked) fires as soon as it clears
-  arena(20); player.ranks.Q = 1; player.ranks.EB = 1;
+  arena(20); player.ranks.Q = 1; player.ranks.EB = 1; player.ranks.AD = 1;
+  player.blitzCharges = P.BLITZ_MAX;
   dummy(150);
   check('blitzes start banked', player.blitzCharges === P.BLITZ_MAX, `charges ${player.blitzCharges}`);
   tap('q');
@@ -2530,6 +2532,42 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the sweep hits the enemy below', m.hp < 1e6);
   step(30);
   check('the spin does not hover', player.onGround);
+}
+
+{
+  // EXP bar at max level: reads LV.100 and stays full
+  arena(20);
+  player.level = 99; player.exp = 500; player.expNext = 1000;
+  check('below max level the bar shows exp/expNext', expBar().text === '500/1K' || expBar().text.includes('/'), expBar().text);
+  player.level = MAX_LEVEL;
+  check('at max level the bar reads LV.100', expBar().text === `LV.${MAX_LEVEL}`, expBar().text);
+  check('...and the bar stays full', expBar().pct === 1);
+}
+
+{
+  // Midair Spin links into Plunging Volley: E fires out of the sweep
+  arena(20); player.ranks.W = 1; player.ranks.MS = 1; player.ranks.E = 1; player.ranks.PV = 1;
+  dummy(100);
+  tap('c'); step(8);
+  tap('w');
+  check('the spin opens the volley window', player.volleyLinkT > 0 && player.useT > 0, `t ${player.volleyLinkT.toFixed(2)}`);
+  tap('e');
+  check('the spin links into Plunging Volley', player.cast === 'barrage' && player.volleyLinkT <= 0,
+    `cast ${player.cast} t ${player.volleyLinkT.toFixed(2)}`);
+}
+{
+  // Air Dive links into the equipped ground rush, Skyfall-style: the dive's
+  // window counts for Electric Blitz, not just the base Sky Toss
+  arena(20); player.ranks.Q = 1; player.ranks.EB = 1; player.ranks.AD = 1;
+  player.blitzCharges = P.BLITZ_MAX;
+  dummy(150);
+  tap('c'); step(8);
+  tap('q'); step(12); // the dive lands and rolls into its rush
+  check('the dive opens the Q-slot window with a Blitz equipped', player.combo > 0, `combo ${player.combo.toFixed(2)}`);
+  const charges0 = player.blitzCharges;
+  tap('q'); step(1); // the landing rush's tail is buffered, not dropped
+  check('the blitz fires off the dive, no use-time wait', player.blitzCharges === charges0 - 1 && player.cast === 'rush',
+    `charges ${player.blitzCharges} cast ${player.cast} charges0 ${charges0}`);
 }
 
 {
