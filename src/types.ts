@@ -171,6 +171,8 @@ export interface Mob {
   hitFlash: number;
   /** Seconds of hitstun left: it flinches and stops in place (see HITSTUN). */
   hurt?: number;
+  /** Seconds spent turning round toward the player while chasing (see CHASE_TURN). */
+  turn?: number;
   /** Set when a multi-hit attack drops its HP to 0 with hits still to land:
    *  it stays (inert) to take them, and dies on the last one (or when this
    *  failsafe timer runs out). */

@@ -13,7 +13,7 @@ import { game, gotoFloor, mobLevel, player, spawnMob, spawnWave, SPAWN_SPREAD } 
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
-import { update } from '../src/update';
+import { CHASE_TURN, update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, type Layout } from '../src/floor';
 import { MOB_ART, paintMob } from '../src/mobart';
@@ -1495,6 +1495,22 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   Object.assign(settings, DEFAULT_SETTINGS);
 }
 
+// --- chasing enemies keep full speed up close and turn on the spot ---
+{
+  arena(1, 160); player.invuln = 999;
+  const m = dummy(140); m.spd = 60; m.aggro = true; m.dir = 1;
+  step(1);
+  check('a chasing enemy runs at full speed even right next to you', Math.abs(m.vx - 60) < 1e-6, `vx ${m.vx.toFixed(1)} at ${(player.x - m.x).toFixed(1)}px`);
+  m.x = player.x + 15; m.vx = 60; step(1);
+  check('when you get past it, it stops to turn round', m.dir === 1 && m.vx === 0);
+  step(Math.ceil(CHASE_TURN / P.STEP));
+  check('...then comes back at full speed', m.dir === -1 && Math.abs(m.vx + 60) < 1e-6, `vx ${m.vx.toFixed(1)}`);
+  m.x = player.x + 15;
+  m.x = player.x + 1; step(1);
+  check('...standing still on top of you instead of flipping back and forth', m.vx === 0);
+  game.mobs.length = 0;
+}
+
 // --- elites: rare, bigger, tougher, worth more ---
 {
   arena();
@@ -1510,11 +1526,11 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   killMob(n); const one = drops.length;
   killMob(e);
   check(`an elite drops ${ELITE.COINS} coin piles`, one === 1 && drops.length === 1 + ELITE.COINS);
-  // waves: about 1 in 8
+  // waves: about 1 in 25
   game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Crab'] }));
   game.mobs = []; spawnWave();
   const frac = game.mobs.filter((m) => m.elite).length / game.mobs.length;
-  check('waves roll elites about 1 in 8', frac > 0.07 && frac < 0.19, frac.toFixed(3));
+  check('waves roll elites rarely, about 1 in 25', ELITE.CHANCE === 1 / 25 && frac > 0.01 && frac < 0.09, frac.toFixed(3));
   game.mobs = []; game.floor.spawns = [];
 }
 
