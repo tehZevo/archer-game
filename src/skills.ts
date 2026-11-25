@@ -113,33 +113,36 @@ export function landDive(): void {
 /** A skill's use time, shortened by Haste (+N% attack speed: time / (1 + N)). */
 export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
 
-/** Keys with an air form that cools down on its own, so using one form never
- *  locks out the other: Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
-export const AIR_FORM_KEYS: SkillKey[] = ['Q', 'W', 'E'];
+/** Keys with an air form that is its own skill (its own row, rank and
+ *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
+export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };
 
 /** The cooldown slot a key uses right now: its air form's ("E.air") in the
  *  air, else its own. (Sky Assault has no air form: it stays on W.) */
 export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.climb): string {
-  return airborne && AIR_FORM_KEYS.includes(key) && activeSkill(key).key !== 'AB' ? `${key}.air` : key;
+  return airborne && AIR_FORM[key] && activeSkill(key).key !== 'AB' ? `${key}.air` : key;
 }
 
-/** How long a skill cools down for, by the form it fires as. */
-export function formCd(kind: SkillKey, airborne: boolean): number {
-  if ((kind === 'Q' || kind === 'EB') && airborne) return P.DIVE_CD;
-  if (kind === 'W' && airborne) return P.SPIN_CD;
-  if (kind === 'E' && !airborne) return P.SPIKE_CD;
+/** How long a skill cools down for: its own cd, which is per-form now that
+ *  the air forms (AD, MS, PV) are skills in their own right. */
+export function formCd(kind: SkillKey): number {
   return SKILLS[kind].cd;
 }
 
 /** `chained`: fired off the end of a Q rush (see the Z chain below), so the rush's use time doesn't hold it. */
 export function cast(key: SkillKey, chained = false): void {
-  const s = activeSkill(key);
-  if (!isLearned(key)) return;
-  const r = rank(key);
+  const ground = activeSkill(key);
+  const airborne = !player.onGround && !player.climb;
+  // In the air the key fires its own skill (Air Dive, Midair Spin, Plunging
+  // Volley), with its own rank, MP cost and use time. Sky Assault is the
+  // exception: it has no air form, so W keeps hovering.
+  const airKey = airborne && ground.key !== 'AB' ? AIR_FORM[key] : undefined;
+  const s = airKey ? SKILLS[airKey] : ground;
+  if (!isLearned(s.key)) return;
+  const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
   const linked = LINKED_SKILLS.includes(kind);
-  const airborne = !player.onGround && !player.climb;
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep.
   if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
@@ -152,7 +155,7 @@ export function cast(key: SkillKey, chained = false): void {
   // the Midair Spin is on its own cooldown even though W is a link skill,
   // so one jump can't chain sweeps all the way up
   const slot = cdSlot(key, airborne);
-  const spin = kind === 'W' && airborne;
+  const spin = kind === 'MS';
   if (player.cd[slot] > 0 && (!linked || spin)) return;
   // Electric Blitz spends a banked charge: with none left, nothing happens
   // (Down + Q, the strike in place, needs no charge)
@@ -160,20 +163,19 @@ export function cast(key: SkillKey, chained = false): void {
   if (player.mp < r.mp) return;
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   // ...except that Plunging Volley can cut a Sky Assault hover short, so W -> E flows
-  const fromHover = kind === 'E' && airborne && player.hangT > 0;
+  const fromHover = kind === 'PV' && player.hangT > 0;
   if (player.useT > 0 && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return;
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
-  // Q is a two-form key: the ground rush, and the Air Dive in mid-air.
+  // Q and E are two-form keys: the ground forms stay on Q and E (and Q's
+  // upgrades), the air forms are AD and PV (chosen above).
   if ((kind === 'VS' || kind === 'RA') && !player.onGround) return;
-  // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air.
-  // (the shared cooldown gate below covers both forms)
 
   player.mp -= r.mp;
-  player.cd[slot] = player.cdMax[slot] = formCd(kind, airborne);
+  player.cd[slot] = player.cdMax[slot] = formCd(kind);
   if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.combatT = P.COMBAT_TIME; }
   player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift itself starts a new one below)
   player.skillPose = null; // the spin / vanish of the last cast is over (set again below)
@@ -262,22 +264,25 @@ export function cast(key: SkillKey, chained = false): void {
     }
 
     // Electric Blitz is the same rush, just faster and longer (see below).
+    case 'AD': {
+      // Air Dive (Q's air form, its own skill): plunge diagonally down,
+      // carrying the enemies under and in front of you, and roll into the
+      // ground rush on landing. (drawn in its dive pose: see localPose)
+      player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
+      sfx.jump();
+      player.vx = player.face * P.DIVE_VX;
+      player.vy = P.DIVE_VY;
+      player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
+      player.diving = true;
+      rushStrike = null; // (a strike left over from an earlier rush must not land now)
+      player.combo = 1.1; player.comboT = 1.1;
+      break;
+    }
+
     case 'EB':
-    case 'Q': {
-      // Air Dive (air form): plunge diagonally down, carrying the enemies
-      // under and in front of you, and roll into the ground rush on landing.
-      // (drawn in its dive pose while player.diving: see localPose)
-      if (!player.onGround) {
-        player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
-        sfx.jump();
-        player.vx = player.face * P.DIVE_VX;
-        player.vy = P.DIVE_VY;
-        player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
-        player.diving = true;
-        rushStrike = null; // (a strike left over from an earlier rush must not land now)
-        player.combo = 1.1; player.comboT = 1.1;
-        break;
-      }
+    case 'Q':
+    case 'VS':
+    case 'RA': {
       groundRush(held('down'), s.key === 'EB');
       break;
     }
@@ -353,22 +358,23 @@ export function cast(key: SkillKey, chained = false): void {
     }
 
     case 'E': {
-      // Spike Lift (ground form): spikes erupt in a burst around you and
+      // Spike Lift (E's ground form): spikes erupt in a burst around you and
       // throw you into the air.
-      if (player.onGround) {
-        player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
-        sfx.jump();
-        game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
-        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
-        tg.forEach((m) => damage(m, P.SPIKE_DMG));
-        player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
-        player.onGround = false;
-        break;
-      }
+      player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
+      sfx.jump();
+      game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
+      const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
+      tg.forEach((m) => damage(m, P.SPIKE_DMG));
+      player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
+      player.onGround = false;
+      break;
+    }
+
+    case 'PV': {
+      // Plunging Volley (E's air form, its own skill): a small upward bump
+      // (no freeze: you keep your drift and fall right after) as arrows rain
+      // straight down into a column beneath you, hitting every enemy in it.
       player.hangT = 0; player.hangHits = 0; // out of a Sky Assault hover
-      // Plunging Volley (air form): a small upward bump (no freeze: you
-      // keep your drift and fall right after) as arrows rain straight down
-      // into a column beneath you, hitting every enemy in it (nearest first).
       player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
       sfx.shoot();
       const feet = player.y + player.h;
@@ -407,21 +413,22 @@ export function cast(key: SkillKey, chained = false): void {
       break;
     }
 
+    case 'MS': {
+      // Midair Spin (W's air form, its own skill): a 360° sweep around you,
+      // hitting every enemy in reach.
+      player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
+      player.skillPose = 'spin';
+      sfx.shoot();
+      game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
+      const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
+      tg.forEach((m) => damage(m, r.dmg));
+      break;
+    }
+
     case 'W': {
-      // Midair Spin (air form): a 360° sweep around you, hitting every enemy
-      // in reach. Shares the key with the launch and is picked by state.
-      if (airborne) {
-        player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
-        player.skillPose = 'spin';
-        sfx.shoot();
-        game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
-        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
-        tg.forEach((m) => damage(m, r.dmg));
-        break;
-      }
-      // Skyfall Volley (ground form): knock the enemies ahead into the air and
-      // shoot them before they land. Q (the rush) gathers them up first, and
-      // the link window it opens is what makes this available.
+      // Skyfall Volley (W's ground form): knock the enemies ahead into the
+      // air and shoot them before they land. Q (the rush) gathers them up
+      // first, and the link window it opens is what makes this available.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       sfx.shoot();
       const face = player.face;
