@@ -197,8 +197,9 @@ export function cast(key: SkillKey, chained = false): void {
   if (kind === 'EB' && !airborne && !held('down') && player.blitzCharges <= 0) return;
   if (player.mp < r.mp) return;
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
-  // ...except that Plunging Volley can cut a Sky Assault hover short, so W -> E flows
-  const fromHover = kind === 'PV' && player.hangT > 0;
+  // ...except that the airborne kit (Plunging Volley, Glide, and the Q-slot
+  // rush you land into) cuts a Sky Assault hover short, so W -> E flows
+  const fromHover = player.hangT > 0 && (kind === 'PV' || kind === 'D' || key === 'Q');
   if ((player.useT > 0 || player.recoverT > 0) && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
@@ -292,7 +293,10 @@ export function cast(key: SkillKey, chained = false): void {
     }
 
     case 'D': {
-      // Glide: acrobatic forward tumble; usable repeatedly in the air
+      // Glide: acrobatic forward tumble; usable repeatedly in the air.
+      // Off a Sky Assault hover it ends the hover, so the tumble carries you
+      // (the hover's own per-frame vx/vy reset would otherwise eat it).
+      player.hangT = 0; player.hangHits = 0;
       player.cast = 'jump'; player.castT = 0.18; player.castTotal = 0.18;
       sfx.glide();
       const dir = player.face;          // launch in the direction you're facing
@@ -309,6 +313,8 @@ export function cast(key: SkillKey, chained = false): void {
       // Air Dive (Q's air form, its own skill): plunge diagonally down,
       // carrying the enemies under and in front of you, and roll into the
       // ground rush on landing. (drawn in its dive pose: see localPose)
+      player.hangT = 0; player.hangHits = 0; // out of a Sky Assault hover (the
+      // dive's own momentum takes over immediately, no stuck dive pose)
       player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
       sfx.jump();
       player.vx = player.face * P.DIVE_VX;
