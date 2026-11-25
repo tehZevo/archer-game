@@ -253,6 +253,8 @@ export function netStatus(): Record<string, unknown> {
 
 /** The pose peers should see: an active skill animation wins over movement. */
 export function localPose(): Pose {
+  if (player.diving) return 'dive';
+  if (player.skillPose && player.castT > 0) return player.skillPose;
   if (player.cast === 'shoot' || player.cast === 'rush' || player.cast === 'barrage') return player.cast;
   return player.animState;
 }

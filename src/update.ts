@@ -16,6 +16,7 @@ import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
 import { updateGear } from './gear';
+import { updateCorpses } from './deaths';
 import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
@@ -234,6 +235,7 @@ export function update(dt: number): void {
   updateMobs(dt);
   updateQuakes(dt);
   updateEconomy(dt); // coin piles fall and fade; X picks up, A/S drink
+  updateCorpses(dt); // enemies dying their own ways
   updateGear(dt);   // gear on the floor fades, and walking over it puts it on
   updatePet(dt); // fetches piles lying near you
   updateRush(dt); // after the mobs move, so the ones being pushed stay in front

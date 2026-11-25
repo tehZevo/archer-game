@@ -1,6 +1,7 @@
 import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { FX } from './fxsprites';
-import { ELITE, FX_DUR, WORLD } from './config';
+import { ELITE, FX_DUR, P, WORLD } from './config';
+import { corpses, deathBits, deathPose, DEATH_T, rand, type Corpse } from './deaths';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { HITSTUN } from './combat';
@@ -208,6 +209,71 @@ function goldSilhouette(c: HTMLCanvasElement): HTMLCanvasElement {
   return g;
 }
 
+/* ---------------- enemy deaths (see deaths.ts) ---------------- */
+
+/** Bits that glow are added on, like the skill effects. */
+const GLOWS = new Set(['spark', 'star', 'ember']);
+
+function drawCorpse(c: Corpse): void {
+  const s = SPR.mob[c.name]?.hurt;
+  const p = Math.min(1, c.age / DEATH_T), q = deathPose(c, p);
+  const mid = c.feet - c.h / 2;
+  if (s && q.alpha > 0) {
+    ctx.save();
+    ctx.globalAlpha = q.alpha;
+    // turned about the middle of the body, squashed onto its feet
+    ctx.translate(Math.round(c.x + q.dx), Math.round(mid + q.dy));
+    ctx.rotate(q.rot);
+    ctx.translate(0, c.h / 2);
+    ctx.scale(q.sx * c.dir * c.k, q.sy * c.k);
+    ctx.drawImage(s.c, -Math.round(s.w / 2), -s.h);
+    ctx.restore();
+  }
+  // crumbling: the body breaks into chunks of itself that tumble apart
+  if (s && c.recipe.move === 'crumble' && p >= 0.08) {
+    const r = rand(c.seed ^ 0x5bd1), t = c.age - 0.08 * DEATH_T, B = 4;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - p * p);
+    for (let y = 0; y < s.h; y += B) for (let x = 0; x < s.w; x += B) {
+      const ox = (x + B / 2 - s.w / 2) * c.k, oy = (y + B / 2 - s.h) * c.k; // from the feet
+      const vx = ox * 3 + (r() - 0.5) * 30, vy = -40 - r() * 50;
+      const px = c.x + c.dir * (ox + vx * t), py = Math.min(c.feet + c.drop - 2, c.feet + oy + vy * t + 170 * t * t);
+      ctx.drawImage(s.c, c.dir > 0 ? x : s.w - x - B, y, B, B, Math.round(px - B * c.k / 2), Math.round(py), B * c.k, B * c.k);
+    }
+    ctx.restore();
+  }
+  // what flies off it
+  const floor = c.h / 2 + c.drop; // the ground, from its middle
+  ctx.save();
+  if (GLOWS.has(c.recipe.bits)) ctx.globalCompositeOperation = 'lighter';
+  for (const b of deathBits(c, c.age)) {
+    if (b.alpha <= 0) continue;
+    ctx.globalAlpha = b.alpha;
+    ctx.fillStyle = b.col;
+    const x = Math.round(c.x + b.x), y = Math.round(mid + Math.min(floor - 1, b.y));
+    switch (c.recipe.bits) {
+      case 'feather': case 'petal': case 'shell':
+        // a sliver turning as it goes
+        if (Math.abs(Math.sin(b.rot)) < 0.5) ctx.fillRect(x - 1, y, 3, 1); else ctx.fillRect(x, y - 1, 1, 3);
+        break;
+      case 'gear':
+        // a tooth sticking out, turning round it, and a dark hub
+        ctx.fillRect(x - 1, y - 1, 3, 3); ctx.fillRect(x + (Math.cos(b.rot) > 0 ? 2 : -2), y, 1, 1);
+        ctx.fillStyle = '#2a2018'; ctx.fillRect(x, y, 1, 1);
+        break;
+      case 'star':
+        ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3);
+        break;
+      case 'shard':
+        if (Math.sin(b.rot) > 0) ctx.fillRect(x, y - 1, 1, 2); else ctx.fillRect(x - 1, y, 2, 1);
+        break;
+      default:
+        ctx.fillRect(x - (b.size >> 1), y - (b.size >> 1), b.size, b.size);
+    }
+  }
+  ctx.restore();
+}
+
 function drawMob(m: Mob): void {
   const a = SPR.mob[m.type.n];
   // in hitstun it holds its hurt pose (eyes shut, recoiling); a boss shows its enemy's, grown huge
@@ -290,11 +356,36 @@ function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pos
   const frame = archerFrame(archerFrames(look), pose, pose === 'climb' ? climbPhase(feet) : t, since);
   const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
-  ctx.globalAlpha = alpha;
+  ctx.globalAlpha = alpha * (pose === 'vanish' ? vanishAlpha(since ?? 0) : 1);
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
+  if (pose === 'spin' || pose === 'dive') {
+    // turned about the middle of the body: a whole turn through the spin,
+    // or pitched head-first down the dive
+    const turn = pose === 'dive' ? DIVE_PITCH : Math.min(1, (since ?? 0) / SPIN_TURN_T) * Math.PI * 2;
+    ctx.translate(0, -ARCHER_H / 2); ctx.rotate(turn); ctx.translate(0, ARCHER_H / 2);
+  }
   ctx.drawImage(img, -img.width / 2, -ARCHER_H);
   ctx.restore();
+}
+
+/** The Midair Spin's whole turn takes this long, s (its cast time). */
+const SPIN_TURN_T = 0.3;
+/** How far the Air Dive pitches you head-down, radians. */
+const DIVE_PITCH = 0.8;
+/** Tempest: you blink out, stay gone while the sweep goes round, and
+ *  flicker back as it ends (s since the cast). */
+function vanishAlpha(s: number): number {
+  if (s < 0.06) return 1 - s / 0.06;
+  if (s < 0.26) return 0;
+  if (s < 0.36) return Math.floor(s * 60) % 2 ? (s - 0.26) / 0.1 : 0.2;
+  return 1;
+}
+
+/** Afterimages trailing an Air Dive, back along the line of the dive. */
+function drawDiveTrail(look: Look, x: number, feet: number, face: number, t: number, alpha: number, tint?: string): void {
+  const len = Math.hypot(P.DIVE_VX, P.DIVE_VY), ux = (face * P.DIVE_VX) / len, uy = P.DIVE_VY / len;
+  for (const [d, a] of [[14, 0.3], [7, 0.5]] as const) drawArcher(look, x - ux * d, feet - uy * d, face, 'dive', t, alpha * a, undefined, tint);
 }
 
 // scratch canvas for tinting a ghost's frame
@@ -328,6 +419,7 @@ function drawGhosts(): void {
     // ghosts use the same 16x24 box; one on an older version (no look sent)
     // is washed in their colour instead
     const look = looks.get(id);
+    if (g.pose === 'dive') drawDiveTrail(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, now / 1000, 0.85, look ? undefined : col);
     drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, look ? undefined : col);
     const name = names.get(id);
     if (name) {
@@ -373,6 +465,7 @@ function drawBubble(id: string, x: number, bottom: number, now: number): void {
 }
 
 function drawPlayer(): void {
+  if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, player.invuln > 0 ? 0.8 : 1);
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
@@ -439,6 +532,7 @@ export function render(): void {
   drawDecorations(ts);
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
+  corpses.forEach(drawCorpse);
   game.mobs.forEach(drawMob);
   quakes.forEach(drawQuake);
   game.shots.forEach(drawShot);

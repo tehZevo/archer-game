@@ -202,20 +202,83 @@ function tracerAnim(): FxAnim {
   }, 0.35);
 }
 
-/** Mob death: a soft puff of dust swelling from the body with a few motes
- *  drifting up. Origin at the mob's feet. */
-function deathAnim(): FxAnim {
-  const W = 34, H = 30, bx = W / 2, by = H - 3;
-  return anim(W, H, bx, by, 7, (L, f) => {
-    const R = rng(41), fade = 1 - f / 7;
-    for (let i = 0; i < 7; i++) {
-      const ang = (i / 7) * Math.PI * 2 + 0.4, sp = 3 + R() * 3;
-      const px = bx + Math.cos(ang) * sp * (0.6 + f * 0.9), py = by - 8 + Math.sin(ang) * sp * 0.6 * (0.6 + f * 0.9) - f * 1.5;
-      L.disc('dust', px, py, 3.2 - f * 0.25, 0.8 * fade);
+/** An arc of a ring from a0 to a1 (any angles, a0 < a1 < a0 + 2pi): the
+ *  ring itself only takes -pi..pi, so an arc across pi is drawn in two. */
+function arc(L: Light, r: RampName, cx: number, cy: number, rx: number, ry: number, thick: number, I: number, a0: number, a1: number): void {
+  const w = (a: number): number => Math.atan2(Math.sin(a), Math.cos(a));
+  const b0 = w(a0), b1 = w(a1);
+  if (b0 <= b1) L.ring(r, cx, cy, rx, ry, thick, I, b0, b1);
+  else { L.ring(r, cx, cy, rx, ry, thick, I, b0, Math.PI); L.ring(r, cx, cy, rx, ry, thick, I, -Math.PI, b1); }
+}
+
+/** Spike Lift: a burst of glowing spikes erupting from the ground on
+ *  both sides of you, nearest first, then sinking back with dust at their
+ *  bases. Origin at your feet. */
+function spikesAnim(): FxAnim {
+  const R0 = 56, W = R0 * 2 + 10, H = 40, bx = W / 2, by = H - 3;
+  // each spike: offset from you, height, lean
+  const r = rng(91);
+  const spikes = Array.from({ length: 14 }, (_, i) => {
+    const side = i % 2 ? 1 : -1, d = 6 + (i >> 1) * 7.5 + r() * 3;
+    return { x: bx + side * d, h: 16 + r() * 14 - d * 0.08, lean: side * (1.5 + r() * 3), at: d / R0 };
+  });
+  return anim(W, H, bx, by, 8, (L, f) => {
+    const R = rng(93 + f), now = f / 7;
+    for (const s of spikes) {
+      const t = (now - s.at * 0.45) / 0.55; // each one erupts a little after the one inside it
+      if (t <= 0 || t >= 1) continue;
+      const up = t < 0.3 ? t / 0.3 : 1 - (t - 0.3) / 0.7 * 0.8, h = s.h * up;
+      L.line('teal', s.x, by, s.x + s.lean * up, by - h, 2.6, 0.3, 1.15 * (t < 0.7 ? 1 : (1 - t) / 0.3));
+      L.line('cyan', s.x, by - 1, s.x + s.lean * up * 0.8, by - h * 0.8, 0.9, 0.2, 1.1);
+      if (t < 0.6) for (let k = 0; k < 2; k++) L.disc('dust', s.x + (R() * 2 - 1) * 4, by - R() * 2, 1.4 + R(), 0.8 * (1 - t));
     }
-    L.ring('dust', bx, by - 1, 6 + f * 2.2, 1.6 + f * 0.5, 1, 0.6 * fade);
-    for (let i = 0; i < 3; i++) L.spark('cyan', bx - 8 + R() * 16, by - 10 - f * 2.5 - R() * 8, 0.8 * fade, i === 0);
-  }, 0.3);
+    // the ground cracks open under them
+    const crack = Math.min(1, now * 2.5) * R0, fade = 1 - now;
+    L.line('teal', bx - crack, by + 1, bx + crack, by + 1, 0.6, 0.6, 0.8 * fade);
+  }, 0.4);
+}
+
+/** Tempest: an oval of energy sweeping up and around where you vanished,
+ *  its bright head chasing a fading tail, sparks flung off it. Origin at
+ *  your feet. */
+function tempestAnim(): FxAnim {
+  const RX = 70, RY = 26, W = RX * 2 + 16, H = 84, cx = W / 2, by = H - 4;
+  return anim(W, H, cx, by, 9, (L, f) => {
+    const R = rng(61 + f), q = f / 8;
+    const cy = by - 10 - q * 34;               // it rises as it sweeps
+    const head = -Math.PI / 2 + q * Math.PI * 3; // a turn and a half
+    const fade = f < 6 ? 1 : 1 - (f - 5) / 4;
+    // the sweep: a long arc behind the head, brightest at the front
+    for (let k = 0; k < 4; k++) {
+      const a1 = head - k * 0.55;
+      arc(L, k ? 'teal' : 'cyan', cx, cy, RX * (0.8 + q * 0.2), RY, 2.2 - k * 0.3, (1.2 - k * 0.25) * fade, a1 - 0.7, a1);
+    }
+    // an inner swirl and the spot you left
+    arc(L, 'teal', cx, cy + 4, RX * 0.45, RY * 0.5, 1.1, 0.7 * fade, head - 2.6, head - 1);
+    if (f < 3) L.disc('cyan', cx, by - 12, 6 - f * 2, 1.1);
+    for (let i = 0; i < 6; i++) {
+      const a = head - R() * 2.5;
+      L.spark('cyan', cx + Math.cos(a) * RX * 0.9 + R() * 6 - 3, cy + Math.sin(a) * RY + R() * 6 - 3, 0.9 * fade, i === 0);
+    }
+  });
+}
+
+/** Midair Spin: blades of light whirling a full turn round you, each a
+ *  crescent with a bright leading edge. Origin at your feet (the whirl is
+ *  centred on your middle). */
+function spinAnim(): FxAnim {
+  const S = 52, c = S / 2, MID = 12;
+  return anim(S, S, c, c + MID, 6, (L, f) => {
+    const R = rng(71 + f), fade = f < 4 ? 1 : 1 - (f - 3) / 3;
+    for (let b = 0; b < 2; b++) {
+      const head = -Math.PI + (f / 6) * Math.PI * 2 + b * Math.PI;
+      for (let k = 0; k < 3; k++) {
+        const a1 = head - k * 0.5;
+        arc(L, k ? 'teal' : 'cyan', c, c, 19 - k, 17 - k, 1.6 - k * 0.3, (1.15 - k * 0.3) * fade, a1 - 0.6, a1);
+      }
+    }
+    for (let i = 0; i < 4; i++) { const a = R() * Math.PI * 2; L.spark('cyan', c + Math.cos(a) * 21, c + Math.sin(a) * 19, 0.85 * fade, i === 0); }
+  });
 }
 
 /** Level up: a gold pillar of light at the player's feet with rings and
@@ -375,7 +438,9 @@ export function FX(): Record<string, FxAnim> {
       muzzle: muzzleAnim(),
       arrow: arrowAnim(),
       tracer: tracerAnim(),
-      death: deathAnim(),
+      spikes: spikesAnim(),
+      tempest: tempestAnim(),
+      spin: spinAnim(),
       levelUp: levelUpAnim(),
       rush: rushAnim(),
       swoosh: swooshAnim(),

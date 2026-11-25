@@ -61,6 +61,8 @@ import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
+import { corpses, DEATH_T, DEATHS, deathOf, deathPose } from '../src/deaths';
+import { localPose } from '../src/net';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
@@ -691,7 +693,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- archer sprite sheet ---
 check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS).every(([p, fs]) => fs.length > 0 && fs.every((g) => g.length === 24 && g.every((r) => r.length === (p === 'prone' ? 24 : 16)))));
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
-check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('prone') === POSES.length - 1 && POSES[0] === 'idle');
+check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('vanish') === POSES.length - 1 && POSES.indexOf('prone') === 7 && POSES[0] === 'idle');
 {
   // holding Down on the ground lies you flat; Left/Right overrides it with a normal walk
   arena(1); player.x = 300; player.vx = 0; player.face = 1;
@@ -2166,6 +2168,46 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   bindKey('a', 'h');
   check('the HUD and menus label the bound key', keyName('a') === 'H' && keyName('s') === 'S');
   resetBinds();
+}
+
+// --- skill art: Spike Lift, Tempest, Midair Spin and Air Dive have their own looks ---
+{
+  const ready = (): void => { for (const k of Object.keys(player.cd)) player.cd[k] = 0; player.useT = 0; player.mp = 999; };
+  const fxOf = (t: string): boolean => game.fx.some((f) => f.type === t);
+  const air = (): void => { player.y -= 40; player.vy = 0; player.onGround = false; };
+  arena(30); player.ranks.E = 1; player.ranks.W = 1; player.ranks.R = 1;
+  ready(); game.fx.length = 0; tap('e');
+  check('Spike Lift erupts spikes from the ground', fxOf('spikes') && !fxOf('rush'));
+  arena(30); player.ranks.W = 1; ready(); air(); game.fx.length = 0; tap('w');
+  check('the Midair Spin whirls blades round you and spins the archer', fxOf('spin') && localPose() === 'spin');
+  arena(30); player.ranks.R = 1; ready(); game.fx.length = 0; tap('r');
+  check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
+  step(15);
+  check('...and she is back once it ends', localPose() !== 'vanish');
+  arena(30); ready(); air(); tap('q');
+  check('the Air Dive draws its dive pose', player.diving && localPose() === 'dive');
+  release();
+}
+
+// --- every enemy dies its own way ---
+{
+  const bases = MOB_TYPES.filter((m) => !m.of);
+  check('every enemy has its own death', bases.every((m) => DEATHS[m.n]), bases.filter((m) => !DEATHS[m.n]).map((m) => m.n).join(', '));
+  const looks = bases.map((m) => `${DEATHS[m.n]?.move}/${DEATHS[m.n]?.bits}`);
+  check('no two enemies die the same way', new Set(looks).size === looks.length, looks.filter((l, i) => looks.indexOf(l) !== i).join(', '));
+  check('a variant dies like the enemy it is a cousin of', MOB_TYPES.filter((m) => m.of).every((m) => deathOf(m) === DEATHS[m.of!]));
+  arena(1); corpses.length = 0;
+  const m = dummy(140);
+  killMob(m);
+  check('a defeated enemy is left dying where it fell', corpses.length === 1 && corpses[0].name === m.type.n && corpses[0].drop === 0);
+  step(Math.ceil(DEATH_T / P.STEP) + 1);
+  check('...and is gone when its death has played', corpses.length === 0);
+  const f = dummy(140); f.fly = true; f.y -= 40;
+  killMob(f);
+  const c = corpses[0];
+  check('one killed in the air falls to the ground as it dies', Math.abs(c.drop - 40) < 1 && Math.abs(deathPose(c, 1).dy - c.drop) < 1, `drop ${c.drop.toFixed(1)} dy ${deathPose(c, 1).dy.toFixed(1)}`);
+  gotoPlace(climb(3)); step(1);
+  check('deaths do not follow you to another floor', corpses.length === 0);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

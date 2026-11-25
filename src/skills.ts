@@ -1,4 +1,4 @@
-import { LINKED_SKILLS, P, SKILLS } from './config';
+import { FX_DUR, LINKED_SKILLS, P, SKILLS } from './config';
 import { game, later, mobBounds, player } from './state';
 import { held } from './input';
 import { airborneInBox, damage, hitbox, spawnArrow } from './combat';
@@ -176,6 +176,7 @@ export function cast(key: SkillKey, chained = false): void {
   player.cd[slot] = player.cdMax[slot] = formCd(kind, airborne);
   if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.combatT = P.COMBAT_TIME; }
   player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift itself starts a new one below)
+  player.skillPose = null; // the spin / vanish of the last cast is over (set again below)
 
   // Fervor: skills chained off Sky Toss stack final damage. The link
   // consumes the window, so it can't be chained again without another Sky Toss.
@@ -266,7 +267,7 @@ export function cast(key: SkillKey, chained = false): void {
     case 'Q': {
       // Air Dive (air form): plunge diagonally down, carrying the enemies
       // under and in front of you, and roll into the ground rush on landing.
-      // TODO: dedicated dive art.
+      // (drawn in its dive pose while player.diving: see localPose)
       if (!player.onGround) {
         player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
         sfx.jump();
@@ -355,12 +356,11 @@ export function cast(key: SkillKey, chained = false): void {
     case 'E': {
       // Spike Lift (ground form): spikes erupt in a burst around you and
       // throw you into the air.
-      // TODO: dedicated spike art; this reuses the rush's horn of light.
       if (player.onGround) {
         player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
         sfx.jump();
+        game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
         const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
-        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.4 }));
         tg.forEach((m) => damage(m, P.SPIKE_DMG));
         player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
         player.onGround = false;
@@ -392,15 +392,15 @@ export function cast(key: SkillKey, chained = false): void {
     case 'R': {
       // Tempest: you vanish as an oval of energy sweeps up and around you,
       // striking every enemy in a wide radius (nearest first).
-      // TODO: dedicated Tempest art for the sweep; this uses a muzzle flash.
       player.cast = 'shoot'; player.castT = 0.36; player.castTotal = 0.36;
+      player.skillPose = 'vanish';
       sfx.shoot();
       const face = player.face;
       const mx = player.x + face * 8, my = player.y + 13;
       const tg = hitbox(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2)
         .sort((a, b) => Math.abs(a.x - player.x) - Math.abs(b.x - player.x))
         .slice(0, r.targets);
-      game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
+      game.fx.push({ type: 'tempest', x: player.x, y: player.y + player.h, t: FX_DUR.tempest, follow: true });
       netShot(mx, my, face, P.TEMPEST_R);
       tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
         if (game.mobs.includes(m)) damage(m, r.dmg);
@@ -411,12 +411,12 @@ export function cast(key: SkillKey, chained = false): void {
     case 'W': {
       // Midair Spin (air form): a 360° sweep around you, hitting every enemy
       // in reach. Shares the key with the launch and is picked by state.
-      // TODO: dedicated spin art; this uses a ring of horns.
       if (airborne) {
         player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
+        player.skillPose = 'spin';
         sfx.shoot();
+        game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
         const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
-        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.3 }));
         tg.forEach((m) => damage(m, r.dmg));
         break;
       }
