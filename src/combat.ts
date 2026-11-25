@@ -8,7 +8,7 @@ import { passiveBonus } from './progress';
 import { BOSS, bossDown } from './boss';
 import { addCorpse } from './deaths';
 import { questKill } from './quests';
-import { clearStatus, INFLICT, maybeInflict } from './status';
+import { clearStatus } from './status';
 import type { DamageOpts, DmgNum, Mob } from './types';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
@@ -61,7 +61,9 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
     // show their numbers) before it dies
     if (opts.more) target.dying = DYING_MAX;
     else killMob(target);
-  } else if (target.dying === undefined) maybeInflict(target, INFLICT.player); // the area's element (see status.ts)
+  }
+  // (no status procs from your hits for now; mobs still inflict the area's
+  // element on you — see update.ts. The mob keeps any effect it already has.)
 }
 
 /** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
