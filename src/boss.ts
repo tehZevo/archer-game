@@ -1,11 +1,10 @@
 import { P, WORLD } from './config';
-import { game, logMsg, mobLevel, player } from './state';
+import { game, logMsg, player } from './state';
 import { areaMobs } from './floor';
-import { areaName, isAreaEnd } from './world';
-import { net } from './net';
+import { areaOf, isPathEnd, mobLevel } from './world';
 import { mobExp } from './progress';
 import { sfx } from './audio';
-import type { Mob, MobType } from './types';
+import type { Mob, MobType, Portal } from './types';
 
 /* ============================================================
    BOSSES
@@ -42,8 +41,8 @@ export const QUAKE_T = 0.45;
 
 /** The enemy an area's boss is based on: its strongest walker (fliers if
  *  it has nothing else). */
-export function bossType(area: number): MobType {
-  const pool = areaMobs(areaName(area));
+export function bossType(area: string): MobType {
+  const pool = areaMobs(area);
   const walkers = pool.filter((m) => !m.fly);
   return (walkers.length ? walkers : pool).reduce((a, b) => (b.lvl > a.lvl ? b : a));
 }
@@ -56,13 +55,13 @@ export const bossAlive = (): Mob | undefined => game.mobs.find((m) => m.boss);
 /** On an area's last floor, put its boss on the ground. */
 export function spawnBoss(): void {
   quakes.length = 0;
-  if (game.floor.town || !isAreaEnd(game.floor.number)) return;
-  const type = bossType(net.area);
+  if (game.floor.town || !isPathEnd(game.floor.place)) return;
+  const type = bossType(areaOf(game.floor.place));
   const ground = game.floor.platforms[0];
   const scale = 1 + (player.level - 1) * 0.12;
   const hp = Math.round(type.hp * scale * BOSS.HP);
   const w = type.w * BOSS.SCALE, h = type.h * BOSS.SCALE;
-  const level = mobLevel(game.floor.number);
+  const level = mobLevel(game.floor.place);
   game.mobs.push({
     x: WORLD.w * 0.75, y: ground.y - h, w, h,
     vx: 0, vy: 0, home: WORLD.w / 2, range: WORLD.w / 2 - 24, dir: -1,
@@ -159,6 +158,6 @@ export function bossDown(m: Mob, drop: (m: Mob) => void): void {
 }
 
 /** Can a portal be used? Ways up stay sealed while the boss stands. */
-export function portalOpen(to: number): boolean {
-  return to < game.floor.number || !bossAlive();
+export function portalOpen(p: Portal): boolean {
+  return !!p.down || !bossAlive();
 }

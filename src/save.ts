@@ -1,6 +1,5 @@
 import { CARRY_MAX, wallet } from './economy';
-import { areaFor, lastTown, START_AREA } from './world';
-import { net } from './net';
+import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
 import { pet } from './pets';
@@ -21,7 +20,7 @@ import type { SkillKey } from './types';
    ============================================================ */
 
 const KEY = 'archer-game:save';
-const VERSION = 2; // 2: the Harbor start renumbered every stage (older saves are dropped)
+const VERSION = 3; // 3: places (towns and paths) replaced stage numbers (older saves are dropped)
 export const SAVE_EVERY = 5; // s between autosaves
 
 export interface SaveData {
@@ -32,9 +31,8 @@ export interface SaveData {
   sp: number;
   stats: Record<string, number>;
   ranks: Record<string, number>;
-  floor: number;
-  /** The area (branch) of that floor (absent in older saves: the leftmost branch). */
-  area?: number;
+  /** The town you resume in (its id, see world.ts): the latest one you passed. */
+  town: string;
   /** Coins and potions (absent in older saves: start empty). */
   coins?: number;
   potions?: { hp: number; mp: number };
@@ -54,7 +52,7 @@ export function snapshot(): SaveData {
     v: VERSION,
     level: player.level, exp: Math.floor(player.exp), ap: player.ap, sp: player.sp,
     stats: { ...player.stats }, ranks: { ...player.ranks },
-    floor: game.floor.number, area: net.area,
+    town: lastTown(game.floor.place),
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
     pet: pet.owned,
@@ -67,8 +65,8 @@ const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
 };
 
 
-/** Apply a save to the player; returns the floor to resume on, or null if the save is unusable. */
-export function apply(d: unknown): number | null {
+/** Apply a save to the player; returns the place to resume on, or null if the save is unusable. */
+export function apply(d: unknown): Place | null {
   if (!d || typeof d !== 'object' || (d as SaveData).v !== VERSION) return null;
   const s = d as SaveData;
   player.level = int(s.level, 1, MAX_LEVEL, 1);
@@ -93,11 +91,8 @@ export function apply(d: unknown): number | null {
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, 0);
   loadQuests(s.quests);
   pet.owned = s.pet === true;
-  // resume at the latest town on the saved branch (it also sets the area)
-  const floor = int(s.floor, 1, 9999, 1);
-  const at = lastTown(floor, areaFor(floor, int(s.area, 0, 9999, START_AREA)) ?? START_AREA);
-  net.area = at.area;
-  return at.stage;
+  // resume in the saved town (the start if it's gone from the map)
+  return cleanPlace({ town: s.town }) ?? START;
 }
 
 /** Off after a reset, so the page-hide save can't write the old progress back. */
@@ -108,12 +103,12 @@ export function save(): void {
   try { store()?.setItem(KEY, JSON.stringify(snapshot())); } catch { /* storage full or blocked */ }
 }
 
-/** Load the saved progress into the player; returns the floor to resume on (1 if none). */
-export function load(): number {
+/** Load the saved progress into the player; returns the place to resume on (the start if none). */
+export function load(): Place {
   try {
     const raw = store()?.getItem(KEY);
-    return (raw && apply(JSON.parse(raw))) || 1;
-  } catch { return 1; }
+    return (raw && apply(JSON.parse(raw))) || START;
+  } catch { return START; }
 }
 
 export function hasSave(): boolean {

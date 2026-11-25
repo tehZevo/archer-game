@@ -1,10 +1,11 @@
+import { nextPlace } from './world';
 import { EMOTES } from './emotes';
 import { netEmote } from './net';
 import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
-import { CAM, P, SKILL_ORDER, WORLD } from './config';
+import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
 import { passiveBonus } from './progress';
-import { cameraTarget, gainExp, game, gotoFloor, logMsg, mobBounds, player, spawnWave } from './state';
+import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, killMob, revive } from './combat';
@@ -64,7 +65,7 @@ export function update(dt: number): void {
   if (!pressed('c') && held('c') && player.onGround && !player.climb) cast('C');
   // dev keys (?dev only): [ levels up, ] warps to the next floor
   if (dev.on && pressed('[')) gainExp(player.expNext - player.exp);
-  if (dev.on && pressed(']')) { gotoFloor(game.floor.number + 1); return; }
+  if (dev.on && pressed(']')) { gotoPlace(nextPlace(game.floor.place)); return; }
 
   // enemy waves run on the fixed step so headless tests stay deterministic
   // other players' kills in this instance make waves come faster
@@ -203,11 +204,11 @@ export function update(dt: number): void {
   const p = game.floor.portals.find((q) => player.onGround && Math.abs(player.x - q.x) < q.w / 2 + 10 && feet >= q.y - 4 && feet <= q.y + 8);
   // Up beside a town NPC talks to them (before the portals: they never overlap)
   if (talk()) return;
-  if (p && pressed('up') && !portalOpen(p.to)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
+  if (p && pressed('up') && !portalOpen(p)) logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`);
   else if (p && pressed('up')) {
-    if (p.to > game.floor.number && !game.floor.town) bump('floors'); // climbed past a combat floor
+    if (!p.down && !game.floor.town) bump('floors'); // climbed past a combat floor
     sfx.portal();
-    gotoFloor(p.to, p.area);
+    gotoPlace(p.to);
     return;
   }
 
@@ -251,6 +252,9 @@ export function update(dt: number): void {
 export const CHASE_SLACK = 3;
 /** Seconds a chasing enemy stops to turn round when you get past it. */
 export const CHASE_TURN = 0.3;
+/** Tiles past the player a chasing enemy runs to before turning back, so a
+ *  chase sweeps past you and comes at you from the other side. */
+export const CHASE_OVERSHOOT = 3 * TILE;
 
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
@@ -280,15 +284,19 @@ function updateMobs(dt: number): void {
       if (m.boss) bossMove(m, dt, lo, hi);
       else if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
         // full speed at you, turning on the spot: no easing off as it closes
-        // in, no slow skid to turn round (a few px of slack stops it
-        // flipping every frame while it stands on you)
-        // turning round takes a moment: it stops, then sets off the other way
-        const want = Math.abs(d) > CHASE_SLACK ? Math.sign(d) : m.dir;
-        if (want !== m.dir) {
+        // in. It aims a few tiles past you, so it runs over you and turns
+        // round there, coming back from the other side instead of parking.
+        const goal = player.x + m.dir * CHASE_OVERSHOOT;
+        const toGoal = goal - m.x;
+        if (Math.abs(toGoal) > CHASE_SLACK) {
+          m.turn = 0;
+          m.vx = m.dir * m.spd * slowFactor(m);
+        } else {
+          // at the far end of the sweep: stop, then set off the other way
           m.turn = (m.turn ?? 0) + dt;
-          if (m.turn >= CHASE_TURN) { m.dir = want; m.turn = 0; }
-        } else m.turn = 0;
-        m.vx = Math.abs(d) > CHASE_SLACK && !m.turn ? m.dir * m.spd * slowFactor(m) : 0;
+          m.vx = 0;
+          if (m.turn >= CHASE_TURN) { m.dir = Math.sign(d) || m.dir; m.turn = 0; }
+        }
       } else {
         m.vx += (m.dir * m.spd * slowFactor(m) - m.vx) * Math.min(1, 12 * dt);
         // turn back at the end of the patrol, or on reaching the platform's edge
@@ -314,8 +322,9 @@ function updateMobs(dt: number): void {
       m.y += (old + m.vy) * 0.5 * dt;
       // swept landing; also follows slopes up/down by STICK px. A mob only
       // ever lands on its own platform (it passes through any other), so a
-      // launch can't knock it onto a different one.
-      const home = (p: Platform): boolean => p.block === m.spawn?.block;
+      // launch can't knock it onto a different one. A boss is big enough to
+      // stride across the whole floor, so it lands on whatever is under it.
+      const home = (p: Platform): boolean => !!m.boss || p.block === m.spawn?.block;
       const s = m.vy < 0 ? null : surfaceBetween(m.x, m.w, prevFeet - STICK, m.y + m.h + STICK, null, home);
       if (s) {
         m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; m.airTime = Math.min(m.airTime, 0.35);
@@ -353,7 +362,7 @@ export function devInput(dt: number): void {
   if (repeated('up', dt)) dev.sel = (dev.sel + n - 1) % n;
   if (repeated('down', dt)) dev.sel = (dev.sel + 1) % n;
   if (pressed('escape')) dev.open = false;
-  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; const s = devStops()[dev.sel]; gotoFloor(s.stage, s.area); }
+  if (pressed('z') || pressed('enter') || pressed(' ')) { dev.open = false; const s = devStops()[dev.sel]; gotoPlace(s.place); }
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {

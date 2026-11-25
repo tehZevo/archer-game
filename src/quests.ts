@@ -1,9 +1,9 @@
 import { bump } from './achievements';
 import { pressed } from './input';
-import { gainExp, mobLevel } from './state';
+import { gainExp } from './state';
 import { mobExp } from './progress';
 import { areaMobs } from './floor';
-import { AREAS } from './world';
+import { mobLevel, pathsFrom, pathsInto, START_TOWN, townArea, townDepth } from './world';
 import { wallet } from './economy';
 import { sfx } from './audio';
 
@@ -24,17 +24,18 @@ export const QUEST_MAX = 3;
 export const quests: Quest[] = [];
 
 /** The board's window: open while reading; the world waits. */
-export const board = { open: false, sel: 0, area: 0, stage: 0 };
+export const board = { open: false, sel: 0, town: START_TOWN };
 
-/** What a town's board posts: one quest per enemy kind of the areas it
- *  leads up into (its own area's at the end of a branch), at most four. */
-export function boardOffers(stage: number, area: number): Quest[] {
-  const a = AREAS[area];
-  const from = a.up.length ? a.up : [a.id];
-  const names = [...new Set(from.flatMap((id) => areaMobs(AREAS[id].name).map((m) => m.n)))].slice(0, 4);
-  // the enemies upstairs are at about the level of the floors just above
-  const level = mobLevel(a.up.length ? stage + 1 : Math.max(1, stage - 1));
-  const need = 8 + 2 * a.depth;
+/** What a town's board posts: one quest per enemy kind of the paths it
+ *  leads up into (at the end of a branch, of the paths that end there), at
+ *  most four. */
+export function boardOffers(town: string): Quest[] {
+  const ups = pathsFrom(town);
+  const areas = ups.length ? ups.map((p) => p.name) : [townArea(town)];
+  const names = [...new Set(areas.flatMap((a) => areaMobs(a).map((m) => m.n)))].slice(0, 4);
+  // the enemies are at about the level of the floors just around the town
+  const level = ups.length ? mobLevel({ town }) : pathsInto(town)[0]?.lvl[1] ?? 1;
+  const need = 8 + 2 * townDepth(town);
   return names.map((mob) => ({
     mob, need, have: 0,
     exp: Math.round(mobExp(level) * need * 0.6),
@@ -76,12 +77,12 @@ export function abandon(i: number): boolean {
 
 /** The board's rows: your active quests first, then the postings you could take. */
 export function boardRows(): { q: Quest; active: number | null }[] {
-  const offers = boardOffers(board.stage, board.area).filter((o) => !quests.some((a) => a.mob === o.mob));
+  const offers = boardOffers(board.town).filter((o) => !quests.some((a) => a.mob === o.mob));
   return [...quests.map((q, i) => ({ q, active: i })), ...offers.map((q) => ({ q, active: null }))];
 }
 
-export function openBoard(stage: number, area: number): void {
-  board.open = true; board.sel = 0; board.stage = stage; board.area = area;
+export function openBoard(town: string): void {
+  board.open = true; board.sel = 0; board.town = town;
 }
 
 /** Board input: Up/Down picks, Z takes a posting or hands in a finished

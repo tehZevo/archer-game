@@ -257,10 +257,10 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
 
 /** Hand-drawn enemies (sprites.ts) and their palette-swapped variants: each
  *  maps the base's exact colours to its own. */
-export const DRAWN = ['Garden Snail', 'Boar', 'Wisp', 'Iron Hog', 'Crab', 'Hermit Crab', 'Gull'];
+export const DRAWN = ['Garden Snail', 'Boar', 'Wisp', 'Iron Hog', 'Enemy Crab', 'Hermit Crab', 'Gull'];
 export const RECOLOR: Record<string, { base: string; map: Record<string, string> }> = {
   'Red Snail': { base: 'Garden Snail', map: { '#5fb8f0': '#f07a5a', '#3f86c4': '#b8402a' } },
-  'Blue Crab': { base: 'Crab', map: { '#e8643c': '#4a8ae8', '#ff9a6a': '#9ac8ff', '#b8401f': '#2a4aa8', '#3a1208': '#0e1a3a' } },
+  'Blue Crab': { base: 'Enemy Crab', map: { '#e8643c': '#4a8ae8', '#ff9a6a': '#9ac8ff', '#b8401f': '#2a4aa8', '#3a1208': '#0e1a3a' } },
   'Wild Boar': { base: 'Boar', map: { '#c56f9f': '#5a3a24', '#e79ac4': '#8a5a3a', '#d07fae': '#6a4228', '#ffffff': '#f0e0b0' } },
   'Storm Gull': { base: 'Gull', map: { '#f4f7fc': '#8a94a8', '#9aa6b8': '#3a4458', '#f0c040': '#e8e070' } },
 };

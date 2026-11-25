@@ -105,7 +105,7 @@ function drawHUDItems(): void {
     text(ctx, `${where} · ${n} player${n === 1 ? '' : 's'}`, pad, ly, 1, net.code ? '#4fd8c4' : '#8ea3c2', 'left');
     ly += 9;
   }
-  text(ctx, placeName(game.floor.number, net.area), pad, ly, 1, '#8ea3c2', 'left');
+  text(ctx, placeName(game.floor.place), pad, ly, 1, '#8ea3c2', 'left');
   ly += 9;
   // this floor's modifier, if it rolled one
   const mod = modLine();

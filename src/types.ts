@@ -1,3 +1,4 @@
+import type { Place } from './world';
 import type { BossState } from './boss';
 export type SkillKey = 'Z' | 'C' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'BS' | 'VS' | 'RA' | 'SA' | 'PP' | 'IR' | 'HA';
 
@@ -344,10 +345,10 @@ export interface Portal {
   y: number;
   w: number;
   h: number;
-  /** Floor it leads to. */
-  to: number;
-  /** Area the destination is in (a town's portals lead into other areas); unset keeps yours. */
-  area?: number;
+  /** The place it leads to. */
+  to: Place;
+  /** A town's way back down (always open, even with a boss up). */
+  down?: boolean;
   /** Shown above it (towns: where each portal goes). */
   label?: string;
   /** A town's ways up: the level of the enemies where it leads (shown under the label). */
@@ -366,7 +367,8 @@ export type FloorMod = 'icy';
 
 /** A procedurally generated floor: its layout, enemies and exit portal. */
 export interface Floor {
-  number: number;
+  /** Where this floor is: a town, or a path and floor (see world.ts). */
+  place: Place;
   platforms: Platform[];
   ropes: Climbable[];
   ladders: Climbable[];

@@ -1,6 +1,5 @@
 import { game, player } from './state';
-import { net } from './net';
-import { areaName } from './world';
+import { areaOf } from './world';
 import { killMob } from './combat';
 import type { Mob, Status, StatusKind } from './types';
 
@@ -39,7 +38,7 @@ export const AREA_STATUS: Record<string, StatusKind> = {
 };
 /** The element of the area you're in (none in towns). */
 export const areaStatus = (): StatusKind | undefined =>
-  game.floor.town ? undefined : AREA_STATUS[areaName(net.area)];
+  game.floor.town ? undefined : AREA_STATUS[areaOf(game.floor.place)];
 
 type Bearer = { effects?: Status[] };
 

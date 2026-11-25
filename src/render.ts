@@ -8,11 +8,11 @@ import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
 import * as TB from './tilebake';
 import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
-import { areaName } from './world';
+import { areaOf, lastTown, townIndex } from './world';
 import { drawBackdrop } from './backdropdraw';
 import { PROP_H, PROP_W, propAt, propsFor } from './props';
 import { BACK_DECOR, DECOR_SIZE, paintDecor, townPal } from './towndecor';
-import { localPose, looks, names, net, peers } from './net';
+import { localPose, looks, names, peers } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { view, type Pose } from './ghost';
@@ -49,7 +49,7 @@ export function resize(): void {
 /** `?area=Cave` previews an area's tileset on any floor (e.g. one not on the map yet). */
 const previewArea = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('area') : null;
 /** The tileset of the floor being drawn. */
-const tileset = (): Tileset => tilesetFor(previewArea ?? areaName(net.area));
+const tileset = (): Tileset => tilesetFor(previewArea ?? areaOf(game.floor.place));
 
 function drawBackground(ts: Tileset): void {
   const { w, h } = game.view;
@@ -135,10 +135,10 @@ function drawProps(ts: Tileset): void {
 /** Town decor, baked per kind, palette and facing (see towndecor.ts). */
 const decorCanvases = new Map<string, HTMLCanvasElement>();
 function drawDecor(back: boolean): void {
-  const pal = townPal(net.area);
+  const ti = townIndex(lastTown(game.floor.place)), pal = townPal(ti);
   for (const d of game.floor.decor ?? []) {
     if (BACK_DECOR.has(d.kind) !== back) continue;
-    const key = `${d.kind}.${net.area}.${d.flip ? 1 : 0}`, { w, h } = DECOR_SIZE[d.kind];
+    const key = `${d.kind}.${ti}.${d.flip ? 1 : 0}`, { w, h } = DECOR_SIZE[d.kind];
     let c = decorCanvases.get(key);
     if (!c) {
       c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -169,10 +169,10 @@ function drawLadder(ts: Tileset, l: Climbable): void {
 function drawPortal(p: Portal): void {
   const s = SPR.portal;
   const bob = Math.sin(performance.now() / 300) * 2;
-  const down = p.to < game.floor.number;
+  const down = !!p.down;
   // a way down glows a different colour; a sealed one (boss still up) is dark
   if (down) ctx.filter = 'hue-rotate(150deg)';
-  if (!portalOpen(p.to)) ctx.filter = 'grayscale(1) brightness(0.55)';
+  if (!portalOpen(p)) ctx.filter = 'grayscale(1) brightness(0.55)';
   ctx.drawImage(s.c, Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
   ctx.filter = 'none';
   if (p.label) {

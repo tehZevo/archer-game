@@ -260,7 +260,7 @@ export const SPR = {
     'Boar': anim(pigSprite, 4, 9, pigHurt),
     'Wisp': anim(wispSprite, 4, 8, wispHurt),
     'Iron Hog': anim(hogSprite, 4, 7, hogHurt),
-    'Crab': anim(crabSprite, 2, 7, crabHurt),
+    'Enemy Crab': anim(crabSprite, 2, 7, crabHurt),
     'Hermit Crab': anim(hermitSprite, 2, 5, hermitHurt),
     'Gull': anim(gullSprite, 2, 5, gullHurt),
     ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
