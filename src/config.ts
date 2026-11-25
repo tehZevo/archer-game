@@ -186,6 +186,10 @@ export const MOB_TYPES: MobType[] = [
 ];
 
 
+/** Elites: now and then a floor enemy spawns bigger and tougher, with a gold
+ *  outline, and is worth more. Multiples of the normal enemy's stats. */
+export const ELITE = { CHANCE: 1 / 8, SCALE: 1.5, HP: 4, DMG: 1.3, EXP: 3, COINS: 3 } as const;
+
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, death: 0.35, levelUp: 0.9,

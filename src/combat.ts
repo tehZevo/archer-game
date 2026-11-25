@@ -1,4 +1,4 @@
-import { P } from './config';
+import { ELITE, P } from './config';
 import { localKill } from './boost';
 import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
@@ -64,6 +64,7 @@ export function killMob(m: Mob): void {
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);
   dropCoins(m);
+  if (m.elite) for (let i = 1; i < ELITE.COINS; i++) dropCoins({ ...m, x: m.x + (i % 2 ? 6 : -6) * Math.ceil(i / 2) });
   if (m.boss) bossDown(m, dropCoins);
   questKill(m.name);
 }

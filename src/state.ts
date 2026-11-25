@@ -1,4 +1,4 @@
-import { CAM, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
+import { CAM, ELITE, MOB_TYPES, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
 import { AREAS, areaFor, tierOf, townStage } from './world';
 import { generateFloor } from './floor';
 import { net } from './net';
@@ -99,23 +99,26 @@ export function mobBounds(m: Mob): [number, number] {
  *  Beach 1 is level 1 and Forest 1, the 11th combat floor, is level 11. */
 export const mobLevel = (stage: number): number => Math.max(1, stage - tierOf(stage)); // one town per depth below
 
-export function spawnMob(s: Spawn, type: MobType): void {
+export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
   const level = mobLevel(game.floor.number);
   const scale = 1 + (level - 1) * 0.12;
-  const hp = Math.round(type.hp * scale);
+  const e = elite ? ELITE : { SCALE: 1, HP: 1, DMG: 1, EXP: 1 };
+  const hp = Math.round(type.hp * scale * e.HP);
+  const w = Math.round(type.w * e.SCALE), h = Math.round(type.h * e.SCALE);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
   const lo = s.minX ?? s.x - 110, hi = s.maxX ?? s.x + 110;
   game.mobs.push({
-    x: spot.x, y: spot.y - type.h, w: type.w, h: type.h,
+    x: spot.x, y: spot.y - h, w, h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: type.spd,
-    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06)),
+    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06) * e.DMG),
     fly: !!type.fly, col: type.col,
-    level, exp: mobExp(level),
+    level, exp: mobExp(level) * e.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
     spawn: s,
+    ...(elite ? { elite: true } : {}),
   });
 }
 
@@ -123,7 +126,9 @@ export function spawnMob(s: Spawn, type: MobType): void {
 export function spawnWave(): void {
   for (const z of game.floor.spawns) {
     const alive = game.mobs.filter((m) => m.spawn === z).length;
-    for (let i = alive; i < (z.cap ?? 1); i++) spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]));
+    for (let i = alive; i < (z.cap ?? 1); i++) {
+      spawnMob(z, mobTypeFor(z.types[Math.floor(Math.random() * z.types.length)]), Math.random() < ELITE.CHANCE);
+    }
   }
 }
 

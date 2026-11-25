@@ -1,5 +1,5 @@
 import { FX } from './fxsprites';
-import { FX_DUR, WORLD } from './config';
+import { ELITE, FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { mobFrame } from './mobanim';
@@ -161,11 +161,26 @@ function drawPortal(p: Portal): void {
   }
 }
 
+/** A sprite's silhouette in gold (cached per frame): an elite's outline. */
+const glow = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>();
+function goldSilhouette(c: HTMLCanvasElement): HTMLCanvasElement {
+  let g = glow.get(c);
+  if (!g) {
+    g = document.createElement('canvas'); g.width = c.width; g.height = c.height;
+    const x = g.getContext('2d')!;
+    x.drawImage(c, 0, 0);
+    x.globalCompositeOperation = 'source-in';
+    x.fillStyle = '#ffd166'; x.fillRect(0, 0, g.width, g.height);
+    glow.set(c, g);
+  }
+  return g;
+}
+
 function drawMob(m: Mob): void {
   const a = SPR.mob[m.type.n];
   const s = a?.frames[mobFrame(m, a.frames.length, a.fps)];
   // a boss is its enemy grown huge; winding up an attack, it shakes and flashes
-  const k = m.boss ? BOSS.SCALE : 1, wind = windingUp(m);
+  const k = m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1, wind = windingUp(m);
   const shake = wind ? (Math.floor(performance.now() / 50) % 2 ? 1 : -1) : 0;
   // Walkers animate through their frames; fliers also float. The HP bar and
   // stun star stay anchored to the mob's body position, so they never move with it.
@@ -173,10 +188,16 @@ function drawMob(m: Mob): void {
   ctx.save();
   if (m.hitFlash > 0) ctx.globalAlpha = 0.75;
   if (wind && Math.floor(performance.now() / 100) % 2) ctx.filter = 'brightness(1.8) saturate(0.6)';
+
   if (s) {
     // sprites face right: mirror them when the enemy heads left
     ctx.translate(Math.round(m.x) + shake, Math.round(m.y + bob));
     ctx.scale(m.dir < 0 ? -k : k, k);
+    if (m.elite) {
+      // a 1px (screen) gold outline: the silhouette nudged each way, under the sprite
+      const g = goldSilhouette(s.c), o = 1 / k;
+      for (const [ox, oy] of [[o, 0], [-o, 0], [0, o], [0, -o]]) ctx.drawImage(g, -Math.round(s.w / 2) + ox, oy);
+    }
     ctx.drawImage(s.c, -Math.round(s.w / 2), 0);
   }
   ctx.restore();

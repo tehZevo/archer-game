@@ -8,8 +8,8 @@ import { AREAS, areaName, isAreaEnd, isTown, lastTown, MAP_AREAS, placeName, tow
 let seed = 12345;
 Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
 
-import { FX_DUR, MOB_TYPES, P } from '../src/config';
-import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
+import { ELITE, FX_DUR, MOB_TYPES, P } from '../src/config';
+import { game, gotoFloor, mobLevel, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
@@ -1433,6 +1433,29 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('escape');
   check('a second Esc resumes', !game.pause);
   Object.assign(settings, DEFAULT_SETTINGS);
+}
+
+// --- elites: rare, bigger, tougher, worth more ---
+{
+  arena();
+  const z = { x: 100, y: ground().y, types: ['Crab'] } as never;
+  spawnMob(z, MOB_TYPES[1]); spawnMob(z, MOB_TYPES[1], true);
+  const [n, e] = game.mobs.slice(-2);
+  check('an elite is bigger and tougher, and worth more EXP', !n.elite && !!e.elite
+    && e.w === Math.round(n.w * ELITE.SCALE) && e.h === Math.round(n.h * ELITE.SCALE)
+    && e.hpMax === Math.round(n.hpMax * ELITE.HP) && e.dmg > n.dmg && e.exp === n.exp * ELITE.EXP);
+  check('an elite stands on the ground like the rest', Math.abs(e.y + e.h - (n.y + n.h)) < 0.01);
+  check('an elite keeps its name (quests count it)', e.name === n.name);
+  drops.length = 0;
+  killMob(n); const one = drops.length;
+  killMob(e);
+  check(`an elite drops ${ELITE.COINS} coin piles`, one === 1 && drops.length === 1 + ELITE.COINS);
+  // waves: about 1 in 8
+  game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Crab'] }));
+  game.mobs = []; spawnWave();
+  const frac = game.mobs.filter((m) => m.elite).length / game.mobs.length;
+  check('waves roll elites about 1 in 8', frac > 0.07 && frac < 0.19, frac.toFixed(3));
+  game.mobs = []; game.floor.spawns = [];
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

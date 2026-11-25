@@ -159,6 +159,8 @@ export interface Mob {
   barT: number;
   anim: number;
   spawn: Spawn;
+  /** A rare, tougher spawn (see ELITE in config.ts): bigger, gold-outlined, worth more. */
+  elite?: boolean;
   /** Set on an area's boss: what it's doing (see boss.ts). */
   boss?: BossState;
 }
