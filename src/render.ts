@@ -16,6 +16,7 @@ import { BACK_DECOR, DECOR_SIZE, paintDecor, townPal } from './towndecor';
 import { localPose, looks, names, peers } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
+import { isLearned } from './progress';
 import { view, type Pose } from './ghost';
 import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, climbPhase } from './archer';
 import { NB } from './nb';
@@ -464,8 +465,16 @@ function drawBubble(id: string, x: number, bottom: number, now: number): void {
   lines.forEach((l, i) => text(ctx, l, tx, by + 2 + i * 9, 1, '#1a2438', 'center'));
 }
 
+/** The Echo Shot shadow's colour: a cool blue ghost of the archer's own look. */
+const ECHO_TINT = '#7fb8ff';
+
 function drawPlayer(): void {
   if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, player.invuln > 0 ? 0.8 : 1);
+  // Echo Shot: the shadow archer stands behind you, mirroring your shot.
+  if (player.cast && isLearned('ES')) {
+    const t = performance.now() / 1000;
+    drawArcher(myLook(), player.x - player.face * 14, player.y + player.h, player.face, 'shoot', t, 0.45, player.castTotal - player.castT, ECHO_TINT);
+  }
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
