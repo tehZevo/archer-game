@@ -351,6 +351,10 @@ export interface Portal {
 }
 
 /** A town NPC: stands at (x, y = the surface under their feet). */
+/** A town decoration standing on a surface at (x, y): x is its centre, y the ground it stands on. */
+export interface Decor { x: number; y: number; kind: DecorKind; flip?: boolean }
+export type DecorKind = 'house' | 'tower' | 'lamp' | 'bench' | 'crate' | 'barrel' | 'flowers' | 'well' | 'sign' | 'awning' | 'fence';
+
 export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board'; name: string }
 
 /** A floor modifier (see floormods.ts). */
@@ -369,6 +373,8 @@ export interface Floor {
   portals: Portal[];
   /** People to talk to (towns): stand beside one and press Up. */
   npcs?: Npc[];
+  /** Towns: buildings and street furniture, purely visual (see towndecor.ts). */
+  decor?: Decor[];
   town: boolean;
   /** Random floors: the layout style it was built with (see LAYOUTS in floor.ts). */
   layout?: string;

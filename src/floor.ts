@@ -5,7 +5,7 @@ import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
 import { rollMods } from './floormods';
-import type { Climbable, Floor, MobType, Platform, Portal, Spawn } from './types';
+import type { Climbable, Decor, DecorKind, Floor, MobType, Npc, Platform, Portal, Spawn } from './types';
 
 // One stream per floor generation, seeded from the room name (minus its hour) so every player
 // in a channel gets the same layout (reseeded at the top of generateFloor).
@@ -305,62 +305,104 @@ function groundSlab(): Platform {
   return { x: 0, y: snap(GEN_H - h), w: WORLD.w, h, ground: true };
 }
 
+/** Town layouts, picked by area id (so each town is always the same): see townFloor. */
+export const TOWN_PLANS = ['plaza', 'loft', 'market', 'terrace'] as const;
+export type TownPlan = typeof TOWN_PLANS[number];
+export const townPlanFor = (areaId: number): TownPlan => TOWN_PLANS[areaId % TOWN_PLANS.length];
+
 /**
- * A town (the stop after each area's 10 floors, see world.ts): one designed layout, not random, and no enemies.
- * Ways up from the ends of the ground into the areas above this one (left
- * and right where the path forks, the left end alone where it doesn't,
- * none at the top of a branch); on a floating plaza deck in the middle
- * (ladder on its left, rope on its right) a way back down to the town
- * below (the first town's leads to the floor below it). Players arrive
- * under the deck, between the up portals. Every other town (odd area ids)
- * has a second level: a loft over the deck's right side, up a ladder, where
- * the way down moves.
+ * A town (the stop after each area's floors, see world.ts): a designed
+ * layout, not random, and no enemies. Ways up stand at the ends of the
+ * ground (left and right where the path forks, the left end alone where it
+ * doesn't, none at the top of a branch); the way back down to the town below
+ * stands up on the highest level (the first town has none). Players arrive on
+ * the ground in the middle. The layout is one of TOWN_PLANS, by area id:
+ *  - plaza: a floating deck in the middle, ladder on its left, rope on its right;
+ *  - loft: the plaza, plus a loft over the deck's right side holding the way down;
+ *  - market: two stall decks either side, a bridge between them up top;
+ *  - terrace: two terraces stepping up to the right.
+ * Every level has two tiles (32px) of headroom under the next one up. Houses,
+ * lamps, benches and the like (decor) are drawn behind; they never collide.
  */
 export function townFloor(n: number): Floor {
-  const ground = groundSlab();
-  const deckW = 8, deckX = (WORLD.w - deckW * TILE) / 2;
-  // a 3-tile block whose bottom leaves 2 tiles (32px) of headroom over the ground
-  const deck = makeShape('flat', deckX, ground.y - 3 * TILE, deckW);
-  deck.tiles.forEach((t) => { t.block = 1; });
-  const deckTop = Math.min(...deck.tiles.map((t) => t.y));
+  const ground = groundSlab(), G = ground.y, T = TILE;
+  const here = AREAS[net.area], plan = townPlanFor(here.id);
   const P = (x: number, y: number, to: number, label: string, area: number): Portal =>
     ({ x, y, w: 40, h: 56, to, label, area });
-  // labelled with where they lead: the areas ahead, and the town you came from
-  const here = AREAS[net.area];
-  const upX = [2 * TILE, WORLD.w - 2 * TILE];
-  // ...and the level of the enemies on the first floor up there
-  const ups = here.up.map((a, i) => ({ ...P(upX[i], ground.y, n + 1, placeName(n + 1, a), a), lvl: Math.max(1, n + 1 - tierOf(n + 1)) }));
-  // the loft: 5 tiles over the deck's columns 3-7, the same headroom over the
-  // deck as the deck has over the ground; its ladder at its left end stays
-  // clear of the way down further along it
-  const loft = here.id % 2 === 1 ? makeShape('flat', deckX + 3 * TILE, deckTop - 3 * TILE, 5) : null;
-  loft?.tiles.forEach((t) => { t.block = 2; });
-  const loftTop = loft ? Math.min(...loft.tiles.map((t) => t.y)) : deckTop;
-  const downX = loft ? deckX + 6 * TILE : WORLD.w / 2;
+  const upX = [2 * T, WORLD.w - 2 * T];
+  // ...labelled with where they lead, and the level of the enemies on the first floor up there
+  const ups = here.up.map((a, i) => ({ ...P(upX[i], G, n + 1, placeName(n + 1, a), a), lvl: Math.max(1, n + 1 - tierOf(n + 1)) }));
+  const platforms: Platform[] = [ground], ladders: Climbable[] = [], ropes: Climbable[] = [];
+  const npcs: Npc[] = [], decor: Decor[] = [];
+  let blockId = 0;
+  /** A level: a 3-tile block `w` tiles wide from column `col`, on storey 1 (over the
+   *  ground) or 2 (over storey 1), each with two tiles of headroom under it. */
+  const level = (col: number, w: number, storey: 1 | 2): { x: number; top: number; w: number } => {
+    const sh = makeShape('flat', col * T, G - (3 + (storey - 1) * 5) * T, w), id = ++blockId;
+    sh.tiles.forEach((t) => { t.block = id; });
+    platforms.push(...sh.tiles);
+    return { x: col * T, top: Math.min(...sh.tiles.map((t) => t.y)), w: w * T };
+  };
+  const at = (col: number): number => col * T + T / 2; // the middle of a column
+  const ladder = (col: number, top: number, bottom: number): void => { ladders.push({ x: at(col), y1: top, y2: bottom }); };
+  const rope = (col: number, top: number, bottom: number): void => { ropes.push({ x: at(col), y1: top, y2: bottom }); };
+  const npc = (kind: Npc['kind'], x: number, y: number): void => {
+    const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS' }[kind];
+    if (kind !== 'trainer' || blockOf(n) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
+  };
+  const deco = (kind: DecorKind, x: number, y: number, flip = false): void => { decor.push({ x, y, kind, ...(flip ? { flip } : {}) }); };
+  let downAt: { x: number; y: number };
+
+  if (plan === 'plaza' || plan === 'loft') {
+    // a deck over columns 6-13 (ladder on its left, rope on its right)...
+    const deck = level(6, 8, 1);
+    ladder(6, deck.top, G); rope(13, deck.top, G);
+    npc('shop', at(7), deck.top); npc('trainer', at(12) - T / 2, deck.top);
+    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G);
+    deco('awning', at(7), deck.top); deco('flowers', at(10) - T / 2, deck.top);
+    deco('house', at(9) + T / 2, G); deco('lamp', at(4) - T / 2, G); deco('lamp', at(15) + T / 2, G);
+    deco('bench', at(11), G); deco('crate', at(8), G);
+    if (plan === 'loft') {
+      // ...and a loft over the deck's columns 9-13, up a ladder at its left end
+      const loft = level(9, 5, 2);
+      ladder(9, loft.top, deck.top);
+      downAt = { x: 12 * T, y: loft.top };
+      deco('lamp', at(13) + 4, loft.top); deco('barrel', at(10) + 4, loft.top);
+    } else {
+      downAt = { x: WORLD.w / 2, y: deck.top };
+    }
+  } else if (plan === 'market') {
+    // two stall decks (shop left, trainer right), a bridge between them holding the way down
+    const left = level(4, 5, 1), right = level(11, 5, 1), bridge = level(7, 6, 2);
+    ladder(4, left.top, G); rope(15, right.top, G);
+    ladder(7, bridge.top, left.top); rope(12, bridge.top, right.top);
+    npc('shop', at(5) + 4, left.top); npc('trainer', at(14) - 4, right.top);
+    npc('board', at(5) + T / 2, G); npc('stylist', at(13) + T / 2, G);
+    deco('awning', at(5) + 4, left.top); deco('awning', at(14) - 4, right.top, true);
+    deco('crate', at(8) - 4, left.top); deco('barrel', at(11) + 4, right.top);
+    deco('lamp', at(8) + 4, bridge.top); deco('lamp', at(11) - 4, bridge.top);
+    deco('well', at(9) + T / 2, G); deco('house', at(5) + 4, left.top); deco('house', at(14) - 4, right.top, true);
+    deco('flowers', at(8) - 2, G); deco('flowers', at(11) + 2, G);
+    downAt = { x: at(9) + T / 2, y: bridge.top };
+  } else {
+    // terraces stepping up to the right: a low one on the left, a high one on the right
+    const low = level(4, 7, 1), high = level(9, 7, 2);
+    ladder(4, low.top, G); rope(9, high.top, low.top); rope(15, high.top, G);
+    npc('shop', at(5) + 4, low.top); npc('trainer', at(8), low.top);
+    npc('board', at(5) + 4, G); npc('stylist', at(8), G);
+    deco('awning', at(5) + 4, low.top); deco('flowers', at(14) - 2, high.top);
+    deco('tower', at(12) + T / 2, high.top); deco('house', at(7), low.top);
+    deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
+    downAt = { x: at(12) + T / 2, y: high.top };
+  }
   // the first town (the Harbor) is the bottom of the world: no way down
-  const down = here.parent >= 0
-    ? [P(downX, loftTop, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)]
-    : [];
+  const down = here.parent >= 0 ? [P(downAt.x, downAt.y, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)] : [];
+  if (down.length) deco('sign', downAt.x - 30, downAt.y);
   return {
-    number: n, town: true, h: GEN_H,
-    platforms: [ground, ...deck.tiles, ...(loft?.tiles ?? [])],
-    ladders: [
-      { x: deckX + TILE / 2, y1: deckTop, y2: ground.y },
-      ...(loft ? [{ x: deckX + 3 * TILE + TILE / 2, y1: loftTop, y2: deckTop }] : []),
-    ],
-    ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
-    spawns: [],
+    number: n, town: true, h: GEN_H, layout: plan,
+    platforms, ladders, ropes, spawns: [],
     portal: ups[0] ?? down[0], portals: [...ups, ...down],
-    // the shopkeeper keeps a stall on the deck, left of the way down; from the
-    // third town up (Lanternhollow) a trainer stands to the right of it;
-    // the stylist works on the ground right of the deck, and a quest
-    // board stands on the ground left of the ladder
-    npcs: [
-      { x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' },
-      { x: deckX - TILE, y: ground.y, kind: 'board', name: 'QUESTS' },
-      { x: deckX + (deckW + 1) * TILE, y: ground.y, kind: 'stylist', name: 'STYLIST' },
-      ...(blockOf(n) >= 2 ? [{ x: deckX + (deckW - 2) * TILE, y: deckTop, kind: 'trainer' as const, name: 'TRAINER' }] : []),
-    ],
+    npcs, decor,
   };
 }
 
@@ -376,6 +418,7 @@ function trim(f: Floor): Floor {
   for (const s of spawns) { s.y -= shift; s.spots?.forEach((q) => { q.y -= shift; }); }
   for (const p of portals) p.y -= shift;
   for (const n of f.npcs ?? []) n.y -= shift;
+  for (const d of f.decor ?? []) d.y -= shift;
   f.h = GEN_H - shift;
   return f;
 }
