@@ -22,11 +22,11 @@ Using a skill doesn't announce its name on screen.
 
 All skills unlock at one of four levels, matching the job ladder: **1, 10, 30, 60**.
 
-- **Lv.1 — Basics:** Twin Shot (Z, free at rank 1); Jump (C, free); Glide (D); Precision (passive).
-- **Lv.10 — Aerial Combo:** Sky Toss (Q); Skyfall Volley (W), upgradable to Sky Assault; Midair Spin (requiring Sky Assault); Air Dive (its plunge, requiring Sky Toss); Agile Climbing; Fervor (passive).
-- **Lv.30 — Ground Burst:** Spike Lift (E); Plunging Volley (its air form); Haste (passive); Echo Shot (passive); Shell Barrage (the Z upgrade).
-- **Lv.60 — Storm:** Electric Blitz; Tempest (R); Power Surge (passive).
+- **Lv.1:** the starter kit, available from character creation.
+- **Lv.10:** the second job's wave of skills.
+- **Lv.30:** Mystic Archer's group (with the job's SP bonus).
+- **Lv.60:** Adele's group (with the job's SP bonus).
 
-Skill upgrades — the slot branches (Shell Barrage / Backstep Shot on Z, Vault Shot / Rising Arrow on Q) and the skills that build on another skill (Midair Spin on Skyfall Volley, Air Dive on Sky Toss, Plunging Volley on Spike Lift) — are generally **not** unlockable in the same job as the skill they build on: the base skill and its upgrade live in different groups, so mastering the base and discovering its replacement are separate moments in the build.
+Which skills sit in each group is deliberately left open for now and will be decided as the build evolves; what's fixed is the cadence — four unlock moments, one per job tier. Skill upgrades (new forms, skills that build on another skill) are generally not unlockable in the same group as the skill they build on, so mastering a base skill and discovering its replacement are separate moments.
 
-SP is awarded to fund each group as it opens (roughly 10 at Lv.1, 14 at Lv.10, 16+5 at Lv.30, 14+5 at Lv.60 — about 59 total against the ~52 needed to max everything), leaving a little choice pressure without punishing experimentation.
+SP is awarded to fund each group as it opens, sized so the skills in a group are affordable when it unlocks, with enough total SP to max most (not all) of the tree by the level cap.
