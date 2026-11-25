@@ -2535,6 +2535,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
+  // Tempest is a committed cast: locked in place and invulnerable while it
+  // sweeps out (the use time already freezes movement; the storm grants i-frames)
+  arena(20); player.ranks.R = 1;
+  dummy(140);
+  tap('r');
+  check('Tempest locks you in place', player.cast === 'shoot' && player.useT > 0, `useT ${player.useT.toFixed(2)}`);
+  check('...and you are invulnerable for the cast', player.invuln > 0 && player.invuln >= player.castT - 1e-9,
+    `invuln ${player.invuln.toFixed(2)} castT ${player.castT.toFixed(2)}`);
+  step(11); // the 0.36s storm plays out
+  check('the invulnerability ends with the storm', player.invuln <= 0, `invuln ${player.invuln.toFixed(2)}`);
   // A buffered skill fires in the direction held when it releases, not when
   // it was pressed: Q left, Q right zips you back and forth
   arena(20); player.ranks.Q = 1;
@@ -2623,8 +2633,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     `hangT ${player.hangT.toFixed(2)} cast ${player.cast}`);
   step(2);
   check('...and the dive plays out (no hover freeze)', player.hangT === 0 && (player.diving || player.rushT > 0),
-    `diving ${player.diving} rushT ${player.rushT.toFixed(2)}`);
-}
+    `diving ${player.diving} rushT ${player.rushT.toFixed(2)}`);}
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
