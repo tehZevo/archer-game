@@ -392,7 +392,7 @@ export function cast(key: SkillKey, chained = false): void {
         .filter((m) => m.y + m.h > feet) // beneath you, not beside you
         .sort((a, b) => a.y - b.y)
         .slice(0, r.targets);
-      player.vy = Math.min(player.vy, -P.PLUNGE_HOP);
+      player.vy -= P.PLUNGE_HOP; // stacks on the current momentum, not a fixed reset
       // the volley rains onto each target, or onto the ground below if none
       (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[player.x, feet + 40]])
         .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
