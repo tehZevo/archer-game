@@ -452,17 +452,17 @@ function volleyFlareAnim(): FxAnim {
   });
 }
 
-/** Plunging Volley's blast: a tornado driving down from the archer's feet,
- *  orange rings whirling round a funnel that narrows to a green-shot impact
- *  at the bottom. Origin at the top centre (her feet). */
+/** Plunging Volley's blast: a flat tornado under the archer's feet:
+ *  a low, wide whirl of orange rings sweeping out under her, with a
+ *  green-shot impact ring. Origin at the top centre (her feet). */
 function tornadoAnim(depth: number): FxAnim {
-  const W = 64, H = Math.round(depth) + 16, cx = W / 2, top = 2;
+  const W = 84, H = Math.round(depth) + 14, cx = W / 2, top = 4;
   return anim(W, H, cx, top, 8, (L, f) => {
     const R = rng(131 + f), fade = f < 5 ? 1 : 1 - (f - 4) / 4;
     const reach = Math.min(1, (f + 1) / 3) * depth; // it drives down over the first frames
-    for (let k = 0; k < 14; k++) {
-      const t = k / 13, y = top + t * reach;
-      const rx = 24 - t * 19, ry = 4 - t * 2.4; // wide at the top, a point at the bottom
+    for (let k = 0; k < 5; k++) {
+      const t = k / 4, y = top + t * reach;
+      const rx = 34 - t * 16, ry = 4 - t * 1.5; // a wide, flat whirl, tapering a little
       const spin = f * 1.3 + k * 0.55;
       // the whole ring faintly, its front half bright: a whirl, not stacked bars
       L.ring('orange', cx, y, rx, ry, 1.1, 0.45 * fade);
@@ -471,9 +471,9 @@ function tornadoAnim(depth: number): FxAnim {
     }
     if (f >= 2) {
       const by = top + depth, g = (f - 2) / 6;
-      L.ring('orange', cx, by, 10 + g * 16, 3 + g * 2, 1.3, 1.0 * (1 - g));
+      L.ring('orange', cx, by, 18 + g * 20, 3 + g * 2, 1.3, 1.0 * (1 - g));
       L.disc('lime', cx, by - 1, 4 - g * 3, 1.1 * (1 - g));
-      for (let i = 0; i < 6; i++) L.spark(i % 2 ? 'green' : 'orange', cx + (R() * 2 - 1) * (8 + f * 3), by - R() * 10, 0.9 * fade, i === 0);
+      for (let i = 0; i < 6; i++) L.spark(i % 2 ? 'green' : 'orange', cx + (R() * 2 - 1) * (16 + f * 4), by - R() * 6, 0.9 * fade, i === 0);
     }
   }, 0.4);
 }
@@ -517,7 +517,7 @@ export function FX(): Record<string, FxAnim> {
       skyHit: hitAnim(false, 'sky'),
       spinHit: hitAnim(false, 'red'),
       volleyFlare: volleyFlareAnim(),
-      tornado: tornadoAnim(P.PLUNGE_DEPTH),
+      tornado: tornadoAnim(20), // a flat sweeping blast under her, not a tall column
       climbRise: climbRiseAnim(),
       rain: rainAnim(),
       rainHit: hitAnim(false, 'gold'),
