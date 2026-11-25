@@ -159,8 +159,10 @@ export function cast(key: SkillKey, chained = false): void {
   // Dive's, chiefly): it fires off the dive without the use-time wait.
   // Tempest is a link too, but only off the end of a Sky Assault hover (see
   // update's hang block): it stays a standalone skill the rest of the time.
+  // Electric Blitz links into itself: a blitz cast opens a short window in
+  // which the next blitz skips the ending lag, chaining like a combo.
   const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0) ||
-    (kind === 'R' && player.assaultLinkT > 0);
+    (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
@@ -209,7 +211,14 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
-    player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
+  // The grounded Sky Toss counts as a link while a window is open (the Air
+  // Dive's, chiefly): it fires off the dive without the use-time wait.
+  // Tempest is a link too, but only off the end of a Sky Assault hover (see
+  // update's hang block): it stays a standalone skill the rest of the time.
+  // Electric Blitz links into itself: a blitz cast opens a short window in
+  // which the next blitz skips the ending lag, chaining like a combo.
+  const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0) ||
+    (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0);
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
@@ -312,6 +321,9 @@ export function cast(key: SkillKey, chained = false): void {
     case 'VS':
     case 'RA': {
       groundRush(held('down'), s.key === 'EB');
+      // the blitz's self-link window: the next blitz (with a charge banked)
+      // fires immediately, skipping this one's ending lag
+      if (kind === 'EB') player.blitzLinkT = P.BLITZ_LINK;
       break;
     }
 

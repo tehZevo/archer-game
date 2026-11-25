@@ -44,6 +44,7 @@ export const P = {
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
   BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
+  BLITZ_LINK: 0.8,     // s the self-link window stays open after a blitz (covers its use time + delay)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
   BLITZ_DIST: 96,      // px the blitz travels
   // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.

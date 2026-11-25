@@ -58,7 +58,7 @@ export const player: Player = {
   anim: 0, animState: 'idle',
   fervor: 0, fervorT: 0,
   superStance: 0,
-  combo: 0, comboT: 0, assaultLinkT: 0,
+  combo: 0, comboT: 0, assaultLinkT: 0, blitzLinkT: 0,
   level: 1,
   exp: 0,
   expNext: expToNext(1),

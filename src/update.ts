@@ -92,7 +92,8 @@ export function update(dt: number): void {
   // a chained link fires as soon as Sky Toss finishes
   // (a chained Twin Shot also waits out the slide itself)
   const busy = player.recoverT > 0; // the animation's recovery: a live link window cuts it short
-  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && player.combo <= 0)) {
+  const window = player.combo > 0 || player.blitzLinkT > 0; // Q's link, or a blitz's self-link
+  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && !window)) {
     const k = player.queued; player.queued = null;
     cast(k, k === 'Z');
   }
@@ -103,6 +104,7 @@ export function update(dt: number): void {
   const locked = player.useT > 0; // skill use time: no movement input
   if (player.comboT > 0) { player.comboT -= dt; if (player.comboT <= 0) player.combo = 0; }
   if (player.assaultLinkT > 0) player.assaultLinkT -= dt;
+  if (player.blitzLinkT > 0) player.blitzLinkT -= dt;
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 
