@@ -48,6 +48,7 @@ export const P = {
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 200,     // px/s upward bump when it fires (~19px rise; was 110, ~6px)
   PIERCE_RANGE: 260,   // Piercing Arrow reach, px
+  SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)

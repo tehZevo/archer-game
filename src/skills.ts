@@ -71,8 +71,9 @@ export function cast(key: SkillKey): void {
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
   const linked = LINKED_SKILLS.includes(kind);
-  // Link skills only work right after Sky Toss, once per Sky Toss.
-  if (linked && player.combo <= 0) return;
+  // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
+  // Spin is the exception: W in the air is a standalone sweep.
+  if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   if (player.cd[key] > 0 && !linked) return;
