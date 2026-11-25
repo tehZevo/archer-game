@@ -429,7 +429,61 @@ const tidePools: Tileset = {
   },
 };
 
+/* ---------------- Harbor: weathered dock planks, rope coils, bollards, barnacled pilings ---------------- */
+const harbor: Tileset = {
+  name: 'Harbor',
+  sky: ['#5a9ac8', '#8cc0dc', '#4a88b8'],
+  fill(x, y, v) {
+    // horizontal boards, 4px tall, with a dark seam under each and staggered butt joints
+    const row = y >> 2, ry = y & 3;
+    if (ry === 3) return '#4a3222';
+    const joint = (row * 5 + v * 3) % 16;
+    if (x === joint) return '#4a3222';
+    let col = row % 2 ? '#8a6040' : '#7e5638';
+    if (ry === 0) col = row % 2 ? '#9a6e4a' : '#8e6442';              // the board's lit upper edge
+    if (hash(x >> 1, row, v + 70) < 0.12) col = '#6e4a30';           // grain streaks
+    if ((x === joint + 2 || x === joint - 2) && ry === 1) col = '#3a3a40'; // nail heads beside each joint
+    return col;
+  },
+  surface(x, d, v) {
+    // the deck: two pale sun-bleached boards on top
+    if (d === 0) return '#d8b88a';
+    if (d <= 2) return (x + v * 7) % 9 === 0 ? '#9a7652' : '#bf9a6a';
+    if (d === 3) return '#5a3e28';
+    return null;
+  },
+  edge: { outer: '#2e1e14', inner: '#4a3222', surfOuter: '#6a4a30', surfInner: '#a8845a', style: 'chip', r: 1 },
+  top(p, v) {
+    const y = TOP_Y;
+    if (v === 1) { // a coil of rope
+      p(5, y - 3, '#c8a06a', 8, 3); p(6, y - 4, '#c8a06a', 6, 1); p(6, y - 3, '#8a6a3c', 6, 1); p(8, y - 2, '#e0c088', 2, 1);
+    } else if (v === 2) { // an iron bollard
+      p(12, y - 4, '#3a3e48', 4, 4); p(11, y - 5, '#4a505c', 6, 2); p(12, y - 5, '#6a7280', 2, 1);
+    } else if (v === 3) { // a gull feather and a dropped fish
+      p(4, y - 1, '#f4f7fc', 4, 1); p(3, y - 1, '#c8ccd4');
+      p(10, y - 2, '#8ab0c8', 5, 2); p(15, y - 3, '#8ab0c8', 1, 1); p(15, y - 1, '#8ab0c8', 1, 1); p(10, y - 2, '#1e2a36');
+    }
+  },
+  bottom(p, v) {
+    // the tops of the pilings under the boards, crusted with barnacles and weed
+    for (const x of [2, 11]) {
+      p(x, 0, '#5a3e28', 3, 5 + v); p(x, 0, '#7a5638', 1, 5 + v);
+      p(x, 3 + v, '#d8dcd0'); p(x + 2, 4, '#d8dcd0');
+      if (v) p(x + 1, 5 + v, '#2e7a4a', 1, 2);
+    }
+  },
+  rope(p) { // a thick, tarred mooring line
+    p(6, 0, '#a8844e', 4, 16); p(6, 0, '#d0ac74', 1, 16); p(9, 0, '#6a4e2a', 1, 16);
+    for (let y = 1; y < 16; y += 4) { p(6, y, '#6a4e2a', 2, 1); p(8, y + 1, '#6a4e2a', 2, 1); }
+  },
+  ladder(p) { // a dock ladder: plank rails, rungs on iron brackets
+    p(2, 0, '#6e4a30', 3, 16); p(11, 0, '#6e4a30', 3, 16);
+    p(2, 0, '#9a6e4a', 1, 16); p(11, 0, '#9a6e4a', 1, 16);
+    p(5, 6, '#8e6442', 6, 3); p(5, 6, '#b08a5e', 6, 1); p(4, 7, '#3a3e48', 1, 1); p(11, 7, '#3a3e48', 1, 1);
+  },
+};
+
 export const NATURE: Record<string, Tileset> = {
   Swamp: swamp, Mountain: mountain, Sky: sky, Meadow: meadow, Riverbank: riverbank, Hills: hills,
-  'Tide Pools': tidePools,
+  'Tide Pools': tidePools, Harbor: harbor,
 };

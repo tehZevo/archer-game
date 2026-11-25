@@ -16,7 +16,9 @@
 /** One area in the plan: its name, its town's name, and the areas above it. */
 interface Plan { area: string; town: string; up?: Plan[] }
 
-const PLAN: Plan = { area: 'Tide Pools', town: 'Saltwick', up: [
+// The root is a town alone (no combat floors below it): the Harbor, where a
+// new game starts, a calm dock whose way up leads to the Beach.
+const PLAN: Plan = { area: 'Harbor', town: 'Saltwick', up: [
   { area: 'Beach', town: 'Driftwood Rest', up: [
     { area: 'Forest', town: 'Mossgate', up: [
       { area: 'Cave', town: 'Fernwick', up: [
@@ -26,7 +28,10 @@ const PLAN: Plan = { area: 'Tide Pools', town: 'Saltwick', up: [
         ] },
       ] },
       { area: 'Riverbank', town: 'Reedmouth', up: [
-        { area: 'Sunken Ruins', town: 'Tidewatch' },
+        { area: 'Sunken Ruins', town: 'Tidewatch', up: [
+          // the Tide Pools are a tough coastal branch, far from the start
+          { area: 'Tide Pools', town: 'Wrackhaven' },
+        ] },
         { area: 'Mirror Lake', town: 'Stillwater', up: [
           { area: 'Starfall Observatory', town: 'Thistledown' },
         ] },
@@ -78,7 +83,7 @@ export const AREAS: Area[] = [];
 export const START_AREA = 0;
 
 /** Floors per depth. Lower areas are shorter, so the climb picks up speed. */
-export const TIER_FLOORS: readonly number[] = [2, 3, 5, 5, 6, 7, 8];
+export const TIER_FLOORS: readonly number[] = [0, 3, 5, 5, 6, 7, 8]; // the Harbor has none: it's just its town
 
 /** The deepest depth any branch reaches. */
 export const TOP_BLOCK = TIER_FLOORS.length - 1;

@@ -16,10 +16,11 @@ export const dev = {
   sel: 0,
 };
 
-/** The dev menu's rows: the start, then every area's town (in tree order,
- *  indented by depth). `label` is the area the town sits on top of. */
+/** The dev menu's rows: the first combat floor (Beach 1, above the Harbor
+ *  where you start), then every area's town (in tree order, indented by
+ *  depth). `label` is the area the town sits on top of. */
 export const devStops = (): { stage: number; area: number; name: string; label: string }[] => [
-  { stage: 1, area: 0, name: `${AREAS[0].name} 1 - start`, label: '' },
+  { stage: 2, area: AREAS[0].up[0], name: `${AREAS[AREAS[0].up[0]].name} 1 - first floor`, label: '' },
   ...AREAS.map((a) => ({ stage: townStage(a.depth), area: a.id, name: ' '.repeat(a.depth) + a.town, label: a.name })),
 ];
 

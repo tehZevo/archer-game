@@ -21,7 +21,7 @@ import type { SkillKey } from './types';
    ============================================================ */
 
 const KEY = 'archer-game:save';
-const VERSION = 1;
+const VERSION = 2; // 2: the Harbor start renumbered every stage (older saves are dropped)
 export const SAVE_EVERY = 5; // s between autosaves
 
 export interface SaveData {

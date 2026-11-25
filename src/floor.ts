@@ -333,9 +333,10 @@ export function townFloor(n: number): Floor {
   loft?.tiles.forEach((t) => { t.block = 2; });
   const loftTop = loft ? Math.min(...loft.tiles.map((t) => t.y)) : deckTop;
   const downX = loft ? deckX + 6 * TILE : WORLD.w / 2;
+  // the first town (the Harbor) is the bottom of the world: no way down
   const down = here.parent >= 0
-    ? P(downX, loftTop, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)
-    : P(downX, loftTop, n - 1, placeName(n - 1, here.id), here.id);
+    ? [P(downX, loftTop, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)]
+    : [];
   return {
     number: n, town: true, h: GEN_H,
     platforms: [ground, ...deck.tiles, ...(loft?.tiles ?? [])],
@@ -345,7 +346,7 @@ export function townFloor(n: number): Floor {
     ],
     ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
     spawns: [],
-    portal: ups[0] ?? down, portals: [...ups, down],
+    portal: ups[0] ?? down[0], portals: [...ups, ...down],
     // the shopkeeper keeps a stall on the deck, left of the way down; from the
     // third town up (Lanternhollow) a trainer stands to the right of it;
     // the stylist works on the ground right of the deck, and a quest

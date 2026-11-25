@@ -108,6 +108,19 @@ const CLOUDS = (col: string, n: number, s: number, seed: number) => (p: BgPaint)
 
 export const BACKDROPS: Record<string, Backdrop> = {
   Classic: { far: CLOUDS('#ffffff14', 5, 6, 1), mid: CLOUDS('#ffffff20', 3, 10, 2) },
+  Harbor: { // a calm sea: long swell lines, far sails, and moored boats' masts
+    far: (p) => {
+      CLOUDS('#ffffff26', 5, 6, 50)(p);
+      for (let i = 0; i < 6; i++) scatter(5, 51 + i, (x, y, r) => p(x, y, '#ffffff22', 10 + r * 24, 1)); // swell glints
+      scatter(3, 52, (x, y) => { p(x, y - 8, '#f4f7fc40', 1, 8); for (let k = 0; k < 6; k++) p(x + 1, y - 8 + k, '#f4f7fc40', Math.ceil(k / 1.5), 1); p(x - 3, y, '#2e5a7a40', 9, 2); }); // far sails
+    },
+    mid: (p) => scatter(4, 53, (x, y, r) => { // moored boats: hull, mast, furled sail
+      const w = 16 + Math.round(r * 10);
+      p(x, y, '#3a5a7a50', w, 3); p(x + 2, y + 3, '#3a5a7a50', w - 4, 2);
+      p(x + w / 2, y - 20, '#3a5a7a50', 1, 20); p(x + w / 2 - 4, y - 16, '#3a5a7a50', 8, 2);
+    }),
+    particles: { kind: 'glints', cols: ['#ffffff', '#bfefff'], n: 5 },
+  },
   'Tide Pools': {
     far: CLOUDS('#ffffff20', 5, 6, 40),
     mid: (p) => { ridges(p, 100, 8, 12, '#2e5a7a50', 41); scatter(4, 42, (x, _y, _r, i) => { const by = 100 + (i % 2) * 128; p(x, by - 14, '#2e5a7a50', 6, 14); p(x + 1, by - 22, '#f4f7fc50', 4, 8); }); }, // sea stacks and a lighthouse or two

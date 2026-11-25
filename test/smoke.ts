@@ -22,7 +22,7 @@ function step(n = 1): void {
 }
 
 function reset(): void {
-  gotoFloor(1);
+  gotoFloor(2); // Beach 1: stage 1 is the Harbor, a town
   player.x = 160; player.y = game.floor.platforms[0].y - player.h;
   player.vx = 0; player.vy = 0;
   player.onGround = true; player.climb = null;
@@ -142,14 +142,14 @@ step(1);
 check('portal advances the floor', game.floor.number === floor0 + 1);
 setKey('up', false);
 
-// --- 12. after each area's floors comes a town (the Tide Pools are 2 floors) ---
-gotoFloor(3, 0);
-check('stage 3 (after Tide Pools 2) is a town', game.floor.town === true && game.mobs.length === 0);
+// --- 12. the game starts in a town (the Harbor) whose way up leads to the Beach ---
+gotoFloor(1, 0);
+check('stage 1 (the Harbor) is a town', game.floor.town === true && game.mobs.length === 0);
 player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
 player.onGround = true;
 setKey('up', true);
 step(1);
-check('town portal leads on to the next area', game.floor.number === 4 && net.area === 1);
+check('town portal leads on to the next area', game.floor.number === 2 && net.area === 1);
 setKey('up', false);
 
 // every skill (bases, upgrades, passives) has its own 14x14 icon glyph
