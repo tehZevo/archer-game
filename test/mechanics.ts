@@ -1457,6 +1457,20 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
       check('the boss stands on a high platform with you', Math.abs(boss.y + boss.h - deck.y) < 1, `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y} (deck ${deck.x},${deck.w} ground ${ground.y})`);
     }
   }
+  // a slam aimed at a player on a high platform lands on that platform,
+  // rising to their feet rather than to a fixed height
+  {
+    const deck = game.floor.platforms.find((q) => q !== ground && q.w > boss.w + 8 && q.y < ground.y - 20);
+    if (deck) {
+      stand(deck.x + deck.w / 2);
+      boss.x = deck.x + deck.w / 2; boss.y = ground.y - boss.h; boss.vx = boss.vy = 0;
+      boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+      quakes.length = 0;
+      for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = 1; game.mobs.splice(0, game.mobs.length, boss); step(1); }
+      check('a slam from the ground lands on the platform you stand on', Math.abs(boss.y + boss.h - deck.y) < 1 && boss.boss.act === 'walk', `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y}, act ${boss.boss.act}`);
+      game.mobs.push(boss);
+    }
+  }
   // beaten: the way up opens
   killMob(boss);
   check('beating the boss clears it', !bossAlive());
