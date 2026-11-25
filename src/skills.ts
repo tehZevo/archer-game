@@ -211,14 +211,9 @@ export function cast(key: SkillKey, chained = false): void {
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
     player.combo = 0; player.comboT = 0;
-  // The grounded Sky Toss counts as a link while a window is open (the Air
-  // Dive's, chiefly): it fires off the dive without the use-time wait.
-  // Tempest is a link too, but only off the end of a Sky Assault hover (see
-  // update's hang block): it stays a standalone skill the rest of the time.
-  // Electric Blitz links into itself: a blitz cast opens a short window in
-  // which the next blitz skips the ending lag, chaining like a combo.
-  const linked = LINKED_SKILLS.includes(kind) || (kind === 'Q' && player.combo > 0) ||
-    (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0);
+    player.combo = 0; player.comboT = 0;
+    player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
+    player.blitzLinkT = 0; // a linked blitz spends its own window too
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
