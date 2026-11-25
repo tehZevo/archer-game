@@ -1402,7 +1402,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const boss = bs[0];
   check('the boss is one of its enemies, grown huge and much tougher',
     boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
-  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)) === 'Giant Enemy Crab', bossName(bossType(AREAS.find((a) => a.name === 'Tide Pools')!.id)));
+  check("the Tide Pools' boss is the Giant Enemy Crab", bossName(bossType('Tide Pools')) === 'Giant Enemy Crab', bossType('Tide Pools'));
   const hp0 = player.hpMax;
   player.hpMax = player.hp = 1e7;
   const ground = game.floor.platforms[0];
@@ -1680,9 +1680,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 // --- enemies move at half their old speed ---
 {
   arena();
-  spawnMob({ x: 100, y: ground().y, types: ['Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Crab')!);
+  spawnMob({ x: 100, y: ground().y, types: ['Enemy Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Enemy Crab')!);
   const m = game.mobs[game.mobs.length - 1];
-  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
+  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Enemy Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
   game.mobs.length = 0;
 }
 
