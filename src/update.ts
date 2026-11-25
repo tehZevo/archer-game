@@ -15,7 +15,7 @@ import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { clamp } from './util';
 import { shop, shopInput, talk, trainer, trainerInput, updateEconomy } from './economy';
-import { updateGear } from './gear';
+import { bag, unequip, updateGear, wear } from './gear';
 import { dev, devStops } from './dev';
 import { bossAlive, bossMove, hurtPlayer, portalOpen, updateQuakes } from './boss';
 import { stylist, stylistKey } from './stylist';
@@ -402,7 +402,8 @@ export function devInput(dt: number): void {
 }
 
 function pauseInput(m: PauseMenu, dt: number): void {
-  const n = m.col === 0 ? STAT_KEYS.length : m.col === 1 ? skillRows().length : 1;
+  // the stats column runs on into what you wear and the bag of spares
+  const n = m.col === 0 ? STAT_KEYS.length + 2 + bag.length : m.col === 1 ? skillRows().length : 1;
   // holding Up/Down keeps moving (key repeat)
   if (repeated('up', dt)) m.row = (m.row + n - 1) % n;
   if (repeated('down', dt)) m.row = (m.row + 1) % n;
@@ -410,6 +411,9 @@ function pauseInput(m: PauseMenu, dt: number): void {
   if (pressed('left')) { m.col = ((m.col + 3) % 4) as PauseMenu['col']; m.row = 0; }
   if (pressed('right')) { m.col = ((m.col + 1) % 4) as PauseMenu['col']; m.row = 0; }
   if (pressed('z') || pressed('enter') || pressed(' ')) pauseSpend(m);
+  // X throws away the spare under the cursor
+  const b = m.col === 0 ? m.row - STAT_KEYS.length - 2 : -1;
+  if (pressed('x') && b >= 0 && bag[b]) { bag.splice(b, 1); m.row = Math.min(m.row, STAT_KEYS.length + 1 + bag.length); }
 }
 
 /** The achievements list: Up/Down scrolls, Esc / X / Z closes. */
@@ -429,6 +433,13 @@ function settingsInput(): void {
 export function pauseSpend(m: PauseMenu): void {
   if (m.col === 2) openSettings();
   else if (m.col === 3) openAchievements();
-  else if (m.col === 0) spendStat(STAT_KEYS[m.row]);
+  else if (m.col === 0) {
+    // stats, then WEAPON / ARMOR (take it off into the bag), then the bag
+    // (put that piece on, swapping it with what is worn)
+    const g = m.row - STAT_KEYS.length;
+    if (g < 0) spendStat(STAT_KEYS[m.row]);
+    else if (g < 2) unequip(g === 0 ? 'weapon' : 'armor');
+    else wear(g - 2);
+  }
   else { const r = skillRows()[m.row]; if (r) spendSkill(r.key); }
 }

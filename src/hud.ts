@@ -16,7 +16,8 @@ import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './update';
-import { gear } from './gear';
+import { armorSoak, bag, gear, weaponBonus } from './gear';
+import type { GearItem } from './gear';
 import { dev, DEV_ROWS, devStops } from './dev';
 import { bossAlive } from './boss';
 import { stylist } from './stylist';
@@ -316,10 +317,19 @@ function drawPause(): void {
     text(ctx, `${player.stats[k]}`, x + 40, y, 1, hi, 'left');
     if (player.ap) text(ctx, '+', x + COLS[0].w - 3, y, 1, gold, 'right');
   });
-  // what you're wearing: one piece per slot (there's no bag to keep spares)
+  // what you're wearing, then the bag of spares (rows after the stats)
   const gy = TOP + STAT_KEYS.length * ROW + 4;
-  text(ctx, `WEAPON ${gear.weapon ? `${gear.weapon.name} Lv.${gear.weapon.lvl}` : '-'}`, COLS[0].x + 2, gy, 1, hi, 'left');
-  text(ctx, `ARMOR ${gear.armor ? `${gear.armor.name} Lv.${gear.armor.lvl}` : '-'}`, COLS[0].x + 2, gy + ROW, 1, hi, 'left');
+  const gearRow = (i: number, label: string, color: string): void => {
+    const y = gy + i * ROW, r = STAT_KEYS.length + i;
+    if (m.col === 0 && m.row === r) { ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(COLS[0].x + 0.5, y - 1.5, COLS[0].w - 1, ROW); }
+    text(ctx, label, COLS[0].x + 2, y, 1, color, 'left');
+  };
+  // slot and level only (names run into the skills column); the selected
+  // piece's full name shows in the description below
+  const short = (i: GearItem): string => `${i.kind === 'weapon' ? 'WEAPON' : 'ARMOR'} LV.${i.lvl}`;
+  gearRow(0, gear.weapon ? short(gear.weapon) : 'NO WEAPON', gear.weapon ? hi : dim);
+  gearRow(1, gear.armor ? short(gear.armor) : 'NO ARMOR', gear.armor ? hi : dim);
+  bag.forEach((it, i) => gearRow(2 + i, `- ${short(it)}`, dim));
   const rows = skillRows();
   // a long skill list scrolls (the cursor stays in view) instead of running
   // into the description below; little arrows show there is more
@@ -341,7 +351,12 @@ function drawPause(): void {
   let desc = '';
   if (m.col === 2) desc = 'Sound, damage numbers and keys';
   else if (m.col === 3) desc = 'Achievements and their rewards';
-  else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
+  else if (m.col === 0 && m.row >= STAT_KEYS.length) {
+    const g = m.row - STAT_KEYS.length;
+    const it = g === 0 ? gear.weapon : g === 1 ? gear.armor : bag[g - 2];
+    const what = !it ? 'Nothing worn' : it.kind === 'weapon' ? `${it.name} Lv.${it.lvl}: +${Math.round(weaponBonus(it) * 100)}% attack` : `${it.name} Lv.${it.lvl}: soaks ${Math.round(armorSoak(it) * 100)}% damage`;
+    desc = g < 2 ? (it ? `${what}. Z: into the bag` : what) : `${what}. Z: wear  X: throw away`;
+  } else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
   else if (rows[m.row]) desc = rows[m.row].action || rows[m.row].need || `${rows[m.row].name}: mastered`;
   desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();
   // long descriptions (e.g. a branch upgrade's lock-out note) wrap to two lines

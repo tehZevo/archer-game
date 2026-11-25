@@ -217,10 +217,10 @@ export function buy(kind: ShopKind): boolean {
   if (!row) return false;
   if (kind === 'pet') return buyPet();
   if (wallet.coins < row.price) return false;
-  // gear goes straight on: there is no bag to put it in (see gear.ts)
+  // gear goes on if it beats what you wear, else into the bag (see gear.ts)
   if (row.item) {
+    if (!equip({ ...row.item })) return false; // no upgrade, and the bag is full
     wallet.coins -= row.price;
-    equip(row.item);
     return true;
   }
   const pot = kind as 'hp' | 'mp';
