@@ -52,7 +52,7 @@ export function updateRush(dt: number): void {
   }
   // the slide covers its fixed distance: contact with an enemy slows you, but
   // the slide keeps going until the distance (or the ground, or the clock) ends
-  if (player.rushDist >= P.RUSH_DIST || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
+  if (player.rushDist >= player.rushGoal || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 
 /** End a Sky Toss slide now and land its strike. */
@@ -71,8 +71,10 @@ export function cast(key: SkillKey): void {
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
   const linked = LINKED_SKILLS.includes(kind);
-  // Link skills only work right after Sky Toss, once per Sky Toss.
-  if (linked && player.combo <= 0) return;
+  const airborne = !player.onGround && !player.climb;
+  // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
+  // Spin is the exception: W in the air is a standalone sweep.
+  if (linked && player.combo <= 0 && !(key === 'W' && airborne)) return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
   if (player.cd[key] > 0 && !linked) return;
@@ -80,15 +82,14 @@ export function cast(key: SkillKey): void {
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   if (player.useT > 0 && !linked) return;
 
-  const airborne = !player.onGround && !player.climb;
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return;
   if (kind === 'C' && (airborne || player.climb)) return;
   if (kind === 'D' && !airborne) return;
-  // Sky Toss is a ground launcher: no mid-air use.
-  if ((kind === 'Q' || kind === 'VS' || kind === 'RA') && !player.onGround) return;
-  // Plunging Volley fires down from the air: no ground use.
-  if (kind === 'E' && !airborne) return;
+  // Q is a two-form key: the ground rush, and the Air Dive in mid-air.
+  if ((kind === 'VS' || kind === 'RA') && !player.onGround) return;
+  // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air.
+  // (the shared cooldown gate below covers both forms)
 
   player.mp -= r.mp;
   player.cd[key] = s.cd;
@@ -100,6 +101,9 @@ export function cast(key: SkillKey): void {
     player.combo = 0; player.comboT = 0;
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
+    // linked skills also shorten Tempest's long cooldown and refill a Blitz
+    player.cd.R = Math.max(0, player.cd.R - 1);
+    player.blitzT = Math.max(0, player.blitzT - 1);
   }
 
   switch (kind) {
@@ -175,7 +179,22 @@ export function cast(key: SkillKey): void {
       break;
     }
 
+    // Electric Blitz is the same rush, just faster and longer (see below).
+    case 'EB':
     case 'Q': {
+      // Air Dive (air form): plunge diagonally down, carrying the enemies
+      // under and in front of you, and roll into the ground rush on landing.
+      // TODO: dedicated dive art.
+      if (!player.onGround) {
+        player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
+        sfx.jump();
+        player.vx = player.face * P.DIVE_VX;
+        player.vy = P.DIVE_VY;
+        player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
+        player.diving = true;
+        player.combo = 1.1; player.comboT = 1.1;
+        break;
+      }
       player.cast = 'rush'; player.castT = 0.34; player.castTotal = 0.34;
       sfx.shoot();
       // Down + Q strikes in place. Otherwise slide forward, scooping up the
@@ -202,10 +221,16 @@ export function cast(key: SkillKey): void {
       };
       if (inPlace) rushStrike();
       else {
-        player.vx = face * P.RUSH_SLIDE_V;
+        // Electric Blitz is the charged version: a faster, longer rush that
+        // spends a banked charge instead of a cooldown.
+        const blitz = s.key === 'EB';
+        if (blitz && player.blitzCharges <= 0) { player.cd.Q = 0.1; return; }
+        player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
         player.rushT = P.RUSH_MAX;
         player.rushDist = 0;
+        player.rushGoal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
         player.rushCarry = [];
+        if (blitz) player.blitzCharges--;
       }
       player.combo = 1.1; player.comboT = 1.1;
       break;
@@ -282,7 +307,21 @@ export function cast(key: SkillKey): void {
     }
 
     case 'E': {
-      // Plunging Volley: mid-air only. A small upward bump (no freeze: you
+      // Spike Lift (ground form): spikes erupt in a burst around you and
+      // throw you into the air.
+      // TODO: dedicated spike art; this reuses the rush's horn of light.
+      if (player.onGround) {
+        player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
+        sfx.jump();
+        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
+        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.4 }));
+        tg.forEach((m) => damage(m, P.SPIKE_DMG));
+        player.vy = -P.SPIKE_LIFT;
+        player.onGround = false;
+        player.cd.E = P.SPIKE_CD;
+        break;
+      }
+      // Plunging Volley (air form): a small upward bump (no freeze: you
       // keep your drift and fall right after) as arrows rain straight down
       // into a column beneath you, hitting every enemy in it (nearest first).
       player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
@@ -305,18 +344,18 @@ export function cast(key: SkillKey): void {
     }
 
     case 'R': {
-      // Piercing Arrow: one heavy arrow down the line ahead; every enemy it
-      // passes through takes the full hit, nearest first
+      // Tempest: you vanish as an oval of energy sweeps up and around you,
+      // striking every enemy in a wide radius (nearest first).
+      // TODO: dedicated Tempest art for the sweep; this uses a muzzle flash.
       player.cast = 'shoot'; player.castT = 0.36; player.castTotal = 0.36;
       sfx.shoot();
       const face = player.face;
       const mx = player.x + face * 8, my = player.y + 13;
-      const tg = hitbox(player.x + face * P.PIERCE_RANGE / 2, my, P.PIERCE_RANGE, 28)
-        .sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx))
+      const tg = hitbox(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2)
+        .sort((a, b) => Math.abs(a.x - player.x) - Math.abs(b.x - player.x))
         .slice(0, r.targets);
       game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
-      game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: P.PIERCE_RANGE / 64 });
-      netShot(mx, my, face, P.PIERCE_RANGE);
+      netShot(mx, my, face, P.TEMPEST_R);
       tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
         if (game.mobs.includes(m)) damage(m, r.dmg);
       }));
@@ -324,9 +363,20 @@ export function cast(key: SkillKey): void {
     }
 
     case 'W': {
-      // Skyfall Volley: knock the enemies ahead into the air and shoot them
-      // before they land. Q (the rush) gathers them up first, and the link
-      // window it opens is what makes this available.
+      // Midair Spin (air form): a 360° sweep around you, hitting every enemy
+      // in reach. Shares the key with the launch and is picked by state.
+      // TODO: dedicated spin art; this uses a ring of horns.
+      if (airborne) {
+        player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
+        sfx.shoot();
+        const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
+        tg.forEach((m) => game.fx.push({ type: 'rush', x: m.x, y: m.y + m.h, t: 0.3 }));
+        tg.forEach((m) => damage(m, r.dmg));
+        break;
+      }
+      // Skyfall Volley (ground form): knock the enemies ahead into the air and
+      // shoot them before they land. Q (the rush) gathers them up first, and
+      // the link window it opens is what makes this available.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       sfx.shoot();
       const face = player.face;

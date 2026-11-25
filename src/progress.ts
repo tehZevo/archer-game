@@ -165,7 +165,7 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
 export const SKILL_PICK_EVERY = 5;
 /** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
  *  several upgrades is a branch: taking one locks the others out for good. */
-const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q' };
+const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q', EB: 'Q' };
 
 // TODO: Vault Shot, Rising Arrow and Backstep Shot stay in the game's code
 // (their cast cases, stats and icons) but are off the acquirable list for now;
