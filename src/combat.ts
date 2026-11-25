@@ -23,7 +23,7 @@ export const BAR_SHOW = 4;
 
 /** Seconds an enemy flinches after a hit; and the longest a death can wait on
  *  an attack's remaining hits. */
-export const HITSTUN = 0.22, DYING_MAX = 0.6;
+export const HITSTUN = 0.35, DYING_MAX = 0.6;
 
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   let dmg = game.player.war * mult * passiveDmg() * fervorMult() * rand(0.92, 1.08);
