@@ -343,6 +343,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('movement skills are never offered for ranks', !skillRows().some((r) => (r.key === 'C' || r.key === 'D') && r.action));
 }
 
+// --- an upgrade needs its base skill maxed ---
+{
+  arena(30);
+  player.ranks.Z = 2; player.sp = 1;
+  const row = skillRows().find((r) => r.key === 'S');
+  check('an upgrade shows before its base is maxed, but locked with a reason', !!row && row.action === '' && !!row.need?.includes('Twin Shot'));
+  check('...and an SP can\'t take it', !spendSkill('S') && player.ranks.S === 0 && player.sp === 1);
+  player.ranks.Z = 3;
+  check('with the base maxed it can be taken', spendSkill('S') && activeSkill('Z').key === 'S');
+}
+
 // --- ghosts: few rich packets, smooth playback ---
 {
   // sender walks right at 60 px/s for 2s, recording every frame (60 fps); its clock is 5000ms ahead
@@ -368,11 +379,11 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- branching upgrades: one branch per slot locks out the other ---
 {
   arena(30);
-  player.ranks.Z = 2; player.sp = 2;
+  player.ranks.Z = 3; player.sp = 2;
   const offered = skillRows().map((r) => r.key);
   check('Z offers both branches (Shell Barrage, Backstep Shot)', offered.includes('S') && offered.includes('BS'));
   spendSkill('BS');
-  check('taking Backstep Shot binds it to Z and keeps the rank', activeSkill('Z').key === 'BS' && rank('Z').level === 2);
+  check('taking Backstep Shot binds it to Z and keeps the rank', activeSkill('Z').key === 'BS' && rank('Z').level === 3);
   check('the rival branch is locked out', !skillRows().some((r) => r.key === 'S') && !spendSkill('S') && player.ranks.S === 0);
 }
 {
