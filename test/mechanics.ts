@@ -485,12 +485,22 @@ check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS)
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
 check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('prone') === POSES.length - 1 && POSES[0] === 'idle');
 {
-  // holding Down on the ground lies you flat: no walking, but you can turn
+  // holding Down on the ground lies you flat; Left/Right overrides it with a normal walk
   arena(1); player.x = 300; player.vx = 0; player.face = 1;
-  setKey('down', true); setKey('left', true); step(20);
-  check('holding Down on the ground lies you flat and stops you walking', player.animState === 'prone' && player.face === -1 && Math.abs(player.x - 300) < 1);
-  setKey('left', false); setKey('down', false); step(2);
+  setKey('down', true); step(5);
+  check('holding Down on the ground lies you flat', player.animState === 'prone' && Math.abs(player.x - 300) < 1);
+  setKey('left', true); step(20);
+  const downWalk = 300 - player.x, st = player.animState;
+  setKey('left', false); step(10);
+  check('Left/Right while holding Down stands you up and walks', st === 'walk' && player.face === -1 && downWalk > 10);
+  check('letting go of Left/Right (Down still held) lies you back down', player.animState === 'prone');
+  setKey('down', false); step(2);
   check('letting go of Down stands you back up', player.animState === 'idle');
+  // the same walk as without Down
+  arena(1); player.x = 300; player.vx = 0;
+  setKey('left', true); step(20); setKey('left', false);
+  check('a walk with Down held is as fast as without', Math.abs((300 - player.x) - downWalk) < 0.01, `${(300 - player.x).toFixed(2)} vs ${downWalk.toFixed(2)}`);
+  release();
 }
 
 // --- bug: fast ground moves sank into slopes ---
