@@ -369,6 +369,9 @@ export function cast(key: SkillKey, chained = false): void {
       tg.forEach((m) => damage(m, P.SPIKE_DMG));
       player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
       player.onGround = false;
+      // the launch opens the link window, so Air Dive (Q in the air) can
+      // start on the way up
+      player.combo = 1.4; player.comboT = 1.4;
       break;
     }
 
