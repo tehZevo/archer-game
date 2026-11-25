@@ -92,7 +92,8 @@ export function update(dt: number): void {
   // a chained link fires as soon as Sky Toss finishes
   // (a chained Twin Shot also waits out the slide itself)
   const busy = player.recoverT > 0; // the animation's recovery: a live link window cuts it short
-  const window = player.combo > 0 || player.blitzLinkT > 0; // Q's link, or a blitz's self-link
+  // Q's link, a blitz's self-link, or the Midair Spin Sky Assault opens
+  const window = player.combo > 0 || player.blitzLinkT > 0 || player.spinLinkT > 0;
   // A buffered skill aims where you're holding when it fires, not where you
   // faced when you pressed it: keep facing live while the current skill locks
   // your movement (mashing Q left, Q right zips you back and forth).
@@ -112,6 +113,7 @@ export function update(dt: number): void {
   if (player.blitzLinkT > 0) player.blitzLinkT -= dt;
   if (player.glideLinkT > 0) player.glideLinkT -= dt;
   if (player.volleyLinkT > 0) player.volleyLinkT -= dt;
+  if (player.spinLinkT > 0) player.spinLinkT -= dt;
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 

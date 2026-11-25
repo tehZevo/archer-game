@@ -175,13 +175,17 @@ export function cast(key: SkillKey, chained = false): void {
   // or its Electric Blitz upgrade, so the Air Dive flows into both.)
   const linked = LINKED_SKILLS.includes(kind) || (key === 'Q' && player.combo > 0) ||
     (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0) ||
-    (kind === 'D' && player.glideLinkT > 0) || (kind === 'PV' && player.volleyLinkT > 0);
+    (kind === 'D' && player.glideLinkT > 0) || (kind === 'PV' && player.volleyLinkT > 0) ||
+    (kind === 'MS' && player.spinLinkT > 0);
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
   if (LINKED_SKILLS.includes(kind) && player.combo <= 0 && kind !== 'MS') return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
+  // Sky Assault's own animation buffers the sweep it links into, so pressing
+  // W on the way up lands as the leap peaks
+  if (kind === 'MS' && player.spinLinkT > 0 && player.cast === 'barrage' && player.castT > 0) { player.queued = key; return; }
   // Input buffering: a link pressed during the source skill's post-animation
   // recovery is kept and fires on the first free frame (the rush's own
   // queue above covers its animation). Links bypass the animation itself, so
@@ -204,7 +208,7 @@ export function cast(key: SkillKey, chained = false): void {
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   // ...except that the airborne kit (Plunging Volley, Glide, and the Q-slot
   // rush you land into) cuts a Sky Assault hover short, so W -> E flows
-  const fromHover = player.hangT > 0 && (kind === 'PV' || kind === 'D' || key === 'Q');
+  const fromHover = player.hangT > 0 && (kind === 'PV' || kind === 'D' || kind === 'MS' || key === 'Q');
   if ((player.useT > 0 || player.recoverT > 0) && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
@@ -229,6 +233,7 @@ export function cast(key: SkillKey, chained = false): void {
     player.blitzLinkT = 0; // a linked blitz spends its own window too
     player.glideLinkT = 0; // a linked glide spends the aerial skill's window
     player.volleyLinkT = 0; // ...and so does a linked volley spend the spin's
+    player.spinLinkT = 0; // ...and a linked sweep spends the assault's window
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
@@ -534,6 +539,9 @@ export function cast(key: SkillKey, chained = false): void {
       game.fx.push({ type: 'swoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
       player.hangT = P.BARRAGE_HANG; player.hangHits = r.hits; player.hangHitT = 0;
       player.hangDmg = r.dmg; player.hangTargets = r.targets;
+      // the leap links into Midair Spin (W in the air): the window stays open
+      // through the hover, so the sweep fires out of it with no extra lag
+      player.spinLinkT = P.BARRAGE_HANG + P.ASSAULT_SPIN_LINK;
       break;
     }
 

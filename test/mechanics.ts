@@ -2652,5 +2652,44 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the Blitz rush strikes the carried enemy', m.hp < 1e6, `hp ${m.hp.toFixed(0)}`);
 }
 
+{
+  // Sky Assault links into Midair Spin: the leap opens the window, so W in
+  // the air sweeps out of the hover with no extra lag (the AB -> MS follow-up)
+  arena(20); player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  const m = dummy(120);
+  tap('w'); step(4); // mid-leap: the hover is live
+  check('the assault is hovering', player.hangT > 0 && player.cast === 'barrage', `hangT ${player.hangT.toFixed(2)}`);
+  check('...and its window for the sweep is open', player.spinLinkT > 0, `spinLinkT ${player.spinLinkT.toFixed(2)}`);
+  tap('w');
+  check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.spinLinkT <= 0,
+    `cast ${player.cast} spinLinkT ${player.spinLinkT.toFixed(2)}`);
+  step(12); // the sweep's four hits stagger out
+  check('...and it hits', m.hp < 1e6, `hp ${m.hp}`);
+  check('the linked sweep ends the hover', player.hangT <= 0, `hangT ${player.hangT.toFixed(2)}`);
+  check('...and stacks Fervor like any other link', player.fervor === 1, `fervor ${player.fervor}`);
+}
+
+{
+  // Buffering: W pressed during the assault's own animation is kept and fires
+  // on the first free frame
+  arena(20); player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  tap('w');
+  check('the assault starts', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
+  tap('w'); step(1); // pressed while the leap is still playing
+  check('the sweep is buffered, not dropped', player.queued === 'W', `queued ${player.queued}`);
+  check('...and the assault is still playing', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
+  step(2);
+  check('...then fires once the leap is underway', player.cast === 'shoot' && player.queued === null, `cast ${player.cast}`);
+}
+
+{
+  // Midair Spin on its own (no assault) still works as a standalone sweep
+  arena(20); player.ranks.W = 1; player.ranks.MS = 1;
+  tap('c'); step(10);
+  check('a plain jump's sweep is unaffected', player.cast === null && player.spinLinkT === 0);
+  tap('w'); step(2);
+  check('...and fires as usual', player.cast === 'shoot', `cast ${player.cast}`);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

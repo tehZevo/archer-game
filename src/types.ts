@@ -298,6 +298,8 @@ export interface Player extends Body {
   /** >0 right after a Midair Spin: Plunging Volley (E in the air) links,
    *  dropping straight out of the sweep. */
   volleyLinkT: number;
+  /** s left of the window Sky Assault opens for a Midair Spin. */
+  spinLinkT: number;
   /** Progression. */
   level: number;
   exp: number;
