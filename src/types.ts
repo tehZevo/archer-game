@@ -231,6 +231,8 @@ export interface Player extends Body {
   /** Enemies the slide is pushing along, at their distance ahead of the player. */
   rushCarry: { m: Mob; off: number }[];
   hangT: number;
+  /** Spike Lift: seconds left of the steady push up. */
+  liftT: number;
   /** Sky Assault strikes left, time to the next one, and per-strike damage / targets. */
   hangHits: number;
   hangHitT: number;

@@ -9,7 +9,7 @@ import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, READ
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, killMob, revive } from './combat';
-import { barrageTargets, cast, updateRush } from './skills';
+import { barrageTargets, cast, landDive, updateRush } from './skills';
 import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
@@ -59,13 +59,6 @@ export function update(dt: number): void {
     player.blitzT = player.blitzCharges >= P.BLITZ_MAX ? 0 : player.blitzT - P.BLITZ_CHARGE_T;
     player.readyT.Q = READY_FLASH; // a charge is back: the Q icon flashes
   }
-  if (player.diving && player.onGround) {
-    // the dive lands: roll straight into the ground rush
-    player.diving = false;
-    player.vx = player.face * P.RUSH_SLIDE_V;
-    player.rushT = P.RUSH_MAX; player.rushDist = 0;
-    player.cast = 'rush'; player.castT = P.RUSH_MAX; player.castTotal = P.RUSH_MAX;
-  }
   for (const k of Object.keys(player.cd)) {
     const was = player.cd[k];
     player.cd[k] = Math.max(0, was - dt);
@@ -96,9 +89,10 @@ export function update(dt: number): void {
 
   if (player.castT > 0) player.castT -= dt; else player.cast = null;
   // a chained link fires as soon as Sky Toss finishes
-  if (player.queued && !(player.cast === 'rush' && player.castT > 0)) {
+  // (a chained Twin Shot also waits out the slide itself)
+  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0)) {
     const k = player.queued; player.queued = null;
-    cast(k);
+    cast(k, k === 'Z');
   }
   if (player.superStance > 0) player.superStance -= dt;
   if (player.invuln > 0) player.invuln -= dt;
@@ -193,11 +187,14 @@ export function update(dt: number): void {
         const feetNow = player.y + player.h, nx = player.x + player.vx * dt;
         if (!surfaceBetween(nx, 1, feetNow - 12, feetNow + 12)) player.vx = 0;
       }
+      // Spike Lift: the spikes push you up steadily, against gravity
+      if (player.liftT > 0) { player.liftT -= dt; player.vy = -P.SPIKE_RISE_V - P.GRAVITY * dt; }
       const prevFeet = player.y + player.h, prevX = player.x;
       integrate(player, dt);
       // clamp to the world before colliding, so the ground test uses the final x
       player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2);
       collideGround(player, prevFeet, prevX);
+      landDive(); // an Air Dive touching down rolls into the rush this same frame
 
       // grab a rope/ladder first, so a rope hanging from the platform you're
       // standing on is caught before the drop-through consumes the Down press
@@ -205,6 +202,7 @@ export function update(dt: number): void {
       if (c) {
         player.climb = c;
         player.dropBlock = null;
+        player.liftT = 0;
         player.x = c.x;
         player.y = clamp(player.y, c.y1 - player.h, c.y2 - player.h);
         player.vx = 0; player.vy = 0;
