@@ -1,5 +1,5 @@
 import { cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES, emoteFor, setEmote } from '../src/emotes';
-import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, START_POTIONS, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
+import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, shopStock, START_POTIONS, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
 import { areaOf, isPathEnd, isTown, lastTown, MAP_AREAS, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, samePlace, START, TOWNS, townDepth, type Place } from '../src/world';
 // Mechanics checks, run with `npm test` after the smoke test. Each one is a
 // short, seeded, deterministic run (a few hundred frames at most). No long
@@ -28,6 +28,7 @@ import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, damage, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
+import { mobLevel } from '../src/world';
 import { fmtNum } from '../src/util';
 import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/boss';
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
@@ -1181,6 +1182,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('z');
   check('buying takes the coins and adds a potion', wallet.coins === 5 && wallet.hp === 1);
   check("can't buy without the coins", !buy('mp') && wallet.mp === 0);
+  // the shop also sells a weapon and an armor piece built for this town
+  const stock = shopStock();
+  const bowRow = stock.find((r) => r.kind === 'weapon')!, plateRow = stock.find((r) => r.kind === 'armor')!;
+  check('the shop stocks a weapon and an armor piece', !!bowRow.item && !!plateRow.item);
+  check("the gear is built for this town's level", bowRow.item?.lvl === mobLevel(game.floor.place), `Lv.${bowRow.item?.lvl}`);
+  wallet.coins = bowRow.price;
+  shop.sel = stock.indexOf(bowRow); tap('z');
+  check('buying the bow takes its price and puts it on', wallet.coins === 0 && gear.weapon?.name === bowRow.item?.name);
+  wallet.coins = plateRow.price - 1;
+  shop.sel = stock.indexOf(plateRow); tap('z');
+  check("can't buy the armor a coin short", wallet.coins === plateRow.price - 1 && gear.armor === null);
   tap('escape');
   check('Esc closes the shop (not the pause menu)', !shop.open && !game.pause);
   release();
