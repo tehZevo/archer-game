@@ -47,6 +47,11 @@ export const P = {
   PLUNGE_DEPTH: 176,   // ...and how far below your feet it reaches, px
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 200,     // px/s upward bump when it fires (~19px rise; was 110, ~6px)
+  // Spike Lift: E's ground form. Spikes erupt around you and throw you up.
+  SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
+  SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
+  SPIKE_R: 56,         // px radius of the burst around you
+  SPIKE_LIFT: 300,     // px/s upward (about a full jump's height)
   PIERCE_RANGE: 260,   // Piercing Arrow reach, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them

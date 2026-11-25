@@ -430,11 +430,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 
 // --- E / R ---
 {
+  // E is a two-form key: Spike Lift on the ground, Plunging Volley in the air
   arena(10); player.ranks.E = 1;
-  const under = dummy(100), beside = dummy(170);
+  const near = dummy(140);
   tap('e');
-  check('Plunging Volley does nothing on the ground', player.cd.E === 0 && under.hp === 1e6);
-  // jump, then fire at the top of the jump
+  check('Spike Lift drives spikes into the enemies around you', near.hp < 1e6);
+  check('Spike Lift throws you into the air', !player.onGround && player.vy < 0);
+  step(2);
+  check('Spike Lift is on a long cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
+  // the air form, once you are back on your feet with the cooldown cleared
+  step(40); player.cd.E = 0;
+  const under = dummy(100), beside = dummy(170);
   tap('c'); step(8);
   const yTop = player.y; player.vx = 40; tap('e'); step(1);
   check('Plunging Volley bumps you up (a clear hop)', player.y < yTop - 4 && player.y > yTop - 20 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
