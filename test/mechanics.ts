@@ -417,6 +417,22 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Midair Spin shows on the W key', !!ms && ms.slot === 'W', ms?.slot);
   check('Plunging Volley shows on the E key', !!pv && pv.slot === 'E', pv?.slot);
 }
+// --- a skill's prerequisite must be mastered before it unlocks ---
+{
+  arena(30);
+  player.ranks.Q = 1; player.ranks.W = 1;
+  const ad = skillRows().find((r) => r.key === 'AD');
+  check('Air Dive is locked until Sky Toss is mastered', !!ad && ad.action === '' && !!ad.need?.includes('Sky Toss'), ad?.need);
+  player.ranks.Q = 3;
+  const ad2 = skillRows().find((r) => r.key === 'AD');
+  check('...and unlocks once Sky Toss is at max rank', !!ad2 && ad2.action.startsWith('Learn'));
+  player.ranks.W = 3; player.ranks.AB = 1;
+  const ms = skillRows().find((r) => r.key === 'MS');
+  check('Midair Spin is locked until Sky Assault is mastered', !!ms && ms.action === '' && !!ms.need?.includes('Sky Assault'), ms?.need);
+  player.ranks.AB = 3;
+  const ms2 = skillRows().find((r) => r.key === 'MS');
+  check('...and unlocks once Sky Assault is at max rank', !!ms2 && ms2.action.startsWith('Learn'));
+}
 // --- branching upgrades: the slots that still branch (Z, W) ---
 {
   arena(30);

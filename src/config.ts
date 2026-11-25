@@ -124,10 +124,10 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
   AD: { key: 'AD', name: 'Air Dive', tag: 'Aerial', job: 1, minLevel: 1, maxLevel: 3,
-       cd: P.DIVE_CD, mp1: 3, mpMax: 4, dmg1: 0, dmgMax: 0,
+       cd: P.DIVE_CD, mp1: 3, mpMax: 4, dmg1: 0, dmgMax: 0, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   MS: { key: 'MS', name: 'Midair Spin', tag: 'Link', job: 1, minLevel: 5, maxLevel: 3,
-       cd: P.SPIN_CD, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, targets1: 8, targetsMax: 8,
+       cd: P.SPIN_CD, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, targets1: 8, targetsMax: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
   PV: { key: 'PV', name: 'Plunging Volley', tag: 'Aerial', job: 1, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.25, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10,
