@@ -155,7 +155,7 @@ export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
 /* ---------------- mobs ---------------- */
 export const MOB_TYPES: MobType[] = [
   { n: 'Garden Snail', lvl: 1,  hp: 150,  w: 17, h: 14, spd: 52,  dmg: 3,  col: '#5fb8f0', areas: ['Sunlit Shore'] },
-  { n: 'Crab',         lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Tide Pools', 'Sunlit Shore'] },
+  { n: 'Enemy Crab',   lvl: 2,  hp: 180,  w: 20, h: 13, spd: 70,  dmg: 3,  col: '#e8643c', areas: ['Tide Pools', 'Sunlit Shore'] },
   { n: 'Hermit Crab',  lvl: 3,  hp: 240,  w: 18, h: 16, spd: 40,  dmg: 3,  col: '#e8b48a', areas: ['Sunlit Shore'] },
   { n: 'Gull',         lvl: 4,  hp: 140,  w: 18, h: 12, spd: 90,  dmg: 2,  col: '#f4f7fc', fly: true, areas: ['Sunlit Shore', 'Endless Sky'] },
   { n: 'Boar',   lvl: 8,  hp: 260,  w: 23, h: 18, spd: 78,  dmg: 4,  col: '#e79ac4', areas: ['Whispering Woods', '*'] },
@@ -193,7 +193,7 @@ export const MOB_TYPES: MobType[] = [
   // look and stats. They live wherever their base (`of`) does unless they list their
   // own areas, and turn up in its place VARIANT_CHANCE of the time (see pickVariant).
   { n: 'Red Snail',       of: 'Garden Snail',   lvl: 2,  hp: 210, w: 17, h: 14,                   spd: 44,  dmg: 3, col: '#f07a5a' },
-  { n: 'Blue Crab',       of: 'Crab',           lvl: 3,  hp: 160, w: 20, h: 13,                   spd: 92,  dmg: 3, col: '#4a8ae8' },
+  { n: 'Blue Crab',       of: 'Enemy Crab',           lvl: 3,  hp: 160, w: 20, h: 13,                   spd: 92,  dmg: 3, col: '#4a8ae8' },
   { n: 'Wild Boar',     of: 'Boar',           lvl: 9,  hp: 340, w: 23, h: 18,                   spd: 70,  dmg: 5, col: '#8a5a3a', areas: ['Whispering Woods'] },
   { n: 'Storm Gull',      of: 'Gull',           lvl: 5,  hp: 170, w: 18, h: 12,                   spd: 105, dmg: 3, col: '#8a94a8', fly: true, areas: ['Endless Sky'] },
   { n: 'Horned Beetle',   of: 'Beetle',         lvl: 7,  hp: 260, ...mobSize('Horned Beetle'),   spd: 50,  dmg: 4, col: '#8a5a2a' },
