@@ -2535,6 +2535,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
+  // A buffered skill fires in the direction held when it releases, not when
+  // it was pressed: Q left, Q right zips you back and forth
+  arena(20); player.ranks.Q = 1;
+  dummy(150);
+  setKey('left', true);
+  tap('q'); step(1); // the first rush slides left...
+  setKey('left', false); setKey('right', true);
+  tap('q'); // ...and the next one is buffered while the right key is held
+  step(10); // the first rush (0.34s) ends and the buffered one fires
+  check('the buffered rush fires right', player.face === 1 && player.vx > 0, `face ${player.face} vx ${player.vx.toFixed(0)}`);
+  setKey('right', false);
+}
+{
   // EXP bar at max level: reads LV.100 and stays full
   arena(20);
   player.level = 99; player.exp = 500; player.expNext = 1000;
@@ -2584,8 +2597,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.ranks.HA = 3;
   check('Haste shortens the recovery by 10% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.1) < 1e-6,
     `${delayTime('EB').toFixed(4)}`);
-  player.ranks.HA = 0; player.ranks.EB = 0; player.ranks.Q = 1;
-}
+  player.ranks.HA = 0; player.ranks.EB = 0; player.ranks.Q = 1;}
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
