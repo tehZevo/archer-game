@@ -219,7 +219,7 @@ function dummy(x: number, hp = 1e6): Mob {
     casts += c;
   }
   const avg = casts / 3;
-  check('Lv.1 Garden Snail takes 2-4 Twin Shots', avg >= 2 && avg <= 4, `avg ${avg}`);
+  check('Lv.1 Garden Snail takes 4-7 Twin Shots', avg >= 4 && avg <= 7, `avg ${avg}`);
 }
 
 // --- links: W only works right after Sky Toss, once ---
@@ -766,7 +766,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(40);
   check('back on the ground', player.onGround);
   const m = dummy(140);
-  tap('c'); step(3); tap('w'); step(2);
+  tap('c'); step(3); tap('w'); step(12); // the sweep's four hits stagger out
   const hp1 = m.hp; player.useT = 0; tap('w'); step(2);
   check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['W.air'] > 3);
   let apex = player.y;
@@ -2633,6 +2633,24 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(2);
   check('...and the dive plays out (no hover freeze)', player.hangT === 0 && (player.diving || player.rushT > 0),
     `diving ${player.diving} rushT ${player.rushT.toFixed(2)}`);}
+
+{
+  // Damage rework: the new per-skill hit/damage numbers
+  check('Twin Shot hits up to 4 targets at 80% -> 120% per hit',
+    SKILLS.Z.targetsMax === 4 && SKILLS.Z.dmg1 === 80 && SKILLS.Z.dmgMax === 120);
+  check('Skyfall Volley fires 4 (not 6) at max', SKILLS.W.hits1 === 4 && SKILLS.W.hitsMax === 4);
+  check('Sky Assault strikes 4 (not 8) at max', SKILLS.AB.hits1 === 4 && SKILLS.AB.hitsMax === 4);
+  check('Midair Spin sweeps 4 hits at 200%', SKILLS.MS.hits1 === 4 && SKILLS.MS.hitsMax === 4 && SKILLS.MS.dmg1 === 200 && SKILLS.MS.dmgMax === 200);
+  check('Electric Blitz strikes twice', SKILLS.EB.hits1 === 2 && SKILLS.EB.hitsMax === 2);
+  check('Tempest storms 8 hits at 300% each', SKILLS.R.hits1 === 8 && SKILLS.R.hitsMax === 8 && SKILLS.R.dmg1 === 300 && SKILLS.R.dmgMax === 300);
+  check('Air Dive lands one Sky Toss-strength hit', SKILLS.AD.hits1 === 1 && SKILLS.AD.dmg1 === 250 && SKILLS.AD.dmgMax === 400);
+  // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
+  arena(20); player.ranks.Q = 3; player.ranks.EB = 3;
+  player.blitzCharges = P.BLITZ_MAX;
+  const m = dummy(140);
+  tap('q'); step(24); // the slide ends and the strike lands (both hits)
+  check('the Blitz rush strikes the carried enemy', m.hp < 1e6, `hp ${m.hp.toFixed(0)}`);
+}
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
