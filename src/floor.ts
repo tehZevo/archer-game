@@ -1,6 +1,6 @@
 import { MOB_TYPES, WORLD, TILE } from './config';
 import { net, roomId } from './net';
-import { AREAS, areaName, blockOf, isAreaEnd, isTown, placeName, townStage } from './world';
+import { AREAS, areaName, blockOf, isAreaEnd, isTown, placeName, tierOf, townStage } from './world';
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
@@ -294,7 +294,8 @@ export function townFloor(n: number): Floor {
   // labelled with where they lead: the areas ahead, and the town you came from
   const here = AREAS[net.area];
   const upX = [2 * TILE, WORLD.w - 2 * TILE];
-  const ups = here.up.map((a, i) => P(upX[i], ground.y, n + 1, placeName(n + 1, a), a));
+  // ...and the level of the enemies on the first floor up there
+  const ups = here.up.map((a, i) => ({ ...P(upX[i], ground.y, n + 1, placeName(n + 1, a), a), lvl: Math.max(1, n + 1 - tierOf(n + 1)) }));
   // the loft: 5 tiles over the deck's columns 3-7, the same headroom over the
   // deck as the deck has over the ground; its ladder at its left end stays
   // clear of the way down further along it

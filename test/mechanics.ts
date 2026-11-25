@@ -1644,6 +1644,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   achKey('escape');
 }
 
+// --- town ways up show the level they're meant for ---
+{
+  const forest = AREAS.find((a) => a.name === 'Forest')!;
+  gotoFloor(townStage(forest.depth), forest.id);
+  const ups = game.floor.portals.filter((p) => p.to > game.floor.number);
+  check('each way up from a town shows the level of the enemies there', ups.length > 0 && ups.every((p) => p.lvl === mobLevel(p.to)));
+  check("the way down doesn't", game.floor.portals.filter((p) => p.to < game.floor.number).every((p) => p.lvl === undefined));
+  gotoFloor(1, 0);
+}
+
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---
 {
   resetBinds();
