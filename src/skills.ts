@@ -29,6 +29,7 @@ let rushStrike: (() => void) | null = null;
 export function updateRush(dt: number): void {
   if (player.rushT <= 0) return;
   player.rushT -= dt;
+  player.rushDist += Math.abs(player.vx) * dt;
   const face = Math.sign(player.vx) || player.face;
   // the grab reaches a little behind you too, so an enemy you just passed is still scooped up
   const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
@@ -49,7 +50,9 @@ export function updateRush(dt: number): void {
     const s = surfaceBetween(m.x, m.w, feet - 24, feet + 24, null, (p) => p.block === m.spawn?.block);
     if (s && m.airTime <= 0) { m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; }
   }
-  if (player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
+  // the slide covers its fixed distance: contact with an enemy slows you, but
+  // the slide keeps going until the distance (or the ground, or the clock) ends
+  if (player.rushDist >= P.RUSH_DIST || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 
 /** End a Sky Toss slide now and land its strike. */
@@ -200,6 +203,7 @@ export function cast(key: SkillKey): void {
       else {
         player.vx = face * P.RUSH_SLIDE_V;
         player.rushT = P.RUSH_MAX;
+        player.rushDist = 0;
         player.rushCarry = [];
       }
       player.combo = 1.1; player.comboT = 1.1;

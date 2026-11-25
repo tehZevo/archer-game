@@ -276,10 +276,24 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Toss slides forward', player.x - x0 > 30, `dx ${(player.x - x0).toFixed(1)}`);
   check('Sky Toss pushes the enemies it runs into along with you', carried && m.x > 130);
   check('Sky Toss launches nothing until the slide ends', !launchedEarly);
-  check('the Sky Toss charge hits each enemy it scoops up, once', hits === 1, `${hits} hits during the slide`);
+  check('the Sky Toss charge hits each enemy it scoops up, once', hits === 1, `${hits} hits, dx ${(player.x - x0).toFixed(1)}, rushT ${player.rushT.toFixed(2)}`);
   step(2);
   check('Sky Toss strikes and launches as the slide ends', m.hp < 1e6 && m.airTime > 0);
 }
+{
+  // Sky Toss travels its fixed distance even when an enemy slows it mid-slide
+  arena(1);
+  const m = dummy(player.x + 20);
+  const x0 = player.x;
+  tap('q');
+  step(3);              // mid-slide, having run into the enemy
+  check('contact slows the slide', Math.abs(player.vx) < P.RUSH_SLIDE_V, `vx ${player.vx.toFixed(1)}`);
+  check('...but the slide is not over yet', player.rushT > 0);
+  step(20);
+  check('the slide ends having covered its distance', player.rushT === 0 && player.x - x0 >= P.RUSH_DIST - 4, `dx ${(player.x - x0).toFixed(1)}`);
+  game.mobs.length = 0;
+}
+
 {
   // Sky Toss stops at the edge of the platform instead of sliding off it
   arena(1);

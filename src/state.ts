@@ -37,7 +37,7 @@ export const player: Player = {
   climbRush: false,
   useT: 0,
   queued: null,
-  rushT: 0, rushCarry: [],
+  rushT: 0, rushDist: 0, rushCarry: [],
   hangT: 0, hangHits: 0, hangHitT: 0, hangDmg: 0, hangTargets: 0,
   regenT: 0,
   combatT: 0,
@@ -183,7 +183,7 @@ export function gotoPlace(place: Place): void {
   player.useT = 0;
   player.queued = null;
   player.hangT = 0; player.hangHits = 0;
-  player.rushT = 0; player.rushCarry = [];
+  player.rushT = 0; player.rushDist = 0; player.rushCarry = [];
   player.effects.length = 0; // effects don't follow you to another floor
   if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');
 }
