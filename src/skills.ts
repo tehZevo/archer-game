@@ -84,11 +84,16 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
     // a horn of light erupts under each target (or ahead, if none)
     (tg.length ? tg.map((m) => [m.x, m.y + m.h]) : [[cx, player.y + player.h]])
       .forEach(([x, y]) => game.fx.push({ type: 'rush', x, y, t: 0.4 }));
-    tg.forEach((m) => {
-      // the rush carries and hits; the launch is the W's job now
-      damage(m, r.dmg);
-      if (!inPlace) m.vx = face * 80; // a little follow-through drift
-    });
+    // the rush carries and hits (a Blitz strikes twice); the launch is the
+    // W's job now
+    for (let h = 0; h < r.hits; h++) {
+      later(h * 0.08, () => {
+        tg.filter((m) => game.mobs.includes(m)).forEach((m) => {
+          damage(m, r.dmg, { more: h < r.hits - 1 });
+          if (!inPlace && h === 0) m.vx = face * 80; // a little follow-through drift
+        });
+      });
+    }
   };
   if (inPlace) rushStrike();
   else {
@@ -321,6 +326,10 @@ export function cast(key: SkillKey, chained = false): void {
       player.vy = P.DIVE_VY;
       player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
       player.diving = true;
+      // the dive itself stabs down into the enemies under and in front of
+      // you, for the full Sky Toss hit (one strike, at this skill's damage)
+      hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
+        .slice(0, r.targets).forEach((m) => damage(m, r.dmg));
       rushStrike = null; // (a strike left over from an earlier rush must not land now)
       player.combo = 1.1; player.comboT = 1.1;
       player.glideLinkT = P.GLIDE_LINK; // and it links into a Glide
@@ -482,7 +491,12 @@ export function cast(key: SkillKey, chained = false): void {
       sfx.shoot();
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
-      tg.forEach((m) => damage(m, r.dmg));
+      // the sweep cuts several times, not once
+      for (let h = 0; h < r.hits; h++) {
+        later(h * 0.08, () => {
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { more: h < r.hits - 1 }));
+        });
+      }
       break;
     }
 
