@@ -341,7 +341,8 @@ export interface Shot {
 }
 
 /** Effects are all baked animations (see fxsprites.ts). */
-export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit';
+export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
+  | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit';
 
 export interface Fx {
   type: FxKind;

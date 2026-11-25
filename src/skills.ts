@@ -343,7 +343,7 @@ export function cast(key: SkillKey, chained = false): void {
       // the dive itself stabs down into the enemies under and in front of
       // you, for the full Sky Toss hit (one strike, at this skill's damage)
       hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
-        .slice(0, r.targets).forEach((m) => damage(m, r.dmg));
+        .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
       rushStrike = null; // (a strike left over from an earlier rush must not land now)
       player.combo = 1.1; player.comboT = 1.1;
       player.glideLinkT = P.GLIDE_LINK; // and it links into a Glide
@@ -439,7 +439,7 @@ export function cast(key: SkillKey, chained = false): void {
       sfx.jump();
       game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64).slice(0, r.targets);
-      tg.forEach((m) => damage(m, P.SPIKE_DMG));
+      tg.forEach((m) => damage(m, P.SPIKE_DMG, { fx: 'spikeHit' }));
       player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
       player.onGround = false;
       // the launch opens the link window, so Air Dive (Q in the air) can
@@ -492,7 +492,7 @@ export function cast(key: SkillKey, chained = false): void {
       game.fx.push({ type: 'tempest', x: player.x, y: player.y + player.h, t: FX_DUR.tempest, follow: true });
       netShot(mx, my, face, P.TEMPEST_R);
       tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
-        if (game.mobs.includes(m)) damage(m, r.dmg);
+        if (game.mobs.includes(m)) damage(m, r.dmg, { fx: 'tempestHit' });
       }));
       break;
     }
@@ -512,7 +512,7 @@ export function cast(key: SkillKey, chained = false): void {
       const shots = shotCount(r);
       for (let h = 0; h < shots; h++) {
         later(h * NUM_GAP, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { more: h < shots - 1 }));
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'spinHit', more: h < shots - 1 }));
         });
       }
       break;
@@ -542,14 +542,14 @@ export function cast(key: SkillKey, chained = false): void {
       player.cast = 'barrage'; player.castT = P.BARRAGE_HANG; player.castTotal = P.BARRAGE_HANG;
       sfx.shoot();
       hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
-        .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true }));
+        .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
       const from = player.y + player.h / 2;
       // always the same rise: it used to scale with how high the launched
       // enemies were at that moment, so casting at the top of their arc
       // (or with one on a higher platform) sent you ~3x higher
       player.y = Math.max(0, player.y - P.BARRAGE_UP);
       player.vx = 0; player.vy = 0; player.onGround = false;
-      game.fx.push({ type: 'swoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
+      game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
       player.hangT = P.BARRAGE_HANG; player.hangHits = r.hits; player.hangHitT = 0;
       player.hangDmg = r.dmg; player.hangTargets = r.targets;
       // the leap links into Midair Spin (W in the air): the window stays open

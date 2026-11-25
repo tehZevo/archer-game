@@ -175,8 +175,8 @@ export function update(dt: number): void {
       if (player.hangHits > 0 && player.hangHitT <= 0) {
         player.hangHitT = P.BARRAGE_HANG / 7; // 6 strikes spread through the hover
         player.hangHits--;
-        game.fx.push({ type: 'swoosh', x: player.x + player.face * 10, y: player.y + player.h, t: 0.2, face: player.hangHits % 2 ? -player.face : player.face });
-        barrageTargets().slice(0, player.hangTargets).forEach((m) => damage(m, player.hangDmg, { airborne: true, more: player.hangHits > 0 }));
+        game.fx.push({ type: 'skySwoosh', x: player.x + player.face * 10, y: player.y + player.h, t: 0.2, face: player.hangHits % 2 ? -player.face : player.face });
+        barrageTargets().slice(0, player.hangTargets).forEach((m) => damage(m, player.hangDmg, { airborne: true, fx: 'skyHit', more: player.hangHits > 0 }));
       }
       player.animState = 'jump';
     } else {
