@@ -30,6 +30,8 @@ import { BAR_SHOW, damage, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM
 import { barrageTargets, cast, cdSlot, delayTime } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { mobLevel } from '../src/world';
+import { MOB_SOUNDS } from '../src/audio';
+import { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
 import { fmtNum } from '../src/util';
 import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/boss';
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
@@ -2650,6 +2652,47 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const m = dummy(140);
   tap('q'); step(24); // the slide ends and the strike lands (both hits)
   check('the Blitz rush strikes the carried enemy', m.hp < 1e6, `hp ${m.hp.toFixed(0)}`);
+}
+
+{
+  // Each enemy type has its own hit sound
+  arena(20);
+  check('a Garden Snail has its own impact voice', MOB_SOUNDS['Garden Snail'] !== undefined);
+  check('...as does every base mob type (a variant borrows its parent\'s voice)',
+    MOB_TYPES.every((t) => MOB_SOUNDS[t.of ?? t.n] !== undefined),
+    MOB_TYPES.filter((t) => !MOB_SOUNDS[t.of ?? t.n]).map((t) => t.n).join(', '));
+  const snail = MOB_SOUNDS['Garden Snail'], gull = MOB_SOUNDS['Gull'];
+  check('...and no two sound the same', new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size >= 20,
+    `${new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size} distinct`);
+  check('a snail and a gull are pitched apart', snail.f !== gull.f && snail.t !== gull.t);
+}
+
+{
+  // Death: a tombstone drops in and the ghost rises out of it
+  arena(20);
+  const m = dummy(140);
+  const fell = player.x;
+  player.invuln = 0; player.hp = 1;
+  const saved = Math.random; Math.random = () => 0.99; // the hit lands
+  hurtPlayer(500, m.x);
+  Math.random = saved;
+  check('the archer is down', player.hp === 0, `${player.hp}`);
+  step(1); // the frame's end starts the death animation, then the respawn
+  check('the death animation starts on the spot she fell on', getPlayerDeath() !== null, `${getPlayerDeath()?.x}`);
+  check('...at her position, not the respawn point', Math.abs(getPlayerDeath()!.x - fell) < 1,
+    `${getPlayerDeath()?.x} vs ${fell}`);
+  check('...and the archer is back on her feet', player.hp === player.hpMax && player.onGround);
+  step(6); // the animation runs on its own clock while she plays on
+  check('the tombstone drops in from above', tombDrop(getPlayerDeath()!) > 0 && tombDrop(getPlayerDeath()!) < 1,
+    `${tombDrop(getPlayerDeath()!).toFixed(2)}`);
+  check('...and the ghost has not risen yet', ghostRise(getPlayerDeath()!) === 0);
+  step(Math.ceil((TOMB_DROP_T * 2) / P.STEP));
+  check('the stone lands', tombDrop(getPlayerDeath()!) === 1, `${tombDrop(getPlayerDeath()!).toFixed(2)}`);
+  step(6);
+  check('the ghost starts rising out of it', ghostRise(getPlayerDeath()!) > 0, `${ghostRise(getPlayerDeath()!).toFixed(2)}`);
+  check('the whole animation is about a second and a half', PLAYER_DEATH_T > 1 && PLAYER_DEATH_T < 2, `${PLAYER_DEATH_T}`);
+  step(Math.ceil(PLAYER_DEATH_T / P.STEP));
+  check('...and it clears', getPlayerDeath() === null, `${getPlayerDeath()?.age}`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

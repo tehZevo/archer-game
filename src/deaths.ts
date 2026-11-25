@@ -242,3 +242,52 @@ export function deathBits(c: Corpse, t: number): Bit[] {
   }
   return out;
 }
+
+/* ============================================================
+   PLAYER DEATH
+   Killed archers don't just blink out: a tombstone drops in from the sky
+   where they fell, and their ghost rises out of it and fades. The clock is
+   the same idea as a Corpse's age (see above), so the animation is pure
+   function-of-time and needs no canvas of its own.
+   ============================================================ */
+
+/** s the tombstone takes to drop in, and the ghost to rise and fade. */
+export const TOMB_DROP_T = 0.35, GHOST_RISE_T = 1.0;
+export const PLAYER_DEATH_T = TOMB_DROP_T + GHOST_RISE_T;
+
+export interface PlayerDeath {
+  /** where the archer fell */
+  x: number;
+  /** the ground she fell on */
+  y: number;
+  /** s since she died */
+  age: number;
+  /** her own look, so the ghost is her (see look.ts) */
+  seed: number;
+}
+
+let death: PlayerDeath | null = null;
+export const getPlayerDeath = (): PlayerDeath | null => death;
+
+export function setPlayerDeath(x: number, y: number): void {
+  if (death) return; // one animation per knockout, not one per frame
+  death = { x, y, age: 0, seed: (Math.random() * 1e9) | 0 };
+}
+
+export function updatePlayerDeath(dt: number): void {
+  if (!death) return;
+  death.age += dt;
+  if (death.age >= PLAYER_DEATH_T) death = null;
+}
+
+/** 0..1 of the tombstone's drop (it lands with a small bounce). */
+export function tombDrop(d: PlayerDeath): number {
+  const p = Math.min(1, d.age / TOMB_DROP_T);
+  return 1 - (1 - p) * (1 - p); // ease-out: it settles onto the ground
+}
+
+/** 0..1 of the ghost's rise, starting once the stone has landed. */
+export function ghostRise(d: PlayerDeath): number {
+  const p = (d.age - TOMB_DROP_T) / GHOST_RISE_T;
+  return p <= 0 ? 0 : Math.min(1, p);
+}
