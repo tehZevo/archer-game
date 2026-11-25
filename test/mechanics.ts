@@ -500,6 +500,23 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('q'); for (let i = 0; i < 30 && (player.rushT > 0 || player.cast === 'rush'); i++) step(1);
   check('right after the rush, Z fires at once too', player.useT > 0 && (tap('z'), player.cast === 'shoot'));
 }
+{
+  // Echo Shot (passive): the shadow archer's extra hits ride on every attack,
+  // permanently, once bought with SP. No timer.
+  arena(20); player.ranks.Z = 1;
+  check('Twin Shot fires two arrows with no Echo Shot', rank('Z').hits === 2);
+  player.ranks.ES = 1;
+  check('Echo Shot rank 1 adds one hit to Twin Shot', rank('Z').hits === 3, `${rank('Z').hits}`);
+  player.ranks.Z = 3;
+  check('...and it stacks with the skill\'s own rank', rank('Z').hits === 3, `${rank('Z').hits}`);
+  player.ranks.ES = 3;
+  check('Echo Shot maxed adds two hits', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('Echo Shot unlocks at Lv.15 and is a passive', SKILLS.ES.minLevel === 15 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
+  player.ranks.ES = 0;
+  check("a passive's bonus is zero until learned", rank('Z').hits === 2);
+  arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
+  check('the shadow adds its hits to a mid-air Plunging Volley too', rank('PV').hits === 4, `${rank('PV').hits}`);
+}
 // --- Electric Blitz: Q's charged upgrade ---
 {
   arena(20); player.ranks.Q = 3; player.ranks.EB = 1;

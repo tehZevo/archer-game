@@ -120,7 +120,8 @@ export function rank(key: SkillKey): SkillRank {
     maxLevel: s.maxLevel,
     mp: Math.round(lerp(s.mp1, s.mpMax, t)),
     dmg: lerp(s.dmg1, s.dmgMax, t) / 100,
-    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)),
+    // Echo Shot (a passive): the shadow archer's extra hits ride on every attack.
+    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)) + (s.passive ? 0 : Math.round(passiveBonus('ES'))),
     targets: Math.round(lerp(s.targets1 ?? 1, s.targetsMax ?? 1, t)),
   };
 }

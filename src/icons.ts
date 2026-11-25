@@ -231,6 +231,23 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '..............',
     '.gggggggggggg.',
   ],
+  // Echo Shot: an arrow with a ghosted twin firing behind it
+  ES: [
+    '..............',
+    '......a.......',
+    '.....aa.R.....',
+    '.y...a.RRR....',
+    '.yy..aRR......',
+    '.yy.aRR.......',
+    '.y..aR.....a..',
+    '...aa......aa.',
+    '...a.......y..',
+    '..a........y..',
+    '..yy....RR....',
+    '...yy..RR.....',
+    '....RRRR......',
+    '..............',
+  ],
   // Air Dive: an arrow diving down-right, with a speed streak
   AD: [
     '..............',
