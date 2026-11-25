@@ -1591,19 +1591,21 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   Object.assign(settings, DEFAULT_SETTINGS);
 }
 
-// --- chasing enemies keep full speed up close and turn on the spot ---
+// --- chasing enemies keep full speed, run past you, and turn past you ---
 {
   arena(1, 160); player.invuln = 999;
   const m = dummy(140); m.spd = 60; m.aggro = true; m.dir = 1;
+  m.x = player.x - 40;
   step(1);
   check('a chasing enemy runs at full speed even right next to you', Math.abs(m.vx - 60) < 1e-6, `vx ${m.vx.toFixed(1)} at ${(player.x - m.x).toFixed(1)}px`);
-  m.x = player.x + 15; m.vx = 60; step(1);
-  check('when you get past it, it stops to turn round', m.dir === 1 && m.vx === 0);
+  // it aims 3 tiles (48px) past you, so it keeps going as it closes
+  m.x = player.x - 10; step(1);
+  check('it runs on past you rather than stopping on you', m.vx === 60 && m.x > player.x - 10, `vx ${m.vx.toFixed(1)} x ${m.x.toFixed(1)}`);
+  // once it is 3 tiles past you, it stops to turn round
+  m.x = player.x + 48; m.vx = 60; step(1);
+  check('three tiles past you, it stops to turn round', m.dir === 1 && m.vx === 0, `dir ${m.dir} vx ${m.vx.toFixed(1)}`);
   step(Math.ceil(CHASE_TURN / P.STEP));
   check('...then comes back at full speed', m.dir === -1 && Math.abs(m.vx + 60) < 1e-6, `vx ${m.vx.toFixed(1)}`);
-  m.x = player.x + 15;
-  m.x = player.x + 1; step(1);
-  check('...standing still on top of you instead of flipping back and forth', m.vx === 0);
   game.mobs.length = 0;
 }
 
@@ -1629,6 +1631,15 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const rnd = Math.random; Math.random = () => 0.01;
   try { spawnWave(); } finally { Math.random = rnd; }
   check('waves spawn variants', game.mobs.length > 0 && game.mobs.every((m) => m.type.of), game.mobs.map((m) => m.name).join(', '));
+  game.mobs.length = 0;
+}
+
+// --- enemies move at half their old speed ---
+{
+  arena();
+  spawnMob({ x: 100, y: ground().y, types: ['Crab'] } as never, MOB_TYPES.find((m) => m.n === 'Crab')!);
+  const m = game.mobs[game.mobs.length - 1];
+  check('a spawned enemy moves at half its listed speed', m.spd === Math.round(MOB_TYPES.find((x) => x.n === 'Crab')!.spd * P.MOB_SPEED), `spd ${m.spd}`);
   game.mobs.length = 0;
 }
 

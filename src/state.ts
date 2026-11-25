@@ -114,7 +114,7 @@ export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   game.mobs.push({
     x: spot.x, y: spot.y - h, w, h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
-    type, name: type.n, hp, hpMax: hp, spd: type.spd,
+    type, name: type.n, hp, hpMax: hp, spd: Math.round(type.spd * P.MOB_SPEED),
     dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06) * e.DMG),
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level) * e.EXP,

@@ -33,6 +33,7 @@ export const P = {
   Z_CAST: 0.42,        // s for the whole Twin Shot animation (draw, release, follow-through)
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   ACCEL: 1600,         // groundedAccelForce
+  MOB_SPEED: 0.5,     // ...and the most move too fast: every enemy's spd is halved
   RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (~70px slide)
   RUSH_MAX: 0.32,     // s the Sky Toss slide lasts at most; the strike lands as it ends
   RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up

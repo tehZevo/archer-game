@@ -2,7 +2,7 @@ import { EMOTES } from './emotes';
 import { netEmote } from './net';
 import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
-import { CAM, P, SKILL_ORDER, WORLD } from './config';
+import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
 import { passiveBonus } from './progress';
 import { cameraTarget, gainExp, game, gotoFloor, logMsg, mobBounds, player, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
@@ -251,6 +251,9 @@ export function update(dt: number): void {
 export const CHASE_SLACK = 3;
 /** Seconds a chasing enemy stops to turn round when you get past it. */
 export const CHASE_TURN = 0.3;
+/** Tiles past the player a chasing enemy runs to before turning back, so a
+ *  chase sweeps past you and comes at you from the other side. */
+export const CHASE_OVERSHOOT = 3 * TILE;
 
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
@@ -280,15 +283,19 @@ function updateMobs(dt: number): void {
       if (m.boss) bossMove(m, dt, lo, hi);
       else if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
         // full speed at you, turning on the spot: no easing off as it closes
-        // in, no slow skid to turn round (a few px of slack stops it
-        // flipping every frame while it stands on you)
-        // turning round takes a moment: it stops, then sets off the other way
-        const want = Math.abs(d) > CHASE_SLACK ? Math.sign(d) : m.dir;
-        if (want !== m.dir) {
+        // in. It aims a few tiles past you, so it runs over you and turns
+        // round there, coming back from the other side instead of parking.
+        const goal = player.x + m.dir * CHASE_OVERSHOOT;
+        const toGoal = goal - m.x;
+        if (Math.abs(toGoal) > CHASE_SLACK) {
+          m.turn = 0;
+          m.vx = m.dir * m.spd * slowFactor(m);
+        } else {
+          // at the far end of the sweep: stop, then set off the other way
           m.turn = (m.turn ?? 0) + dt;
-          if (m.turn >= CHASE_TURN) { m.dir = want; m.turn = 0; }
-        } else m.turn = 0;
-        m.vx = Math.abs(d) > CHASE_SLACK && !m.turn ? m.dir * m.spd * slowFactor(m) : 0;
+          m.vx = 0;
+          if (m.turn >= CHASE_TURN) { m.dir = Math.sign(d) || m.dir; m.turn = 0; }
+        }
       } else {
         m.vx += (m.dir * m.spd * slowFactor(m) - m.vx) * Math.min(1, 12 * dt);
         // turn back at the end of the patrol, or on reaching the platform's edge
