@@ -243,6 +243,9 @@ export function update(dt: number): void {
   updateCamera(dt);
 }
 
+/** px either side of the player a chasing enemy stops turning toward them. */
+export const CHASE_SLACK = 3;
+
 function updateMobs(dt: number): void {
   for (const m of [...game.mobs]) {
     updateStatus(m, dt, m);
@@ -270,9 +273,11 @@ function updateMobs(dt: number): void {
       const reachable = player.x >= lo - 8 && player.x <= hi + 8;
       if (m.boss) bossMove(m, dt, lo, hi);
       else if (m.aggro && reachable && Math.abs(d) < 260 && Math.abs((m.y + m.h) - (player.y + player.h)) < 90) {
-        m.dir = Math.sign(d) || 1;
-        m.vx += clamp(d * 4 - m.vx, -2400 * dt, 2400 * dt) * 0.5;
-        m.vx = clamp(m.vx, -m.spd * slowFactor(m), m.spd * slowFactor(m));
+        // full speed at you, turning on the spot: no easing off as it closes
+        // in, no slow skid to turn round (a few px of slack stops it
+        // flipping every frame while it stands on you)
+        if (Math.abs(d) > CHASE_SLACK) m.dir = Math.sign(d);
+        m.vx = Math.abs(d) > CHASE_SLACK ? m.dir * m.spd * slowFactor(m) : 0;
       } else {
         m.vx += (m.dir * m.spd * slowFactor(m) - m.vx) * Math.min(1, 12 * dt);
         // turn back at the end of the patrol, or on reaching the platform's edge
@@ -309,9 +314,10 @@ function updateMobs(dt: number): void {
       m.y = clamp(m.y, 0, WORLD.h - m.h);
     }
     m.x += m.vx * dt;
-    // never off the edge of its own platform (knockback, pushes and chases included)
+    // never off the edge of its own platform (knockback, pushes and chases
+    // included); half a pixel in, so its middle never sits right on the edge
     const [lo, hi] = mobBounds(m);
-    if (m.x < lo || m.x > hi) { m.x = clamp(m.x, lo, hi); m.vx = 0; }
+    if (m.x < lo + 0.5 || m.x > hi - 0.5) { m.x = clamp(m.x, lo + 0.5, hi - 0.5); m.vx = 0; }
   }
 }
 

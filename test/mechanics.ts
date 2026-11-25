@@ -1508,11 +1508,11 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   killMob(n); const one = drops.length;
   killMob(e);
   check(`an elite drops ${ELITE.COINS} coin piles`, one === 1 && drops.length === 1 + ELITE.COINS);
-  // waves: about 1 in 8
+  // waves: about 1 in 25
   game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Crab'] }));
   game.mobs = []; spawnWave();
   const frac = game.mobs.filter((m) => m.elite).length / game.mobs.length;
-  check('waves roll elites about 1 in 8', frac > 0.07 && frac < 0.19, frac.toFixed(3));
+  check('waves roll elites rarely, about 1 in 25', ELITE.CHANCE === 1 / 25 && frac > 0.01 && frac < 0.09, frac.toFixed(3));
   game.mobs = []; game.floor.spawns = [];
 }
 
@@ -1699,6 +1699,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('in hitstun it stops instead of chasing', Math.abs(o.vx) < 30, `vx ${o.vx.toFixed(1)}`);
   step(Math.ceil(HITSTUN / P.STEP) + 1);
   check('hitstun wears off', !o.hurt);
+  game.mobs.length = 0;
+}
+
+// --- chasing enemies keep full speed up close and turn on the spot ---
+{
+  arena(1, 160); player.invuln = 999;
+  const m = dummy(140); m.spd = 60; m.aggro = true; m.dir = 1;
+  step(1);
+  check('a chasing enemy runs at full speed even right next to you', Math.abs(m.vx - 60) < 1e-6, `vx ${m.vx.toFixed(1)} at ${(player.x - m.x).toFixed(1)}px`);
+  m.x = player.x + 15; m.vx = 60; step(1);
+  check('...and turns round at once when you get past it', m.dir === -1 && Math.abs(m.vx + 60) < 1e-6, `vx ${m.vx.toFixed(1)}`);
+  m.x = player.x + 1; step(1);
+  check('...standing still on top of you instead of flipping back and forth', m.vx === 0);
   game.mobs.length = 0;
 }
 
