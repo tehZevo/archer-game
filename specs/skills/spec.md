@@ -24,7 +24,6 @@ All skills unlock at one of four levels, matching the job ladder: **1, 10, 30, 6
 
 - **Lv.1 — Basics:** Twin Shot (Z, free at rank 1); Jump (C, free); Glide (D); Precision (passive).
 - **Lv.10 — Aerial Combo:** Sky Toss (Q) with its Vault Shot / Rising Arrow branch; Skyfall Volley (W) upgradable to Sky Assault; Midair Spin (its sweep, requiring Sky Assault); Air Dive (its plunge, requiring Sky Toss); Agile Climbing; Fervor (passive).
-27
 - **Lv.30 — Ground Burst:** Skyfall Volley sits with Sky Toss as its link; the movement skills arrive as two tiers: air (Jump + Glide at 1), then climb (Agile Climbing at 10).
 - **Lv.30 — Ground Burst:** Spike Lift (E) and its air form Plunging Volley; Haste (passive); Echo Shot (passive); the Z-slot upgrade Shell Barrage.
 - **Lv.60 — Storm:** Electric Blitz; Tempest (R); Power Surge (passive).
