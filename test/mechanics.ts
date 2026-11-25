@@ -267,6 +267,19 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Assault hits', m.hp < hp0);
   check('Sky Assault always rises the same fixed height', Math.abs(up - P.BARRAGE_UP) < 1, `up ${up.toFixed(1)}`);
 }
+{
+  // Sky Assault is gated by the link window: one use per Sky Toss, not spammed.
+  arena(20); player.ranks.W = 3; player.ranks.AB = 1;
+  dummy(125);
+  setKey('down', true); tap('q'); setKey('down', false); step(12);
+  check('the Sky Toss opens the link window', player.combo > 0);
+  tap('w');
+  check('the first Sky Assault fires', player.cast === 'barrage' && player.hangT > 0);
+  check('...and it consumes the window', player.combo === 0);
+  player.hangT = 0; player.cast = null; player.castT = 0; player.useT = 0;
+  tap('w');
+  check('a second Sky Assault waits for a fresh Sky Toss', player.cast !== 'barrage');
+}
 
 {
   // Sky Toss: slide forward pushing enemies along; the strike and launch land as the slide ends
