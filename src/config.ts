@@ -274,4 +274,5 @@ export const FX_DUR: Record<Fx['type'], number> = {
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
+  volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3,
 };

@@ -342,7 +342,8 @@ export interface Shot {
 
 /** Effects are all baked animations (see fxsprites.ts). */
 export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
-  | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit';
+  | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit'
+  | 'volleyFlare' | 'tornado' | 'climbRise';
 
 export interface Fx {
   type: FxKind;
@@ -380,6 +381,8 @@ export interface Banner {
 export interface DamageOpts {
   /** Hit effect to play (default: the cyan hit, or the crit burst). */
   fx?: FxKind;
+  /** No hit spark at all (the skill draws its own single blast instead). */
+  noFx?: boolean;
   airborne?: boolean;
   stun?: boolean;
   launch?: boolean;
