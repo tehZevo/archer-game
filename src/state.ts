@@ -120,7 +120,7 @@ export function spawnMob(s: Spawn, type: MobType, elite = false): void {
     x: spot.x, y: spot.y - h, w, h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: Math.round(type.spd * P.MOB_SPEED),
-    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.06) * e.DMG),
+    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.09) * e.DMG), // ...and hits you 1.5x as hard per level
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level) * e.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
