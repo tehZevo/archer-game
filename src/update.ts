@@ -3,7 +3,7 @@ import { EMOTES } from './emotes';
 import { netEmote } from './net';
 import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
-import { CAM, P, SKILL_ORDER, TILE, WORLD } from './config';
+import { CAM, LINKED_SKILLS, P, SKILL_ORDER, TILE, WORLD } from './config';
 import { passiveBonus } from './progress';
 import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, READY_FLASH, spawnWave } from './state';
 import { held, pressed, repeated } from './input';
