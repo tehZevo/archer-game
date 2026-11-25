@@ -1,3 +1,4 @@
+import { cleanEmote, clearEmotes, EMOTES, setEmote, type Emote } from './emotes';
 import { joinRoom } from 'trystero';
 import type { UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
@@ -136,6 +137,7 @@ let pos: UserState<Packet> | null = null;
 let sendKills: ((n: number) => Promise<void>) | null = null;
 let sendShot: ((s: ShotMsg) => Promise<void>) | null = null;
 let sendChat: ((s: string) => Promise<void>) | null = null;
+let sendEmote: ((n: number) => Promise<void>) | null = null;
 const rec = new Recorder();
 
 /** Network log lines go to the console, prefixed so they're easy to filter. */
@@ -154,6 +156,7 @@ function connect(channel: number): void {
   looks.clear();
   clearShots();
   clearBubbles();
+  clearEmotes();
   resetBoost();
   net.channel = channel;
   // a new floor takes the current hour; a channel hop on the same floor keeps it
@@ -203,6 +206,10 @@ function connect(channel: number): void {
   chatMsg.onMessage((s, ctx) =>
     addChat(ctx.userId, names.get(ctx.userId) ?? '?', cleanChat(s), tintFor(ctx.userId), performance.now()));
   sendChat = chatMsg.send;
+  // emotes (see emotes.ts): an index into EMOTES
+  const emoteMsg = room.makeAction<number>('emote');
+  emoteMsg.onMessage((n, ctx) => { const k = cleanEmote(n); if (k) setEmote(ctx.userId, k, performance.now()); });
+  sendEmote = emoteMsg.send;
   room.onPeerJoin((ctx) => {
     log('peer joined', ctx.userId.slice(0, 8), 'has position:', !!pos?.getAll()[ctx.userId]);
     const got = pos?.getAll()[ctx.userId];
@@ -210,7 +217,7 @@ function connect(channel: number): void {
     const w = who.getAll()[ctx.userId];
     if (w?.n) meet(ctx.userId, w);
   });
-  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); looks.delete(ctx.userId); clearBubbles(ctx.userId); });
+  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); looks.delete(ctx.userId); clearBubbles(ctx.userId); clearEmotes(ctx.userId); });
   net.joined = true;
 }
 
@@ -226,6 +233,12 @@ export function say(raw: string): void {
 export function netShot(x: number, y: number, face: number, len: number): void {
   if (!net.started || !peers.size) return;
   sendShot?.({ t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len) }).catch(() => {});
+}
+
+/** Show an emote over your head, and to the room. */
+export function netEmote(kind: Emote): void {
+  setEmote(SELF, kind, performance.now());
+  if (net.started && peers.size) sendEmote?.(EMOTES.indexOf(kind)).catch(() => {});
 }
 
 /** A snapshot of the connection, for the console: `archer.netStatus()`. */

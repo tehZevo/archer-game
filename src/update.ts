@@ -1,3 +1,5 @@
+import { EMOTES } from './emotes';
+import { netEmote } from './net';
 import { achKey, achUi, bump, openAchievements } from './achievements';
 import { ANIM_RATE } from './mobanim';
 import { CAM, P, SKILL_ORDER, WORLD } from './config';
@@ -50,6 +52,8 @@ export function update(dt: number): void {
   }
   for (const k of SKILL_ORDER) player.cd[k] = Math.max(0, player.cd[k] - dt);
   updateStatus(player, dt);
+  // F1-F7: emotes
+  EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });
   // skill keys
   // Basic attack during Sky Toss's link window casts the link skill
   // (Skyfall Volley, or Sky Assault once upgraded).

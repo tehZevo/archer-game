@@ -1,3 +1,4 @@
+import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { FX } from './fxsprites';
 import { ELITE, FX_DUR, WORLD } from './config';
 import { ctx } from './canvas';
@@ -314,7 +315,25 @@ function drawGhosts(): void {
       text(ctx, name, nx, ny, 1, col, 'center');
     }
     drawBubble(id, g.x, g.y - (name ? 12 : 2), now);
+    drawEmote(id, g.x, g.y, g.face, now);
   }
+}
+
+/** A player's emote: a 9x9 face in a little bubble just above and in front
+ *  of their head (`top` is the sprite's top). */
+function drawEmote(id: string, x: number, top: number, face: number, now: number): void {
+  const e = emoteFor(id, now);
+  if (!e) return;
+  const art = EMOTE_ART[e], age = now - (emotes.get(id)?.at ?? now);
+  // pops in over the first 120ms
+  const pop = age < 120 ? 1 : 0;
+  const bx = Math.round(x + face * 9 - 6), by = Math.round(top - 10 + pop);
+  ctx.fillStyle = '#0d1424'; ctx.fillRect(bx - 1, by, 13, 11); ctx.fillRect(bx, by - 1, 11, 13);
+  ctx.fillStyle = '#f4f7fc'; ctx.fillRect(bx, by, 11, 11);
+  art.forEach((row, ry) => { for (let rx = 0; rx < row.length; rx++) {
+    const c = row[rx];
+    if (c !== '.') { ctx.fillStyle = EMOTE_PAL[c]; ctx.fillRect(bx + 1 + rx, by + 1 + ry, 1, 1); }
+  } });
 }
 
 /** A sender's speech bubble, its bottom (tail tip) at (x, bottom). */
@@ -335,6 +354,7 @@ function drawPlayer(): void {
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
+  drawEmote(SELF, player.x, player.y + player.h - ARCHER_H, player.face, performance.now());
 }
 
 function drawShot(s: Shot): void {
