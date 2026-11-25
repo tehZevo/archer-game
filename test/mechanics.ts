@@ -67,6 +67,7 @@ import { bag, BAG_SIZE, unequip, wear } from '../src/gear';
 import { STAT_KEYS } from '../src/progress';
 import { generateFloor, TOWN_PLANS } from '../src/floor';
 import { corpses, DEATH_T, DEATHS, deathOf, deathPose } from '../src/deaths';
+import { bakeDeathSheet, DEATH_FRAMES, deathFrame } from '../src/deathsheet';
 import { localPose } from '../src/net';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
@@ -2832,6 +2833,25 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the whole animation is about a second and a half', PLAYER_DEATH_T > 1 && PLAYER_DEATH_T < 2, `${PLAYER_DEATH_T}`);
   step(Math.ceil(PLAYER_DEATH_T / P.STEP));
   check('...and it clears', getPlayerDeath() === null, `${getPlayerDeath()?.age}`);
+}
+
+{
+  // Enemy deaths are baked sprite sheets: frames built from each enemy's own
+  // sprite and recipe, picked by age (no runtime particles)
+  const W = 12, H = 10, px = new Uint8ClampedArray(W * H * 4);
+  for (let i = 0; i < W * H; i++) { px[i * 4] = 200; px[i * 4 + 1] = 120; px[i * 4 + 2] = 60; px[i * 4 + 3] = 255; }
+  const src = { w: W, h: H, px };
+  const solid = (g: { px: Uint8ClampedArray }): number => { let n = 0; for (let i = 3; i < g.px.length; i += 4) if (g.px[i]) n++; return n; };
+  const names = Object.keys(DEATHS);
+  const sheets = names.map((n) => bakeDeathSheet(n, DEATHS[n], src));
+  check('every enemy bakes a full strip of death frames', sheets.every((d) => d.frames.length === DEATH_FRAMES));
+  check('...that starts with its body on screen', sheets.every((d) => solid(d.frames[0]) > W * H * 0.3),
+    names.filter((_, i) => solid(sheets[i].frames[0]) <= W * H * 0.3).join(', '));
+  check('...and has mostly faded by the last frame', sheets.every((d) => solid(d.frames[DEATH_FRAMES - 1]) < solid(d.frames[0])));
+  const sig = sheets.map((d) => d.frames.map((g) => Array.from(g.px).join(',')).join('|'));
+  check('each enemy\'s death animation is its own', new Set(sig).size === names.length, `${new Set(sig).size}/${names.length}`);
+  check('the same enemy always bakes the same sheet', bakeDeathSheet(names[0], DEATHS[names[0]], src).frames[4].px.join() === sheets[0].frames[4].px.join());
+  check('a death\'s age picks its frame, holding the last', deathFrame(0) === 0 && deathFrame(DEATH_T / 2) === DEATH_FRAMES / 2 && deathFrame(DEATH_T * 2) === DEATH_FRAMES - 1);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

@@ -1,7 +1,8 @@
 import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { FX } from './fxsprites';
 import { ELITE, FX_DUR, P, WORLD } from './config';
-import { corpses, deathBits, deathPose, DEATH_T, ghostRise, getPlayerDeath, rand, tombDrop, type Corpse } from './deaths';
+import { corpses, deathPose, DEATH_T, ghostRise, getPlayerDeath, tombDrop, type Corpse } from './deaths';
+import { bakeDeathSheet, deathFrame } from './deathsheet';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { HITSTUN } from './combat';
@@ -212,66 +213,40 @@ function goldSilhouette(c: HTMLCanvasElement): HTMLCanvasElement {
 
 /* ---------------- enemy deaths (see deaths.ts) ---------------- */
 
-/** Bits that glow are added on, like the skill effects. */
-const GLOWS = new Set(['spark', 'star', 'ember']);
+/** Each enemy's baked death sheet (deathsheet.ts), as canvases, built on its first death. */
+const deathSheets = new Map<string, { frames: HTMLCanvasElement[]; cx: number; cy: number }>();
+function deathSheetFor(c: Corpse): { frames: HTMLCanvasElement[]; cx: number; cy: number } | null {
+  let d = deathSheets.get(c.name);
+  if (!d) {
+    const s = SPR.mob[c.name]?.hurt;
+    if (!s) return null;
+    const src = s.x.getImageData(0, 0, s.w, s.h);
+    const sheet = bakeDeathSheet(c.name, c.recipe, { w: s.w, h: s.h, px: src.data });
+    d = {
+      cx: sheet.cx, cy: sheet.cy,
+      frames: sheet.frames.map((g) => {
+        const cv = document.createElement('canvas'); cv.width = g.w; cv.height = g.h;
+        const x = cv.getContext('2d')!, id = x.createImageData(g.w, g.h);
+        id.data.set(g.px); x.putImageData(id, 0, 0);
+        return cv;
+      }),
+    };
+    deathSheets.set(c.name, d);
+  }
+  return d;
+}
 
 function drawCorpse(c: Corpse): void {
-  const s = SPR.mob[c.name]?.hurt;
-  const p = Math.min(1, c.age / DEATH_T), q = deathPose(c, p);
-  const mid = c.feet - c.h / 2;
-  if (s && q.alpha > 0) {
-    ctx.save();
-    ctx.globalAlpha = q.alpha;
-    // turned about the middle of the body, squashed onto its feet
-    ctx.translate(Math.round(c.x + q.dx), Math.round(mid + q.dy));
-    ctx.rotate(q.rot);
-    ctx.translate(0, c.h / 2);
-    ctx.scale(q.sx * c.dir * c.k, q.sy * c.k);
-    ctx.drawImage(s.c, -Math.round(s.w / 2), -s.h);
-    ctx.restore();
-  }
-  // crumbling: the body breaks into chunks of itself that tumble apart
-  if (s && c.recipe.move === 'crumble' && p >= 0.08) {
-    const r = rand(c.seed ^ 0x5bd1), t = c.age - 0.08 * DEATH_T, B = 4;
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, 1 - p * p);
-    for (let y = 0; y < s.h; y += B) for (let x = 0; x < s.w; x += B) {
-      const ox = (x + B / 2 - s.w / 2) * c.k, oy = (y + B / 2 - s.h) * c.k; // from the feet
-      const vx = ox * 3 + (r() - 0.5) * 30, vy = -40 - r() * 50;
-      const px = c.x + c.dir * (ox + vx * t), py = Math.min(c.feet + c.drop - 2, c.feet + oy + vy * t + 170 * t * t);
-      ctx.drawImage(s.c, c.dir > 0 ? x : s.w - x - B, y, B, B, Math.round(px - B * c.k / 2), Math.round(py), B * c.k, B * c.k);
-    }
-    ctx.restore();
-  }
-  // what flies off it
-  const floor = c.h / 2 + c.drop; // the ground, from its middle
+  const d = deathSheetFor(c);
+  if (!d) return;
+  const p = Math.min(1, c.age / DEATH_T);
+  // the sheet dies on the spot; a flier killed in the air also falls to the ground
+  const fall = deathPose(c, p).dy - deathPose({ ...c, drop: 0 }, p).dy;
+  const img = d.frames[deathFrame(c.age)], mid = c.feet - c.h / 2;
   ctx.save();
-  if (GLOWS.has(c.recipe.bits)) ctx.globalCompositeOperation = 'lighter';
-  for (const b of deathBits(c, c.age)) {
-    if (b.alpha <= 0) continue;
-    ctx.globalAlpha = b.alpha;
-    ctx.fillStyle = b.col;
-    const x = Math.round(c.x + b.x), y = Math.round(mid + Math.min(floor - 1, b.y));
-    switch (c.recipe.bits) {
-      case 'feather': case 'petal': case 'shell':
-        // a sliver turning as it goes
-        if (Math.abs(Math.sin(b.rot)) < 0.5) ctx.fillRect(x - 1, y, 3, 1); else ctx.fillRect(x, y - 1, 1, 3);
-        break;
-      case 'gear':
-        // a tooth sticking out, turning round it, and a dark hub
-        ctx.fillRect(x - 1, y - 1, 3, 3); ctx.fillRect(x + (Math.cos(b.rot) > 0 ? 2 : -2), y, 1, 1);
-        ctx.fillStyle = '#2a2018'; ctx.fillRect(x, y, 1, 1);
-        break;
-      case 'star':
-        ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3);
-        break;
-      case 'shard':
-        if (Math.sin(b.rot) > 0) ctx.fillRect(x, y - 1, 1, 2); else ctx.fillRect(x - 1, y, 2, 1);
-        break;
-      default:
-        ctx.fillRect(x - (b.size >> 1), y - (b.size >> 1), b.size, b.size);
-    }
-  }
+  ctx.translate(Math.round(c.x), Math.round(mid + fall));
+  ctx.scale(c.dir * c.k, c.k); // sheets face right: mirrored for one heading left
+  ctx.drawImage(img, -d.cx, -d.cy);
   ctx.restore();
 }
 
