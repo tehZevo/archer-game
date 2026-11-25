@@ -129,12 +129,18 @@ export function rank(key: SkillKey): SkillRank {
     maxLevel: s.maxLevel,
     mp: Math.round(lerp(s.mp1, s.mpMax, t)),
     dmg: lerp(s.dmg1, s.dmgMax, t) / 100,
-    // Echo Shot (a passive): the shadow archer fires alongside you, doubling
-    // (bonus1..bonusMax x) the arrows every attack skill fires.
-    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)) * (s.passive ? 1 : Math.max(1, Math.round(passiveBonus('ES')))),
+    // The skill's own shots. Echo Shot is a separate multiplier (see shots()):
+    // keeping the two apart is what lets the shadow's arrows ride the same
+    // damage-number stack as the base volley instead of colliding with it.
+    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)),
     targets: Math.round(lerp(s.targets1 ?? 1, s.targetsMax ?? 1, t)),
   };
 }
+
+/** How many arrows an attack fires: its own shots, doubled by the Echo Shot
+ *  passive's shadow archer. The shadow always procs (a minimum of one lot),
+ *  and its arrows are counted here rather than folded into `hits`. */
+export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('ES')));
 
 /** A passive's current bonus: 0 until learned, then steps up per rank. */
 export function passiveBonus(key: SkillKey): number {
