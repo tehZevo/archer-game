@@ -3,7 +3,8 @@ const KEY_MAP: Record<string, string> = {
 };
 
 /** Keys we consume on keydown so the page doesn't scroll. */
-const PREVENT = new Set(['a', 's', 'z', 'x', 'c', 'v', 'b', 'q', 'w', 'e', 'r', 't', 'f', 'd', 'g', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', 'enter', 'escape', '[', ']', '`']);
+const PREVENT = new Set(['a', 's', 'z', 'x', 'c', 'v', 'b', 'q', 'w', 'e', 'r', 't', 'f', 'd', 'g', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', 'enter', 'escape', '[', ']', '`',
+  'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7']); // F1-F7 are emotes (not help, find, reload...)
 
 const keys: Record<string, boolean> = Object.create(null);
 
