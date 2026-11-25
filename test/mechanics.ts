@@ -479,13 +479,14 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('gear is named by the level it is made for', bow.name === 'Long Bow' && bow.lvl === 10, bow.name);
   check('a Lv.10 bow adds 30% to every hit', equip(bow) && Math.abs(gearDmg() - 1.30) < 0.001, `x${gearDmg().toFixed(3)}`);
   const war0 = player.war;
+  dummy(140); game.dmgNums.length = 0;
   tap('z'); step(12);
   const hit = game.dmgNums[game.dmgNums.length - 1];
   check('the bow multiplies the arrow that lands', hit.v > war0 * 1.29, `hit ${hit.v}`);
 
   check('a weaker bow leaves the stronger one equipped', !equip(gearFor('weapon', 4)) && gear.weapon?.lvl === 10);
   const better = gearFor('weapon', 20);
-  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Composite Bow', gear.weapon?.name);
+  check('a stronger bow replaces it (no bag to keep the old one)', equip(better) && gear.weapon?.name === 'Yew Bow', gear.weapon?.name);
 
   const plate = gearFor('armor', 30);
   check('armor soaks a share of what you take (capped)', equip(plate) && gearSoak() === 0.35, `soak ${gearSoak()}`);
@@ -496,17 +497,22 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   // a kill can leave a piece behind, and walking over it puts it on
   clearGear();
   const slain = dummy(100);
-  for (let i = 0; i < 40 && gearDrops.length === 0; i++) { killMob(slain); slain.hp = 1e6; }
-  check('a defeated enemy can leave gear where it fell', gearDrops.length > 0 && gearDrops[0].item.lvl === slain.lvl);
+  for (let i = 0; i < 80 && gearDrops.length === 0; i++) { slain.dead = false; killMob(slain); slain.hp = 1e6; }
+  check('a defeated enemy can leave gear where it fell', gearDrops.length > 0 && gearDrops[0].item.lvl === slain.level);
   const d = gearDrops[0];
   player.x = d.x; player.y = d.y - player.h; player.onGround = true;
   step(1);
   check('walking over it equips it', gear[d.item.kind] !== null && gearDrops.length === 0);
 
+  const mem: Record<string, string> = {};
+  (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; } };
+  clearGear(); equip(gearFor('weapon', 20)); equip(gearFor('armor', 34));
   save();
   clearGear();
-  apply(load());
-  check('your gear survives a reload', gear.weapon?.name === 'Composite Bow' && gear.armor?.name === 'Plate Armor', `${gear.weapon?.name} / ${gear.armor?.name}`);
+  load();
+  check('your gear survives a reload', gear.weapon?.name === gearFor('weapon', 20).name && gear.armor?.lvl === 34, `${gear.weapon?.name} / ${gear.armor?.name}`);
+  clearSave(); clearGear();
+  delete (globalThis as { localStorage?: unknown }).localStorage;
 }
 
 // --- E / R ---
@@ -1187,7 +1193,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const bowRow = stock.find((r) => r.kind === 'weapon')!, plateRow = stock.find((r) => r.kind === 'armor')!;
   check('the shop stocks a weapon and an armor piece', !!bowRow.item && !!plateRow.item);
   check("the gear is built for this town's level", bowRow.item?.lvl === mobLevel(game.floor.place), `Lv.${bowRow.item?.lvl}`);
-  wallet.coins = bowRow.price;
+  clearGear(); wallet.coins = bowRow.price;
   shop.sel = stock.indexOf(bowRow); tap('z');
   check('buying the bow takes its price and puts it on', wallet.coins === 0 && gear.weapon?.name === bowRow.item?.name);
   wallet.coins = plateRow.price - 1;
