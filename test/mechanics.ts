@@ -1820,11 +1820,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   menu.sel = items().indexOf('look'); menuKey('enter');
   check('LOOK in the menu opens the stylist', stylist.open && stylist.sel === 0);
   menuKey('right');
-  check('Right changes the picked row (body)', myLook().body === 1);
-  menuKey('down'); menuKey('right');
-  check('...the next row down is the hair style', myLook().style === 1);
+  check('Right changes the picked row (hair style)', myLook().style === 1);
   menuKey('down'); menuKey('left');
-  check('Left steps back, wrapping past the colours not unlocked yet (hair colour)', myLook().hair === BASIC.hair! - 1);
+  check('...the next row down is the hair colour', myLook().hair === BASIC.hair! - 1);
   check('the look is kept on this device', cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === BASIC.hair! - 1);
   menuKey('escape');
   check('Esc closes the stylist, not the menu', !stylist.open && menu.open);
@@ -1832,9 +1830,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   stylistKey('escape'); stylist.open = true; stylist.sel = 0;
   const b = stylistBox(320, 180), rowY = (i: number): number => b.y + ST_TOP + i * 14 + 3;
   const sk = myLook().skin;
-  stylistTap(b.x + ST_ROWS_W - 10, rowY(3), 320, 180);
-  check('tapping the right half of a row steps it forward', myLook().skin === (sk + 1) % LOOK_COUNTS.skin && stylist.sel === 3);
-  stylistTap(b.x + 10, rowY(3), 320, 180);
+  stylistTap(b.x + ST_ROWS_W - 10, rowY(2), 320, 180);
+  check('tapping the right half of a row steps it forward', myLook().skin === (sk + 1) % LOOK_COUNTS.skin && stylist.sel === 2);
+  stylistTap(b.x + 10, rowY(2), 320, 180);
   check('tapping the left half steps it back', myLook().skin === sk);
   stylistTap(2, 2, 320, 180);
   check('tapping outside the window closes it', !stylist.open);
@@ -1849,7 +1847,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   check('Up beside the stylist opens the window', stylist.open);
   tap('right');
-  check('arrows change your look there too', myLook().body === 1);
+  check('arrows change your look there too', myLook().style === 1);
   const town = placeName(game.floor.place), extra = TOWN_LOOKS[town][0];
   check('the town stylist knows which town it is in, and says its looks are new', stylist.town === town && stylist.fresh > 0);
   setMyLook({ ...DEFAULT_LOOK, [extra.k]: extra.i - 1 });

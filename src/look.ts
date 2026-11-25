@@ -71,7 +71,7 @@ export const STYLE_NAMES = ['SWEPT', 'SHORT', 'LONG', 'CROP', 'SPIKY', 'SLICKED'
 /** How many styles and hair colours everyone has; the rest come from town stylists. */
 export const BASIC: Partial<Record<keyof Look, number>> = { style: 4, hair: 7 };
 
-export const LOOK_KEYS = ['body', 'style', 'hair', 'skin', 'outfit'] as const;
+export const LOOK_KEYS = ['style', 'hair', 'skin', 'outfit'] as const;
 export const LOOK_COUNTS: Record<keyof Look, number> = {
   body: BODY_NAMES.length, style: STYLE_NAMES.length, hair: HAIR_COLS.length, skin: SKINS.length, outfit: OUTFITS.length,
 };

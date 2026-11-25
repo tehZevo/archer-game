@@ -10,7 +10,7 @@ import { offeredAt, unlockTown } from './townlooks';
    DONE, Esc or X closes. State and input only; see stylistdraw.ts.
    ============================================================ */
 
-export const STYLIST_ROWS = ['BODY', 'HAIR', 'HAIR COLOUR', 'SKIN', 'OUTFIT', 'DONE'] as const;
+export const STYLIST_ROWS = ['HAIR', 'HAIR COLOUR', 'SKIN', 'OUTFIT', 'DONE'] as const;
 
 /** `town`: whose stylist this is (null from the main menu); `fresh`: how many of its extras just unlocked. */
 export const stylist = { open: false, sel: 0, town: null as string | null, fresh: 0 };
