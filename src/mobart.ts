@@ -2,7 +2,9 @@
    MOB ART
    Each area's enemies, painted from a handful of body plans
    (quadruped, bug, hopper, flier, blob, biped, bloom) with their own
-   colours and features. Two frames each: a stride or a wing beat.
+   colours and features. Two frames each: a stride or a wing beat, plus
+   a hurt frame (HURT) for hitstun: eyes squeezed shut, mouth open, body
+   recoiling, like a MapleStory mob's hit1.
    Facing right (drawMob mirrors them), feet on the bottom row, inside
    a w x h box that is also the enemy's hitbox (config.ts uses mobSize).
    Painters only record rectangles, so they run headless in tests;
@@ -18,6 +20,15 @@ interface Look {
 }
 type Plan = (p: MobPaint, f: number, L: Look) => void;
 const OUT = '#141018';
+/** Frame index of the hurt pose (shown during hitstun instead of the walk cycle). */
+export const HURT = 2;
+
+/** An eye: open (sz x sz of the eye colour), or squeezed shut into a dark dash when hurt. */
+function eye(p: MobPaint, x: number, y: number, L: Look, hurt: boolean, sz = 1): void {
+  if (!hurt) { p(x, y, L.e, sz, sz); return; }
+  p(x - (sz > 1 ? 0 : 1), y + sz - 1, OUT, Math.max(2, sz), 1);
+  p(x + Math.max(1, sz) - 1, y + sz - 2, OUT); // the outer corner pinched up
+}
 
 /** A filled oval with a 1px outline. */
 function oval(p: MobPaint, x0: number, y0: number, w: number, h: number, fill: string, out = OUT): void {
@@ -37,50 +48,70 @@ function box(p: MobPaint, x: number, y: number, w: number, h: number, fill: stri
 
 /* ---------------- body plans ---------------- */
 /** Four legs, a long body and a head up front. Features: horns, ears, tail, mane. */
-const quad = (feat: { horns?: boolean; ears?: boolean; tail?: boolean; snout?: boolean }): Plan => (p, f, L) => {
+const quad = (feat: { horns?: boolean; ears?: boolean; tail?: boolean; snout?: boolean }): Plan => (p, f0, L) => {
+  const hurt = f0 === HURT, f = hurt ? 0 : f0;
   const { w, h } = L, legH = 4, by = Math.round(h * 0.38), bh = h - legH - by + 1, up = f;
   for (const [i, lx] of [3, 6, w - 10, w - 7].entries()) {
-    const s = (i % 2 === 0) === (f === 0) ? 0 : 1; // diagonal pairs step together
-    box(p, lx + (s ? 1 : 0), h - legH - 1, 3, legH + 1, L.d);
+    // diagonal pairs step together; hurt, the legs brace apart (back legs back, front legs forward)
+    const s = hurt ? (i < 2 ? -1 : 1) : (i % 2 === 0) === (f === 0) ? 0 : 1;
+    box(p, lx + s, h - legH - 1, 3, legH + 1, L.d);
   }
   oval(p, 1, by - up, w - 6, bh, L.c);
   p(4, by + bh - 3 - up, L.l, w - 12, 1);
-  const hx = w - 8, hy = Math.max(4, by - 4) - up;
+  // hurt: the head jerks back and up
+  const hx = w - 8 - (hurt ? 1 : 0), hy = Math.max(4, by - 4) - up - (hurt ? 1 : 0);
   box(p, hx, hy, 7, 6, L.c);
-  if (feat.snout) box(p, w - 3, hy + 2, 3, 3, L.l);
-  p(w - 4, hy + 2, L.e);
+  if (feat.snout) box(p, hx + 5, hy + 2, 3, 3, L.l);
+  eye(p, hx + 4, hy + 2, L, hurt);
+  if (hurt) p(hx + 5, hy + 4, OUT, 2, 1); // a yelp
   if (feat.horns) { p(hx + 1, hy - 2, L.a, 2, 2); p(hx, hy - 3, L.a, 1, 1); p(hx + 4, hy - 2, L.a, 1, 2); }
   if (feat.ears) { p(hx + 1, hy - 3, OUT, 2, 3); p(hx + 4, hy - 3, OUT, 2, 3); p(hx + 1, hy - 2, L.a, 1, 2); p(hx + 4, hy - 2, L.a, 1, 2); }
   if (feat.tail) { p(0, by - 1 - up + f, L.a, 2, 3); }
 };
 
 /** Low and wide on many legs: a shell or carapace with a shine. */
-const bug = (feat: { spikes?: boolean }): Plan => (p, f, L) => {
-  const { w, h } = L;
-  for (let i = 0; i < 3; i++) { const lx = 3 + i * Math.floor((w - 8) / 2) + ((i + f) % 2); p(lx, h - 3, OUT, 1, 3); p(lx + 1, h - 1, OUT, 1, 1); }
+const bug = (feat: { spikes?: boolean }): Plan => (p, f0, L) => {
+  const hurt = f0 === HURT, f = hurt ? 0 : f0, { w, h } = L;
+  // hurt: the legs splay out flat and the head rears up a pixel
+  for (let i = 0; i < 3; i++) {
+    const lx = 3 + i * Math.floor((w - 8) / 2) + (hurt ? i - 1 : (i + f) % 2);
+    if (hurt) { p(lx, h - 2, OUT, 1, 2); p(lx + (i < 1 ? -1 : 1), h - 1, OUT, 1, 1); }
+    else { p(lx, h - 3, OUT, 1, 3); p(lx + 1, h - 1, OUT, 1, 1); }
+  }
   oval(p, 0, 1, w - 3, h - 3, L.c);
   p(3, 3, L.l, Math.max(2, Math.floor(w / 3)), 1);
   p(2, h - 5, L.d, w - 7, 1);
-  box(p, w - 5, h - 8, 5, 5, L.d);
-  p(w - 2, h - 7, L.e);
+  const ry = h - 8 - (hurt ? 1 : 0);
+  box(p, w - 5, ry, 5, 5, L.d);
+  eye(p, w - 2, ry + 1, L, hurt);
+  if (hurt) p(w - 3, ry + 3, OUT, 2, 1);
   if (feat.spikes) for (let x = 3; x < w - 5; x += 3) p(x, 0, L.a, 1, 2);
 };
 
 /** Squat, crouched; on the second frame it's mid-hop. Features: long ears, wide mouth. */
-const hopper = (feat: { ears?: boolean; mouth?: boolean }): Plan => (p, f, L) => {
+const hopper = (feat: { ears?: boolean; mouth?: boolean }): Plan => (p, f0, L) => {
+  const hurt = f0 === HURT, f = hurt ? 0 : f0;
   const { w, h } = L, lift = f ? 2 : 0, top = feat.ears ? 7 : 2;
-  if (feat.ears) { box(p, w - 8, top - 5 - lift, 3, 6, L.c); box(p, w - 5, top - 5 - lift, 3, 6, L.c); p(w - 7, top - 4 - lift, L.a, 1, 3); p(w - 4, top - 4 - lift, L.a, 1, 3); }
+  if (feat.ears) {
+    // hurt: the ears fold back flat
+    if (hurt) { box(p, w - 11, top - 3, 6, 3, L.c); box(p, w - 10, top - 5, 6, 3, L.c); p(w - 10, top - 2, L.a, 4, 1); }
+    else { box(p, w - 8, top - 5 - lift, 3, 6, L.c); box(p, w - 5, top - 5 - lift, 3, 6, L.c); p(w - 7, top - 4 - lift, L.a, 1, 3); p(w - 4, top - 4 - lift, L.a, 1, 3); }
+  }
   oval(p, 1, top - lift, w - 2, h - top - 2, L.c);
   oval(p, 3, h - 7 - lift, w - 8, 4, L.l, L.c);
-  p(w - 5, top + 2 - lift, L.e, 2, 2);
-  if (feat.mouth) p(w - 6, top + 5 - lift, OUT, 5, 1);
-  // feet: tucked, or kicked out behind mid-hop
-  if (f) { box(p, 0, h - 3, 5, 3, L.d); box(p, w - 6, h - 2, 4, 2, L.d); }
+  eye(p, w - 5, top + 2 - lift, L, hurt, 2);
+  if (hurt) box(p, w - 6, top + 5, 4, 3, '#5a1a2a'); // mouth wide open
+  else if (feat.mouth) p(w - 6, top + 5 - lift, OUT, 5, 1);
+  // feet: tucked, or kicked out behind mid-hop (hurt: both braced forward)
+  if (hurt) { box(p, 3, h - 3, 5, 3, L.d); box(p, w - 7, h - 3, 5, 3, L.d); }
+  else if (f) { box(p, 0, h - 3, 5, 3, L.d); box(p, w - 6, h - 2, 4, 2, L.d); }
   else { box(p, 2, h - 3, 6, 3, L.d); box(p, w - 8, h - 3, 5, 3, L.d); }
 };
 
 /** A body between two wings that beat up and down. Features: beak, stripes, antennae, gears. */
-const flier = (feat: { beak?: boolean; stripes?: boolean; antennae?: boolean; gear?: boolean }): Plan => (p, f, L) => {
+const flier = (feat: { beak?: boolean; stripes?: boolean; antennae?: boolean; gear?: boolean }): Plan => (p, f0, L) => {
+  // hurt: wings flung up in the V, head knocked back a pixel
+  const hurt = f0 === HURT, f = hurt ? 0 : f0;
   const { w, h } = L, cx = Math.floor(w / 2), by = Math.floor(h / 2) - 2;
   // wings: raised in a V, or swept down
   for (const side of [-1, 1]) {
@@ -92,20 +123,26 @@ const flier = (feat: { beak?: boolean; stripes?: boolean; antennae?: boolean; ge
   oval(p, cx - 4, by - 1, 9, 7, L.c);
   if (feat.stripes) { p(cx - 2, by, OUT, 1, 5); p(cx + 1, by, OUT, 1, 5); }
   if (feat.gear) { p(cx - 1, by + 1, L.l, 3, 3); p(cx, by + 2, OUT); }
-  box(p, cx + 3, by - 3, 4, 4, L.c);
-  p(cx + 5, by - 2, L.e);
-  if (feat.beak) p(cx + 7, by - 1, L.d, 2, 1);
+  const hx = cx + 3 - (hurt ? 1 : 0);
+  box(p, hx, by - 3, 4, 4, L.c);
+  eye(p, hx + 2, by - 2, L, hurt);
+  if (feat.beak) { if (hurt) { p(hx + 4, by - 2, L.d, 2, 1); p(hx + 4, by, L.d, 2, 1); } else p(cx + 7, by - 1, L.d, 2, 1); }
+  else if (hurt) p(hx + 3, by - 1, OUT, 2, 1);
   if (feat.antennae) { p(cx + 4, by - 6, OUT, 1, 3); p(cx + 6, by - 6, OUT, 1, 3); }
   p(cx - 1, h - 2, OUT, 3, 1); // tail or stinger
 };
 
 /** A round floating or oozing body. Features: tentacles, drips, sparkle, hood. */
-const blob = (feat: { tentacles?: boolean; drip?: boolean; sparkle?: boolean; hood?: boolean; spots?: boolean }): Plan => (p, f, L) => {
-  const { w, h } = L, bh = h - (feat.tentacles ? 5 : 2), squash = feat.drip ? f : 0;
+const blob = (feat: { tentacles?: boolean; drip?: boolean; sparkle?: boolean; hood?: boolean; spots?: boolean }): Plan => (p, f0, L) => {
+  // hurt: squashed down a pixel, eyes screwed shut, mouth open
+  const hurt = f0 === HURT, f = hurt ? 1 : f0;
+  const { w, h } = L, bh = h - (feat.tentacles ? 5 : 2), squash = hurt ? 1 : feat.drip ? f : 0;
   oval(p, 0, squash, w, bh - squash, L.c);
   p(3, 2 + squash, L.l, 3, 2);
   if (feat.spots) { p(w - 6, 3, L.a, 2, 2); p(4, bh - 5, L.a, 2, 1); }
-  p(w - 6, Math.floor(bh / 2), L.e, 2, 2); p(w - 10, Math.floor(bh / 2), L.e, 2, 2);
+  const ey = Math.floor(bh / 2);
+  eye(p, w - 6, ey, L, hurt, 2); eye(p, w - 10, ey, L, hurt, 2);
+  if (hurt) p(w - 8, ey + 3, OUT, 2, 2);
   if (feat.hood) { p(1, 0, L.d, w - 2, 2); }
   if (feat.tentacles) for (let i = 0; i < 4; i++) { const x = 2 + i * Math.floor((w - 4) / 4); p(x + ((i + f) % 2), bh, L.d, 1, 4); p(x + ((i + f + 1) % 2), h - 1, L.a); }
   if (feat.drip) { p(2, h - 2, L.d, w - 4, 2); }
@@ -113,21 +150,29 @@ const blob = (feat: { tentacles?: boolean; drip?: boolean; sparkle?: boolean; ho
 };
 
 /** Upright on two legs. Features: cap (mushroom), helm, key (wind-up), crystal, rocky, glow. */
-const biped = (feat: { cap?: boolean; helm?: boolean; key?: boolean; crystal?: boolean; rocky?: boolean; arms?: boolean }): Plan => (p, f, L) => {
+const biped = (feat: { cap?: boolean; helm?: boolean; key?: boolean; crystal?: boolean; rocky?: boolean; arms?: boolean }): Plan => (p, f0, L) => {
+  // hurt: legs braced apart, head knocked back, arms flung up
+  const hurt = f0 === HURT, f = hurt ? 0 : f0;
   const { w, h } = L, legH = 4, tx = Math.floor(w * 0.2), tw = w - tx * 2, ty = Math.floor(h * 0.35);
-  box(p, tx + 1 + f, h - legH - 1, 3, legH + 1, L.d); box(p, tx + tw - 4 - f, h - legH - 1, 3, legH + 1, L.d);
+  const spread = hurt ? 1 : 0;
+  box(p, tx + 1 + f - spread, h - legH - 1, 3, legH + 1, L.d); box(p, tx + tw - 4 - f + spread, h - legH - 1, 3, legH + 1, L.d);
   if (feat.cap) {
     box(p, tx + 1, ty, tw - 2, h - legH - ty, L.l);
-    oval(p, 0, 0, w, ty + 3, L.c); p(3, 2, L.a, 2, 2); p(w - 7, 1, L.a, 2, 2); p(Math.floor(w / 2), 3, L.a, 2, 1);
-    p(tx + tw - 5, ty + 3, L.e); p(tx + 3, ty + 3, L.e);
+    oval(p, 0, hurt ? 1 : 0, w, ty + 3 - (hurt ? 1 : 0), L.c); p(3, 2, L.a, 2, 2); p(w - 7, 1 + spread, L.a, 2, 2); p(Math.floor(w / 2), 3, L.a, 2, 1);
+    eye(p, tx + tw - 5, ty + 3, L, hurt); eye(p, tx + 3, ty + 3, L, hurt);
+    if (hurt) p(tx + Math.floor(tw / 2) - 1, ty + 5, OUT, 2, 2);
     return;
   }
   box(p, tx, ty, tw, h - legH - ty, L.c);
   p(tx + 1, ty + 1, L.l, 2, h - legH - ty - 2);
-  if (feat.arms) { box(p, tx - 3, ty + 2 + f, 3, 6, L.d); box(p, tx + tw, ty + 2 - f + 1, 3, 6, L.d); }
-  const hw = Math.min(tw, 8), hx = tx + Math.floor((tw - hw) / 2) + 1;
+  if (feat.arms) {
+    if (hurt) { box(p, tx - 3, ty - 3, 3, 6, L.d); box(p, tx + tw, ty - 3, 3, 6, L.d); }
+    else { box(p, tx - 3, ty + 2 + f, 3, 6, L.d); box(p, tx + tw, ty + 2 - f + 1, 3, 6, L.d); }
+  }
+  const hw = Math.min(tw, 8), hx = tx + Math.floor((tw - hw) / 2) + 1 - spread;
   box(p, hx, ty - 6, hw, 7, feat.helm ? L.d : L.c);
-  p(hx + hw - 3, ty - 4, L.e, 2, feat.helm ? 1 : 2);
+  if (hurt) { eye(p, hx + hw - 3, ty - 4, L, true, 2); p(hx + hw - 3, ty - 1, OUT, 2, 1); }
+  else p(hx + hw - 3, ty - 4, L.e, 2, feat.helm ? 1 : 2);
   if (feat.helm) p(hx + 1, ty - 7, L.a, hw - 2, 1);
   if (feat.key) { p(tx - 2, ty + 3, L.a, 2, 1); box(p, tx - 4, ty + 1 + f, 3, 5, L.a); }
   if (feat.crystal) { p(hx + 1, ty - 8, L.a, 2, 2); p(hx + hw - 3, ty - 8, L.a, 2, 2); p(tx + tw - 3, ty + 2, L.a, 2, 3); }
@@ -135,14 +180,16 @@ const biped = (feat: { cap?: boolean; helm?: boolean; key?: boolean; crystal?: b
 };
 
 /** A flower on a stem, petals opening and closing. */
-const bloom: Plan = (p, f, L) => {
+const bloom: Plan = (p, f0, L) => {
+  // hurt: petals clench shut, the eye squeezes
+  const hurt = f0 === HURT, f = hurt ? 0 : f0;
   const { w, h } = L, cx = Math.floor(w / 2);
   p(cx - 1, Math.floor(h / 2), OUT, 3, h - Math.floor(h / 2)); p(cx, Math.floor(h / 2), L.d, 1, h - Math.floor(h / 2));
   box(p, cx - 4, h - 4, 3, 2, L.d); box(p, cx + 2, h - 6, 3, 2, L.d);
-  const r = f ? 5 : 4;
+  const r = hurt ? 3 : f ? 5 : 4;
   for (const [dx, dy] of [[-r, 0], [r, 0], [0, -r], [0, r - 1]]) oval(p, cx - 2 + dx, 5 + dy, 5, 5, L.c);
   oval(p, cx - 3, 4, 7, 7, L.a);
-  p(cx + 1, 6, L.e, 2, 2);
+  eye(p, cx + 1, 6, L, hurt, 2);
 };
 
 /* ---------------- the roster ---------------- */
@@ -191,7 +238,7 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
   'Null Wraith': { look: L(14, 18, '#2a1a3a', '#120a1a', '#5a3a7a', '#d8a0ff', '#8a4ad8'), plan: blob({ tentacles: true, hood: true }) },
 };
 
-/** Paint frame `f` (0 or 1) of an enemy. */
+/** Paint frame `f` of an enemy: 0 or 1 for its walk cycle, HURT for its hit pose. */
 export function paintMob(name: string, f: number, p: MobPaint): void {
   const m = MOB_ART[name];
   if (m) m.plan(p, f, m.look);

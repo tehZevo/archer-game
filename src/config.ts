@@ -51,6 +51,8 @@ export const P = {
   VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
   FRICTION: 700,       // ground friction when no input (a short slide)
   AIR_BRAKE: 400,      // px/s^2: in the air, holding against your motion only slows you (never reverses)
+  HIT_HOP: 130,        // px/s up when an enemy hits you: a little ~8px bump off the ground...
+  HIT_PUSH: 90,        // ...and this fast back, away from the enemy
 } as const;
 
 /* ---------------- world / map ----------------

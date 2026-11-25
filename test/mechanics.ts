@@ -17,7 +17,7 @@ import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, cl
 import { CHASE_TURN, update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
-import { MOB_ART, paintMob } from '../src/mobart';
+import { HURT, MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
@@ -25,7 +25,7 @@ import { BAR_SHOW, damage, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
-import { BOSS, bossAlive, quakes } from '../src/boss';
+import { BOSS, bossAlive, hurtPlayer, quakes } from '../src/boss';
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
 import { styled } from '../src/archer';
@@ -1292,10 +1292,14 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
     withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
   let artOk = true;
-  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1]) {
+  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1, HURT]) {
     paintMob(name, f, (x, y, c, w = 1, h = 1) => { if (x < 0 || y < 0 || x + w > look.w || y + h > look.h || !/^#[0-9a-f]{6}$/i.test(c)) artOk = false; });
   }
   check('enemy art paints inside its box (the hitbox)', artOk);
+  // the hurt pose (hitstun) is its own drawing: not just frame 0 again
+  const rects = (name: string, f: number): string => { const r: string[] = []; paintMob(name, f, (x, y, c, w = 1, h = 1) => r.push(`${x},${y},${c},${w},${h}`)); return r.join(';'); };
+  const sameHurt = Object.keys(MOB_ART).filter((n) => rects(n, HURT) === rects(n, 0) || rects(n, HURT) === rects(n, 1));
+  check('every painted enemy has its own hurt pose', sameHurt.length === 0, sameHurt.join(', '));
   check('every enemy with painted art uses its box as its size', MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h));
   let pairsOk = true, singles = 0, doubles = 0;
   for (const n of [2, 3, 4]) { // the Beach
@@ -1754,6 +1758,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(Math.ceil(HITSTUN / P.STEP) + 1);
   check('hitstun wears off', !o.hurt);
   game.mobs.length = 0;
+}
+
+// --- getting hit bumps you up off the ground and back, away from the enemy ---
+{
+  arena(1, 120); player.invuln = 0;
+  const m = dummy(player.x + 8); m.dmg = 1; m.atkCd = 0; m.aggro = true;
+  const x0 = player.x, hp0 = player.hp;
+  step(1);
+  check('touching an enemy hurts you', player.hp < hp0);
+  check('the hit bumps you off the ground', !player.onGround && player.vy < 0);
+  check('...and back, away from the enemy', player.vx < 0);
+  let peak = 0;
+  for (let i = 0; i < 30 && !player.onGround; i++) { step(1); peak = Math.max(peak, ground().y - (player.y + player.h)); }
+  check('it is only a little bump, and you land again', player.onGround && peak > 3 && peak < 16, `peak ${peak.toFixed(1)}px`);
+  check('you end up a little way back from the enemy', x0 - player.x > 8 && x0 - player.x < 50, `moved ${(x0 - player.x).toFixed(1)}px`);
+  arena(1, 120); player.invuln = 0;
+  hurtPlayer(1, player.x - 10);
+  check('hit from behind, you are pushed the other way', player.vx > 0);
+  arena(1, 120); player.invuln = 0;
+  hurtPlayer(1);
+  check('a hit from no particular place (a status tick) does not move you', player.vx === 0 && player.onGround);
+  game.mobs.length = 0; player.invuln = 999;
 }
 
 // --- a whiffed Z shot still shows one arrow per hit ---

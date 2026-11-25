@@ -302,7 +302,7 @@ function updateMobs(dt: number): void {
         && player.y < m.y + m.h && m.y < player.y + player.h;
       if (touching && m.atkCd <= 0) {
         m.atkCd = 1.1;
-        if (hurtPlayer(m.dmg)) maybeInflict(player, INFLICT.mob);
+        if (hurtPlayer(m.dmg, m.x)) maybeInflict(player, INFLICT.mob);
       }
       m.atkCd = Math.max(0, m.atkCd - dt);
     }
