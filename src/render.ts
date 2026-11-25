@@ -468,8 +468,11 @@ function drawBubble(id: string, x: number, bottom: number, now: number): void {
 /** The Echo Shot shadow's colour: a cool blue ghost of the archer's own look. */
 const ECHO_TINT = '#7fb8ff';
 
+/** A missed attack's i-frames are invisible (see combat's MISS_IFRAMES). */
+const invulnAlpha = (): number => (player.invuln > 0 && !player.invulnQuiet ? 0.8 : 1);
+
 function drawPlayer(): void {
-  if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, player.invuln > 0 ? 0.8 : 1);
+  if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha());
   // Echo Shot: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and
   // stands ready the rest of the time.
@@ -480,7 +483,7 @@ function drawPlayer(): void {
       player.cast ? player.castTotal - player.castT : undefined, ECHO_TINT);
   }
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
-    player.invuln > 0 ? 0.8 : 1, player.castTotal - player.castT);
+    invulnAlpha(), player.castTotal - player.castT);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
   drawEmote(SELF, player.x, player.y + player.h - ARCHER_H, player.face, performance.now());
 }

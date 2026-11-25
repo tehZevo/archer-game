@@ -5,7 +5,7 @@ import { P, SKILL_BAR } from './config';
 import { cdSlot } from './skills';
 import { READY_FLASH } from './state';
 import { placeName } from './world';
-import { critChance } from './combat';
+import { critChance, critMult, critOverflowPoints } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { net, playerCount } from './net';
@@ -298,7 +298,9 @@ function drawPause(): void {
   ctx.strokeStyle = m.col === 3 ? gold : '#4a5c7a'; ctx.strokeRect(ab.x + 0.5, ab.y + 0.5, ab.w - 1, ab.h - 1);
   text(ctx, 'AWARDS', ab.x + ab.w / 2, ab.y + 3, 1, m.col === 3 ? gold : dim, 'center');
   text(ctx, `LV ${player.level}  HP ${fmtNum(player.hp)}/${fmtNum(player.hpMax)}  MP ${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, w / 2, 23, 1, hi, 'center');
-  text(ctx, `ATT ${Math.round(player.war)}  CRIT ${Math.round(critChance() * 100)}%  EXP ${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, w / 2, 32, 1, hi, 'center');
+  // past the 100% cap, LUK's overflow shows as the crit damage it converts to
+  const crit = `${Math.round(critChance() * 100)}%${critOverflowPoints() ? ` x${critMult().toFixed(2)}` : ''}`;
+  text(ctx, `ATT ${Math.round(player.war)}  CRIT ${crit}  EXP ${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, w / 2, 32, 1, hi, 'center');
 
   text(ctx, `STATS`, COLS[0].x + 2, 46, 1, gold, 'left');
   text(ctx, `AP ${player.ap}`, COLS[0].x + COLS[0].w - 2, 46, 1, player.ap ? gold : dim, 'right');
