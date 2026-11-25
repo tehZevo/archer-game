@@ -46,6 +46,8 @@ export interface SkillDef {
   hitsMax?: number;
   /** Passive skills have no key; their effect is `bonus`, stepping from rank 1 to max. */
   passive?: boolean;
+  /** Bought with SP even though it is open from Lv.1 (otherwise Lv.1 skills come free). */
+  learn?: boolean;
   bonus1?: number;
   bonusMax?: number;
   targets1?: number;

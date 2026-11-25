@@ -58,8 +58,13 @@ step(1);
 check('jump sets upward velocity', player.vy < 0 && !player.onGround);
 setKey('c', false);
 
-// --- 5. Glide: launches forward more than up, 0.3s cd, costs MP ---
+// --- 5. Glide: bought with SP from Lv.1; launches forward more than up, 0.3s cd, costs MP ---
 reset();
+player.ranks.D = 0;
+player.onGround = false; player.y = 500;
+setKey('d', true); step(1); setKey('d', false);
+check('Glide needs its SP first', player.cd.D === 0);
+player.ranks.D = 1; player.cd.D = 0;
 player.onGround = false; player.y = 500;
 setKey('d', true);
 step(1);
