@@ -177,6 +177,8 @@ export interface SkillRow {
   max: number;
   /** What one SP would do here, or '' if nothing. */
   action: string;
+  /** Why it can't be taken yet (an upgrade whose base isn't maxed), if so. */
+  need?: string;
 }
 
 /** Known skills (an upgrade hides its base) plus skills an SP could learn. */
@@ -189,6 +191,14 @@ export function skillRows(): SkillRow[] {
     const slot = s.passive ? '' : base ?? k;
     if (have === 0) {
       if (s.minLevel > player.level || (base && !(player.ranks[base] > 0))) continue;
+      // an upgrade builds on its base skill: shown once the base is learned,
+      // but only taken once the base is at its max rank
+      const b = base ? SKILLS[base] : null;
+      if (b && player.ranks[base!] < b.maxLevel) {
+        rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel, action: '',
+          need: `Needs ${b.name} at max rank (${player.ranks[base!]}/${b.maxLevel}): ${s.desc}` });
+        continue;
+      }
       rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel,
         action: !base ? `Learn: ${s.desc}`
           : rivals(k) ? `${s.desc}. Locks ${rivals(k)}`

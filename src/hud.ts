@@ -302,7 +302,7 @@ function drawPause(): void {
   if (m.col === 2) desc = 'Sound, damage numbers and keys';
   else if (m.col === 3) desc = 'Achievements and their rewards';
   else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
-  else if (rows[m.row]) desc = rows[m.row].action || `${rows[m.row].name}: mastered`;
+  else if (rows[m.row]) desc = rows[m.row].action || rows[m.row].need || `${rows[m.row].name}: mastered`;
   desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();
   // long descriptions (e.g. a branch upgrade's lock-out note) wrap to two lines
   const lines = wrap(desc, 32).slice(0, 2);
