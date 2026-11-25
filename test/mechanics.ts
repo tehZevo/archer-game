@@ -485,7 +485,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('q'); step(14); tap('w'); step(3);
   check('Sky Assault hovers', player.hangT > 0);
   tap('e');
-  check('E fires straight out of the hover', player.hangT === 0 && player.cast === 'barrage' && player.cd['E.air'] > 0);
+  check('E fires straight out of the hover', player.hangT === 0 && player.cast === 'barrage' && player.useT > 0);
 }
 {
   // Q rushes chain into Z: pressed mid-slide, Twin Shot fires as the slide ends
@@ -672,7 +672,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('e'); step(6);
   check('Spike Lift fills its own slot, its full length', player.cd.E > 4 && player.cdMax.E === P.SPIKE_CD && player.cd['E.air'] === 0);
   player.useT = 0; const yv = player.y; tap('e'); step(1);
-  check('Plunging Volley still fires in the air during the Spike Lift cooldown', player.y < yv && player.cd['E.air'] > 0 && player.cd['E.air'] <= SKILLS.E.cd);
+  check('Plunging Volley still fires in the air during the Spike Lift cooldown', player.y < yv && player.cast === 'barrage' && player.cd['E.air'] === 0 && player.cd.E > 4);
   check('the bar shows the form you are in', cdSlot('E') === 'E.air' && cdSlot('E', false) === 'E');
   step(40);
 }
@@ -693,10 +693,11 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('the spin cools down for 4s', player.cdMax['W.air'] === P.SPIN_CD && P.SPIN_CD === 4);
 }
 {
-  // Q: the ground rush cools down for 4s; the Air Dive keeps its own short one
+  // Q: the ground rush has no cooldown (its pace is the use time); the Air
+  // Dive keeps its own short one
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   tap('q');
-  check('the ground rush has a 4s cooldown', SKILLS.Q.cd === 4 && player.cdMax.Q === 4);
+  check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.5 && player.cdMax.Q === 0 && player.useT > 0);
   step(40); player.cd.Q = 0;
   tap('c'); step(6); tap('q');
   check('the Air Dive uses its own cooldown slot', player.cd['Q.air'] > 0 && player.cd.Q === 0);
@@ -712,15 +713,15 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // ready-glow: the bar icon flashes the moment a cooldown runs out
-  arena(20); player.ranks.Q = 1;
-  tap('q');
-  check('casting starts the cooldown with no glow', player.cd.Q > 0 && player.readyT.Q === 0);
-  for (let i = 0; i < 200 && player.cd.Q > 0; i++) step(1);
-  check('the glow flashes as the cooldown ends', player.cd.Q === 0 && player.readyT.Q > 0, `cd ${player.cd.Q.toFixed(2)} readyT ${player.readyT.Q.toFixed(2)}`);
+  arena(20); player.ranks.E = 1;
+  tap('e');
+  check('casting starts the cooldown with no glow', player.cd.E > 0 && player.readyT.E === 0);
+  for (let i = 0; i < 400 && player.cd.E > 0; i++) step(1);
+  check('the glow flashes as the cooldown ends', player.cd.E === 0 && player.readyT.E > 0, `cd ${player.cd.E.toFixed(2)} readyT ${player.readyT.E.toFixed(2)}`);
   step(8);
-  check('the glow fades as the flash plays out', player.readyT.Q > 0 && player.readyT.Q < READY_FLASH, `readyT ${player.readyT.Q.toFixed(2)}`);
+  check('the glow fades as the flash plays out', player.readyT.E > 0 && player.readyT.E < READY_FLASH, `readyT ${player.readyT.E.toFixed(2)}`);
   step(10);
-  check('the glow is gone once the flash is over', player.readyT.Q === 0);
+  check('the glow is gone once the flash is over', player.readyT.E === 0);
 }
 {
   // Haste: +attack speed shortens use time, never cooldowns; Twin Shot is paced by use time alone
