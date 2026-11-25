@@ -102,11 +102,11 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 1, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
-        desc: 'Climb ropes and ladders faster' },
+        desc: 'Up + Jump rushes up ropes and ladders; climb faster' },
   C: { key: 'C', name: 'Jump', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
        cd: 0.05, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0,
        desc: 'Standard jump, keeps your running momentum' },
-  D: { key: 'D', name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
+  D: { key: 'D', name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
        cd: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 1, minLevel: 5, maxLevel: 3,
@@ -154,6 +154,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.1,
         desc: 'Attack speed up (shorter use time, not cooldowns)' },
 };
+
+/** Skills you start with at rank 1 (Lv.1 skills, except those bought with SP). */
+export const startsLearned = (k: SkillKey): boolean => SKILLS[k].minLevel <= 1 && !SKILLS[k].learn;
 
 export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key
 

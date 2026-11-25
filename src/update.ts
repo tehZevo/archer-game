@@ -115,7 +115,8 @@ export function update(dt: number): void {
   if (player.climb && (!pressed('c') || locked || offDir === 0)) {
     const r = player.climb;
     // Up + Jump starts a rush: shoot up the climbable and pop off the top
-    if (!locked && pressed('c') && held('up')) { player.climbRush = true; sfx.jump(); }
+    // (once you have Agile Climbing)
+    if (!locked && pressed('c') && held('up') && player.ranks.AC > 0) { player.climbRush = true; sfx.jump(); }
     const rush = P.CLIMB_RUSH * (1 + passiveBonus('AC'));
     if (player.climbRush) player.y -= rush * dt;
     else if (!locked && held('up'))   player.y -= P.CLIMB * (1 + passiveBonus('AC')) * dt;

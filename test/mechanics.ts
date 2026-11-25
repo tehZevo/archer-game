@@ -56,6 +56,7 @@ import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
 import { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { startRun } from '../src/save';
+import { SKILLS as DEFS, startsLearned } from '../src/config';
 import { clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops } from '../src/gear';
 import { READY_FLASH } from '../src/state';
 import { cameraTarget } from '../src/state';
@@ -1221,8 +1222,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   wallet.coins = RESPEC_PRICES.reset;
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
-  check('a full reset refunds every AP and SP spent',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 3 && wallet.coins === 0,
+  check('a full reset refunds every AP and SP spent (Glide too)',
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 4 && player.ranks.D === 0 && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
@@ -1267,6 +1268,25 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   release();
 }
 
+{
+  // Glide and the climb rush are bought with SP, not given
+  check('a new archer has Twin Shot and Jump free, Glide not yet', DEFS.D.learn === true && startsLearned('Z') && startsLearned('C') && !startsLearned('D'));
+  arena(1); player.ranks.D = 0; player.sp = 1;
+  check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'D' && r.rank === 0 && !!r.action) && spendSkill('D') && player.ranks.D === 1);
+  check('Agile Climbing opens at Lv.10', DEFS.AC.minLevel === 10 && !skillRows().some((r) => r.key === 'AC'));
+  const onRope = (): void => {
+    const c = [...game.floor.ropes, ...game.floor.ladders][0];
+    player.climb = c; player.x = c.x; player.y = c.y2 - player.h - 1; player.onGround = false; player.vx = player.vy = 0;
+  };
+  arena(10); player.ranks.AC = 0; onRope();
+  setKey('up', true); tap('c');
+  check('without Agile Climbing, Up + Jump on a rope does not rush', !player.climbRush);
+  release();
+  arena(10); player.ranks.AC = 1; onRope();
+  setKey('up', true); tap('c');
+  check('with it, Up + Jump rushes up the rope', player.climbRush);
+  release();
+}
 // --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
 {
   arena(1); player.stats.dex = 0; player.stats.vit = 0; recalcStats();

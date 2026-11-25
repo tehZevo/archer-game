@@ -1,4 +1,4 @@
-import { CAM, ELITE, MOB_TYPES, P, SKILLS, SKILL_ORDER, TILE, WORLD } from './config';
+import { CAM, ELITE, MOB_TYPES, P, SKILLS, SKILL_ORDER, startsLearned, TILE, WORLD } from './config';
 import { areaOf, mobLevel, START, type Place } from './world';
 import { generateFloor, pickVariant } from './floor';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
@@ -25,7 +25,7 @@ const readyT: Record<SkillKey, number> = SKILL_ORDER.reduce(
 );
 
 const ranks: Record<SkillKey, number> = (Object.keys(SKILLS) as SkillKey[]).reduce(
-  (o, k) => ((o[k] = SKILLS[k].minLevel <= 1 ? 1 : 0), o),
+  (o, k) => ((o[k] = startsLearned(k) ? 1 : 0), o),
   {} as Record<SkillKey, number>,
 );
 
@@ -64,7 +64,7 @@ export const player: Player = {
   level: 1,
   exp: 0,
   expNext: expToNext(1),
-  sp: 0,
+  sp: 1, // one to start: Glide is bought with SP from Lv.1
   ap: 0,
   stats: { dex: 0, vit: 0, spi: 0, luk: 0 },
   dex: start.dex,

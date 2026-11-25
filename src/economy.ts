@@ -1,5 +1,5 @@
 import { bump } from './achievements';
-import { P, SKILLS } from './config';
+import { P, SKILLS, startsLearned } from './config';
 import { game, player } from './state';
 import { pressed } from './input';
 import { surfaceBetween, surfaceYAt } from './physics';
@@ -196,7 +196,7 @@ export function swapBranch(slot: SkillKey): boolean {
 }
 
 /** Ranks the Archer starts with (free, so a reset gives them back). */
-const FREE_RANKS = (Object.keys(SKILLS) as SkillKey[]).filter((k) => SKILLS[k].minLevel <= 1).length;
+const FREE_RANKS = (Object.keys(SKILLS) as SkillKey[]).filter(startsLearned).length;
 
 /** Refund every AP and SP spent, back to the starting skills. */
 export function resetPoints(): boolean {
@@ -204,7 +204,7 @@ export function resetPoints(): boolean {
   player.ap += STAT_KEYS.reduce((n, k) => n + player.stats[k], 0);
   STAT_KEYS.forEach((k) => { player.stats[k] = 0; });
   player.sp += (Object.keys(player.ranks) as SkillKey[]).reduce((n, k) => n + (player.ranks[k] || 0), 0) - FREE_RANKS;
-  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = SKILLS[k].minLevel <= 1 ? 1 : 0; });
+  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = startsLearned(k) ? 1 : 0; });
   recalcStats();
   wallet.coins -= RESPEC_PRICES.reset;
   sfx.coin();
