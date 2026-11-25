@@ -76,7 +76,7 @@ export const STAT_INFO: Record<StatKey, { name: string; desc: string }> = {
   dex: { name: 'DEX', desc: 'Attack +3%' },
   vit: { name: 'VIT', desc: 'Max HP +5%' },
   spi: { name: 'SPI', desc: 'Max MP' },
-  luk: { name: 'LUK', desc: 'Crit chance' },
+  luk: { name: 'LUK', desc: 'Crit chance +2% a point, to 100%; extra points add crit damage' },
 };
 
 export const STAT_KEYS = Object.keys(STAT_INFO) as StatKey[];

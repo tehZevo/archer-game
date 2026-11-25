@@ -54,7 +54,7 @@ export const player: Player = {
   blitzCharges: P.BLITZ_MAX, blitzT: 0,
   rushGoal: P.RUSH_DIST,
   cast: null, castT: 0, castTotal: 0,
-  invuln: 0,
+  invuln: 0, invulnQuiet: false,
   anim: 0, animState: 'idle',
   fervor: 0, fervorT: 0,
   superStance: 0,
