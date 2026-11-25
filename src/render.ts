@@ -1,7 +1,7 @@
 import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { FX } from './fxsprites';
 import { ELITE, FX_DUR, P, WORLD } from './config';
-import { corpses, deathBits, deathPose, DEATH_T, rand, type Corpse } from './deaths';
+import { corpses, deathBits, deathPose, DEATH_T, ghostRise, getPlayerDeath, rand, tombDrop, type Corpse } from './deaths';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { HITSTUN } from './combat';
@@ -531,6 +531,41 @@ function drawDmg(d: DmgNum): void {
   ctx.restore();
 }
 
+/** A killed archer's own death: a tombstone drops out of the sky onto the
+ *  spot she fell on, and her ghost rises out of it and fades (see deaths.ts).
+ *  Drawn over the world, under the HUD. */
+function drawPlayerDeath(): void {
+  const d = getPlayerDeath();
+  if (!d) return;
+  const drop = tombDrop(d), rise = ghostRise(d);
+
+  // the stone: a rounded slab with a base, dropped from above the screen
+  const W = 13, H = 18;
+  const y = d.y - (1 - drop) * 90;
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, drop * 2);
+  ctx.fillStyle = '#8b93a6';
+  ctx.beginPath();
+  ctx.moveTo(d.x - W / 2, y);
+  ctx.lineTo(d.x - W / 2, y - H + W / 2);
+  ctx.arc(d.x, y - H + W / 2, W / 2, Math.PI, 0);
+  ctx.lineTo(d.x + W / 2, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#6f7789'; // base slab
+  ctx.fillRect(d.x - W / 2 - 2, y - 3, W + 4, 3);
+  ctx.fillStyle = '#5b6376'; // engraved lines
+  ctx.fillRect(d.x - 3, y - H + 6, 6, 1);
+  ctx.fillRect(d.x - 3, y - H + 9, 6, 1);
+  ctx.restore();
+
+  // the ghost: her own sprite, rising off the stone and fading out
+  if (rise > 0) {
+    const alpha = 1 - rise;
+    drawArcher(myLook(), d.x, d.y - 6 - rise * 34, game.player.face, 'idle', performance.now() / 1000, alpha * 0.85, undefined, '#cfe4ff');
+  }
+}
+
 export function render(): void {
   const { w, h } = game.view;
   ctx.imageSmoothingEnabled = false;
@@ -559,6 +594,7 @@ export function render(): void {
   drawGearDrops(); // the same: you want to see what you're about to pick up
   game.fx.forEach(drawFx);
   if (settings.dmgNums) game.dmgNums.forEach(drawDmg);
+  drawPlayerDeath(); // the tombstone and ghost sit above the action
   ctx.restore();
   drawHUD();
 }

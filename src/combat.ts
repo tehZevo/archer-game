@@ -1,4 +1,5 @@
 import { bump } from './achievements';
+import { sfx } from './audio';
 import { ELITE, P } from './config';
 import { localKill } from './boost';
 import { dropGear, gearDmg } from './gear';
@@ -69,6 +70,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   target.hurt = HITSTUN;
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);
   game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: hx, y: hy, t: opts.fx === 'stunHit' ? 0.3 : crit && !opts.fx ? 0.28 : 0.24, face: -game.player.face }); // streaks point back at the shooter
+  sfx.mobHit(target.name); // every line of a multi-hit stack sounds like this enemy
   game.dmgNums.push(stackedNum(target, dmg, crit));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   if (opts.launch) { target.airTime = 1.1; target.vy = -430; target.y -= 4; }

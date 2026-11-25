@@ -9,6 +9,7 @@ import { cameraTarget, gainExp, game, gotoPlace, logMsg, mobBounds, player, READ
 import { held, pressed, repeated } from './input';
 import { catchClimbable, collideGround, integrate, STICK, surfaceBetween, surfaceYAt } from './physics';
 import { damage, killMob, revive } from './combat';
+import { setPlayerDeath, updatePlayerDeath } from './deaths';
 import { barrageTargets, cast, landDive, updateRush } from './skills';
 import { isLearned, skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { sfx } from './audio';
@@ -28,6 +29,10 @@ import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
 
 export function update(dt: number): void {
+  // knocked out: the tombstone and ghost animation starts here, and ages on
+  // its own clock while the respawned archer plays on (see deaths.ts)
+  updatePlayerDeath(dt);
+  if (player.hp <= 0) setPlayerDeath(player.x, player.y + player.h);
   // the shop window holds the world still while you browse (Esc closes it)
   if (shop.open) { shopInput(); return; }
   // so does the trainer's
@@ -292,7 +297,6 @@ export function update(dt: number): void {
   }
 
   if (player.hp <= 0) revive();
-
   updateCamera(dt);
 }
 
