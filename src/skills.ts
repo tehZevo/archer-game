@@ -153,6 +153,9 @@ export function cast(key: SkillKey, chained = false): void {
   if (linked && player.combo <= 0 && kind !== 'MS') return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
   if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
+  // Input buffering: a link pressed while the source skill is still animating
+  // (any skill, not just the rush) is kept and fires on the first free frame.
+  if (linked && player.combo > 0 && (player.useT > 0 || player.recoverT > 0)) { player.queued = key; return; }
   // Q rushes chain into Twin Shot: Z pressed during the rush fires the moment
   // it ends, and right after it (while its link window is open) at once. The
   // chain skips the rush's ending lag once, so it grants one quick shot, not
