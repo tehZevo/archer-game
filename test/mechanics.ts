@@ -24,9 +24,11 @@ import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
+import { BOSS, bossAlive, quakes } from '../src/boss';
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
 import { styled } from '../src/archer';
+import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { lastTown } from '../src/world';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
@@ -791,9 +793,28 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a town has two ways up and one down', game.floor.portals.length === 3 && upL.to === 8 && upR.to === 8
     && upL.area === forest && upR.area === meadow && down.to === 3 && down.area === 0 && game.mobs.length === 0);
   const deck = game.floor.platforms.filter((p) => p.block === 1 && !p.inner);
-  check('the down portal stands on the plaza deck, reached by a ladder and a rope',
-    deck.some((p) => p.y === down.y) && game.floor.ladders[0].y1 === down.y && game.floor.ropes[0].y1 === down.y
-    && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
+  const deckTop = Math.min(...deck.map((p) => p.y));
+  check('the plaza deck is reached by a ladder and a rope from the ground',
+    game.floor.ladders[0].y1 === deckTop && game.floor.ropes[0].y1 === deckTop && game.floor.ladders[0].y2 === game.floor.platforms[0].y);
+  // two-level towns: a loft over the deck, up a ladder, with the way down on it
+  let lofts = 0, flat = 0, loftsOk = true;
+  for (const a of AREAS) {
+    gotoFloor(townStage(a.depth), a.id);
+    const fl = game.floor, dk = fl.platforms.filter((p) => p.block === 1), lf = fl.platforms.filter((p) => p.block === 2);
+    const dTop = Math.min(...dk.map((p) => p.y)), dn = fl.portals.find((q) => q.to < fl.number)!;
+    if (!lf.length) { flat++; if (dn.y !== dTop) loftsOk = false; continue; }
+    lofts++;
+    const lTop = Math.min(...lf.map((p) => p.y)), lBottom = Math.max(...lf.map((p) => p.y + p.h));
+    const lad = fl.ladders[1];
+    const ok = dn.y === lTop && lf.some((p) => !p.inner && p.y === lTop && dn.x >= p.x && dn.x <= p.x + p.w)
+      && lad && lad.y1 === lTop && lad.y2 === dTop
+      && dTop - lBottom >= player.h + 4 // you can walk the deck under it
+      && Math.abs(lad.x - dn.x) >= dn.w / 2 + 10 + 7; // climbing off the ladder isn't standing in the portal
+    if (!ok) { loftsOk = false; check(`${a.town}'s loft`, false); break; }
+  }
+  check("some towns have a second level and some don't", lofts > 0 && flat > 0, `${lofts} two-level, ${flat} one-level`);
+  check("a loft holds the way down, up a ladder from the deck, with headroom under it", loftsOk);
+  gotoFloor(7, beach);
   check('every area has its own rooms, its town too (the first area keeps the plain ids)',
     roomId(13, 1, '', forest) !== roomId(13, 1, '', meadow) && roomId(8, 1, '', forest) !== roomId(8, 1, '', meadow) && !roomId(3, 1, '', 0).includes('-a'));
 
@@ -935,10 +956,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
   // the trainer: from the third town up, respec for coins
   gotoFloor(townStage(0));
-  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'stylist').length === 1 && game.floor.npcs![0].kind === 'shop');
+  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 1 && game.floor.npcs![0].kind === 'shop');
   gotoFloor(townStage(2));
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
-  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist').length === 2);
+  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
   wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.BS = 0;
   tap('up');
@@ -1219,6 +1240,53 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
+  // bosses: an area's last floor has one, and its way up stays sealed until it's beaten
+  release();
+  let endN = 1; while (!isAreaEnd(endN)) endN++;
+  gotoFloor(endN - 1, 0);
+  check('no boss before the last floor of an area', !game.mobs.some((m) => m.boss));
+  gotoFloor(townStage(0), 0);
+  check('no boss in a town', !game.mobs.some((m) => m.boss));
+  gotoFloor(endN, 0);
+  const bs = game.mobs.filter((m) => m.boss);
+  check("an area's last floor has exactly one boss", bs.length === 1);
+  const boss = bs[0];
+  check('the boss is one of its enemies, grown huge and much tougher',
+    boss.w === boss.type.w * BOSS.SCALE && boss.h === boss.type.h * BOSS.SCALE && boss.hpMax >= boss.type.hp * BOSS.HP && !boss.fly);
+  const hp0 = player.hpMax;
+  player.hpMax = player.hp = 1e7;
+  const ground = game.floor.platforms[0];
+  const stand = (x: number): void => { player.x = x; player.y = ground.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.plat = ground; player.climb = null; player.invuln = 0; };
+  const up = game.floor.portals.find((q) => q.to > endN)!;
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('the way up is sealed while the boss stands', game.floor.number === endN && bossAlive() === boss);
+  boss.stun = 2; boss.airTime = 1; step(1);
+  check('the boss shrugs off stuns and launches', boss.stun === 0 && boss.airTime === 0);
+  // charge: far away, it winds up, then rushes
+  boss.x = WORLD.w * 0.75; boss.y = ground.y - boss.h; boss.vy = 0; boss.boss = { act: 'walk', t: 0, cd: 0, air: false };
+  stand(40);
+  step(1);
+  check('far from you, the boss winds up a charge', boss.boss.act === 'windCharge');
+  step(Math.ceil(BOSS.WIND / P.STEP) + 2);
+  check('then rushes at you', boss.boss.act === 'charge' && boss.vx < -boss.spd * 2, `${boss.boss.act} ${boss.vx}`);
+  // slam: the landing hits a player on the ground nearby, not one far off
+  const slam = (dx: number, from = WORLD.w / 2): number => {
+    boss.x = from; boss.y = ground.y - boss.h; boss.vx = boss.vy = 0; boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+    stand(from + dx); quakes.length = 0;
+    const before = player.hp;
+    for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = Math.min(player.invuln, 0.5); game.mobs.splice(0, game.mobs.length, boss); step(1); stand(from + dx); }
+    return before - player.hp;
+  };
+  check("a slam's shockwave hurts a player on the ground nearby", slam(boss.w / 2 + 40) > 0 && quakes.length === 1);
+  check('but not one well out of reach (it leaps toward you)', slam(WORLD.w - 60, 30) === 0);
+  // beaten: the way up opens
+  killMob(boss);
+  check('beating the boss clears it', !bossAlive());
+  player.x = up.x; player.y = up.y - player.h; player.vx = player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('then the way up opens', game.floor.number > endN);
+  player.hpMax = player.hp = hp0;
   // looks: hair style, hair colour, skin and outfit; set from the menu or the town stylist
   check('a bad saved look falls back to the default', JSON.stringify(cleanLook({ style: 99, hair: -1, skin: 'x' })) === JSON.stringify(DEFAULT_LOOK));
   check('a good look is kept', cleanLook({ style: 2, hair: 3, skin: 1, outfit: 4 }).hair === 3);
@@ -1276,6 +1344,51 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('X closes it', !stylist.open && !game.pause);
   setMyLook(DEFAULT_LOOK);
   release();
+  // quests: every town has a board posting kill quests for the areas above it
+  release(); loadQuests([]);
+  for (const a of AREAS) {
+    gotoFloor(townStage(a.depth), a.id);
+    const b = game.floor.npcs?.find((n) => n.kind === 'board');
+    const zones = game.floor.portals.map((q) => [q.x - q.w / 2 - 10, q.x + q.w / 2 + 10]).concat(game.floor.ladders.map((l) => [l.x - 7, l.x + 7]), game.floor.ropes.map((l) => [l.x - 7, l.x + 7]));
+    if (!b || !zones.every(([lo, hi]) => b.x + NPC_R <= lo || b.x - NPC_R >= hi)) { check(`${a.town} has a clear quest board`, false); break; }
+    const offers = boardOffers(townStage(a.depth), a.id);
+    const want = new Set((a.up.length ? a.up : [a.id]).flatMap((id) => areaMobs(AREAS[id].name).map((m) => m.n)));
+    if (!offers.length || !offers.every((o) => want.has(o.mob) && o.exp > 0 && o.coins > 0)) { check(`${a.town} posts quests for the areas above`, false, offers.map((o) => o.mob).join(',')); break; }
+  }
+  check('every town has a quest board clear of portals, ladders and ropes', true);
+  gotoFloor(townStage(0), 0);
+  const boardNpc = game.floor.npcs!.find((n) => n.kind === 'board')!;
+  player.x = boardNpc.x; player.y = boardNpc.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
+  tap('up');
+  check('Up beside the board opens it', board.open && boardRows().length > 0);
+  tap('z');
+  check('Z takes the selected posting', quests.length === 1 && quests[0].have === 0);
+  const q = quests[0];
+  check('a taken posting leaves the offer list', boardRows().filter((r) => r.active === null).every((r) => r.q.mob !== q.mob));
+  for (let i = 0; i < q.need + 3; i++) questKill(q.mob);
+  questKill('Nobody');
+  check('kills count toward the quest (capped at the goal)', q.have === q.need);
+  const exp0 = player.exp, lvl0 = player.level, coins0 = wallet.coins;
+  board.sel = 0; tap('z');
+  check('Z hands in a finished quest for EXP and coins', quests.length === 0 && wallet.coins === coins0 + q.coins && (player.exp > exp0 || player.level > lvl0));
+  for (let i = 0; i < 5; i++) { board.sel = boardRows().findIndex((r) => r.active === null); if (board.sel >= 0) tap('z'); }
+  check(`at most ${QUEST_MAX} quests at once`, quests.length <= QUEST_MAX);
+  const n0 = quests.length; board.sel = 0; tap('x');
+  check('X drops an active quest', quests.length === n0 - 1);
+  tap('escape');
+  check('Esc closes the board (not the pause menu)', !board.open && !game.pause);
+  release();
+  // a kill in the world counts
+  loadQuests([{ mob: 'Garden Snail', need: 2, have: 0, exp: 5, coins: 5 }]);
+  gotoFloor(1, 0); spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]); killMob(game.mobs[game.mobs.length - 1]);
+  check('killing an enemy advances its quest', quests[0].have === 1);
+  // saved and restored
+  const snap = snapshot();
+  loadQuests([]); apply(snap);
+  check('quests survive a save and load', quests.length === 1 && quests[0].mob === 'Garden Snail' && quests[0].have === 1);
+  loadQuests([{ mob: 3 }, null, { mob: 'Crab', need: -5, have: 99, exp: 'x', coins: 1 }]);
+  check('malformed saved quests are dropped or clamped', quests.length === 1 && quests[0].need === 1 && quests[0].have === 1 && quests[0].exp === 0);
+  loadQuests([]);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

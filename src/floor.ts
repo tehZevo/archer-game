@@ -275,7 +275,9 @@ function groundSlab(): Platform {
  * none at the top of a branch); on a floating plaza deck in the middle
  * (ladder on its left, rope on its right) a way back down to the town
  * below (the first town's leads to the floor below it). Players arrive
- * under the deck, between the up portals.
+ * under the deck, between the up portals. Every other town (odd area ids)
+ * has a second level: a loft over the deck's right side, up a ladder, where
+ * the way down moves.
  */
 export function townFloor(n: number): Floor {
   const ground = groundSlab();
@@ -290,21 +292,33 @@ export function townFloor(n: number): Floor {
   const here = AREAS[net.area];
   const upX = [2 * TILE, WORLD.w - 2 * TILE];
   const ups = here.up.map((a, i) => P(upX[i], ground.y, n + 1, placeName(n + 1, a), a));
+  // the loft: 5 tiles over the deck's columns 3-7, the same headroom over the
+  // deck as the deck has over the ground; its ladder at its left end stays
+  // clear of the way down further along it
+  const loft = here.id % 2 === 1 ? makeShape('flat', deckX + 3 * TILE, deckTop - 3 * TILE, 5) : null;
+  loft?.tiles.forEach((t) => { t.block = 2; });
+  const loftTop = loft ? Math.min(...loft.tiles.map((t) => t.y)) : deckTop;
+  const downX = loft ? deckX + 6 * TILE : WORLD.w / 2;
   const down = here.parent >= 0
-    ? P(WORLD.w / 2, deckTop, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)
-    : P(WORLD.w / 2, deckTop, n - 1, placeName(n - 1, here.id), here.id);
+    ? P(downX, loftTop, townStage(here.depth - 1), AREAS[here.parent].town, here.parent)
+    : P(downX, loftTop, n - 1, placeName(n - 1, here.id), here.id);
   return {
     number: n, town: true, h: GEN_H,
-    platforms: [ground, ...deck.tiles],
-    ladders: [{ x: deckX + TILE / 2, y1: deckTop, y2: ground.y }],
+    platforms: [ground, ...deck.tiles, ...(loft?.tiles ?? [])],
+    ladders: [
+      { x: deckX + TILE / 2, y1: deckTop, y2: ground.y },
+      ...(loft ? [{ x: deckX + 3 * TILE + TILE / 2, y1: loftTop, y2: deckTop }] : []),
+    ],
     ropes: [{ x: deckX + (deckW - 1) * TILE + TILE / 2, y1: deckTop, y2: ground.y }],
     spawns: [],
     portal: ups[0] ?? down, portals: [...ups, down],
     // the shopkeeper keeps a stall on the deck, left of the way down; from the
-    // third town up (Lanternhollow) a trainer stands to the right of it; the
-    // stylist works on the ground right of the deck
+    // third town up (Lanternhollow) a trainer stands to the right of it;
+    // the stylist works on the ground right of the deck, and a quest
+    // board stands on the ground left of the ladder
     npcs: [
       { x: deckX + TILE + TILE / 2, y: deckTop, kind: 'shop', name: 'SHOP' },
+      { x: deckX - TILE, y: ground.y, kind: 'board', name: 'QUESTS' },
       { x: deckX + (deckW + 1) * TILE, y: ground.y, kind: 'stylist', name: 'STYLIST' },
       ...(blockOf(n) >= 2 ? [{ x: deckX + (deckW - 2) * TILE, y: deckTop, kind: 'trainer' as const, name: 'TRAINER' }] : []),
     ],

@@ -3,6 +3,8 @@ import { localKill } from './boost';
 import { dropCoins } from './economy';
 import { game, gainExp, logMsg } from './state';
 import { passiveBonus } from './progress';
+import { bossDown } from './boss';
+import { questKill } from './quests';
 import type { DamageOpts, DmgNum, Mob } from './types';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
@@ -62,6 +64,8 @@ export function killMob(m: Mob): void {
   game.fx.push({ type: 'death', x: m.x, y: m.y + m.h, t: 0.35 });
   gainExp(m.exp);
   dropCoins(m);
+  if (m.boss) bossDown(m, dropCoins);
+  questKill(m.name);
 }
 
 /**
