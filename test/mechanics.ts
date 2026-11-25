@@ -621,7 +621,9 @@ check('new poses go on the end of the networked list (older clients read them as
   mem['archer-game:save'] = JSON.stringify({ ...snapshot(), town: 'atlantis' });
   check('a save in a town gone from the map resumes at the start', samePlace(load(), START));
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
-  check('a corrupt or old-version save is ignored', apply({ v: 99, level: 50 }) === null && apply({ v: 2, level: 50 }) === null && apply('junk') === null);
+  check('a corrupt save is ignored', apply('junk') === null);
+  check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 3 }, town: 'mossgate' }) !== null
+    && player.level === 50 && player.ap === 3 && player.ranks.Z === 3);
   apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, town: 0 });
   check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.S + player.ranks.BS === 1);
   clearSave();

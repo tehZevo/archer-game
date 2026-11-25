@@ -20,7 +20,7 @@ import type { SkillKey } from './types';
    ============================================================ */
 
 const KEY = 'archer-game:save';
-const VERSION = 4; // 4: the starting kit (3 HP + 3 MP potions) (older saves are dropped)
+const VERSION = 4; // 4: the starting kit (3 HP + 3 MP potions)
 export const SAVE_EVERY = 5; // s between autosaves
 
 export interface SaveData {
@@ -65,10 +65,24 @@ const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
 };
 
 
+/** Bring a save written by an older VERSION up to the current shape, so a
+ *  format change keeps your run instead of resetting it. Each bump adds a
+ *  case here; the fields every version shares (level, exp, ranks) pass
+ *  through untouched. */
+export function migrate(d: SaveData): SaveData {
+  const v = d.v ?? 0;
+  if (v >= VERSION) return d;
+  // v2 and earlier saved a global stage number; v3 replaced it with a town id
+  if (v < 3 && !d.town) d.town = 'mossgate';
+  // v3 had no starting kit; v4 gives you potions, so an old save keeps what it stored
+  d.v = VERSION;
+  return d;
+}
+
 /** Apply a save to the player; returns the place to resume on, or null if the save is unusable. */
 export function apply(d: unknown): Place | null {
-  if (!d || typeof d !== 'object' || (d as SaveData).v !== VERSION) return null;
-  const s = d as SaveData;
+  if (!d || typeof d !== 'object') return null;
+  const s = migrate(d as SaveData);
   player.level = int(s.level, 1, MAX_LEVEL, 1);
   player.expNext = expToNext(player.level);
   player.exp = int(s.exp, 0, player.expNext - 1, 0);
