@@ -88,7 +88,7 @@ const before = game.kills;
 const expBefore = player.exp;
 player.x = mob.x; player.y = mob.y;
 setKey('z', true);
-step(1 + Math.ceil(P.Z_WINDUP / P.STEP)); // the first hit lands on release, after the windup
+step(1 + Math.ceil((P.Z_WINDUP + 0.1) / P.STEP)); // the first hit lands after the windup; the kill waits for the second
 check('killing a mob increments kills', game.kills > before);
 check('killing a mob awards exp', player.exp >= expBefore);
 

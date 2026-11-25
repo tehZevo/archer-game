@@ -20,7 +20,7 @@ import { MOB_ART, paintMob } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
-import { BAR_SHOW, damage, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
+import { BAR_SHOW, damage, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
 import { activeSkill, STAT_GAIN, PAUSE_ROWS, pauseScroll, rank, recalcStats, skillRows, spendSkill } from '../src/progress';
 import { fmtNum } from '../src/util';
@@ -1668,6 +1668,33 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('each way up from a town shows the level of the enemies there', ups.length > 0 && ups.every((p) => p.lvl === mobLevel(p.to)));
   check("the way down doesn't", game.floor.portals.filter((p) => p.to < game.floor.number).every((p) => p.lvl === undefined));
   gotoFloor(1, 0);
+}
+
+// --- multi-hit overkill waits for the last hit; hitstun ---
+{
+  arena(1); release(); player.invuln = 999;
+  game.mobs.length = 0; game.dmgNums.length = 0;
+  const m = dummy(player.x + 30, 1), kills = game.kills;
+  damage(m, 1, { more: true });
+  check('an overkill hit with more to come leaves the enemy (dying) in place', game.mobs.includes(m) && m.dying !== undefined && game.kills === kills);
+  step(2);
+  check('a dying enemy is frozen and still there between hits', game.mobs.includes(m) && m.vx === 0);
+  damage(m, 1, { more: true }); damage(m, 1);
+  check('every hit shows its number, and the last one kills it', game.dmgNums.length === 3 && !game.mobs.includes(m) && game.kills === kills + 1);
+  killMob(m);
+  check('killing it again does nothing', game.kills === kills + 1);
+  const n = dummy(player.x + 30, 1);
+  damage(n, 1, { more: true });
+  step(Math.ceil(DYING_MAX / P.STEP) + 2);
+  check('a dying enemy dies anyway if the last hit never comes', !game.mobs.includes(n) && game.kills === kills + 2);
+  const o = dummy(player.x + 60); o.spd = 60; o.aggro = true; o.vx = 60;
+  damage(o, 1);
+  check('a hit puts the enemy in hitstun', (o.hurt ?? 0) > 0 && o.hurt! <= HITSTUN);
+  step(3);
+  check('in hitstun it stops instead of chasing', Math.abs(o.vx) < 30, `vx ${o.vx.toFixed(1)}`);
+  step(Math.ceil(HITSTUN / P.STEP) + 1);
+  check('hitstun wears off', !o.hurt);
+  game.mobs.length = 0;
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

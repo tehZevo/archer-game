@@ -125,7 +125,7 @@ export function cast(key: SkillKey): void {
               const len = Math.max(12, Math.abs(ex - mx));
               game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: len / 64 });
             }
-            live.forEach((m) => damage(m, r.dmg));
+            live.forEach((m) => damage(m, r.dmg, { more: h < r.hits - 1 }));
           };
           if (h === 0) hit(); else later(h * 0.08, hit);
         }
@@ -229,7 +229,7 @@ export function cast(key: SkillKey): void {
           for (const m of live) {
             game.fx.push({ type: 'tracer', x: sx, y: sy, t: 0.14, face, sx: Math.max(12, Math.abs(m.x - sx)) / 64 });
           }
-          live.forEach((m) => damage(m, r.dmg));
+          live.forEach((m) => damage(m, r.dmg, { more: h < r.hits - 1 }));
         });
       }
       break;
@@ -291,7 +291,7 @@ export function cast(key: SkillKey): void {
         .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
       for (let h = 0; h < r.hits; h++) {
         later(0.08 + h * 0.08, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit' }));
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { fx: 'rainHit', more: h < r.hits - 1 }));
         });
       }
       break;
@@ -326,7 +326,7 @@ export function cast(key: SkillKey): void {
         .forEach(([x, y]) => game.fx.push({ type: 'rain', x, y, t: 0.4 }));
       for (let h = 0; h < r.hits; h++) {
         later(0.06 + h * 0.07, () => {
-          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { airborne: true, fx: 'rainHit' }));
+          tg.filter((m) => game.mobs.includes(m)).forEach((m) => damage(m, r.dmg, { airborne: true, fx: 'rainHit', more: h < r.hits - 1 }));
         });
       }
       break;
@@ -362,7 +362,7 @@ export function cast(key: SkillKey): void {
         const t = tg[h % (tg.length || 1)];
         // launched one after another from the bow
         spawnArrow(x0, y0, t ? t.x : x0 + player.face * 200, !!t,
-          t ? () => { if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit' }); } : undefined,
+          t ? () => { if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < r.hits }); } : undefined,
           { speed: P.BOLT_V, sprite: 'bolt', dir: player.face, delay: h * 0.08 });
         if (!t) break; // nothing to hit: one bolt is enough
       }
