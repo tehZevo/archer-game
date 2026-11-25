@@ -197,8 +197,10 @@ export function cast(key: SkillKey, chained = false): void {
     player.combo = 0; player.comboT = 0;
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
-    // linked skills also shorten Tempest's long cooldown and refill a Blitz
+    // linked skills also shorten Tempest's and Spike Lift's long cooldowns
+    // and refill a Blitz: spending a link refunds a second off each
     player.cd.R = Math.max(0, player.cd.R - 1);
+    player.cd.E = Math.max(0, player.cd.E - 1);
     if (player.blitzCharges < P.BLITZ_MAX) player.blitzT += 1;
   }
 
