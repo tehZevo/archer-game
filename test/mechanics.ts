@@ -772,15 +772,27 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('the spin cools down for 4s', player.cdMax['W.air'] === P.SPIN_CD && P.SPIN_CD === 4);
 }
 {
-  // Q: the ground rush has no cooldown (its pace is the use time); the Air
-  // Dive keeps its own short one
+  // Q and Air Dive: both paced by the use time alone, no cooldowns
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   tap('q');
   check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.5 && player.cdMax.Q === 0 && player.useT > 0);
   step(40); player.cd.Q = 0;
   tap('c'); step(6); tap('q');
-  check('the Air Dive uses its own cooldown slot', player.cd['Q.air'] > 0 && player.cd.Q === 0);
+  check('the Air Dive has no cooldown, only a use time', SKILLS.AD.cd === 0 && player.cd['Q.air'] === 0 && player.useT > 0 && player.recoverT > 0,
+    `cd ${player.cd['Q.air'].toFixed(2)} use ${player.useT.toFixed(2)}`);
   step(40);
+}
+{
+  // The Air Dive's link window carries into the grounded kit: pressed as the
+  // dive lands (window open), the next skill fires without the use-time wait
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1; player.ranks.W = 1;
+  dummy(150);
+  tap('c'); step(8);
+  tap('q'); step(12); // the dive lands and rolls into its rush
+  check('the dive is still airborne-to-landed with its window open', player.combo > 0, `combo ${player.combo.toFixed(2)}`);
+  const mp0 = player.mp;
+  tap('w');
+  check('Skyfall Volley links out of the dive', player.mp < mp0 && player.combo <= 0, `mp ${player.mp} combo ${player.combo.toFixed(2)}`);
 }
 {
   arena(25); player.ranks.R = 1;
