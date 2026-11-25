@@ -12,7 +12,7 @@ import { FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
-import { clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
+import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, makeShape, SHAPES } from '../src/floor';
@@ -44,6 +44,7 @@ import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, 
 import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
+import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
 import type { Mob, PauseMenu, Platform } from '../src/types';
 
@@ -1432,6 +1433,46 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('escape');
   check('a second Esc resumes', !game.pause);
   Object.assign(settings, DEFAULT_SETTINGS);
+}
+
+// --- key rebinding: swaps, what a physical key drives, storage, the window ---
+{
+  resetBinds();
+  check('by default every action is on its own key', ACTIONS.every((a) => binds[a.id] === a.id && actionFor(a.id) === a.id));
+  bindKey('z', 'j');
+  check('a rebound key drives its action', actionFor('j') === 'z' && keyName('Z') === 'J');
+  check("the action's old key does nothing now", actionFor('z') === '');
+  check('keys that are not actions pass through', actionFor('left') === 'left' && actionFor('escape') === 'escape');
+  bindKey('c', 'j');
+  check('taking a key another action had swaps them', binds.c === 'j' && binds.z === 'c' && actionFor('c') === 'z' && actionFor('j') === 'c');
+  check('arrows, Enter and Esc cannot be bound', !bindKey('z', 'left') && !bindKey('z', 'enter') && !bindKey('z', 'escape'));
+  check('the layout is saved', JSON.parse((globalThis as unknown as { localStorage: Storage }).localStorage.getItem('archer-game:keys')!).c === 'j');
+  check('a stored layout with a key used twice falls back to the defaults', cleanBinds({ ...binds, q: 'j' }).z === 'z');
+  check('a stored layout with a bad key falls back to the defaults', cleanBinds({ ...binds, q: 'enter' }).q === 'q');
+  resetBinds();
+  check('reset puts the defaults back', ACTIONS.every((a) => binds[a.id] === a.id));
+  // the window: settings -> KEYS -> pick a row -> press a key
+  openSettings(); settingsUi.sel = SETTING_ROWS.indexOf('keys'); settingsKey('enter');
+  check("the settings' KEYS row opens the keys window", keysUi.open);
+  settingsKey('down'); settingsKey('enter');
+  check('Z on an action waits for a key', keysUi.waiting && !!capture.fn);
+  settingsKey('down');
+  check('arrows do nothing while waiting', keysUi.sel === 1);
+  capture.fn!('k');
+  check('the next key binds the action', binds.c === 'k' && !keysUi.waiting && !capture.fn);
+  settingsKey('enter'); capture.fn!('escape');
+  check('Esc while waiting cancels', binds.c === 'k' && !keysUi.waiting);
+  settingsKey('enter'); capture.fn!('left');
+  check('an arrow is refused with a note', binds.c === 'k' && keysUi.note !== '');
+  keysUi.sel = KEY_ROWS - 2; settingsKey('enter');
+  check('RESET restores the default layout', binds.c === 'c');
+  settingsKey('escape');
+  check('Esc closes the keys window back to the settings', !keysUi.open && settingsUi.open);
+  settingsKey('escape');
+  // in game: the rebound key's action is what the game sees
+  bindKey('a', 'h');
+  check('the HUD and menus label the bound key', keyName('a') === 'H' && keyName('s') === 'S');
+  resetBinds();
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);

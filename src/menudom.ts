@@ -2,6 +2,7 @@ import { game } from './state';
 import { menu, menuKey, menuTap, menuText } from './menu';
 import { stylist, stylistTap } from './stylist';
 import { settingsTap, settingsUi } from './settings';
+import { actionFor, capture, normalize } from './input';
 
 /* ============================================================
    MENU INPUT (browser only)
@@ -39,10 +40,10 @@ export function bindMenu(canvas: HTMLCanvasElement): void {
   input.addEventListener('input', () => { menuText(input.value); input.value = menu.edit === 'code' ? menu.code : menu.name; });
 
   addEventListener('keydown', (e) => {
-    if (!menu.open) return;
+    if (!menu.open || capture.fn) return; // a key being bound goes to input.ts
     e.stopPropagation(); // the game's input never sees menu keys
-    // Z confirms by its physical spot (KeyZ), like the game's keys (see input.ts)
-    const k = e.code === 'KeyZ' ? 'enter' : NAV[e.key];
+    // the attack key (Z unless rebound) confirms, like in the game (see input.ts)
+    const k = !menu.edit && actionFor(normalize(e)) === 'z' ? 'enter' : NAV[e.key];
     // while typing, letters (z included) go to the field; only Enter, Esc and Up/Down navigate
     if (menu.edit && !['Enter', 'Escape', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     if (!k) return;
