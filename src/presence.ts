@@ -87,7 +87,10 @@ export function ghostFx(tr: GhostTrack, g: GhostView): Fx[] {
 /* ---------------- ghost shots ---------------- */
 
 /** One released shot, as sent: sender's clock (ms), muzzle point, facing, tracer length (px). */
-export interface ShotMsg { t: number; x: number; y: number; f: number; l: number }
+/** A peer's shot: when, where, facing, tracer length, and how many arrows
+ *  (`n`, one every SHOT_GAP ms; absent = 1). */
+export interface ShotMsg { t: number; x: number; y: number; f: number; l: number; n?: number }
+export const SHOT_GAP = 80;
 
 /** Shots waiting for the ghost's playback to reach them (local clock, ms). */
 const pending: { due: number; fx: Fx[] }[] = [];
@@ -104,6 +107,11 @@ export function queueShot(tr: GhostTrack | undefined, s: ShotMsg, now: number): 
     { type: 'muzzle', x: s.x, y: s.y, t: 0.18, face },
     { type: 'tracer', x: s.x, y: s.y, t: 0.14, face, sx: len / 64 },
   ] });
+  // the rest of a multi-arrow shot, one tracer each
+  const n = Number.isFinite(s.n) ? Math.max(1, Math.min(8, Math.floor(s.n!))) : 1;
+  for (let i = 1; i < n && pending.length < MAX_PENDING; i++) {
+    pending.push({ due: due + i * SHOT_GAP, fx: [{ type: 'tracer', x: s.x, y: s.y, t: 0.14, face, sx: len / 64 }] });
+  }
 }
 
 /** Effects of queued shots whose moment has come. */

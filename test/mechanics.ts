@@ -10,7 +10,7 @@ Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 **
 
 import { ELITE, FX_DUR, MOB_TYPES, P } from '../src/config';
 import { game, gotoFloor, mobLevel, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
-import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, tintFor } from '../src/presence';
+import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
@@ -241,7 +241,6 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const x0 = player.x, y0 = player.y, hp0 = m.hp;
-  const air = barrageTargets(), top = air.length ? Math.min(...air.map((a) => a.y)) : y0 - 40;
   tap('w');
   const up = y0 - player.y;
   let hover = 0;
@@ -249,8 +248,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Sky Assault warps straight up without moving sideways', up > 0 && player.x === x0, `up ${up.toFixed(1)} dx ${(player.x - x0).toFixed(2)}`);
   check('Sky Assault hovers about half a second, then lands', hover >= 12 && hover <= 18 && player.onGround, `hover ${hover} frames`);
   check('Sky Assault hits', m.hp < hp0);
-  const peak = y0 - Math.min(y0, top - player.h - 4);
-  check('Sky Assault rises 1.5x the way to the launched enemy (twice its old height)', P.BARRAGE_RISE === 1.5 && Math.abs(up - peak * P.BARRAGE_RISE) < 1, `up ${up.toFixed(1)} full ${peak.toFixed(1)}`);
+  check('Sky Assault always rises the same fixed height', Math.abs(up - P.BARRAGE_UP) < 1, `up ${up.toFixed(1)}`);
 }
 
 {
@@ -419,7 +417,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   // jump, then fire at the top of the jump
   tap('c'); step(8);
   const yTop = player.y; player.vx = 40; tap('e'); step(1);
-  check('Plunging Volley bumps you up a little', player.y < yTop && player.y > yTop - 8 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
+  check('Plunging Volley bumps you up (a clear hop)', player.y < yTop - 4 && player.y > yTop - 20 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
   step(4);
   check('Plunging Volley does not freeze you mid-air', player.vy > 0 && player.vx !== 0);
   step(10);
@@ -692,6 +690,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a ghost shot waits for the playback to reach it', dueShots(due0 - 1).length === 0);
   check('a ghost shot shows muzzle and tracer on time', dueShots(due0).map((f) => f.type).sort().join(',') === 'muzzle,tracer');
   check('back-to-back ghost shots each show', dueShots(due0 + 100).length === 2);
+  queueShot(st, { t: 7000, x: 80, y: 40, f: 1, l: 64, n: 4 }, 8000);
+  const d7 = 7000 + 1000 + INTERP_MS, tracers = (t: number) => dueShots(t).filter((f) => f.type === 'tracer').length;
+  check('a multi-arrow ghost shot shows one tracer per arrow, one after another',
+    tracers(d7) === 1 && tracers(d7 + SHOT_GAP) === 1 && tracers(d7 + 3 * SHOT_GAP) === 2);
   queueShot(st, { t: NaN, x: 0, y: 0, f: 1, l: 1 } as never, 0);
   for (let i = 0; i < 100; i++) queueShot(undefined, { t: 0, x: 0, y: 0, f: 1, l: 1 }, 0);
   check('bad or flooding shot messages are capped', dueShots(1e9).length <= 80);
@@ -1700,6 +1702,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(Math.ceil(HITSTUN / P.STEP) + 1);
   check('hitstun wears off', !o.hurt);
   game.mobs.length = 0;
+}
+
+// --- a whiffed Z shot still shows one arrow per hit ---
+{
+  arena(1); game.mobs.length = 0; game.fx.length = 0;
+  player.cd.Z = 0; player.useT = 0;
+  const seen = new Set<object>();
+  setKey('z', true); step(1); setKey('z', false);
+  for (let i = 0; i < Math.ceil((P.Z_WINDUP + 0.3) / P.STEP); i++) { step(1); game.fx.filter((f) => f.type === 'tracer').forEach((f) => seen.add(f)); }
+  const n = seen.size;
+  check('a Z shot with nothing in range still fires every arrow', n === rank('Z').hits, `${n} tracers for ${rank('Z').hits} hits`);
+  release();
 }
 
 // --- key rebinding: swaps, what a physical key drives, storage, the window ---

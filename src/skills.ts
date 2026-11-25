@@ -114,13 +114,14 @@ export function cast(key: SkillKey): void {
         game.fx.push({ type: 'muzzle', x: mx, y: my, t: 0.18, face });
         // other players see the shot reach the first target (or whiff across the range)
         const near = tg.filter((m) => game.mobs.includes(m))[0];
-        netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96);
+        netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96, r.hits);
         if (player.onGround) player.vx -= face * 40; // recoil nudge
         for (let h = 0; h < r.hits; h++) {
           const hit = (): void => {
             const live = tg.filter((m) => game.mobs.includes(m));
-            // a tracer whips out to each target (or across the range on a whiff)
-            const ends = live.length ? live.map((m) => m.x) : h === 0 ? [mx + face * 96] : [];
+            // a tracer whips out to each target, or across the range on a
+            // whiff: every hit fires, so a miss shows as many arrows as a hit
+            const ends = live.length ? live.map((m) => m.x) : [mx + face * 96];
             for (const ex of ends) {
               const len = Math.max(12, Math.abs(ex - mx));
               game.fx.push({ type: 'tracer', x: mx, y: my, t: 0.14, face, sx: len / 64 });
@@ -226,8 +227,9 @@ export function cast(key: SkillKey): void {
         later(h * 0.08, () => {
           const live = tg.filter((m) => game.mobs.includes(m));
           const sx = player.x + face * 8, sy = player.y + 13;
-          for (const m of live) {
-            game.fx.push({ type: 'tracer', x: sx, y: sy, t: 0.14, face, sx: Math.max(12, Math.abs(m.x - sx)) / 64 });
+          // one tracer per target, or one across the range on a whiff
+          for (const ex of live.length ? live.map((m) => m.x) : [sx + face * 96]) {
+            game.fx.push({ type: 'tracer', x: sx, y: sy, t: 0.14, face, sx: Math.max(12, Math.abs(ex - sx)) / 64 });
           }
           live.forEach((m) => damage(m, r.dmg, { more: h < r.hits - 1 }));
         });
@@ -339,12 +341,11 @@ export function cast(key: SkillKey): void {
       // strikes run on the fixed step in update (see the hang block).
       player.cast = 'barrage'; player.castT = P.BARRAGE_HANG; player.castTotal = P.BARRAGE_HANG;
       sfx.shoot();
-      const air = barrageTargets();
-      const top = air.length ? Math.min(...air.map((m) => m.y)) : player.y - 40;
       const from = player.y + player.h / 2;
-      // rise toward the highest launched enemy, but only P.BARRAGE_RISE of the way
-      const peak = Math.min(player.y, top - player.h - 4);
-      player.y = Math.max(0, player.y - (player.y - peak) * P.BARRAGE_RISE);
+      // always the same rise: it used to scale with how high the launched
+      // enemies were at that moment, so casting at the top of their arc
+      // (or with one on a higher platform) sent you ~3x higher
+      player.y = Math.max(0, player.y - P.BARRAGE_UP);
       player.vx = 0; player.vy = 0; player.onGround = false;
       game.fx.push({ type: 'swoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
       player.hangT = P.BARRAGE_HANG; player.hangHits = r.hits; player.hangHitT = 0;
