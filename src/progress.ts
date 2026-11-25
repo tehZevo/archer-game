@@ -167,6 +167,11 @@ export const SKILL_PICK_EVERY = 5;
  *  several upgrades is a branch: taking one locks the others out for good. */
 const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q' };
 
+// TODO: Vault Shot, Rising Arrow and Backstep Shot stay in the game's code
+// (their cast cases, stats and icons) but are off the acquirable list for now;
+// reconsider bringing them back once the Q/W combo (rush, then launch) is in.
+const RETIRED: SkillKey[] = ['BS', 'VS', 'RA'];
+
 /** One line of the pause menu's skill list. */
 export interface SkillRow {
   key: SkillKey;
@@ -185,6 +190,7 @@ export interface SkillRow {
 export function skillRows(): SkillRow[] {
   const rows: SkillRow[] = [];
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
+    if (RETIRED.includes(k)) continue;
     const s = SKILLS[k], have = player.ranks[k] || 0, base = UPGRADES[k];
     const upgradedAway = Object.entries(UPGRADES).some(([u, b]) => b === k && player.ranks[u as SkillKey] > 0);
     if (upgradedAway || branchLocked(k)) continue;
