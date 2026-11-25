@@ -23,11 +23,10 @@ Using a skill doesn't announce its name on screen.
 All skills unlock at one of four levels, matching the job ladder: **1, 10, 30, 60**.
 
 - **Lv.1 — Basics:** Twin Shot (Z, free at rank 1); Jump (C, free); Glide (D); Precision (passive).
-- **Lv.10 — Aerial Combo:** Sky Toss (Q) with its Vault Shot / Rising Arrow branch; Skyfall Volley (W) upgradable to Sky Assault; Midair Spin (its sweep, requiring Sky Assault); Air Dive (its plunge, requiring Sky Toss); Agile Climbing; Fervor (passive).
-- **Lv.30 — Ground Burst:** Skyfall Volley sits with Sky Toss as its link; the movement skills arrive as two tiers: air (Jump + Glide at 1), then climb (Agile Climbing at 10).
-- **Lv.30 — Ground Burst:** Spike Lift (E) and its air form Plunging Volley; Haste (passive); Echo Shot (passive); the Z-slot upgrade Shell Barrage.
+- **Lv.10 — Aerial Combo:** Sky Toss (Q); Skyfall Volley (W), upgradable to Sky Assault; Midair Spin (requiring Sky Assault); Air Dive (its plunge, requiring Sky Toss); Agile Climbing; Fervor (passive).
+- **Lv.30 — Ground Burst:** Spike Lift (E); Plunging Volley (its air form); Haste (passive); Echo Shot (passive); Shell Barrage (the Z upgrade).
 - **Lv.60 — Storm:** Electric Blitz; Tempest (R); Power Surge (passive).
 
-Skill upgrades — the new forms (Shell Barrage, Sky Assault, Vault Shot, Rising Arrow) and the skills that build on another skill (Midair Spin on Sky Assault, Air Dive on Sky Toss, Plunging Volley on Spike Lift) — are generally **not** unlockable in the same job as the skill they build on: the base skill and its upgrade live in different groups, so mastering the base and discovering its replacement are separate moments in the build.
+Skill upgrades — the slot branches (Shell Barrage / Backstep Shot on Z, Vault Shot / Rising Arrow on Q) and the skills that build on another skill (Midair Spin on Skyfall Volley, Air Dive on Sky Toss, Plunging Volley on Spike Lift) — are generally **not** unlockable in the same job as the skill they build on: the base skill and its upgrade live in different groups, so mastering the base and discovering its replacement are separate moments in the build.
 
 SP is awarded to fund each group as it opens (roughly 10 at Lv.1, 14 at Lv.10, 16+5 at Lv.30, 14+5 at Lv.60 — about 59 total against the ~52 needed to max everything), leaving a little choice pressure without punishing experimentation.
