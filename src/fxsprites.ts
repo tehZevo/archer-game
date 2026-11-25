@@ -1,4 +1,3 @@
-import { P } from './config';
 /**
  * Skill effect animations: original pixel art in the style of classic MMOs'
  * glowing skill effects (white-hot core, cyan/teal halo, soft outer glow,
