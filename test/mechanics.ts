@@ -427,6 +427,14 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(15); player.ranks.W = 3; player.ranks.AB = 1;
   check('W offers Sky Assault as its upgrade', activeSkill('W').key === 'AB');
 }
+{
+  // Midair Spin: W's air form sweeps the enemies around you
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
+  const m = dummy(140);
+  tap('c'); step(8);
+  const hp0 = m.hp; tap('w'); step(4);
+  check('Midair Spin sweeps the enemies around you in the air', m.hp < hp0 && m.airTime === 0, `hp ${m.hp}`);
+}
 
 // --- E / R ---
 {
