@@ -2389,5 +2389,41 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('deaths do not follow you to another floor', corpses.length === 0);
 }
 
+{
+  // Aerial height gate: the air forms want ~2/3 of the jump's peak of height
+  // (AIR_MIN_H), not just any airtime
+  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  dummy(100);
+  tap('c'); step(1); // just left the ground: ~9px of height
+  const mp0 = player.mp;
+  tap('e');
+  check('Plunging Volley needs real height: early in the jump', player.cast !== 'barrage' && player.mp === mp0, `cast ${player.cast}`);
+  step(7); // near the jump's apex (~35px)
+  tap('e');
+  check('Plunging Volley fires near the jump apex', player.cast === 'barrage' && player.mp < mp0, `cast ${player.cast}`);
+}
+{
+  // the same gate on Air Dive and Midair Spin
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  tap('c'); step(1);
+  const mp0 = player.mp;
+  tap('q');
+  check('Air Dive needs real height: early in the jump', player.cast !== 'rush' && player.mp === mp0, `cast ${player.cast}`);
+  step(7);
+  tap('q');
+  check('Air Dive fires near the jump apex', player.cast === 'rush' && player.mp < mp0, `cast ${player.cast}`);
+}
+{
+  // ...and on Midair Spin
+  arena(20); player.ranks.W = 1; player.ranks.MS = 1;
+  tap('c'); step(1);
+  const mp0 = player.mp;
+  tap('w');
+  check('Midair Spin needs real height: early in the jump', player.mp === mp0 && player.cd['W.air'] === 0, `cd ${player.cd['W.air'].toFixed(1)}`);
+  step(7);
+  tap('w');
+  check('Midair Spin fires near the jump apex', player.mp < mp0 && player.cd['W.air'] > 0, `cd ${player.cd['W.air'].toFixed(1)}`);
+}
+
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

@@ -134,6 +134,11 @@ export function formCd(kind: SkillKey): number {
 }
 
 /** `chained`: fired off the end of a Q rush (see the Z chain below), so the rush's use time doesn't hold it. */
+/** Aerial skills need real height, not just any airtime: ~2/3 of the default
+ *  jump's peak (v²/2g ≈ 35px), so shallow jumps don't trigger the full
+ *  aerial combo. */
+export const AIR_MIN_H = (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
+
 export function cast(key: SkillKey, chained = false): void {
   const ground = activeSkill(key);
   const airborne = !player.onGround && !player.climb;
@@ -143,6 +148,10 @@ export function cast(key: SkillKey, chained = false): void {
   const airKey = airborne && ground.key !== 'AB' ? AIR_FORM[key] : undefined;
   const s = airKey ? SKILLS[airKey] : ground;
   if (!isLearned(s.key)) return;
+  // Air Dive, Midair Spin and Plunging Volley want you properly airborne:
+  // at least ~2/3 of a full jump's peak above the floor.
+  if (airborne && (s.key === 'AD' || s.key === 'MS' || s.key === 'PV') &&
+      game.floor.platforms[0].y - (player.y + player.h) < AIR_MIN_H) return;
   const r = rank(s.key);
   // which skill actually fires: a slot can be upgraded (W → Sky Assault)
   const kind = s.key;
