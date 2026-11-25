@@ -542,21 +542,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('...and lands when the roll clears', hurtPlayer(10, 0, 18) && player.hp === player.hpMax - 10);
   player.hp = player.hpMax; player.invuln = 0;
   check('a mob two levels above lands on any roll', hurtPlayer(10, 0, 22) && player.hp === player.hpMax - 10);
-  // Echo Shot (passive): the shadow archer's extra hits ride on every attack,
-  // permanently, once bought with SP. No timer.
+  // Echo Shot (passive): the shadow archer fires alongside you, doubling the
+  // arrows every attack fires, permanently, once bought with SP. No timer.
   arena(20); player.ranks.Z = 1;
   check('Twin Shot fires two arrows with no Echo Shot', rank('Z').hits === 2);
   player.ranks.ES = 1;
-  check('Echo Shot rank 1 adds one hit to Twin Shot', rank('Z').hits === 3, `${rank('Z').hits}`);
+  check('Echo Shot doubles Twin Shot\'s arrows', rank('Z').hits === 4, `${rank('Z').hits}`);
   player.ranks.Z = 3;
-  check('...and it stacks with the skill\'s own rank', rank('Z').hits === 3, `${rank('Z').hits}`);
+  check('...and it scales with the skill\'s own rank', rank('Z').hits === 4, `${rank('Z').hits}`);
   player.ranks.ES = 3;
-  check('Echo Shot maxed adds two hits', rank('Z').hits === 4, `${rank('Z').hits}`);
+  check('Echo Shot stays doubled at max rank', rank('Z').hits === 4, `${rank('Z').hits}`);
   check('Echo Shot unlocks at Lv.15 and is a passive', SKILLS.ES.minLevel === 15 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
   player.ranks.ES = 0;
-  check("a passive's bonus is zero until learned", rank('Z').hits === 2);
+  check("a passive's bonus is one lot of arrows until learned", rank('Z').hits === 2);
   arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
-  check('the shadow adds its hits to a mid-air Plunging Volley too', rank('PV').hits === 4, `${rank('PV').hits}`);
+  check('the shadow doubles a mid-air Plunging Volley too', rank('PV').hits === 4, `${rank('PV').hits}`);
 }
 // --- Electric Blitz: Q's charged upgrade ---
 {
