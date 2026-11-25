@@ -40,6 +40,7 @@ export const player: Player = {
   dropY: 0,
   climbRush: false,
   useT: 0,
+  recoverT: 0,
   queued: null,
   rushT: 0, rushDist: 0, rushCarry: [],
   hangT: 0, liftT: 0, hangHits: 0, hangHitT: 0, hangDmg: 0, hangTargets: 0,
@@ -189,6 +190,7 @@ export function gotoPlace(place: Place): void {
   player.dropBlock = null;
   player.climbRush = false;
   player.useT = 0;
+  player.recoverT = 0;
   player.queued = null;
   player.hangT = 0; player.liftT = 0; player.hangHits = 0;
   player.rushT = 0; player.rushDist = 0; player.rushCarry = [];

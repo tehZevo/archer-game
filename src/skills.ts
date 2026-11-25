@@ -113,6 +113,10 @@ export function landDive(): void {
 /** A skill's use time, shortened by Haste (+N% attack speed: time / (1 + N)). */
 export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
 
+/** Recovery after the animation ends: movement frees up at useT's end, a new
+ *  skill waits out this delay. Links skip it (see cast). */
+export const delayTime = (kind: SkillKey): number => SKILLS[kind].delay ?? P.DELAY_TIME;
+
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };
@@ -167,7 +171,7 @@ export function cast(key: SkillKey, chained = false): void {
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   // ...except that Plunging Volley can cut a Sky Assault hover short, so W -> E flows
   const fromHover = kind === 'PV' && player.hangT > 0;
-  if (player.useT > 0 && !linked && !fromHover && !chained) return;
+  if ((player.useT > 0 || player.recoverT > 0) && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return;
@@ -179,7 +183,7 @@ export function cast(key: SkillKey, chained = false): void {
 
   player.mp -= r.mp;
   player.cd[slot] = player.cdMax[slot] = formCd(kind);
-  if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.combatT = P.COMBAT_TIME; }
+  if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.recoverT = delayTime(kind); player.combatT = P.COMBAT_TIME; }
   player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift itself starts a new one below)
   player.skillPose = null; // the spin / vanish of the last cast is over (set again below)
 

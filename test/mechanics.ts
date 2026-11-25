@@ -90,7 +90,7 @@ function arena(level = 1, x = 100): void {
   for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'C', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
-  player.useT = 0; player.cast = null; player.castT = 0; player.combo = 0; player.queued = null; player.hangT = 0;
+  player.useT = 0; player.recoverT = 0; player.cast = null; player.castT = 0; player.combo = 0; player.queued = null; player.hangT = 0;
   player.fervor = 0; player.combatT = 0; player.regenT = 0; player.invuln = 999;
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
   game.pause = null;
@@ -777,12 +777,12 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   cast('Z');
   const base = player.useT;
   check('Twin Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
-  player.useT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
+  player.useT = 0; player.recoverT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
   const rCd = player.cd.R, rUse = player.useT;
-  player.ranks.HA = 3; player.useT = 0; player.cd.R = 0; cast('R');
+  player.ranks.HA = 3; player.useT = 0; player.recoverT = 0; player.cd.R = 0; cast('R');
   check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.useT - rUse / 1.1) < 1e-6);
   check('Haste leaves cooldowns alone', player.cd.R === rCd);
-  player.useT = 0; cast('Z');
+  player.useT = 0; player.recoverT = 0; cast('Z');
   check('a hasted Twin Shot fires about 10% faster', Math.abs(player.useT - base / 1.1) < 1e-6);
   player.ranks.HA = 0; player.ranks.R = 0;
 }
