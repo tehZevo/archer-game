@@ -66,7 +66,7 @@ export const P = {
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
   SPIN_RISE_V: 22.5,   // px/s: the midair sweep lifts you at this steady speed (was a slow fall)
-  SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
+  SPIN_CD: 8,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
@@ -120,10 +120,10 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
   W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 1,
-       cd: 0, use: 0.9, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
   E: { key: 'E', linksInto: [...LAUNCHER_LINKS, 'PV'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 1,
-       cd: P.SPIKE_CD, use: 0.7, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
+       cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows and unlock levels, each with
   // no cooldown (use time only) and chaining into its ground form.
@@ -131,7 +131,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 1.1, mp1: 4, dmg1: 400, hits1: 1, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   MS: { key: 'MS', linksInto: ['D', 'PV'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60, maxLevel: 1,
-       cd: P.SPIN_CD, use: 0.8, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'AB',
+       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
   PV: { key: 'PV', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 1,
        cd: 0, use: 0.2, delay: 0.4, mp1: 7, dmg1: 240, hits1: 2, targets1: 10, requires: 'E',
@@ -143,7 +143,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', linksInto: ['MS', 'R', 'Z', 'Q'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 1,
-       cd: 0, use: 0.9, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
+       cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
        desc: 'After Rush Toss: leap up to launched enemies' },
   S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 1,
        cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
