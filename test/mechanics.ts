@@ -18,7 +18,8 @@ import { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../s
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { textWidth } from '../src/font';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
-import { CHASE_TURN, update } from '../src/update';
+import { update } from '../src/update';
+import { CHASE_TURN } from '../src/mobai';
 import { activeSkill, expBar, MAX_LEVEL, passiveBonus, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
@@ -50,7 +51,7 @@ import { dev, devStops } from '../src/dev';
 import { BASIC } from '../src/look';
 import { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src/townlooks';
 import { openStylist, STYLIST_ROWS } from '../src/stylist';
-import { devInput } from '../src/update';
+import { devInput } from '../src/windows';
 import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
 import { say } from '../src/net';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
