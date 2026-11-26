@@ -56,13 +56,14 @@ const quad = (feat: { horns?: boolean; ears?: boolean; tail?: boolean; snout?: b
     // diagonal pairs step together; hurt, the legs brace apart (back legs back, front legs forward)
     const s = hurt ? (i < 2 ? -1 : 1) : f ? 0 : (i % 2 === 0) === (f0 === 0) ? 0 : 1;
     box(p, lx + s, h - legH - 1, 3, legH + 1, L.d);
+    p(lx + s + 1, h - 2, OUT); // a hoof
   }
   oval(p, 1, by - up, w - 6, bh, L.c);
   p(4, by + bh - 3 - up, L.l, w - 12, 1);
   // hurt: the head jerks back and up
   const hx = w - 8 - (hurt ? 1 : 0), hy = Math.max(4, by - 4) - up - (hurt ? 1 : 0);
   box(p, hx, hy, 7, 6, L.c);
-  if (feat.snout) box(p, hx + 5, hy + 2, 3, 3, L.l);
+  if (feat.snout) { box(p, hx + 5, hy + 2, 3, 3, L.l); p(hx + 6, hy + 3, L.d); } // with a nostril
   eye(p, hx + 4, hy + 2, L, hurt);
   if (hurt) p(hx + 5, hy + 4, OUT, 2, 1); // a yelp
   if (feat.horns) { p(hx + 1, hy - 2, L.a, 2, 2); p(hx, hy - 3, L.a, 1, 1); p(hx + 4, hy - 2, L.a, 1, 2); }
@@ -83,6 +84,9 @@ const bug = (feat: { spikes?: boolean }): Plan => (p, f0, L) => {
   oval(p, 0, 1, w - 3, h - 3, L.c);
   p(3, 3, L.l, Math.max(2, Math.floor(w / 3)), 1);
   p(2, h - 5, L.d, w - 7, 1);
+  // the shell's seam down the middle, and a row of dots along the side
+  p(Math.floor((w - 3) / 2), 2, L.d, 1, h - 7);
+  for (let x = 3; x < w - 7; x += 3) p(x, h - 6, L.l);
   const ry = h - 8 - (hurt ? 1 : 0) + nod;
   box(p, w - 5, ry, 5, 5, L.d);
   eye(p, w - 2, ry + 1, L, hurt);
@@ -103,6 +107,7 @@ const hopper = (feat: { ears?: boolean; mouth?: boolean }): Plan => (p, f0, L) =
   oval(p, 1, top - lift, w - 2, h - top - 2, L.c);
   oval(p, 3, h - 7 - lift, w - 8, 4, L.l, L.c);
   eye(p, w - 5, top + 2 - lift, L, hurt, 2);
+  p(w - 7, top + 4 - lift, L.a, 2, 1); // a cheek
   if (hurt) box(p, w - 6, top + 5, 4, 3, '#5a1a2a'); // mouth wide open
   else if (feat.mouth) p(w - 6, top + 5 - lift, OUT, 5, 1);
   // feet: tucked, or kicked out behind mid-hop (hurt: both braced forward)
@@ -122,7 +127,7 @@ const flier = (feat: { beak?: boolean; stripes?: boolean; antennae?: boolean; ge
     for (let i = 0; i < cx - 2; i++) {
       const x = side < 0 ? cx - 3 - i : cx + 2 + i;
       const y = f === 2 ? by + 1 + Math.floor(i / 2) : f % 2 ? by : by - Math.floor(i / 1.5);
-      p(x, y, OUT, 1, 4); p(x, y + 1, i % 3 === 2 ? L.l : L.a, 1, 2);
+      p(x, y, OUT, 1, 4); p(x, y + 1, i % 3 === 2 ? L.l : i >= cx - 4 ? L.d : L.a, 1, 2); // the tips darker
     }
   }
   oval(p, cx - 4, by - 1, 9, 7, L.c);
@@ -144,7 +149,7 @@ const blob = (feat: { tentacles?: boolean; drip?: boolean; sparkle?: boolean; ho
   const hurt = f0 === HURT, f = hurt ? 1 : f0 >> 1, tw = hurt ? 1 : f0;
   const { w, h } = L, bh = h - (feat.tentacles ? 5 : 2), squash = hurt ? 1 : feat.drip ? f : 0;
   oval(p, 0, squash, w, bh - squash, L.c);
-  p(3, 2 + squash, L.l, 3, 2);
+  p(3, 2 + squash, L.l, 3, 2); p(7, 2 + squash, L.l); // a shine, and a glint beside it
   if (feat.spots) { p(w - 6, 3, L.a, 2, 2); p(4, bh - 5, L.a, 2, 1); }
   const ey = Math.floor(bh / 2);
   eye(p, w - 6, ey, L, hurt, 2); eye(p, w - 10, ey, L, hurt, 2);
@@ -172,6 +177,7 @@ const biped = (feat: { cap?: boolean; helm?: boolean; key?: boolean; crystal?: b
   }
   box(p, tx, ty, tw, h - legH - ty, L.c);
   p(tx + 1, ty + 1, L.l, 2, h - legH - ty - 2);
+  p(tx + 1, h - legH - 3, L.d, tw - 2, 1); p(tx + Math.floor(tw / 2), h - legH - 3, L.a); // a belt and its buckle
   if (feat.arms) {
     if (hurt) { box(p, tx - 3, ty - 3, 3, 6, L.d); box(p, tx + tw, ty - 3, 3, 6, L.d); }
     else { box(p, tx - 3, ty + 2 + f, 3, 6, L.d); box(p, tx + tw, ty + 2 - f + 1, 3, 6, L.d); }
