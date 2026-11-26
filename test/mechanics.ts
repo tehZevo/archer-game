@@ -15,6 +15,7 @@ const climb = (n: number): Place => { let p: Place = START; for (let i = 1; i < 
 
 import { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/config';
 import { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
+import { confirmInput, confirmUi } from '../src/confirm';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { FONT_CHARS, textWidth } from '../src/font';
 import fontPng from '../assets/font.png';
@@ -2980,6 +2981,24 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...and turns over the regular enemies\' beat, not at once', boss.dir === 1 && boss.vx === 0, `dir ${boss.dir} vx ${boss.vx.toFixed(0)}`);
   step(4); // past CHASE_TURN
   check('...and completes the turn', boss.dir === -1, `dir ${boss.dir}`);
+}
+{
+  // Every combat floor has a way back down on the ground, and it asks first.
+  const here: Place = { path: 'woods', floor: 3 };
+  gotoPlace(here);
+  const back = game.floor.portals.find((q) => q.down);
+  check('a combat floor has a return portal on the ground', !!back && back.y >= game.floor.platforms[0].y - 1,
+    back ? `y ${back.y.toFixed(0)}` : 'none');
+  check('...and it leads to the town below the path', !!back && back.to.town === 'driftwood', back?.label);
+  const stand = (): void => { player.x = back!.x; player.y = back!.y - player.h; player.onGround = true; };
+  stand(); tap('up');
+  check('...stepping into it asks before it sends you', confirmUi.open && game.floor.place.floor === 3,
+    `open ${confirmUi.open}`);
+  confirmUi.yes = false; tap('z');
+  check('...saying no keeps you on the floor', !confirmUi.open && game.floor.place.floor === 3);
+  stand(); tap('up'); confirmUi.yes = true; tap('z');
+  check('...saying yes travels to that town', game.floor.town && placeKey(game.floor.place) === 'driftwood',
+    placeKey(game.floor.place));
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

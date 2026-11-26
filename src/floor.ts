@@ -1,6 +1,6 @@
 import { MOB_TYPES, VARIANT_CHANCE, WORLD, TILE } from './config';
 import { net, roomId } from './net';
-import { areaOf, isPathEnd, isTown, nextPlace, pathById, pathsFrom, pathsInto, placeKey, placeName, townDepth, townIndex, type LayoutMix, type Place } from './world';
+import { areaOf, isPathEnd, isTown, lastTown, nextPlace, pathById, pathsFrom, pathsInto, placeKey, placeName, townDepth, townIndex, type LayoutMix, type Place } from './world';
 import { hashStr, seeded } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
@@ -307,10 +307,13 @@ export function generateFloor(place: Place): Floor {
   // The exit portal sits centred on the highest platform's walkable top tile.
   const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: nextPlace(place) };
   if (isPathEnd(place)) portal.label = placeName(portal.to); // the way into the town names it
+  // And a way back down on the ground, at the far end from where you arrive:
+  // it takes you to the town below and asks before it sends you.
+  const back: Portal = { x: WORLD.w - 4 * TILE, y: ground.y, w: 40, h: 56, to: { town: lastTown(place) }, down: true, label: placeName({ town: lastTown(place) }) };
 
   // its own stream, so rolling a modifier never changes the layout
   const mods = rollMods(areaOf(place), seeded(hashStr(seedId + '-mods')));
-  return trim({ place, platforms, ropes, ladders, spawns, portal, portals: [portal], town: false, h: GEN_H, layout, ...(mods.length ? { mods } : {}) });
+  return trim({ place, platforms, ropes, ladders, spawns, portal, portals: [portal, back], town: false, h: GEN_H, layout, ...(mods.length ? { mods } : {}) });
 }
 
 /** The full-width ground slab every floor stands on: 4 tiles, not a wall

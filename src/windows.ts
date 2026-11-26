@@ -7,6 +7,7 @@ import { bag, unequip, wear } from './gear';
 import { dev, devStops } from './dev';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
+import { confirmInput, confirmUi } from './confirm';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu } from './types';
 
@@ -21,6 +22,7 @@ export function windowInput(dt: number): boolean {
   if (trainer.open) { trainerInput(); return true; }
   if (stylist.open) { stylistInput(); return true; }
   if (board.open) { boardInput(); return true; }
+  if (confirmUi.open) { confirmInput(); return true; }
   // the settings window (from the Esc menu) sits over the paused game
   if (settingsUi.open) { settingsInput(); return true; }
   if (achUi.open) { achInput(); return true; }
