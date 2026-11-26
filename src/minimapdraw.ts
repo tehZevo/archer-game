@@ -1,6 +1,6 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { peers } from './net';
+import { roster } from './net';
 import { view } from './ghost';
 import { tintFor } from './presence';
 import { MINI_SCALE, miniRect, toMini } from './minimap';
@@ -53,7 +53,7 @@ export function drawMinimap(): void {
   for (const pt of game.floor.portals) dot(pt.x, pt.y - 4, pt.down ? '#8fe3c4' : '#c9a6ff', 2);
   for (const m of game.mobs) dot(m.x, m.y + m.h / 2, '#ff6b6b');
   const now = performance.now();
-  for (const [id, tr] of peers) {
+  for (const [id, tr] of roster.tracks) {
     const g = view(tr, now);
     if (g) dot(g.x, g.y + 12, tintFor(id), 2);
   }

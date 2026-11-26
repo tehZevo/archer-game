@@ -7,7 +7,7 @@ import { game, player } from './state';
 import { HITSTUN } from './combat';
 import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
-import { localPose, looks, names, peers } from './net';
+import { localPose, roster } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { isLearned } from './progress';
@@ -211,18 +211,18 @@ function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
 export function drawGhosts(): void {
   const now = performance.now();
   game.fx.push(...dueShots(now));
-  for (const [id, tr] of peers) {
+  for (const [id, tr] of roster.tracks) {
     const g = view(tr, now);
     if (!g) continue;
     const col = tintFor(id);
     game.fx.push(...ghostFx(tr, g));
     // ghosts use the same 16x24 box; one on an older version (no look sent)
     // is washed in their colour instead
-    const look = looks.get(id);
+    const look = roster.looks.get(id);
     if (g.pose === 'dive') drawDiveTrail(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, now / 1000, 0.85, look ? undefined : col);
     drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since,
       look ? undefined : col, false);
-    const name = names.get(id);
+    const name = roster.names.get(id);
     if (name) {
       const nx = Math.round(g.x), ny = Math.round(g.y) - 10;
       // 1px dark outline so the tag reads over any background

@@ -13,21 +13,29 @@ import { cleanLook, myLook, watchLook, type Look } from './look';
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
 
-// One room per place; players spread across numbered channels.
+/* ---------------- room ids ----------------
+   A room id is five separate concerns joined into one string:
+     eurekaland-<place>-<crowd><hour><dev>
+   - prefix: shared by every room this game opens
+   - place:  the place key (see placeKey in world.ts)
+   - crowd:  a public channel (c2) or a private instance code (pABCDE);
+             a private instance is one room per place, whatever the channel
+   - hour:   floors only, the UTC hour you entered (-h2026112414)
+   - dev:    dev sessions get their own rooms (see dev.ts) */
 const APP_ID = 'tehZevo/archer-game';
-/** Public rooms are per place + channel; a private instance (net.code) is one
- *  room per place. `place` is a place key (see placeKey in world.ts). */
-export const roomId = (place: string, channel: number, code = net.code, hour = net.hour): string =>
-  (code ? `eurekaland-${place}-p${code}` : `eurekaland-${place}-c${channel}`) + hourTag(place, hour) + devTag();
-/* Rooms by hour: a floor's rooms are tagged with the UTC hour you entered
-   it (e.g. -h2026112414), so peers left over from earlier sessions are left
-   behind. The hour is fixed when you join a floor's room (through a portal,
-   or starting play): if it turns while you're on a floor you stay put, and
+const ROOM_PREFIX = 'eurekaland';
+const crowdTag = (channel: number, code: string): string => (code ? `p${code}` : `c${channel}`);
+/* Rooms by hour: peers left over from earlier sessions are left behind.
+   The hour is fixed when you join a floor's room (through a portal, or
+   starting play): if it turns while you're on a floor you stay put, and
    your next portal takes you into the new hour's rooms. Towns have no hour,
    so everyone passing through meets there. (The lobby, counts only, has none.) */
+const hourTag = (place: string, hour: string): string => (hour && !isTownId(place) ? `-h${hour}` : '');
+/** The room for a place + channel (or instance code) + hour. */
+export const roomId = (place: string, channel: number, code = net.code, hour = net.hour): string =>
+  `${ROOM_PREFIX}-${place}-${crowdTag(channel, code)}${hourTag(place, hour)}${devTag()}`;
 /** The UTC hour stamp for a time: YYYYMMDDHH. */
 export const hourStamp = (ms: number): string => new Date(ms).toISOString().slice(0, 13).replace(/[-T]/g, '');
-const hourTag = (place: string, hour: string): string => (hour && !isTownId(place) ? `-h${hour}` : '');
 
 /* ---------------- private instances ---------------- */
 /** Letters for instance codes: no I or O, which read as 1 and 0. */
@@ -47,14 +55,29 @@ export function parseCode(s: string): string {
   return c.length === CODE_LEN ? c : '';
 }
 
-/** Live map of everyone in the current channel (excluding us): buffered motion for playback. */
-export const peers = new Map<string, GhostTrack>();
-/** Display names of the players in `peers`, by peer id. */
-export const names = new Map<string, string>();
-/** How the players in `peers` look (absent for players on older versions). */
-export const looks = new Map<string, Look>();
+/** Everyone else in our room, as far as we've heard. Motion, name and look
+ *  arrive separately (and a peer on an older version may never send a look),
+ *  so each lives in its own map, keyed by peer id. */
+export const roster = {
+  /** Buffered motion for playback: a peer shows as a ghost once this arrives. */
+  tracks: new Map<string, GhostTrack>(),
+  /** Display names. */
+  names: new Map<string, string>(),
+  /** How each player looks (absent for players on older versions). */
+  looks: new Map<string, Look>(),
+  /** Drop a player who left (their bubbles and emotes too). */
+  forget(id: string): void {
+    roster.tracks.delete(id); roster.names.delete(id); roster.looks.delete(id);
+    clearBubbles(id); clearEmotes(id);
+  },
+  /** Empty the roster when we change rooms. */
+  clear(): void {
+    roster.tracks.clear(); roster.names.clear(); roster.looks.clear();
+    clearShots(); clearBubbles(); clearEmotes(); resetBoost();
+  },
+};
 /** Players in this channel or instance, you included. */
-export const playerCount = (): number => peers.size + 1;
+export const playerCount = (): number => roster.tracks.size + 1;
 export const net = {
   channel: 1, joined: false,
   /** The place key of the room we're in ('' before the first). */
@@ -129,33 +152,85 @@ function postLobby(): void {
   const key = `${at.p}:${at.c}`;
   if (key !== posted && lobbyAt) { posted = key; lobbyAt.set(at); }
 }
-let room: Room | null = null;
-// Trystero's signed per-user store: we own it, peers read it.
-let pos: UserState<Packet> | null = null;
-let sendKills: ((n: number) => Promise<void>) | null = null;
-let sendShot: ((s: ShotMsg) => Promise<void>) | null = null;
-let sendChat: ((s: string) => Promise<void>) | null = null;
-let sendEmote: ((n: number) => Promise<void>) | null = null;
+/** Our side of a name tag: set once, and again whenever your look changes. */
+interface Who { n: string; l?: Look }
+/** What we can send to the room. */
+interface Sends {
+  /** kill counts, in batches; each peer's waves speed up (see boost.ts) */
+  kills: number;
+  /** every released shot is its own message, so back-to-back shots all show */
+  shot: ShotMsg;
+  /** a chat line (see chat.ts) */
+  chat: string;
+  /** an index into EMOTES (see emotes.ts) */
+  emote: number;
+}
+/** The live connection to our current room. */
+interface Link {
+  room: Room;
+  /** Our motion, in Trystero's signed per-user store: we own it, peers read it. */
+  pos: UserState<Packet>;
+  /** Our name and look, in their own store, so they don't ride every motion packet. */
+  who: UserState<Who>;
+  send: { [K in keyof Sends]: (v: Sends[K]) => Promise<void> };
+}
+let link: Link | null = null;
 const rec = new Recorder();
 
 /** Network log lines go to the console, prefixed so they're easy to filter. */
 const log = (...a: unknown[]): void => { if (typeof console !== 'undefined') console.info('[net]', ...a); };
 
 function receive(id: string, p: Packet): void {
-  let tr = peers.get(id);
-  if (!tr) { peers.set(id, (tr = newTrack())); log('first position from', id.slice(0, 8)); }
+  let tr = roster.tracks.get(id);
+  if (!tr) { roster.tracks.set(id, (tr = newTrack())); log('first position from', id.slice(0, 8)); }
   ingest(tr, p, performance.now());
 }
 
+function meet(id: string, val: Who): void {
+  roster.names.set(id, cleanName(val.n));
+  if (val.l) roster.looks.set(id, cleanLook(val.l)); else roster.looks.delete(id);
+}
+
+/** Send to the room, if anyone's there to hear it. */
+function toRoom<K extends keyof Sends>(kind: K, v: Sends[K]): void {
+  if (net.started && roster.tracks.size) link?.send[kind](v).catch(() => {});
+}
+
+/** The two user states: our motion and our name tag, mirrored into the roster. */
+function makeStates(room: Room): Pick<Link, 'pos' | 'who'> {
+  const pos = room.makeUserState<Packet>('pos', { t: Math.round(performance.now()), f: player.face, s: [[0, Math.round(player.x), Math.round(player.y), 0, 0, 0]] });
+  pos.onChange((val, meta) => {
+    if (meta.self) return;
+    if (meta.removed || !val) roster.tracks.delete(meta.userId);
+    else receive(meta.userId, val);
+  });
+  const who = room.makeUserState<Who>('who', { n: myName(), l: myLook() });
+  who.onChange((val, meta) => {
+    if (meta.self) return;
+    if (meta.removed || !val) { roster.names.delete(meta.userId); roster.looks.delete(meta.userId); }
+    else meet(meta.userId, val);
+  });
+  watchLook((l) => who.set({ n: myName(), l }));
+  return { pos, who };
+}
+
+/** The four actions, each wired to what it does when a peer sends it. */
+function makeSends(room: Room): Link['send'] {
+  const kills = room.makeAction<number>('kills');
+  kills.onMessage((n) => remoteKills(n));
+  const shot = room.makeAction<ShotMsg>('shot');
+  shot.onMessage((s, ctx) => queueShot(roster.tracks.get(ctx.userId), s, performance.now()));
+  const chat = room.makeAction<string>('chat');
+  chat.onMessage((s, ctx) =>
+    addChat(ctx.userId, roster.names.get(ctx.userId) ?? '?', cleanChat(s), tintFor(ctx.userId), performance.now()));
+  const emote = room.makeAction<number>('emote');
+  emote.onMessage((n, ctx) => { const k = cleanEmote(n); if (k) setEmote(ctx.userId, k, performance.now()); });
+  return { kills: kills.send, shot: shot.send, chat: chat.send, emote: emote.send };
+}
+
 function connect(channel: number): void {
-  room?.leave();
-  peers.clear();
-  names.clear();
-  looks.clear();
-  clearShots();
-  clearBubbles();
-  clearEmotes();
-  resetBoost();
+  link?.room.leave();
+  roster.clear();
   net.channel = channel;
   // a new place takes the current hour; a channel hop on the same place keeps it
   const here = placeKey(game.floor.place);
@@ -164,59 +239,24 @@ function connect(channel: number): void {
   // identity: 'none' gives each tab its own userId; the default persists one
   // per browser, so two tabs in a profile would share a slot and overwrite
   // each other's positions.
-  room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL, identity: 'none' }, roomId(net.place, channel));
+  const room = joinRoom({ appId: APP_ID, maxUsers: MAX_PER_CHANNEL, identity: 'none' }, roomId(net.place, channel));
   log('joining', roomId(net.place, channel));
-  pos = room.makeUserState<Packet>('pos', { t: Math.round(performance.now()), f: player.face, s: [[0, Math.round(player.x), Math.round(player.y), 0, 0, 0]] });
-  pos.onChange((val, meta) => {
-    if (meta.self) return;
-    if (meta.removed || !val) peers.delete(meta.userId);
-    else receive(meta.userId, val);
-  });
-  // names travel in their own user state: set once, not with every motion packet
-  // (and so does your look, sent again whenever you change it)
-  type Who = { n: string; l?: Look };
-  const who = room.makeUserState<Who>('who', { n: myName(), l: myLook() });
-  const meet = (id: string, val: Who): void => {
-    names.set(id, cleanName(val.n));
-    if (val.l) looks.set(id, cleanLook(val.l)); else looks.delete(id);
-  };
-  who.onChange((val, meta) => {
-    if (meta.self) return;
-    if (meta.removed || !val) { names.delete(meta.userId); looks.delete(meta.userId); }
-    else meet(meta.userId, val);
-  });
-  watchLook((l) => who.set({ n: myName(), l }));
+  const l: Link = { room, ...makeStates(room), send: makeSends(room) };
+  link = l;
   // A full room (we joined it empty) means everyone is in it: hop to the next.
   // (Private instances have nowhere to spill to: the 21st player just sees nobody.)
   room.onError((err) => {
     console.warn('[net] room error:', err.code, err.message, err);
-    if (err.code === 'room-full' && !net.code && !Object.keys(room!.getPeers()).length) connect(channel + 1);
+    if (err.code === 'room-full' && !net.code && !Object.keys(room.getPeers()).length) connect(channel + 1);
   });
-  // kills are broadcast in batches; each peer's waves speed up (see boost.ts)
-  const kills = room.makeAction<number>('kills');
-  kills.onMessage((n) => remoteKills(n));
-  sendKills = kills.send;
-  // every released shot is its own message, so back-to-back shots all show
-  const shots = room.makeAction<ShotMsg>('shot');
-  shots.onMessage((s, ctx) => queueShot(peers.get(ctx.userId), s, performance.now()));
-  sendShot = shots.send;
-  // chat lines go to everyone in the room (see chat.ts)
-  const chatMsg = room.makeAction<string>('chat');
-  chatMsg.onMessage((s, ctx) =>
-    addChat(ctx.userId, names.get(ctx.userId) ?? '?', cleanChat(s), tintFor(ctx.userId), performance.now()));
-  sendChat = chatMsg.send;
-  // emotes (see emotes.ts): an index into EMOTES
-  const emoteMsg = room.makeAction<number>('emote');
-  emoteMsg.onMessage((n, ctx) => { const k = cleanEmote(n); if (k) setEmote(ctx.userId, k, performance.now()); });
-  sendEmote = emoteMsg.send;
   room.onPeerJoin((ctx) => {
-    log('peer joined', ctx.userId.slice(0, 8), 'has position:', !!pos?.getAll()[ctx.userId]);
-    const got = pos?.getAll()[ctx.userId];
+    const got = l.pos.getAll()[ctx.userId];
+    log('peer joined', ctx.userId.slice(0, 8), 'has position:', !!got);
     if (got) receive(ctx.userId, got);
-    const w = who.getAll()[ctx.userId];
+    const w = l.who.getAll()[ctx.userId];
     if (w?.n) meet(ctx.userId, w);
   });
-  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); peers.delete(ctx.userId); names.delete(ctx.userId); looks.delete(ctx.userId); clearBubbles(ctx.userId); clearEmotes(ctx.userId); });
+  room.onPeerLeave((ctx) => { log('peer left', ctx.userId.slice(0, 8)); roster.forget(ctx.userId); });
   net.joined = true;
 }
 
@@ -225,27 +265,26 @@ export function say(raw: string): void {
   const text = cleanChat(raw);
   if (!text) return;
   addChat(SELF, myName(), text, '#ffffff', performance.now());
-  if (net.started && peers.size) sendChat?.(text).catch(() => {});
+  toRoom('chat', text);
 }
 
 /** Tell the channel we released a shot (muzzle at x,y; tracer len px). */
 export function netShot(x: number, y: number, face: number, len: number, n = 1): void {
-  if (!net.started || !peers.size) return;
-  sendShot?.({ t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len), n }).catch(() => {});
+  toRoom('shot', { t: Math.round(performance.now()), x: Math.round(x), y: Math.round(y), f: face, l: Math.round(len), n });
 }
 
 /** Show an emote over your head, and to the room. */
 export function netEmote(kind: Emote): void {
   setEmote(SELF, kind, performance.now());
-  if (net.started && peers.size) sendEmote?.(EMOTES.indexOf(kind)).catch(() => {});
+  toRoom('emote', EMOTES.indexOf(kind));
 }
 
 /** A snapshot of the connection, for the console: `archer.netStatus()`. */
 export function netStatus(): Record<string, unknown> {
   return {
-    started: net.started, offline: net.offline, room: room ? roomId(net.place, net.channel) : null,
-    connectedPeers: room ? Object.keys(room.getPeers()).length : 0,
-    ghosts: peers.size, names: [...names.values()],
+    started: net.started, offline: net.offline, room: link ? roomId(net.place, net.channel) : null,
+    connectedPeers: link ? Object.keys(link.room.getPeers()).length : 0,
+    ghosts: roster.tracks.size, names: [...roster.names.values()],
     lobbyPeers: lobby ? Object.keys(lobby.getPeers()).length : 0,
     lobbyCounts: Object.fromEntries(lobbyCounts(net.place || START_TOWN)),
   };
@@ -265,10 +304,10 @@ export function localPose(): Pose {
 export function sync(): void {
   // changing floors moves us to that floor's rooms, keeping the channel number
   if (!net.started || !canConnect()) return;
-  if (!room || placeKey(game.floor.place) !== net.place) connect(net.channel);
+  if (!link || placeKey(game.floor.place) !== net.place) connect(net.channel);
   postLobby();
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);
-  if (p) pos?.set(p);
+  if (p) link?.pos.set(p);
   const k = takeBatch(performance.now());
-  if (k && peers.size) sendKills?.(k).catch(() => {});
+  if (k) toRoom('kills', k);
 }
