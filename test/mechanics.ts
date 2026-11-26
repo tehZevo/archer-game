@@ -460,7 +460,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   player.ranks.Z = 3; player.sp = 2;
   const offered = skillRows().map((r) => r.key);
   check('Z offers Shell Barrage', offered.includes('S'));
-  check('the retired branches are not offered', !offered.includes('BS') && !offered.includes('VS') && !offered.includes('RA'));
+  check('the retired branches are not offered', !offered.includes('RA'));
   spendSkill('S');
   check('taking Shell Barrage binds it to Z at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
   check('Shell Barrage is the only offer on Z', skillRows().filter((r) => r.slot === 'Z' && r.key !== 'Z').length === 1);
@@ -973,10 +973,10 @@ check('new poses go on the end of the networked list (older clients read them as
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
   arena(35); gotoPlace({ town: 'mossgate' });
-  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.BS = 3; player.ranks.E = 2;
+  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.W = 3; player.ranks.E = 2;
   save();
   const want = JSON.stringify(snapshot());
-  arena(1); player.ap = 0; player.sp = 0; player.ranks.BS = 0; player.ranks.E = 0;
+  arena(1); player.ap = 0; player.sp = 0; player.ranks.W = 0; player.ranks.E = 0;
   const place = load();
   check('save round-trips level, EXP, points, stats, ranks and the town', JSON.stringify({ ...snapshot(), town: 'mossgate' }) === want && samePlace(place, { town: 'mossgate' }));
   check('you resume in the latest town: a town itself, or the start of the path you were on',
@@ -989,8 +989,8 @@ check('new poses go on the end of the networked list (older clients read them as
   check('a corrupt save is ignored', apply('junk') === null);
   check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 3 }, town: 'mossgate' }) !== null
     && player.level === 50 && player.ap === 3 && player.ranks.Z === 3);
-  apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, S: 1, BS: 1 }, town: 0 });
-  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.S + player.ranks.BS === 1);
+  apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, RA: 1, EB: 1 }, town: 0 });
+  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.RA + player.ranks.EB === 1);
   clearSave();
   check('reset forgets the save', !hasSave() && samePlace(load(), START));
   delete (globalThis as { localStorage?: unknown }).localStorage;
@@ -1482,14 +1482,14 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
   check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
-  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.BS = 0;
+  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.Z = 0;
   tap('up');
   check('Up beside the trainer opens the trainer', trainer.open && trainer.sel === 0);
   tap('z');
-  check('a branch swap keeps the rank and takes the coins', player.ranks.BS === 2 && player.ranks.S === 0 && wallet.coins === 0);
+  check('a branch swap keeps the rank and takes the coins', player.ranks.Z === 2 && player.ranks.S === 0 && wallet.coins === 0);
   tap('escape');
 
-  player.ranks.BS = 0; player.ranks.Z = 3; player.stats.dex = 4; player.ap = 0; player.sp = 0;
+  player.ranks.S = 0; player.ranks.Z = 3; player.stats.dex = 4; player.ap = 0; player.sp = 0;
   wallet.coins = RESPEC_PRICES.reset;
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
@@ -3110,6 +3110,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     `t ${player.usedT.Q.toFixed(2)}`);
   step(10);
   check('...and is gone', player.usedT.Q === 0, `t ${player.usedT.Q.toFixed(2)}`);
+  step(6); // the 0.6s Sky Toss cast finishes, freeing you to jump
   tap('c'); step(6);
   tap('q');
   check('the Air Dive flashes the stacked air slot, not the ground one',

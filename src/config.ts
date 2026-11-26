@@ -153,12 +153,6 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Branch upgrades: each competes with the other upgrade on the same slot.
-  BS: { key: 'BS', name: 'Backstep Shot', tag: 'Reposition', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 0.55, mp1: 3, mpMax: 4, dmg1: 150, dmgMax: 205, hits1: 2, hitsMax: 3, targets1: 2, targetsMax: 3,
-       desc: 'Hop backward while firing forward' },
-  VS: { key: 'VS', name: 'Vault Shot', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
-       desc: 'Leap back into the air, launching enemies ahead' },
   RA: { key: 'RA', name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
        desc: 'Launch enemies ahead and rise with them' },
@@ -183,7 +177,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
 /** Skills you start with at rank 1 (Lv.1 skills, except those bought with SP). */
 export const startsLearned = (k: SkillKey): boolean => SKILLS[k].minLevel <= 1 && !SKILLS[k].learn;
 
-export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, BS, VS, AB) share their slot's key
+export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, AB) share their slot's key
 
 /** The buttons shown in the on-canvas skill bar. Z is the main attack slot:
  *  Twin Shot early, upgraded to Shell Barrage at Lv.30. */

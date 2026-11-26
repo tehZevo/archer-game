@@ -85,7 +85,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   if (player.climb && kind !== 'C' && kind !== 'D') return null;
   if (kind === 'C' && (airborne || player.climb)) return null;
   if (kind === 'D' && !airborne) return null;
-  if ((kind === 'VS' || kind === 'RA') && !player.onGround) return null;
+  if (kind === 'RA' && !player.onGround) return null;
   return { linked, chained };
 }
 

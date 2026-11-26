@@ -59,19 +59,6 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '..eeE.....',
     'eeeeeE....',
   ],
-  // Backstep Shot: arrow forward, chevrons stepping back
-  BS: [
-    '..........',
-    '......x...',
-    '.......x.a',
-    '..xxxxxxxa',
-    '.......x.a',
-    '......x...',
-    '..........',
-    '.r..r.....',
-    'r..r......',
-    '.r..r.....',
-  ],
   // Jump: a boot springing up
   C: [
     '....a.....',
@@ -123,19 +110,6 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '...aaa....',
     '..aaa.....',
     '.aaa......',
-  ],
-  // Vault Shot: a backward leap arc over a launched arrow
-  VS: [
-    '...rrrr...',
-    '.rr....rr.',
-    'r........r',
-    'r........R',
-    'RR........',
-    '.R........',
-    '....a.....',
-    '...aaa....',
-    '....x.....',
-    'gggggggggg',
   ],
   // Rising Arrow: an arrow climbing beside a launched target, with lift lines
   RA: [

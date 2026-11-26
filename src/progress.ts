@@ -182,17 +182,14 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
 export const SKILL_PICK_EVERY = 5;
 /** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
  *  several upgrades is a branch: taking one locks the others out for good. */
-const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', BS: 'Z', AB: 'W', VS: 'Q', RA: 'Q', EB: 'Q' };
+const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', AB: 'W', RA: 'Q', EB: 'Q' };
 
 // The air forms of Q, W and E (Air Dive, Midair Spin, Plunging Volley) are
 // their own skills, but on the list they show the key they're used on, not
 // their own abbreviation.
 const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 'E' };
 
-// TODO: Vault Shot, Rising Arrow and Backstep Shot stay in the game's code
-// (their cast cases, stats and icons) but are off the acquirable list for now;
-// reconsider bringing them back once the Q/W combo (rush, then launch) is in.
-export const RETIRED: SkillKey[] = ['BS', 'VS', 'RA'];
+export const RETIRED: SkillKey[] = ['RA'];
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {
