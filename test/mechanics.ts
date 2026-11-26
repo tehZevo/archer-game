@@ -779,6 +779,18 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(40);
 }
 {
+  // The spike lift links into Downpour: E pressed during the rise fires as it ends
+  arena(60); player.ranks.E = 1; player.ranks.PV = 1;
+  dummy(130);
+  tap('e'); step(12); // rise to the top of the lift (the air form needs ~2/3 a jump's height)
+  check('Piercing Leap lifts you (setup)', !player.onGround && player.liftT > 0, `liftT ${player.liftT.toFixed(2)}`);
+  tap('e'); // Downpour (E's air form) pressed during the lift links off it
+  check('the spike lift links into Downpour', player.linkFrom === 'E' && linkable('PV'), `from ${player.linkFrom}`);
+  let fired = -1;
+  for (let i = 0; i < 24 && fired < 0; i++) { step(1); if (player.casting.key === 'PV') fired = i; }
+  check('...and it fires as the lift ends', fired >= 0 && player.casting.key === 'PV', `fired ${fired}`);
+}
+{
   // A linked skill refunds 1s off Piercing Leap's cooldown (as it does Tempest's)
   arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
   dummy(150);
