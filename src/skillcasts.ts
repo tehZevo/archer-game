@@ -156,7 +156,8 @@ function plungingVolley(r: SkillRank): void {
     .filter((m) => m.y + m.h > feet) // beneath you, not beside you
     .sort((a, b) => a.y - b.y)
     .slice(0, r.targets);
-  player.vy -= P.PLUNGE_HOP; // stacks on the current momentum, not a fixed reset
+  // leave a faster existing upward speed untouched; otherwise add the hop, capped at -PLUNGE_MAX
+  player.vy = player.vy < -P.PLUNGE_MAX ? player.vy : Math.max(player.vy - P.PLUNGE_HOP, -P.PLUNGE_MAX);
   // one flare on her and a single tornado blast driving down below her (no
   // per-enemy rain: the blast is the hit effect)
   game.fx.push({ type: 'volleyFlare', x: player.x, y: player.y + player.h / 2, t: FX_DUR.volleyFlare });
