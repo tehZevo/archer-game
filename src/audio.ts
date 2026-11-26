@@ -37,6 +37,12 @@ function levelUp(): void {
 export const sfx = {
   shoot: (): void => tone(660, 0.12, 'square', 0.14, 880),
   jump: (): void => tone(420, 0.16, 'sine', 0.16, 720),
+  /** A Gale Stream shot: an airy whip of wind and a light bowstring snap,
+   *  short enough to run at eight a second without smearing. */
+  gale: (): void => {
+    noise({ dur: 0.07, vol: 0.16, filter: { type: 'bandpass', f: 1800, to: 6500, q: 3 } });
+    osc({ type: 'triangle', f: 1250, to: 700, dur: 0.045, vol: 0.07 });
+  },
   glide: (): void => tone(300, 0.22, 'triangle', 0.18, 560),
   hit: (): void => tone(220, 0.08, 'square', 0.12, 140),
   /** Each enemy's own impact (see mobvoices.ts): a slime and a golem should not sound the same. */

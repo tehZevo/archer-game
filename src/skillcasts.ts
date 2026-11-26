@@ -8,7 +8,7 @@ import { shotCount } from './progress';
 import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
 import { delayTime, useTime } from './castrules';
-import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
+import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
 
 import type { SkillKey, SkillRank } from './types';
 
@@ -47,6 +47,24 @@ function twinShot(r: SkillRank): void {
     hit(shots > 1);
     eachShot(shots - 1, NUM_GAP, (more) => hit(more));
   });
+}
+
+/** One Gale Stream shot (Z held after a shot, see rapid.ts): a quick
+ *  green bolt into the closest enemy ahead, hitting it twice (more with
+ *  Twin Echoes). It fires the way the stream faces, not the way you walk. */
+function galeShot(r: SkillRank): void {
+  const face = player.rapid.face;
+  setPose('shoot', 1 / P.GALE_RATE);
+  const [m] = nearest(player.x + face * P.GALE_RANGE / 2, player.y + player.h / 2, P.GALE_RANGE, 56, 1);
+  const mx = player.x + face * 8, my = player.y + 13;
+  sfx.gale();
+  game.fx.push({ type: 'galeMuzzle', x: mx, y: my, t: FX_DUR.galeMuzzle, face });
+  const len = m ? Math.max(12, Math.abs(m.x - mx)) : P.GALE_RANGE * 0.7;
+  game.fx.push({ type: 'galeShot', x: mx, y: my, t: FX_DUR.galeShot, face, sx: len / 64 });
+  netShot(mx, my, face, len, 1);
+  if (!m) return;
+  const shots = shotCount(r);
+  eachShot(shots, 0, (more) => { if (alive([m]).length) damage(m, r.dmg, { more, fx: 'galeHit' }); });
 }
 
 /** Glide: acrobatic forward tumble; usable repeatedly in the air. Off a Sky
@@ -250,5 +268,5 @@ export const CASTS: Partial<Record<SkillKey, Cast>> = {
   'ground-q': skyToss, eb: electricBlitz, 'air-q': airDive,
   'ground-w': skyfallVolley, ab: skyAssault, 'air-w': midairSpin,
   'ground-e': spikeLift, 'air-e': plungingVolley,
-  r: tempest, s: shellBarrage,
+  r: tempest, s: shellBarrage, 'held-z': galeShot,
 };

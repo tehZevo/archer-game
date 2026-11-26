@@ -79,6 +79,33 @@ function muzzleAnim(): FxSheet {
   });
 }
 
+/** Gale Stream muzzle: a small green gust ring snapping open at the bow,
+ *  with leaf-like sparks spun off it. Faces right; origin at the muzzle. */
+function galeMuzzleAnim(): FxSheet {
+  const W = 20, H = 18, y = H / 2;
+  return anim(W, H, 1, y, 4, (L, f) => {
+    const R = rng(41 + f), fade = 1 - f / 4, cx = 4 + f * 1.5;
+    L.ring('lime', cx, y, 2 + f * 1.2, 3.5 + f * 1.6, 1.1, 1.1 * fade, -1.5, 1.5);
+    L.line('green', 1, y, 6 + f * 3, y, 0.4, 1.2, 1.15 * fade);
+    for (let i = 0; i < 3; i++) L.spark(i ? 'green' : 'lime', cx + 2 + R() * 9, y - 6 + R() * 12, 0.95 * fade, i === 0);
+  });
+}
+
+/** Gale Stream shot: one green bolt with a twist of wind wrapped round it,
+ *  whipping out to the target. Faces right; origin at the muzzle; stretched to the target. */
+function galeShotAnim(): FxSheet {
+  const W = 64, H = 11, y = 5.5;
+  const spans: [number, number][] = [[0, 0.55], [0.2, 1], [0.6, 1], [0.88, 1]];
+  return anim(W, H, 0, y, spans.length, (L, f) => {
+    const [a, b] = spans[f], fade = f < 2 ? 1 : 1 - (f - 1) / 3;
+    const x0 = 1 + a * (W - 2), x1 = b * (W - 2);
+    L.line('lime', x0, y, x1, y, 0.3, 1.3, 1.2 * fade);
+    // the wind twisting round the bolt: a sine strand either side
+    const wy = (x: number): number => y + Math.sin((x + f * 6) / 4) * 3.2;
+    for (let x = x0; x < x1 - 2; x += 2) L.line('green', x, wy(x), x + 2, wy(x + 2), 0.5, 0.5, 0.75 * fade);
+  }, 0.35);
+}
+
 /** Arrow projectile: a long thin glowing streak. Faces right; origin at the tip. */
 function arrowAnim(): FxSheet {
   return anim(26, 7, 24, 3.5, 1, (L) => {
@@ -597,4 +624,7 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   blitzTrail: () => blitzTrailAnim(),
   stunHit: () => stunHitAnim(),
   spirit: () => spiritAnim(),
+  galeMuzzle: () => galeMuzzleAnim(),
+  galeShot: () => galeShotAnim(),
+  galeHit: () => hitAnim(false, 'lime'),
 };

@@ -20,4 +20,5 @@ import './11-deaths';
 import './12-deaths-2';
 import './13-font-casts';
 import './16-pets';
+import './15-gale-stream';
 import './14-tail';
