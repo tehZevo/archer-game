@@ -229,6 +229,10 @@ export interface Casting {
   freeze: boolean;
   /** A skill pressed too early, fired on the first free frame. */
   queued: SkillKey | null;
+  /** The direction held when that buffered skill was pressed (0 = none): the
+   *  buffered skill fires facing this way, and holding a new direction while
+   *  it's buffered re-aims it. The current cast's facing stays locked. */
+  queuedFace: -1 | 0 | 1;
 }
 
 export interface RushState {
