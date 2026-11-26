@@ -92,6 +92,7 @@ export { archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle 
 export { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 export { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 export { pet, PET } from '../src/pets';
+export { PET_KINDS, choosePet, petShop, clearPets } from '../src/pets';
 export { achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 export { startRun } from '../src/save';
 export { SKILLS as DEFS, startsLearned } from '../src/config';

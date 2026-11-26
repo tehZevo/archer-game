@@ -10,7 +10,7 @@ import { fillRect, newGrid, type Grid } from './grid';
    rest of the scenery (artsheets.ts: npc/<kind>/<frame>).
    ============================================================ */
 
-export type NpcLook = 'shop' | 'stylist' | 'trainer';
+export type NpcLook = 'shop' | 'stylist' | 'trainer' | 'pets';
 export const NPC_W = 16, NPC_H = 24;
 /** Frames: 0 standing, 1 breathing in, 2 blinking, 3 waving. */
 export const NPC_FRAMES = 4;
@@ -133,10 +133,51 @@ const TRAINER_WAVE: [number, number, string][] = [
   [13, 13, 'o'], [14, 13, 'o'], [13, 14, 'o'], [14, 14, '.'], [13, 15, 'o'], [14, 15, '.'],
 ];
 
+/* The pet keeper: a green ranger's cap with a red feather, a long auburn
+   braid, a brown vest over a cream shirt, a treat pouch on her belt, and
+   a goldfinch perched on her shoulder. */
+const PETS = [
+  '................',
+  '.......oooo..r..',
+  '......occcco.rr.',
+  '.....occccccor..',
+  '....occccccccCo.',
+  '...oCCCCCCCCCCCo',
+  '....ohhhhhhhhho.',
+  '....ohsssssshho.',
+  '....ohsesssesho.',
+  '....ohssssSsshho',
+  '.oo.ohssrrssshho',
+  'oyyo.oSSSSSSo.ho',
+  'oykyooaaaaaaoo.o',
+  '.yyyovaaaaaavvo.',
+  '.oYovvaaaaaavvo.',
+  '..osovvaaaavvoso',
+  '...osovvvvvvoso.',
+  '...oommLmmLmmo..',
+  '....ommmppmmmo..',
+  '....ommmppmmmo..',
+  '....ommo..ommo..',
+  '....omm....mmo..',
+  '...obbbo..obbbo.',
+  '...oooo....oooo.',
+];
+const PETS_PAL: Record<string, string> = {
+  c: '#4f9a44', C: '#2e6a30', r: '#e0503a', h: '#a8522a', s: '#f2d0a9', S: '#d9a47c', e: OUT,
+  a: '#f4efe2', v: '#8a5a34', m: '#3f6a5a', L: '#ffd166', p: '#c9952f', b: '#5e3b1f',
+  y: '#ffd166', Y: '#e0a83a', k: OUT,
+};
+/** The keeper's raised hand (the right arm lifted off the vest). */
+const PETS_WAVE: [number, number, string][] = [
+  [14, 8, 'o'], [15, 8, 'o'], [14, 9, 's'], [15, 9, 'o'], [14, 10, 'a'], [15, 10, 'o'], [14, 11, 'a'], [15, 11, 'o'],
+  [14, 12, 'v'], [15, 12, 'o'], [14, 13, 'o'], [14, 15, 'o'], [15, 15, '.'], [13, 16, 'o'], [14, 16, '.'],
+];
+
 const ART: Record<NpcLook, { rows: string[]; pal: Record<string, string>; wave: [number, number, string][]; eyes: number }> = {
   shop: { rows: SHOP, pal: SHOP_PAL, wave: SHOP_WAVE, eyes: 8 },
   stylist: { rows: STYLIST, pal: STYLIST_PAL, wave: STYLIST_WAVE, eyes: 7 },
   trainer: { rows: TRAINER, pal: TRAINER_PAL, wave: TRAINER_WAVE, eyes: 5 },
+  pets: { rows: PETS, pal: PETS_PAL, wave: PETS_WAVE, eyes: 8 },
 };
 
 /** The rows of an NPC's frame (see NPC_FRAMES). */

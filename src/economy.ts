@@ -8,7 +8,7 @@ import { openStylist } from './stylist';
 import { openBoard } from './quests';
 import { lastTown, placeName } from './world';
 import { coinMult } from './floormods';
-import { buyPet, PET } from './pets';
+import { openPetShop } from './pets';
 import { equip, gearFor, weaponBonus, armorSoak } from './gear';
 import type { GearItem } from './gear';
 import { mobLevel } from './world';
@@ -22,7 +22,8 @@ import type { Floor, Mob, Npc, SkillKey } from './types';
    stand on it and press X to pick it up (it flies to you with a
    chime). Landed piles bob gently and fade after 5 minutes. Coins buy potions from the town shopkeeper (press Up
    beside them); A drinks an HP potion, S an MP potion. All of it
-   is local (enemies are local too) and saved.
+   is local (enemies are local too) and saved. Pets come from the pet
+   keeper (pets.ts).
    ============================================================ */
 
 /** What you carry (saved). You start with a small kit of potions. */
@@ -129,7 +130,7 @@ export function npcNear(): Npc | null {
 
 /** The shop window (open while browsing; the world waits). */
 export const shop = { open: false, sel: 0 };
-/** A line in the shop window. Potions and the pet are always stocked; the
+/** A line in the shop window. Potions are always stocked; the
  *  gear rows are made for the town you are standing in (see shopStock). */
 export interface ShopRow {
   kind: ShopKind;
@@ -143,12 +144,12 @@ export interface ShopRow {
   item?: GearItem;
 }
 
-export type ShopKind = 'hp' | 'mp' | 'weapon' | 'armor' | 'pet';
+export type ShopKind = 'hp' | 'mp' | 'weapon' | 'armor';
 
 /** Gear costs more the higher up the tower it is made for. */
 export const gearPrice = (lvl: number): number => 40 + lvl * 25;
 
-/** The shopkeeper's stock: potions and the pet, plus a weapon and an armor
+/** The shopkeeper's stock: potions, plus a weapon and an armor
  *  piece built for this town's level, so each town sells its own tier. */
 export function shopStock(): ShopRow[] {
   const lvl = mobLevel(game.floor.place);
@@ -160,7 +161,6 @@ export function shopStock(): ShopRow[] {
       desc: `+${Math.round(weaponBonus(bow) * 100)}% DAMAGE - LV.${bow.lvl}` },
     { kind: 'armor', name: plate.name, key: '', price: gearPrice(plate.lvl), item: plate,
       desc: `SOAKS ${Math.round(armorSoak(plate) * 100)}% DAMAGE - LV.${plate.lvl}` },
-    { kind: 'pet', name: 'PET', key: '', desc: 'FETCHES COINS FOR YOU', price: PET.PRICE },
   ];
 }
 
@@ -218,7 +218,6 @@ export function resetPoints(): boolean {
 export function buy(kind: ShopKind): boolean {
   const row = shopStock().find((r) => r.kind === kind);
   if (!row) return false;
-  if (kind === 'pet') return buyPet();
   if (wallet.coins < row.price) return false;
   // gear goes on if it beats what you wear, else into the bag (see gear.ts)
   if (row.item) {
@@ -240,6 +239,7 @@ export function talk(): boolean {
   if (!n) return false;
   if (n.kind === 'shop') { shop.open = true; shop.sel = 0; }
   if (n.kind === 'trainer') { trainer.open = true; trainer.sel = 0; }
+  if (n.kind === 'pets') openPetShop();
   if (n.kind === 'stylist') openStylist(placeName(game.floor.place));
   if (n.kind === 'board') openBoard(lastTown(game.floor.place));
   return true;
