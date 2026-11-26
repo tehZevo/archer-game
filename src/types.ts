@@ -214,6 +214,38 @@ export interface Body {
   plat: Platform | null;
 }
 
+/** The link windows a skill can open (see links.ts). */
+export type LinkKind = 'combo' | 'assault' | 'blitz' | 'glide' | 'volley' | 'spin';
+
+export interface Casting {
+  /** s left of the current skill's use time: no other skills or movement. */
+  useT: number;
+  /** s of recovery after the animation: blocks new skills, not movement. Links skip it. */
+  recoverT: number;
+  /** A skill pressed too early, fired on the first free frame. */
+  queued: SkillKey | null;
+}
+
+export interface RushState {
+  /** s left of the slide (0 = not rushing); the strike lands when it ends. */
+  t: number;
+  /** px of the slide covered, and the px it travels (Sky Toss vs Electric Blitz). */
+  dist: number;
+  goal: number;
+  /** Enemies being pushed along, at their distance ahead of the player. */
+  carry: { m: Mob; off: number }[];
+}
+
+export interface Hover {
+  /** s left hovering (no gravity) while striking airborne enemies. */
+  t: number;
+  /** Strikes left, s to the next one, and each strike's damage and target cap. */
+  hits: number;
+  hitT: number;
+  dmg: number;
+  targets: number;
+}
+
 export interface Player extends Body {
   face: 1 | -1;
   /** Glide (double jump) charge; refilled on landing. */
@@ -227,30 +259,17 @@ export interface Player extends Body {
   dropY: number;
   /** Rushing up the current rope/ladder (Up + Jump): fast climb, hop off the top. */
   climbRush: boolean;
-  /** Seconds left in the current skill's use time: no other skills or movement. */
-  useT: number;
-  /** Recovery after the animation: blocks new skills, not movement. Links skip it. */
-  recoverT: number;
-  /** A link skill pressed during Sky Toss, fired once Sky Toss finishes. */
-  queued: SkillKey | null;
-  /** Sky Assault: seconds left hovering (no gravity) while striking airborne enemies. */
-  /** Sky Toss slide: seconds left (0 = not rushing). The strike lands when it ends. */
-  rushT: number;
-  /** px of the slide's fixed distance already covered. */
-  rushDist: number;
-  /** Enemies the slide is pushing along, at their distance ahead of the player. */
-  rushCarry: { m: Mob; off: number }[];
-  hangT: number;
+  /** The current skill's use time, recovery and buffered follow-up. */
+  casting: Casting;
+  /** Sky Toss / Electric Blitz slide (see the rush in skills.ts). */
+  rush: RushState;
   /** Spike Lift: seconds left of the steady push up. */
   liftT: number;
   /** How the current cast draws you, over its usual pose: whirling
    *  round (Midair Spin) or gone (Tempest). Cleared by the next cast. */
   skillPose?: 'spin' | 'vanish' | null;
-  /** Sky Assault strikes left, time to the next one, and per-strike damage / targets. */
-  hangHits: number;
-  hangHitT: number;
-  hangDmg: number;
-  hangTargets: number;
+  /** Sky Assault's hover: time left, strikes left and their pacing / damage / reach. */
+  hang: Hover;
   /** Seconds until the next regen tick. */
   regenT: number;
   /** Seconds left "in combat" (since last attacking or being hit): no HP regen. */
@@ -270,10 +289,7 @@ export interface Player extends Body {
   /** True while an Air Dive is in flight; the landing rolls into the rush. */
   diving: boolean;
   /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
-  blitzCharges: number;
-  blitzT: number;
-  /** px the current rush slide travels (Sky Toss vs Electric Blitz). */
-  rushGoal: number;
+  blitz: { charges: number; t: number };
   cast: CastName | null;
   castT: number;
   castTotal: number;
@@ -287,23 +303,8 @@ export interface Player extends Body {
   fervor: number;
   fervorT: number;
   superStance: number;
-  /** >0 while the Sky Toss link window is open. */
-  combo: number;
-  comboT: number;
-  /** >0 right after an Electric Blitz: the next blitz links (with buffering),
-   *  skipping the first one's ending lag. */
-  blitzLinkT: number;
-  /** >0 in the window right after a Sky Assault hover ends, during which
-   *  Tempest (R) links: it fires immediately, no cast/recovery wait. */
-  assaultLinkT: number;
-  /** >0 right after an aerial skill (Air Dive, Midair Spin, Plunging
-   *  Volley): Glide (D) links, settling into the glide mid-combo. */
-  glideLinkT: number;
-  /** >0 right after a Midair Spin: Plunging Volley (E in the air) links,
-   *  dropping straight out of the sweep. */
-  volleyLinkT: number;
-  /** s left of the window Sky Assault opens for a Midair Spin. */
-  spinLinkT: number;
+  /** s left of each link window (see links.ts: open/close/tick only through its helpers). */
+  links: Record<LinkKind, number>;
   /** Progression. */
   level: number;
   exp: number;

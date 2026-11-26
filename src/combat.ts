@@ -11,6 +11,7 @@ import { addCorpse } from './deaths';
 import { questKill } from './quests';
 import { clearStatus } from './status';
 import type { DamageOpts, DmgNum, Mob } from './types';
+import { closeLinks } from './links';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
@@ -161,7 +162,7 @@ export function revive(): void {
   game.player.onGround = true; game.player.plat = ground;
   game.player.climb = null; game.player.climbRush = false;
   game.player.fervor = 0;
-  game.player.combo = 0;
+  closeLinks(); // a respawn starts with every link window shut
   clearStatus(game.player);
   logMsg('You were knocked out. <b>Revived at the village gate.</b>');
 }

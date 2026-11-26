@@ -39,11 +39,10 @@ export const player: Player = {
   dropBlock: null,
   dropY: 0,
   climbRush: false,
-  useT: 0,
-  recoverT: 0,
-  queued: null,
-  rushT: 0, rushDist: 0, rushCarry: [],
-  hangT: 0, liftT: 0, hangHits: 0, hangHitT: 0, hangDmg: 0, hangTargets: 0,
+  casting: { useT: 0, recoverT: 0, queued: null },
+  rush: { t: 0, dist: 0, goal: P.RUSH_DIST, carry: [] },
+  hang: { t: 0, hits: 0, hitT: 0, dmg: 0, targets: 0 },
+  liftT: 0,
   regenT: 0,
   combatT: 0,
   hp: start.hpMax, hpMax: start.hpMax,
@@ -51,14 +50,13 @@ export const player: Player = {
   cd,
   readyT, cdMax,
   diving: false,
-  blitzCharges: P.BLITZ_MAX, blitzT: 0,
-  rushGoal: P.RUSH_DIST,
+  blitz: { charges: P.BLITZ_MAX, t: 0 },
   cast: null, castT: 0, castTotal: 0,
   invuln: 0, invulnQuiet: false,
   anim: 0, animState: 'idle',
   fervor: 0, fervorT: 0,
   superStance: 0,
-  combo: 0, comboT: 0, assaultLinkT: 0, blitzLinkT: 0, glideLinkT: 0, volleyLinkT: 0, spinLinkT: 0,
+  links: { combo: 0, assault: 0, blitz: 0, glide: 0, volley: 0, spin: 0 },
   level: 1,
   exp: 0,
   expNext: expToNext(1),
@@ -189,11 +187,11 @@ export function gotoPlace(place: Place): void {
   player.leftClimbX = null;
   player.dropBlock = null;
   player.climbRush = false;
-  player.useT = 0;
-  player.recoverT = 0;
-  player.queued = null;
-  player.hangT = 0; player.liftT = 0; player.hangHits = 0;
-  player.rushT = 0; player.rushDist = 0; player.rushCarry = [];
+  player.casting.useT = 0;
+  player.casting.recoverT = 0;
+  player.casting.queued = null;
+  player.hang.t = 0; player.liftT = 0; player.hang.hits = 0;
+  player.rush.t = 0; player.rush.dist = 0; player.rush.carry = [];
   player.effects.length = 0; // effects don't follow you to another floor
   if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');
 }

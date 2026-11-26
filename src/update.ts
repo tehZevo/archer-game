@@ -27,6 +27,7 @@ import { updateCorpses } from './deaths';
 import { INFLICT, maybeInflict, slowFactor, updateStatus } from './status';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu, Platform } from './types';
+import { bufferWindowOpen, linkOpen, openLink, tickLinks } from './links';
 
 /** Countdown to Agile Climbing's next rising-streak effect. */
 let climbFxT = 0;
@@ -63,9 +64,9 @@ export function update(dt: number): void {
   }
   // Electric Blitz banks its charges: one refills every 10s, and a linked
   // skill (see skills.ts) shaves time off the charge currently filling.
-  if (player.blitzCharges < P.BLITZ_MAX && (player.blitzT += dt) >= P.BLITZ_CHARGE_T) {
-    player.blitzCharges++;
-    player.blitzT = player.blitzCharges >= P.BLITZ_MAX ? 0 : player.blitzT - P.BLITZ_CHARGE_T;
+  if (player.blitz.charges < P.BLITZ_MAX && (player.blitz.t += dt) >= P.BLITZ_CHARGE_T) {
+    player.blitz.charges++;
+    player.blitz.t = player.blitz.charges >= P.BLITZ_MAX ? 0 : player.blitz.t - P.BLITZ_CHARGE_T;
     player.readyT.Q = READY_FLASH; // a charge is back: the Q icon flashes
   }
   for (const k of Object.keys(player.cd)) {
@@ -81,7 +82,7 @@ export function update(dt: number): void {
   // skill keys
   // Basic attack during Sky Toss's link window casts the link skill
   // (Skyfall Volley, or Sky Assault once upgraded).
-  const linkZ = pressed('z') && player.combo > 0 && isLearned('W');
+  const linkZ = pressed('z') && linkOpen('combo') && isLearned('W');
   if (linkZ) cast('W');
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
   // holding Jump keeps jumping: re-jump on every landing
@@ -100,29 +101,24 @@ export function update(dt: number): void {
   if (player.castT > 0) player.castT -= dt; else player.cast = null;
   // a chained link fires as soon as Sky Toss finishes
   // (a chained Twin Shot also waits out the slide itself)
-  const busy = player.recoverT > 0; // the animation's recovery: a live link window cuts it short
+  const busy = player.casting.recoverT > 0; // the animation's recovery: a live link window cuts it short
   // Q's link, a blitz's self-link, or the Midair Spin Sky Assault opens
-  const window = player.combo > 0 || player.blitzLinkT > 0 || player.spinLinkT > 0;
+  const window = bufferWindowOpen();
   // A buffered skill aims where you're holding when it fires, not where you
   // faced when you pressed it: keep facing live while the current skill locks
   // your movement (mashing Q left, Q right zips you back and forth).
   const aimDir = held('left') ? -1 : held('right') ? 1 : 0;
-  if (player.queued && aimDir !== 0) player.face = aimDir as 1 | -1;
-  if (player.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.queued === 'Z' && player.rushT > 0) && !(busy && !window) && !assaultLeaping()) {
-    const k = player.queued; player.queued = null;
+  if (player.casting.queued && aimDir !== 0) player.face = aimDir as 1 | -1;
+  if (player.casting.queued && !(player.cast === 'rush' && player.castT > 0) && !(player.casting.queued === 'Z' && player.rush.t > 0) && !(busy && !window) && !assaultLeaping()) {
+    const k = player.casting.queued; player.casting.queued = null;
     cast(k, k === 'Z');
   }
   if (player.superStance > 0) player.superStance -= dt;
   if (player.invuln > 0) player.invuln -= dt;
-  if (player.useT > 0) player.useT -= dt;
-  if (player.recoverT > 0) player.recoverT -= dt;
-  const locked = player.useT > 0; // skill use time: no movement input
-  if (player.comboT > 0) { player.comboT -= dt; if (player.comboT <= 0) player.combo = 0; }
-  if (player.assaultLinkT > 0) player.assaultLinkT -= dt;
-  if (player.blitzLinkT > 0) player.blitzLinkT -= dt;
-  if (player.glideLinkT > 0) player.glideLinkT -= dt;
-  if (player.volleyLinkT > 0) player.volleyLinkT -= dt;
-  if (player.spinLinkT > 0) player.spinLinkT -= dt;
+  if (player.casting.useT > 0) player.casting.useT -= dt;
+  if (player.casting.recoverT > 0) player.casting.recoverT -= dt;
+  const locked = player.casting.useT > 0; // skill use time: no movement input
+  tickLinks(dt);
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 
@@ -171,21 +167,21 @@ export function update(dt: number): void {
       // holding Up would otherwise re-catch this rope the same frame
       player.leftClimbX = player.x;
     }
-    if (player.hangT > 0) {
+    if (player.hang.t > 0) {
       // Sky Assault: hover in place, striking airborne enemies at intervals
-      player.hangT -= dt;
-      if (player.hangT <= 0) {
+      player.hang.t -= dt;
+      if (player.hang.t <= 0) {
         // the hover ends here: landing opens the link window, so Tempest
         // (R) fires as a finisher on the Q -> W -> AB chain
-        player.assaultLinkT = 1.1;
+        openLink('assault', 1.1);
       }
       player.vx = 0; player.vy = 0;
-      player.hangHitT -= dt;
-      if (player.hangHits > 0 && player.hangHitT <= 0) {
-        player.hangHitT = P.BARRAGE_HANG / 7; // 6 strikes spread through the hover
-        player.hangHits--;
-        game.fx.push({ type: 'skySwoosh', x: player.x + player.face * 10, y: player.y + player.h, t: 0.2, face: player.hangHits % 2 ? -player.face : player.face });
-        barrageTargets().slice(0, player.hangTargets).forEach((m) => damage(m, player.hangDmg, { airborne: true, fx: 'skyHit', more: player.hangHits > 0 }));
+      player.hang.hitT -= dt;
+      if (player.hang.hits > 0 && player.hang.hitT <= 0) {
+        player.hang.hitT = P.BARRAGE_HANG / 7; // 6 strikes spread through the hover
+        player.hang.hits--;
+        game.fx.push({ type: 'skySwoosh', x: player.x + player.face * 10, y: player.y + player.h, t: 0.2, face: player.hang.hits % 2 ? -player.face : player.face });
+        barrageTargets().slice(0, player.hang.targets).forEach((m) => damage(m, player.hang.dmg, { airborne: true, fx: 'skyHit', more: player.hang.hits > 0 }));
       }
       player.animState = 'jump';
     } else {
@@ -218,7 +214,7 @@ export function update(dt: number): void {
 
 
       // Sky Toss never slides you off a platform: stop at the edge instead
-      if (player.rushT > 0 && player.onGround) {
+      if (player.rush.t > 0 && player.onGround) {
         const feetNow = player.y + player.h, nx = player.x + player.vx * dt;
         if (!surfaceBetween(nx, 1, feetNow - 12, feetNow + 12)) player.vx = 0;
       }
