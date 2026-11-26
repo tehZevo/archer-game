@@ -2,7 +2,7 @@
 // grids (so they run headless: the bake writes them to PNG, see
 // scripts/bake.ts), and turned into canvases when first drawn.
 
-import { HURT, MOB_ART, RECOLOR, mobSize, paintMob } from './mobart';
+import { FRAMES, HURT, MOB_ART, RECOLOR, mobSize, paintMob } from './mobart';
 import { canvasGrid, fillRect, gridCanvas, hexRgb, newGrid, type Grid } from './grid';
 import { BAKED_MOBS } from './mobbaked';
 
@@ -322,11 +322,11 @@ const gullSprite = (f: number): Sprite => grid(gullRows(f), GULL_PAL);
 /** Hurt: wings flung up, eye shut, beak gaping. */
 const gullHurt = (): Sprite => grid(marked(gullRows(0), [[11, 4, 'k'], [12, 4, 'k'], [14, 4, 'Y'], [15, 4, 'Y'], [16, 4, 'o'], [14, 5, 'k'], [15, 5, 'k'], [14, 6, 'Y'], [15, 6, 'Y'], [16, 6, 'o']]), GULL_PAL);
 
-/** An enemy from mobart.ts, baked into its two frames and its hurt pose. */
+/** An enemy from mobart.ts, baked into its FRAMES-step cycle and its hurt pose. */
 const artMob = (name: string, fps: number): MobAnim => {
   const { w, h } = mobSize(name);
   const bake = (f: number): Sprite => { const s = make(w, h); paintMob(name, f, (x, y, col, gw = 1, gh = 1) => px(s, x, y, col, gw, gh)); return s; };
-  return anim(bake, 2, fps, () => bake(HURT));
+  return anim(bake, FRAMES, fps, () => bake(HURT));
 };
 
 /** The warp pad's pixels (baked with the scenery, see artsheets.ts). */
@@ -349,7 +349,7 @@ export const MOB_GEN: Record<string, () => MobAnim> = {
   'Enemy Crab': () => anim(crabSprite, 4, 7, crabHurt),
   'Hermit Crab': () => anim(hermitSprite, 4, 5, hermitHurt),
   'Gull': () => anim(gullSprite, 4, 10, gullHurt),
-  ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, () => artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
+  ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, () => artMob(n, MOB_ART[n].look.w > 17 ? 12 : 14)])),
 };
 
 /** A baked enemy sheet's PNG (a data URL) and layout: n frames, then the hurt pose. */

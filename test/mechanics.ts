@@ -1800,13 +1800,13 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
     withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
   let artOk = true;
-  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1, HURT]) {
+  for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1, 2, 3, HURT]) {
     paintMob(name, f, (x, y, c, w = 1, h = 1) => { if (x < 0 || y < 0 || x + w > look.w || y + h > look.h || !/^#[0-9a-f]{6}$/i.test(c)) artOk = false; });
   }
   check('enemy art paints inside its box (the hitbox)', artOk);
   // the hurt pose (hitstun) is its own drawing: not just frame 0 again
   const rects = (name: string, f: number): string => { const r: string[] = []; paintMob(name, f, (x, y, c, w = 1, h = 1) => r.push(`${x},${y},${c},${w},${h}`)); return r.join(';'); };
-  const sameHurt = Object.keys(MOB_ART).filter((n) => rects(n, HURT) === rects(n, 0) || rects(n, HURT) === rects(n, 1));
+  const sameHurt = Object.keys(MOB_ART).filter((n) => [0, 1, 2, 3].some((f) => rects(n, HURT) === rects(n, f)));
   check('every painted enemy has its own hurt pose', sameHurt.length === 0, sameHurt.join(', '));
   check('every enemy with painted art uses its box as its size', MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h));
   let pairsOk = true, singles = 0, doubles = 0;
