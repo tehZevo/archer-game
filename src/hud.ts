@@ -14,7 +14,7 @@ import { drawMenu } from './menudraw';
 import { drawMinimap } from './minimapdraw';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
-import { activeSkill, expBar, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
+import { activeSkill, expBar, isLearned, skillRows, PAUSE_ROWS, pauseScroll, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './windows';
 import { armorSoak, bag, gear, weaponBonus } from './gear';
 import type { GearItem } from './gear';
@@ -407,86 +407,6 @@ export function bindMenuClicks(canvas: HTMLCanvasElement): void {
     if (col < 0 || row < 0 || row >= n) return;
     if (m.col === col && m.row === row) pauseSpend(m);
     else { m.col = col as 0 | 1; m.row = row; }
-  });
-}
-
-/* ---------------- side panel ---------------- */
-interface Row {
-  root: HTMLElement;
-  lvl: HTMLElement;
-  btn: HTMLButtonElement;
-}
-const rows = new Map<SkillKey, Row>();
-
-export function buildPanel(): void {
-  const el = document.getElementById('skillList');
-  if (!el) return;
-  el.innerHTML = '';
-  SKILL_BAR.forEach(({ skill: k }) => {
-    if (!k) return;
-    const s = activeSkill(k);
-    const d = document.createElement('div');
-    d.className = 'skill';
-    d.innerHTML = `<div class="key">${keyName(k)}</div><div class="sbody">
-      <div class="nm">${s.name}<span class="tag">${s.tag}</span></div>
-      <div class="ds">${s.desc}</div>
-      <div class="row"><span class="rl"></span>
-        <button class="up" data-k="${k}" title="Spend 1 SP">+</button></div>
-    </div>`;
-    el.appendChild(d);
-    rows.set(k, {
-      root: d,
-      lvl: d.querySelector('.rl') as HTMLElement,
-      btn: d.querySelector('.up') as HTMLButtonElement,
-    });
-  });
-  el.addEventListener('click', (e) => {
-    const t = (e.target as HTMLElement).closest('.up');
-    if (!t) return;
-    const k = (t as HTMLElement).dataset.k as SkillKey;
-    if (spendSp(k)) {
-      syncPanel();
-      const r = rows.get(k);
-      if (r) {
-        r.root.classList.add('flash');
-        setTimeout(() => r.root.classList.remove('flash'), 320);
-      }
-    }
-  });
-}
-
-export function syncPanel(): void {
-  const set = (id: string, v: string): void => {
-    const e = document.getElementById(id);
-    if (e) e.textContent = v;
-  };
-  const bar = (id: string, pct: number): void => {
-    const e = document.getElementById(id);
-    if (e) e.style.width = `${clamp(pct, 0, 1) * 100}%`;
-  };
-  set('lvl', `Lv.${player.level}`);
-  set('job', player.job.title || 'Novice');
-  set('hpt', `${Math.round(player.hp)}`);
-  bar('hpb', player.hp / player.hpMax);
-  set('mpt', `${Math.round(player.mp)}`);
-  bar('mpb', player.mp / player.mpMax);
-  set('expt', `${player.exp} / ${player.expNext}`);
-  bar('expb', player.exp / player.expNext);
-  set('sp', String(player.sp));
-  set('kills', String(game.kills));
-  set('fervor', `${player.fervor} stacks${player.fervor ? ` (+${player.fervor * 8}%)` : ''}`);
-  bar('fervorb', player.fervor / 5);
-
-  SKILL_BAR.forEach(({ skill: k }) => {
-    if (!k) return;
-    const r = rows.get(k);
-    if (!r) return;
-    const s = activeSkill(k);
-    const learned = isLearned(k);
-    const lv = rank(k).level;
-    r.lvl.textContent = learned ? `Lv.${lv}/${s.maxLevel}` : `Pick at Lv.${Math.ceil(s.minLevel / 5) * 5}+`;
-    r.btn.disabled = !learned || player.sp <= 0 || lv >= s.maxLevel;
-    r.root.classList.toggle('locked', !learned);
   });
 }
 

@@ -61,15 +61,30 @@ function drawBackground(ts: Tileset): void {
 }
 
 
+/** The portal sprite recoloured by a canvas filter, baked once per filter
+ *  (a live ctx.filter is slow, often a CPU fallback). */
+const portalTints = new Map<string, HTMLCanvasElement>();
+function portalSprite(filter: string): HTMLCanvasElement {
+  const s = SPR.portal;
+  if (filter === 'none') return s.c;
+  let c = portalTints.get(filter);
+  if (!c) {
+    c = document.createElement('canvas'); c.width = s.w; c.height = s.h;
+    const g = c.getContext('2d')!;
+    g.filter = filter;
+    g.drawImage(s.c, 0, 0);
+    portalTints.set(filter, c);
+  }
+  return c;
+}
+
 function drawPortal(p: Portal): void {
   const s = SPR.portal;
   const bob = Math.sin(performance.now() / 300) * 2;
   const down = !!p.down;
   // a way down glows a different colour; a sealed one (boss still up) is dark
-  if (down) ctx.filter = 'hue-rotate(150deg)';
-  if (!portalOpen(p)) ctx.filter = 'grayscale(1) brightness(0.55)';
-  ctx.drawImage(s.c, Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
-  ctx.filter = 'none';
+  const filter = !portalOpen(p) ? 'grayscale(1) brightness(0.55)' : down ? 'hue-rotate(150deg)' : 'none';
+  ctx.drawImage(portalSprite(filter), Math.round(p.x - s.w / 2), Math.round(p.y - s.h + bob));
   if (p.label) {
     // centred over the portal, but kept inside the world (town names are long)
     const half = textWidth(p.label) / 2 + 2;
