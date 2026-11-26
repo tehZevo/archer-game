@@ -7,7 +7,7 @@ import { ctx } from './canvas';
 import { game, player } from './state';
 import { HITSTUN } from './combat';
 import { BREATH, mobFrame } from './mobanim';
-import { breath, mobAnim } from './sprites';
+import { breath, mobAnim, recoil } from './sprites';
 import { gridCanvas } from './grid';
 import { localPose, roster } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
@@ -81,7 +81,9 @@ export function drawMob(m: Mob): void {
   const a = mobAnim(m.type.n);
   // in hitstun it holds its hurt pose (eyes shut, recoiling); a boss shows its enemy's, grown huge
   const f = a ? mobFrame(m, a.frames.length, a.fps) : 0;
-  const s = a && ((m.hurt ?? 0) > 0 && !m.dead ? a.hurt : f === BREATH ? breath(a) : a.frames[f]);
+  // in hitstun it flinches: the hurt pose and a recoil, in turn
+  const s = a && ((m.hurt ?? 0) > 0 && !m.dead ? (Math.floor((m.hurt ?? 0) * 14) % 2 ? recoil(a) : a.hurt)
+    : f === BREATH ? breath(a) : a.frames[f]);
   // a boss is its enemy grown huge; winding up an attack, it shakes and flashes
   const k = m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1, wind = windingUp(m);
   const shake = wind ? (Math.floor(performance.now() / 50) % 2 ? 1 : -1) : 0;
