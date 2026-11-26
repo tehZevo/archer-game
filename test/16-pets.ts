@@ -1,4 +1,4 @@
-import { P, player, game, drops, flying, wallet, gearDrops, gearFor, gotoPlace, TOWNS, COIN_LIFE, snapshot, apply, clearSave, pet, PET, PET_KINDS, choosePet, clearPets, check, step, arena, ground } from './harness';
+import { P, player, game, drops, flying, wallet, gearDrops, gearFor, gotoPlace, TOWNS, COIN_LIFE, snapshot, apply, clearSave, pet, PET, PET_KINDS, choosePet, petCustoms, clearPets, toggleCustom, check, step, arena, ground } from './harness';
 
 /** A landed coin pile `dx` px from you, worth v. */
 const pile = (dx: number, v: number) => {
@@ -63,6 +63,33 @@ const pile = (dx: number, v: number) => {
   choosePet('goldfinch'); player.hp = Math.floor(player.hpMax * 0.2); wallet.hp = 2; step(30);
   check('other pets do not', wallet.hp === 2);
   player.hp = player.hpMax;
+}
+
+// --- customizations: each pet's toggles change what it does, and persist ---
+{
+  arena(); step(1); drops.length = 0; flying.length = 0; gearDrops.length = 0; clearPets();
+  pet.owned = ['goldfinch']; choosePet('goldfinch'); step(1);
+  const lying = () => ({ item: gearFor('weapon', 1), x: player.x + 50, y: ground().y, t: COIN_LIFE });
+
+  gearDrops.push(lying()); step(Math.ceil(1 / P.STEP));
+  check('a goldfinch starts with only coins on',
+    petCustoms('goldfinch').coins && !petCustoms('goldfinch').items && gearDrops.length === 1);
+
+  toggleCustom('goldfinch', 'items'); step(Math.ceil(1 / P.STEP));
+  check('toggling ITEMS on makes it fetch gear', gearDrops.length === 0 && petCustoms('goldfinch').items);
+  toggleCustom('goldfinch', 'items');
+
+  const far = { x: player.x + PET_KINDS.goldfinch.range + 40, y: ground().y, vy: 0, v: 5, t: COIN_LIFE, landed: true };
+  wallet.coins = 0; drops.push(far); step(Math.ceil(1 / P.STEP));
+  check('a base-range goldfinch leaves a far pile', wallet.coins === 0 && drops.length === 1);
+  toggleCustom('goldfinch', 'range'); step(Math.ceil(1.5 / P.STEP));
+  check('toggling RANGE on lets it reach farther', wallet.coins === 5 && drops.length === 0);
+  toggleCustom('goldfinch', 'range');
+
+  toggleCustom('goldfinch', 'items');
+  const snap = snapshot(); clearPets(); apply(snap);
+  check('customizations survive a save and load', petCustoms('goldfinch').items && !petCustoms('goldfinch').range);
+  drops.length = 0; flying.length = 0; gearDrops.length = 0; wallet.coins = 0;
 }
 
 // --- saved with you; a fresh start clears them ---

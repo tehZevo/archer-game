@@ -4,7 +4,7 @@ import { text } from './font';
 import { art } from './artsheets';
 import { wallet } from './economy';
 import { PET_LIST } from './petart';
-import { pet, PET_KINDS, petShop } from './pets';
+import { pet, PET_CUSTOMS, PET_KINDS, petCustoms, petShop } from './pets';
 
 /* The pet following you, and the pet keeper's window (drawing only; see pets.ts). */
 
@@ -35,28 +35,44 @@ function action(kind: (typeof PET_LIST)[number]): string {
 }
 
 /** The pet keeper's window (screen space): every pet with its sprite, its
- *  price or whether you own it, and what the selected one does. */
+ *  price or whether you own it, and what the selected one does. When you own
+ *  the selected pet, its four customizations show below (toggled with 1-4). */
 export function drawPetShop(): void {
   const { w, h } = game.view;
   ctx.fillStyle = '#050a14c8'; ctx.fillRect(0, 0, w, h);
-  const ROW = 18, bw = 196, bh = 64 + PET_LIST.length * ROW;
+  const kind = PET_LIST[petShop.sel];
+  const owned = pet.owned.includes(kind);
+  const ROW = 18, bw = 196, bh = (owned ? 92 : 64) + PET_LIST.length * ROW;
   const bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
   ctx.fillStyle = '#101a2e'; ctx.fillRect(bx, by, bw, bh);
   ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
   text(ctx, 'PET KEEPER', w / 2, by + 6, 1, GOLD, 'center');
   text(ctx, `${wallet.coins}G`, bx + bw - 6, by + 6, 1, GOLD, 'right');
   const now = performance.now() / 1000;
-  PET_LIST.forEach((kind, i) => {
+  PET_LIST.forEach((k, i) => {
     const y = by + 22 + i * ROW, sel = petShop.sel === i;
     if (sel) { ctx.strokeStyle = GOLD; ctx.strokeRect(bx + 4.5, y - 1.5, bw - 9, ROW - 1); }
     // the selected pet flaps; the rest hold still
-    const s = petSprite(kind, sel ? now : 0);
+    const s = petSprite(k, sel ? now : 0);
     ctx.drawImage(s, Math.round(bx + 16 - s.width / 2), Math.round(y + (ROW - 2 - s.height) / 2));
-    text(ctx, PET_KINDS[kind].name, bx + 30, y + 4, 1, HI, 'left');
-    const [label, col] = status(kind);
+    text(ctx, PET_KINDS[k].name, bx + 30, y + 4, 1, HI, 'left');
+    const [label, col] = status(k);
     text(ctx, label, bx + bw - 9, y + 4, 1, col, 'right');
   });
-  const kind = PET_LIST[petShop.sel];
-  text(ctx, `${action(kind)}   ESC CLOSE`, w / 2, by + bh - 26, 1, DIM, 'center');
-  text(ctx, PET_KINDS[kind].desc, w / 2, by + bh - 13, 1, '#5d708f', 'center');
+  let foot = by + 22 + PET_LIST.length * ROW;
+  if (owned) {
+    // the four customizations, each with the number key that flips it
+    const c = petCustoms(kind);
+    text(ctx, 'CUSTOMIZATIONS  1-4', w / 2, foot + 4, 1, GOLD, 'center');
+    PET_CUSTOMS.forEach((row, i) => {
+      const y = foot + 18 + i * 11;
+      const on = c[row.key];
+      text(ctx, `${i + 1}`, bx + 14, y, 1, DIM, 'left');
+      text(ctx, row.label, bx + 28, y, 1, on ? MINE : DIM, 'left');
+      text(ctx, on ? 'ON' : 'OFF', bx + bw - 12, y, 1, on ? MINE : POOR, 'right');
+    });
+    foot += 18 + PET_CUSTOMS.length * 11;
+  }
+  text(ctx, `${action(kind)}   ESC CLOSE`, w / 2, foot + 4, 1, DIM, 'center');
+  text(ctx, PET_KINDS[kind].desc, w / 2, foot + 17, 1, '#5d708f', 'center');
 }
