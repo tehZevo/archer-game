@@ -2,7 +2,7 @@ import { shop, trainer } from './economy';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
 import { P, SKILL_BAR } from './config';
-import { cdSlot } from './skills';
+import { cdSlot } from './castrules';
 import { READY_FLASH } from './state';
 import { placeName } from './world';
 import { critChance, critMult, critOverflowPoints } from './combat';
