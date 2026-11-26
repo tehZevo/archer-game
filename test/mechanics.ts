@@ -487,7 +487,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   tap('c'); step(6);
   const y0 = player.y;
-  tap('q'); step(2);
+  tap('q'); step(5); // past the windup, into the plunge
   check('Air Dive plunges you down and forward', player.y > y0 + 4 && player.vx !== 0, `dy ${(player.y - y0).toFixed(1)}`);
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
@@ -799,7 +799,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1; player.ranks.W = 1;
   dummy(150);
   tap('c'); step(8);
-  tap('q'); step(12); // the dive lands and rolls into its rush
+  tap('q'); step(15); // the windup, the plunge, and the landing rush
   check('the dive is still airborne-to-landed with its window open', player.links.combo > 0, `combo ${player.links.combo.toFixed(2)}`);
   const mp0 = player.mp;
   tap('w');
@@ -2424,7 +2424,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
   step(15);
   check('...and she is back once it ends', localPose() !== 'vanish');
-  arena(30); player.ranks.AD = 1; ready(); air(); tap('q');
+  arena(30); player.ranks.AD = 1; ready(); air(); tap('q'); step(4); // past the windup
   check('the Air Dive draws its dive pose', player.diving && localPose() === 'dive');
   release();
 }
@@ -2639,7 +2639,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.blitz.charges = P.BLITZ_MAX;
   dummy(150);
   tap('c'); step(8);
-  tap('q'); step(12); // the dive lands and rolls into its rush
+  tap('q'); step(15); // the windup, the plunge, and the landing rush
   check('the dive opens the Q-slot window with a Blitz equipped', player.links.combo > 0, `combo ${player.links.combo.toFixed(2)}`);
   const charges0 = player.blitz.charges;
   tap('q'); step(1); // the landing rush's tail is buffered, not dropped
@@ -2682,7 +2682,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   openLink('combo', linkWindow('AD')); // the hover's own follow-up window
-  tap('q');
+  tap('q'); step(4); // past the windup
   check('Air Dive off the hover snaps out of the assault', player.hang.t === 0 && player.cast === 'rush' && player.diving,
     `hangT ${player.hang.t.toFixed(2)} cast ${player.cast}`);
   step(2);
@@ -3043,6 +3043,44 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   step(8); // past SPIN_LINK_DELAY
   check('...and it fires once the window opens', player.cast === 'jump' && player.casting.useT > 0,
     `cast ${player.cast} useT ${player.casting.useT.toFixed(2)}`);
+}
+{
+  // The aerial kit plants you: each skill zeroes your velocity so the move
+  // reads as its own move, not as momentum carried in from a run or a jump.
+  arena(30); player.ranks.W = 1; player.ranks.MS = 1;
+  tap('c'); step(6);
+  player.vx = 180; player.vy = -60;
+  tap('w');
+  // (gravity picks back up on the next frame; the point is the momentum is gone)
+  check('Midair Spin zeroes vx and vy, so the sweep holds its spot', player.vx === 0 && player.vy > -60,
+    `vx ${player.vx.toFixed(0)} vy ${player.vy.toFixed(0)}`);
+  const x0 = player.x; step(6);
+  check('...and it stays put through the sweep', Math.abs(player.x - x0) < 1, `dx ${(player.x - x0).toFixed(1)}`);
+}
+{
+  // Air Dive: a frozen coil, then the diagonal plunge.
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  tap('c'); step(6);
+  player.vx = 180; player.vy = -60;
+  tap('q');
+  check('Air Dive hangs frozen through its windup', player.vx === 0 && player.vy > -60 && !player.diving,
+    `vx ${player.vx.toFixed(0)} vy ${player.vy.toFixed(0)} diving ${player.diving}`);
+  step(2); // DIVE_WINDUP is 0.1s: the coil is the first three frames
+  check('...and is still in the coil a frame in', !player.diving && player.vx === 0,
+    `diving ${player.diving} vx ${player.vx.toFixed(0)}`);
+  step(2);
+  check('...then plunges down and forward', player.diving && player.vx > 200 && player.vy > 300,
+    `diving ${player.diving} vx ${player.vx.toFixed(0)} vy ${player.vy.toFixed(0)}`);
+}
+{
+  // Spike Lift: you rise straight up from where you were running.
+  arena(20); player.ranks.E = 1;
+  player.vx = 200;
+  tap('e');
+  check('Spike Lift zeroes vx so you rise straight up', player.vx === 0 && player.vy < 0,
+    `vx ${player.vx.toFixed(0)} vy ${player.vy.toFixed(0)}`);
+  const x0 = player.x; step(6);
+  check('...and the climb stays on the spot it started', Math.abs(player.x - x0) < 1, `dx ${(player.x - x0).toFixed(1)}`);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
