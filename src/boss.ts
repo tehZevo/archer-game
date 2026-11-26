@@ -85,7 +85,7 @@ export function spawnBoss(): void {
 }
 
 /** Hurt the player (unless they're still flashing from the last hit). True if it landed.
- *  Hit by something at `fromX`, they're bumped a little up off the ground and back, away from it
+ *  Hit by something at `fromX`, they're bumped a little up and back, away from it (on top of their own momentum)
  *  (not while climbing or hovering in Skyward Assault). The attacker's level sets
  *  how often it misses (see missChance). */
 export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolean {
@@ -97,8 +97,9 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
   }
   if (fromX !== undefined && !player.climb && player.hang.t <= 0) {
     const away = Math.sign(player.x - fromX) || -player.face;
-    player.vx = away * P.HIT_PUSH;
-    player.vy = Math.min(player.vy, -P.HIT_HOP);
+    // added to the momentum you already had, not replacing it
+    player.vx += away * P.HIT_PUSH;
+    player.vy -= P.HIT_HOP;
     player.onGround = false;
   }
   // armor soaks a share of the hit
