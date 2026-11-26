@@ -103,12 +103,13 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.skillPose = null; // the spin / vanish of the last cast is over
   if (!linked) return;
   // Fervor: each link stacks final damage, and spends every open window, so
-  // one link ends the whole combo. And it shaves the two long cooldowns and
-  // refills a Blitz.
+  // one link ends the whole combo. And it shaves the long cooldowns,
+  // refills a Blitz, and the Cyclone Sweep's cooldown.
   closeLinks();
   player.fervor = Math.min(5, player.fervor + 1);
   player.fervorT = 9;
   player.cd.R = Math.max(0, player.cd.R - 1);
   player.cd.E = Math.max(0, player.cd.E - 1);
+  player.cd['W.air'] = Math.max(0, player.cd['W.air'] - 1);
   if (player.blitz.charges < P.BLITZ_MAX) player.blitz.t += 1;
 }
