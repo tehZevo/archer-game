@@ -25,15 +25,15 @@ const PAL: Record<string, string> = {
   s: '#f2d0a9', // skin (boot cuff)
   b: '#7a5232', // boot leather
   // skill colours: each attack reads by its hue (effects use the same, fxsprites.ts)
-  y: '#ffe14d', Y: '#d9a400', // Air Dive yellow
-  P: '#9b5cff', D: '#4a2390', // Spike Lift / Tempest purple
+  y: '#ffe14d', Y: '#d9a400', // Meteor Dive yellow
+  P: '#9b5cff', D: '#4a2390', // Piercing Leap / Tempest purple
   k: '#ff8ad8', // Tempest pink
-  i: '#bfeeff', I: '#6cc8f5', // Sky Assault light blue
-  n: '#ff5a4a', // Midair Spin red highlight
+  i: '#bfeeff', I: '#6cc8f5', // Skyward Assault light blue
+  n: '#ff5a4a', // Cyclone Sweep red highlight
 };
 
 const GLYPHS: Record<SkillKey, string[]> = {
-  // Twin Shot: two arrows side by side
+  // Double Shot: two arrows side by side
   Z: [
     '..........',
     '.g....a...',
@@ -46,7 +46,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.g....a...',
     '..........',
   ],
-  // Shell Barrage: a fan of green bolts with a stun star
+  // Bolt Flurry: a fan of green bolts with a stun star
   S: [
     '.......g..',
     '......ggg.',
@@ -85,7 +85,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     'x.AA.AAA..',
     '...AAA.AA.',
   ],
-  // Sky Toss: an arrow launching up off the ground, with lift lines
+  // Rush Toss: an arrow launching up off the ground, with lift lines
   Q: [
     '....aa....',
     '...aaaa...',
@@ -124,7 +124,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '...w.w....',
     'gggggggggg',
   ],
-  // Skyfall Volley: arrows raining down at an angle
+  // Rising Arrows: arrows raining down at an angle
   W: [
     '.x....x...',
     '..x....x..',
@@ -137,7 +137,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.....aaa..',
     'gggggggggg',
   ],
-  // Sky Assault: rising chevrons with strike slashes
+  // Skyward Assault: rising chevrons with strike slashes
   AB: [
     '....ii....',
     '...iiii...',
@@ -150,7 +150,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.I..II..I.',
     '..I.II.I..',
   ],
-  // Spike Lift: purple spikes erupting from the ground
+  // Piercing Leap: purple spikes erupting from the ground
   E: [
     '....p.....',
     '....p.....',
@@ -163,7 +163,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     'DDDDDDDDDD',
     '.D.D..D.D.',
   ],
-  // Echo Shot: an arrow with a ghosted twin firing behind it
+  // Twin Echoes: an arrow with a ghosted twin firing behind it
   ES: [
     '.......aa.',
     '......aaa.',
@@ -176,7 +176,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.y..y.....',
     '...y......',
   ],
-  // Air Dive: an arrow diving down-right, with a speed streak
+  // Meteor Dive: an arrow diving down-right, with a speed streak
   AD: [
     'yy........',
     'yyy....YY.',
@@ -189,7 +189,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '.b........',
     'bb........',
   ],
-  // Midair Spin: a circular blade arc
+  // Cyclone Sweep: a circular blade arc
   MS: [
     '...RRRR...',
     '.RR....RR.',
@@ -202,7 +202,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '...RRRR...',
     '..........',
   ],
-  // Plunging Volley: orange arrows (green fletching) raining onto a green target
+  // Downpour: orange arrows (green fletching) raining onto a green target
   PV: [
     '.e..e..e..',
     '.r..r..r..',
@@ -267,7 +267,7 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '....rr....',
     '...r......',
   ],
-  // Agile Climbing: a rope ladder
+  // Acrobatics: a rope ladder
   AC: [
     '...LLLL...',
     '...L..L...',

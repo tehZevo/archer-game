@@ -25,58 +25,54 @@ export const P = {
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
-  BARRAGE_HANG: 0.75,  // s Sky Assault hovers (striking) before falling
+  BARRAGE_HANG: 0.75,  // s Skyward Assault hovers (striking) before falling
   ASSAULT_LEAP: 0.12,  // s the assault's opening leap: a W pressed in it is buffered, after it the sweep fires out of the hover
-  ASSAULT_SPIN_LINK: 0.35, // s of extra link window Sky Assault keeps open for Midair Spin after the hover
-  BARRAGE_UP: 43,      // px Sky Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
+  ASSAULT_SPIN_LINK: 0.35, // s of extra link window Skyward Assault keeps open for Cyclone Sweep after the hover
+  BARRAGE_UP: 43,      // px Skyward Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
-  BOLT_V: 420,         // Shell Barrage bolt speed (px/s)
-  Z_WINDUP: 0.10,      // s Twin Shot draws the bow before the arrows fly
-  Z_CAST: 0.42,        // s for the whole Twin Shot animation (draw, release, follow-through)
+  BOLT_V: 420,         // Bolt Flurry bolt speed (px/s)
+  Z_WINDUP: 0.10,      // s Double Shot draws the bow before the arrows fly
+  Z_CAST: 0.42,        // s for the whole Double Shot animation (draw, release, follow-through)
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   DELAY_TIME: 0.2,     // s of recovery after the animation (see delayTime; links skip it)
   ACCEL: 1600,         // groundedAccelForce
   MOB_SPEED: 0.5,     // ...and the most move too fast: every enemy's spd is halved
-  RUSH_DIST: 64,      // px the Sky Toss slide always travels: it stops here, not early
-  RUSH_SLIDE_V: 320,  // Sky Toss ground slide start speed (the slide's pace)
-  RUSH_MAX: 0.32,     // s the Sky Toss slide lasts at most; the strike lands as it ends
+  RUSH_DIST: 64,      // px the Rush Toss slide always travels: it stops here, not early
+  RUSH_SLIDE_V: 320,  // Rush Toss ground slide start speed (the slide's pace)
+  RUSH_MAX: 0.32,     // s the Rush Toss slide lasts at most; the strike lands as it ends
   RUSH_GRAB: 22,      // px ahead of the player the slide picks enemies up
   RUSH_GRAB_BACK: 10, // ...and px behind, so an enemy you just passed still counts
-  RUSH_HIT: 0.4,      // the slide hits each enemy once as it scoops them up, at this share of Sky Toss's damage
+  RUSH_HIT: 0.4,      // the slide hits each enemy once as it scoops them up, at this share of Rush Toss's damage
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
   BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
   LINK_BUFFER: 0.5,   // s of free time a link window stays open past the animation (see linkWindow)
-  BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
+  BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Rush Toss)
   BLITZ_DIST: 96,      // px the blitz travels
-  // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
+  // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
-  BACKSTEP_VX: 230,    // Backstep Shot: backward hop speed, px/s
-  BACKSTEP_VY: 150,    // ...and its small upward pop (v²/2g ≈ 11px)
-  VAULT_VX: 150,       // Vault Shot: backward leap speed, px/s
-  PLUNGE_W: 56,        // Plunging Volley: width of the column it rains into, px
+  PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 112.5,   // px/s (was 150) added to your current momentum (stacks: a falling cast lifts less)
-  // Spike Lift: E's ground form. Spikes erupt around you and throw you up.
+  // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
   SPIKE_R: 56,         // px radius of the burst around you
   SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed...
   SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIKE_LIFT_H: 40,    // px the tornado lifts you, from wherever you are (see spikeLift)
-  SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
+  SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
   SPIN_ANIM: 0.6,      // s the whole sweep plays (the archer's turn and the blades round her)
-  SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Plunging Volley link opens (the tail of the longer SPIN_ANIM pose)
+  SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Downpour link opens (the tail of the longer SPIN_ANIM pose)
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
-  VAULT_VY: 360,       // ...and its upward launch (v²/2g ≈ 62px, higher than a jump)
   FRICTION: 700,       // ground friction when no input (a short slide)
   AIR_BRAKE: 400,      // px/s^2: in the air, holding against your motion only slows you (never reverses)
   HIT_HOP: 130,        // px/s up when an enemy hits you: a little ~8px bump off the ground...
@@ -106,12 +102,12 @@ export const TILE = 16;
    skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
 export const SKILLS: Record<SkillKey, SkillDef> = {
   // Actives: 3 ranks; stats step from rank 1 to rank 3 so every rank is a big jump.
-  // `use` is the use time (see SkillDef); Twin Shot and its upgrades have no
+  // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
   // cooldown, so their pace is their use time alone (which Haste speeds up).
-  Z: { key: 'Z', name: 'Twin Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
+  Z: { key: 'Z', name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
        cd: 0, use: 0.7, mp1: 2, mpMax: 3, dmg1: 80, dmgMax: 120, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 4,
        desc: 'Hits the closest enemies in range twice' },
-  AC: { key: 'AC', name: 'Agile Climbing', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 3, passive: true,
+  AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders; climb faster' },
   C: { key: 'C', name: 'Jump', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1,
@@ -120,24 +116,24 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   D: { key: 'D', name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
        cd: 0, use: 0.2, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
-  Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
+  Q: { key: 'Q', name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.6, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
        desc: 'Launch enemies airborne, opens the link window' },
-  W: { key: 'W', name: 'Skyfall Volley', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
+  W: { key: 'W', name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 4, targets1: 4, targetsMax: 4,
-       desc: 'Airborne-only volley after Sky Toss' },
-  E: { key: 'E', name: 'Spike Lift', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+       desc: 'Airborne-only volley after Rush Toss' },
+  E: { key: 'E', name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIKE_CD, use: 1.3, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
-  AD: { key: 'AD', name: 'Air Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
+  AD: { key: 'AD', name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 1.1, mp1: 3, mpMax: 4, dmg1: 250, dmgMax: 400, hits1: 1, hitsMax: 1, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
-  MS: { key: 'MS', name: 'Midair Spin', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
+  MS: { key: 'MS', name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIN_CD, use: 0.8, mp1: 3, mpMax: 5, dmg1: 200, dmgMax: 200, hits1: 4, hitsMax: 4, targets1: 8, targetsMax: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
-  PV: { key: 'PV', name: 'Plunging Volley', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
+  PV: { key: 'PV', name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.8, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
@@ -146,10 +142,10 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 3, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', name: 'Sky Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
+  AB: { key: 'AB', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 4, hitsMax: 4, targets1: 6, targetsMax: 6, requires: 'W',
-       desc: 'After Sky Toss: leap up to launched enemies' },
-  S: { key: 'S', name: 'Shell Barrage', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 3,
+       desc: 'After Rush Toss: leap up to launched enemies' },
+  S: { key: 'S', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.6, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Branch upgrades: each competes with the other upgrade on the same slot.
@@ -157,7 +153,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
        desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
-  ES: { key: 'ES', name: 'Echo Shot', tag: 'Passive', job: 4, minLevel: 60, maxLevel: 3, passive: true,
+  ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 2, bonusMax: 2,
         desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire' },
   SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
@@ -180,7 +176,7 @@ export const startsLearned = (k: SkillKey): boolean => SKILLS[k].minLevel <= 1 &
 export const SKILL_ORDER: SkillKey[] = ['Z', 'C', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, AB) share their slot's key
 
 /** The buttons shown in the on-canvas skill bar. Z is the main attack slot:
- *  Twin Shot early, upgraded to Shell Barrage at Lv.30. */
+ *  Double Shot early, upgraded to Bolt Flurry at Lv.30. */
 /** Attack keys Z (main), Q, W, E, R. Slots upgrade in place (see UPGRADES in progress.ts). */
 export const SKILL_BAR: { label: string; skill: SkillKey | null }[] = [
   { label: 'Z', skill: 'Z' },
@@ -190,7 +186,7 @@ export const SKILL_BAR: { label: string; skill: SkillKey | null }[] = [
   { label: 'R', skill: 'R' },
 ];
 
-/** Skills that consume the Sky Toss link window and stack Fervor. */
+/** Skills that consume the Rush Toss link window and stack Fervor. */
 export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
 
 /* ---------------- mobs ---------------- */

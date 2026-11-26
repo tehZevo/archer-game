@@ -12,7 +12,7 @@ import { barrageTargets } from './skills';
 import { landDive } from './rush';
 import { openLink } from './links';
 
-/** Countdown to Agile Climbing's next rising-streak effect. */
+/** Countdown to Acrobatics's next rising-streak effect. */
 let climbFxT = 0;
 
 /** -1 / 1 while Left / Right is held (Left wins), else 0. */
@@ -20,7 +20,7 @@ export const heldDir = (): -1 | 0 | 1 => held('left') ? -1 : held('right') ? 1 :
 
 /**
  * The player's movement for one fixed step: on a rope or ladder, hovering in
- * a Sky Assault, or walking / falling under physics. `locked` (a skill's use
+ * a Skyward Assault, or walking / falling under physics. `locked` (a skill's use
  * time) blocks movement input.
  */
 export function movePlayer(dt: number, locked: boolean): void {
@@ -43,7 +43,7 @@ export function movePlayer(dt: number, locked: boolean): void {
 }
 
 /** On a rope / ladder (v83 rules: see catchClimbable): Up/Down climbs, and
- *  with Agile Climbing, Up + Jump rushes up and pops off the top. */
+ *  with Acrobatics, Up + Jump rushes up and pops off the top. */
 function climb(dt: number, locked: boolean): void {
   const r = player.climb!;
   if (!locked && pressed('c') && held('up') && player.ranks.AC > 0) { player.climbRush = true; sfx.jump(); }
@@ -86,7 +86,7 @@ function jumpOffClimb(dir: -1 | 1 | 0): void {
   player.leftClimbX = player.x;
 }
 
-/** Sky Assault: hover in place, striking airborne enemies at intervals. */
+/** Skyward Assault: hover in place, striking airborne enemies at intervals. */
 function hover(dt: number): void {
   player.hang.t -= dt;
   // the hover ends here: landing opens the link window, so Tempest (R) fires
@@ -116,12 +116,12 @@ function walk(dt: number, locked: boolean): void {
   const prevFeet = player.y + player.h, prevX = player.x;
   integrate(player, dt);
   // clamp to the world before colliding, so the ground test uses the final x;
-  // vertically too: chained aerial hops (Plunging Volley's stacked momentum)
+  // vertically too: chained aerial hops (Downpour's stacked momentum)
   // can't carry you off the top of the map
   player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2);
   player.y = clamp(player.y, 0, WORLD.h - player.h);
   collideGround(player, prevFeet, prevX);
-  landDive(); // an Air Dive touching down rolls into the rush this same frame
+  landDive(); // a Meteor Dive touching down rolls into the rush this same frame
   // grab a rope/ladder first, so a rope hanging from the platform you're
   // standing on is caught before the drop-through consumes the Down press
   if (grabClimbable()) return;
@@ -152,14 +152,14 @@ function steer(dt: number, locked: boolean): void {
 
 /** Skills that push the player around while they play. */
 function skillForces(dt: number): void {
-  // Sky Toss never slides you off a platform: stop at the edge instead
+  // Rush Toss never slides you off a platform: stop at the edge instead
   if (player.rush.t > 0 && player.onGround) {
     const feet = player.y + player.h, nx = player.x + player.vx * dt;
     if (!surfaceBetween(nx, 1, feet - 12, feet + 12)) player.vx = 0;
   }
-  // Spike Lift: the spikes push you up steadily, against gravity
+  // Piercing Leap: the spikes push you up steadily, against gravity
   if (player.liftT > 0) { player.liftT -= dt; player.vy = -P.SPIKE_RISE_V - P.GRAVITY * dt; }
-  // Midair Spin: the sweep holds you steady, so you don't fall straight through the animation
+  // Cyclone Sweep: the sweep holds you steady, so you don't fall straight through the animation
   if (player.cast === 'shoot' && player.skillPose === 'spin' && !player.onGround) player.vy = 0;
 
 }

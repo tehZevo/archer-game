@@ -254,9 +254,9 @@ function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pos
   ctx.restore();
 }
 
-/** The Midair Spin's whole turn takes this long, s (its cast time). */
+/** The Cyclone Sweep's whole turn takes this long, s (its cast time). */
 const SPIN_TURN_T = P.SPIN_ANIM;
-/** How far the Air Dive pitches you head-down, radians. */
+/** How far the Meteor Dive pitches you head-down, radians. */
 const DIVE_PITCH = 0.8;
 /** Tempest: you blink out, stay gone while the sweep goes round, and
  *  flicker back as it ends (s since the cast). */
@@ -267,10 +267,10 @@ function vanishAlpha(s: number): number {
   return 1;
 }
 
-/** Air Dive's colour: its afterimages wash yellow. */
+/** Meteor Dive's colour: its afterimages wash yellow. */
 const DIVE_TINT = '#ffe14d';
 
-/** Afterimages trailing an Air Dive, back along the line of the dive. */
+/** Afterimages trailing a Meteor Dive, back along the line of the dive. */
 function drawDiveTrail(look: Look, x: number, feet: number, face: number, t: number, alpha: number, tint?: string): void {
   const len = Math.hypot(P.DIVE_VX, P.DIVE_VY), ux = (face * P.DIVE_VX) / len, uy = P.DIVE_VY / len;
   for (const [d, a] of [[14, 0.3], [7, 0.5]] as const) drawArcher(look, x - ux * d, feet - uy * d, face, 'dive', t, alpha * a, undefined, tint);
@@ -353,7 +353,7 @@ function drawBubble(id: string, x: number, bottom: number, now: number): void {
   lines.forEach((l, i) => text(ctx, l, tx, by + 2 + i * 9, 1, '#1a2438', 'center'));
 }
 
-/** The Echo Shot shadow's colour: a cool blue ghost of the archer's own look. */
+/** The Twin Echoes shadow's colour: a cool blue ghost of the archer's own look. */
 const ECHO_TINT = '#7fb8ff';
 
 /** A missed attack's i-frames are invisible (see combat's MISS_IFRAMES). */
@@ -361,7 +361,7 @@ const invulnAlpha = (): number => (player.invuln > 0 && !player.invulnQuiet ? 0.
 
 function drawPlayer(): void {
   if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha(), DIVE_TINT);
-  // Echo Shot: the shadow archer is a permanent companion at your side,
+  // Twin Echoes: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and
   // stands ready the rest of the time.
   if (isLearned('ES')) {

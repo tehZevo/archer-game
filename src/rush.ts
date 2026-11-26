@@ -8,7 +8,7 @@ import { openLink } from './links';
 import { linkWindow } from './castrules';
 import { alive, eachShot, fxUnder, pose } from './skillfx';
 
-/** The pending Sky Toss strike, fired when the slide ends. */
+/** The pending Rush Toss strike, fired when the slide ends. */
 let rushStrike: (() => void) | null = null;
 
 /** Drop a strike left over from an earlier rush, so it can't land later. */
@@ -16,7 +16,7 @@ export function clearRushStrike(): void {
   rushStrike = null;
 }
 
-/** Start a slide (or the Air Dive's plunge) that scoops up enemies for `t` seconds. */
+/** Start a slide (or the Meteor Dive's plunge) that scoops up enemies for `t` seconds. */
 export function startSlide(t: number, goal = 0): void {
   player.rush.t = t;
   player.rush.dist = 0;
@@ -25,7 +25,7 @@ export function startSlide(t: number, goal = 0): void {
 }
 
 /**
- * Sky Toss slide, on the fixed step (after the player moves): pick up the
+ * Rush Toss slide, on the fixed step (after the player moves): pick up the
  * enemies the slide runs into and push them along in front, and land the
  * strike when the slide ends (time up, slowed down, or left the ground).
  */
@@ -68,14 +68,14 @@ function push(face: number): void {
   }
 }
 
-/** End a Sky Toss slide now and land its strike. */
+/** End a Rush Toss slide now and land its strike. */
 export function endRush(): void {
   player.rush.t = 0;
   rushStrike?.();
 }
 
 /**
- * The ground rush (Q on the ground, and the Air Dive's landing): slide
+ * The ground rush (Q on the ground, and the Meteor Dive's landing): slide
  * forward, scooping up the enemies in the way and pushing them along; the
  * strike lands when the slide ends: out of time, slowed, or at a platform
  * edge (see updateRush). In place (Down + Q) it strikes at once. Electric
@@ -118,7 +118,7 @@ function strike(inPlace: boolean, face: number): void {
   });
 }
 
-/** The Air Dive touched down: roll straight into the real ground rush (its
+/** The Meteor Dive touched down: roll straight into the real ground rush (its
  *  slide, strike and link window), with no pause. */
 export function landDive(): void {
   if (!player.diving || !player.onGround) return;

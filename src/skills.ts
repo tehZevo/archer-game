@@ -8,7 +8,7 @@ import { closeLink, closeLinks, linkOpen, linksIn } from './links';
 import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, offHover, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
-/** Airborne enemies Sky Assault can reach: around and below the player. */
+/** Airborne enemies Skyward Assault can reach: around and below the player. */
 export function barrageTargets() {
   return airborneInBox(player.x, player.y + player.h, 120, 140);
 }
@@ -23,13 +23,13 @@ interface Fire { linked: boolean; chained: boolean }
  */
 export function cast(key: SkillKey, chained = false): void {
   const airborne = !player.onGround && !player.climb;
-  // In the air the key fires its own skill (Air Dive, Midair Spin, Plunging
-  // Volley), with its own rank, MP cost and use time. Sky Assault is W's
-  // ground-only upgrade: W in the air is always Midair Spin.
+  // In the air the key fires its own skill (Meteor Dive, Cyclone Sweep, Plunging
+  // Volley), with its own rank, MP cost and use time. Skyward Assault is W's
+  // ground-only upgrade: W in the air is always Cyclone Sweep.
   const airKey = airborne ? AIR_FORM[key] : undefined;
   const kind = airKey ?? activeSkill(key).key;
   if (!isLearned(kind)) return;
-  // Air Dive, Midair Spin and Plunging Volley want you properly airborne:
+  // Meteor Dive, Cyclone Sweep and Downpour want you properly airborne:
   // at least ~2/3 of a full jump's peak above the floor.
   if (airKey && game.floor.platforms[0].y - (player.y + player.h) < AIR_MIN_H) return;
   const r = rank(kind);
@@ -51,32 +51,32 @@ function buffer(key: SkillKey): null {
  */
 function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean, r: SkillRank): Fire | null {
   const linkSkill = LINKED_SKILLS.includes(kind);
-  // Which presses count as links: see linksIn. (Sky Toss off the Air Dive's
+  // Which presses count as links: see linksIn. (Rush Toss off the Meteor Dive's
   // window, a blitz off its own, the aerial kit off each other's windows.)
   const linked = linksIn(kind, key, linkSkill);
-  // Link skills only work right after Sky Toss, once per Sky Toss.
+  // Link skills only work right after Rush Toss, once per Rush Toss.
   if (linkSkill && !linkOpen('combo')) return null;
   const rushPlaying = player.cast === 'rush' && player.castT > 0;
-  // A link pressed while Sky Toss is still playing waits for it to finish.
+  // A link pressed while Rush Toss is still playing waits for it to finish.
   if (linked && rushPlaying) return buffer(key);
-  // Sky Assault's leap buffers the sweep it links into, so pressing W on the
+  // Skyward Assault's leap buffers the sweep it links into, so pressing W on the
   // way up lands as the leap peaks.
   if (kind === 'MS' && linkOpen('spin') && assaultLeaping()) return buffer(key);
-  // Q rushes chain into Twin Shot: Z pressed during the rush fires the moment
+  // Q rushes chain into Double Shot: Z pressed during the rush fires the moment
   // it ends, and right after it (while its link window is open) at once. The
   // chain skips the rush's ending lag once: one quick shot, not repeated uses.
   if (kind === 'Z' && !chained && (player.rush.t > 0 || rushPlaying)) return buffer('Z');
   if (kind === 'Z' && linkOpen('combo')) { chained = true; closeLink('combo'); }
 
-  // The Midair Spin and Tempest keep their own cooldown even as a link, so one
+  // The Cyclone Sweep and Tempest keep their own cooldown even as a link, so one
   // jump can't chain sweeps all the way up and a Storm isn't ready next Assault.
   if (player.cd[cdSlot(key, airborne)] > 0 && (!linked || kind === 'MS' || kind === 'R')) return null;
   // Electric Blitz spends a banked charge (Down + Q, the strike in place, needs none).
   if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
   // An attack skill's use time (and its recovery) blocks every other skill;
-  // a link bypasses it. So does the airborne kit (Plunging Volley, Glide,
-  // Midair Spin, the Q-slot rush) pulled out of a Sky Assault hover, which
+  // a link bypasses it. So does the airborne kit (Downpour, Glide,
+  // Cyclone Sweep, the Q-slot rush) pulled out of a Skyward Assault hover, which
   // ends the hover and fires on the press rather than at its end.
   const busy = player.casting.useT > 0 || player.casting.recoverT > 0;
   if (busy && !linked && !chained && !offHover(kind)) return buffer(key);
@@ -103,7 +103,7 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
     player.casting.freeze = FREEZE_CAST.has(kind);
     player.combatT = P.COMBAT_TIME;
   }
-  player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift starts a new one)
+  player.liftT = 0; // any other skill ends a Piercing Leap's push (Piercing Leap starts a new one)
   player.skillPose = null; // the spin / vanish of the last cast is over
   if (!linked) return;
   // Fervor: each link stacks final damage, and spends every open window, so

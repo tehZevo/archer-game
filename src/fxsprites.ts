@@ -22,8 +22,8 @@ export const RAMPS = {
   dust: ramp([[110, 124, 138], [170, 184, 196], [220, 230, 238], [245, 250, 255], [255, 255, 255]], [0.25, 0.45, 0.7, 0.9, 1]),
   lime: ramp([[70, 110, 10], [140, 200, 20], [214, 240, 60], [250, 250, 170], [255, 255, 255]]),
   gold: ramp([[150, 90, 10], [230, 160, 30], [255, 209, 102], [255, 240, 190], [255, 255, 255]]),
-  // skill colours (match the icon palette): Air Dive yellow, Spike Lift purple,
-  // Tempest purple + pink, Sky Assault light blue, Midair Spin red
+  // skill colours (match the icon palette): Meteor Dive yellow, Piercing Leap purple,
+  // Tempest purple + pink, Skyward Assault light blue, Cyclone Sweep red
   yellow: ramp([[150, 120, 0], [230, 190, 20], [255, 225, 77], [255, 245, 170], [255, 255, 255]]),
   purple: ramp([[70, 20, 140], [120, 50, 210], [165, 100, 255], [215, 180, 255], [255, 255, 255]]),
   pink: ramp([[150, 30, 110], [230, 70, 170], [255, 130, 210], [255, 200, 235], [255, 255, 255]]),
@@ -169,7 +169,7 @@ function hitAnim(big: boolean, rp: RampName): FxAnim {
   });
 }
 
-/** Twin Shot muzzle: a bright streak with teal crescents curling round the tip. Faces right. */
+/** Double Shot muzzle: a bright streak with teal crescents curling round the tip. Faces right. */
 function muzzleAnim(): FxAnim {
   // kept tight to the bow: the origin is the muzzle, everything within ~16px of it
   const W = 22, H = 18, y = H / 2;
@@ -196,7 +196,7 @@ function arrowAnim(): FxAnim {
   }, 0.35);
 }
 
-/** Twin Shot tracer: twin streaks whipping out from the bow across
+/** Double Shot tracer: twin streaks whipping out from the bow across
  *  the range. Faces right; origin at the muzzle; stretched to the target. */
 function tracerAnim(): FxAnim {
   const W = 64, H = 9, y = 4.5;
@@ -219,7 +219,7 @@ function arc(L: Light, r: RampName, cx: number, cy: number, rx: number, ry: numb
   else { L.ring(r, cx, cy, rx, ry, thick, I, b0, Math.PI); L.ring(r, cx, cy, rx, ry, thick, I, -Math.PI, b1); }
 }
 
-/** Spike Lift: a burst of glowing spikes erupting from the ground on
+/** Piercing Leap: a burst of glowing spikes erupting from the ground on
  *  both sides of you, nearest first, then sinking back with dust at their
  *  bases. Origin at your feet. */
 function spikesAnim(body: RampName = 'purple', core: RampName = 'pink'): FxAnim {
@@ -284,7 +284,7 @@ function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxAni
   });
 }
 
-/** Midair Spin: blades of light whirling a full turn round you, each a
+/** Cyclone Sweep: blades of light whirling a full turn round you, each a
  *  crescent with a bright leading edge. Origin at your feet (the whirl is
  *  centred on your middle). */
 function spinAnim(rp: RampName = 'red'): FxAnim {
@@ -319,7 +319,7 @@ function levelUpAnim(): FxAnim {
   });
 }
 
-/** Sky Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base. */
+/** Rush Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base. */
 function rushAnim(): FxAnim {
   const W = 30, H = 52, bx = W / 2, by = H - 4;
   return anim(W, H, bx, by, 8, (L, f) => {
@@ -356,7 +356,7 @@ function rushAnim(): FxAnim {
   }, 0.4);
 }
 
-/** Sky Assault strike: a white-blue crescent swoosh that sweeps and thins. Faces right. */
+/** Skyward Assault strike: a white-blue crescent swoosh that sweeps and thins. Faces right. */
 function swooshAnim(rp: RampName = 'cyan'): FxAnim {
   const W = 30, H = 30, c = W / 2;
   return anim(W, H, c, c, 4, (L, f) => {
@@ -368,7 +368,7 @@ function swooshAnim(rp: RampName = 'cyan'): FxAnim {
   });
 }
 
-/** Skyfall Volley: a volley of yellow-green arrows raining down onto the target,
+/** Rising Arrows: a volley of yellow-green arrows raining down onto the target,
  *  spiky gold impacts, a flat green crescent swirl and dust. Origin at the base. */
 function rainAnim(): FxAnim {
   const W = 40, H = 64, bx = W / 2, by = H - 6;
@@ -398,7 +398,7 @@ function rainAnim(): FxAnim {
   }, 0.4);
 }
 
-/** Shell Barrage bolt: a green streak with a brighter, wider head. Faces right; origin at the tip. */
+/** Bolt Flurry bolt: a green streak with a brighter, wider head. Faces right; origin at the tip. */
 function boltAnim(): FxAnim {
   return anim(30, 9, 28, 4.5, 1, (L) => {
     L.line('green', 1, 4.5, 28, 4.5, 0.3, 1.6, 1.2);
@@ -406,7 +406,7 @@ function boltAnim(): FxAnim {
   }, 0.35);
 }
 
-/** Shell Barrage hit: green-white starburst with a long horizontal streak and a fading crescent
+/** Bolt Flurry hit: green-white starburst with a long horizontal streak and a fading crescent
  *  (drawn mirrored so the streak points back toward the shooter). */
 function stunHitAnim(): FxAnim {
   const W = 56, H = 34, c = 22, y = H / 2;
@@ -449,7 +449,7 @@ function spiritAnim(): FxAnim {
   });
 }
 
-/** Plunging Volley, on the archer: an orange burst at the bow with green
+/** Downpour, on the archer: an orange burst at the bow with green
  *  motes flung off it. Origin at her middle. */
 function volleyFlareAnim(): FxAnim {
   const S = 40, c = S / 2;
@@ -464,7 +464,7 @@ function volleyFlareAnim(): FxAnim {
   });
 }
 
-/** Plunging Volley's blast: a flat tornado under the archer's feet:
+/** Downpour's blast: a flat tornado under the archer's feet:
  *  a low, wide whirl of orange rings sweeping out under her, with a
  *  green-shot impact ring. Origin at the top centre (her feet). */
 function tornadoAnim(depth: number): FxAnim {
@@ -490,7 +490,7 @@ function tornadoAnim(depth: number): FxAnim {
   }, 0.4);
 }
 
-/** Agile Climbing's rush: green streaks shooting up past the archer with
+/** Acrobatics's rush: green streaks shooting up past the archer with
  *  sparkles left behind. Origin at her feet. */
 function climbRiseAnim(): FxAnim {
   const W = 24, H = 44, bx = W / 2, by = H - 2;
@@ -505,7 +505,7 @@ function climbRiseAnim(): FxAnim {
   }, 0.35);
 }
 
-/** Air Dive windup: three yellow arrows streak along curved paths diagonally
+/** Meteor Dive windup: three yellow arrows streak along curved paths diagonally
  *  down and forward, leading the dive. Faces right; origin at the player's middle. */
 function diveWindupAnim(): FxAnim {
   const W = 56, H = 48, ox = 12, oy = 10, n = 6;

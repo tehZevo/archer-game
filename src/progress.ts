@@ -129,7 +129,7 @@ export function rank(key: SkillKey): SkillRank {
     maxLevel: s.maxLevel,
     mp: Math.round(lerp(s.mp1, s.mpMax, t)),
     dmg: lerp(s.dmg1, s.dmgMax, t) / 100,
-    // The skill's own shots. Echo Shot is a separate multiplier (see shots()):
+    // The skill's own shots. Twin Echoes is a separate multiplier (see shots()):
     // keeping the two apart is what lets the shadow's arrows ride the same
     // damage-number stack as the base volley instead of colliding with it.
     hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)),
@@ -137,7 +137,7 @@ export function rank(key: SkillKey): SkillRank {
   };
 }
 
-/** How many arrows an attack fires: its own shots, doubled by the Echo Shot
+/** How many arrows an attack fires: its own shots, doubled by the Twin Echoes
  *  passive's shadow archer. The shadow always procs (a minimum of one lot),
  *  and its arrows are counted here rather than folded into `hits`. */
 export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('ES')));
@@ -153,15 +153,15 @@ export function passiveBonus(key: SkillKey): number {
 export const isLearned = (key: SkillKey): boolean => (player.ranks[activeSkill(key).key] || 0) > 0;
 
 /**
- * The skill currently bound to a bar slot. The Z slot starts as Twin Shot
- * and is upgraded to Shell Barrage (a strict upgrade) once it unlocks.
+ * The skill currently bound to a bar slot. The Z slot starts as Double Shot
+ * and is upgraded to Bolt Flurry (a strict upgrade) once it unlocks.
  */
 export function activeSkill(key: SkillKey): SkillDef {
   const up = upgradesOf(key).find((u) => player.ranks[u] > 0);
   return SKILLS[up ?? key];
 }
 
-/** The upgrade branches available on a slot (e.g. Z → Shell Barrage or Backstep Shot). */
+/** The upgrade branches available on a slot (e.g. Z → Bolt Flurry or Backstep Shot). */
 export const upgradesOf = (base: SkillKey): SkillKey[] =>
   (Object.keys(UPGRADES) as SkillKey[]).filter((u) => UPGRADES[u] === base);
 
@@ -177,14 +177,14 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
 /* ---------------- skill picks ----------------
    Every level grants 1 AP; every 5th level also grants a skill point (SP).
    Both are spent from the pause menu. An SP learns a newly available skill,
-   takes a slot upgrade (Twin Shot -> Shell Barrage, Skyfall Volley ->
-   Sky Assault), or raises a learned skill's rank. */
+   takes a slot upgrade (Double Shot -> Bolt Flurry, Rising Arrows ->
+   Skyward Assault), or raises a learned skill's rank. */
 export const SKILL_PICK_EVERY = 5;
 /** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
  *  several upgrades is a branch: taking one locks the others out for good. */
 const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', AB: 'W', RA: 'Q', EB: 'Q' };
 
-// The air forms of Q, W and E (Air Dive, Midair Spin, Plunging Volley) are
+// The air forms of Q, W and E (Meteor Dive, Cyclone Sweep, Downpour) are
 // their own skills, but on the list they show the key they're used on, not
 // their own abbreviation.
 const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 'E' };
@@ -216,7 +216,7 @@ export function skillRows(): SkillRow[] {
     const slot = s.passive ? '' : base ?? AIR_FORM_KEY[k] ?? k;
     if (have === 0) {
       if (s.minLevel > player.level || (base && !(player.ranks[base] > 0))) continue;
-      // a prerequisite skill (e.g. Midair Spin needs Sky Assault) must be
+      // a prerequisite skill (e.g. Cyclone Sweep needs Skyward Assault) must be
       // mastered first: the row shows what's needed until it is
       const req = s.requires ? SKILLS[s.requires] : null;
       if (req && player.ranks[s.requires!] < req.maxLevel) {
@@ -255,7 +255,7 @@ export function spendSkill(key: SkillKey): boolean {
   const row = skillRows().find((r) => r.key === key);
   if (player.sp <= 0 || !row || !row.action) return false;
   // an upgrade starts at rank 1, not at its base skill's rank: the first SP
-  // on Sky Assault buys rank 1, whatever rank Skyfall Volley is at
+  // on Skyward Assault buys rank 1, whatever rank Rising Arrows is at
   player.ranks[key] = row.rank > 0 ? row.rank + 1 : 1;
   player.sp--;
   return true;

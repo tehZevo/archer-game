@@ -75,7 +75,7 @@ const SHOOT_BODY = [
   '....ooTTTTo...o.',
 ];
 
-// Twin Shot windup: string drawn back to the chin, arrow nocked across the bow.
+// Double Shot windup: string drawn back to the chin, arrow nocked across the bow.
 const DRAW_BODY = [
   '..oCcctttssssowo',
   '..oCccTttxx..w.o',
@@ -95,7 +95,7 @@ const FOLLOW_BODY = [
   '....ooTTTTo.....',
 ];
 
-// Sky Toss: crouched low, leaning into the slide.
+// Rush Toss: crouched low, leaning into the slide.
 const RUSH_BODY = [
   '..oCcctttttssow.',
   '.oCccTttttto.xw.',
@@ -119,7 +119,7 @@ const CLIMB = [
    '.....ollolloo...', '.....ollo.llo...', '.....obbo.obbo..', '.....obbo.obbo..', '.....oooo.oooo..', '................'],
 ];
 
-// Midair Spin: tucked tight, knees pulled up, bow held out (render.ts
+// Cyclone Sweep: tucked tight, knees pulled up, bow held out (render.ts
 // whirls the frame round a full turn).
 const SPIN_LOWER = [
   '....olllllloo...',
@@ -130,7 +130,7 @@ const SPIN_LOWER = [
   '................',
 ];
 
-// Air Dive: stretched out head-first, bow reaching ahead, legs together
+// Meteor Dive: stretched out head-first, bow reaching ahead, legs together
 // and trailing (render.ts pitches the frame down the line of the dive).
 // The second frame flutters the feet.
 const DIVE_LEGS = [

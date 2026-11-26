@@ -39,7 +39,7 @@ export const devTag = (): string => (dev.on ? '-dev' : '');
 
 /** Max the player out for testing: level 100 (with its job and a stack of
  *  ability points) and every skill at max rank, except Haste and the retired
- *  branches (Backstep Shot, Vault Shot, Rising Arrow). Bound to the `\` key. */
+ *  branch (Rising Arrow). Bound to the `\` key. */
 export const maxOut = (): void => {
   player.level = MAX_LEVEL;
   player.exp = 0;

@@ -9,14 +9,14 @@ import type { LinkKind, SkillKey } from './types';
    through these helpers, so "which skill opens what" reads at the cast
    (openLink) and "what fires out of it" at the gate (linkOpen).
 
-     combo    Sky Toss / Air Dive / launchers -> the link skills (W, AB, Z chain, and
-                W in the air: the Midair Spin)
-     assault  Sky Assault's hover ending      -> Tempest (R)
+     combo    Rush Toss / Meteor Dive / launchers -> the link skills (W, AB, Z chain, and
+                W in the air: the Cyclone Sweep)
+     assault  Skyward Assault's hover ending      -> Tempest (R)
      tempest  Tempest                         -> Dive (Q in the air)
      blitz    Electric Blitz                  -> the next blitz
      glide    the aerial skills               -> Glide (D)
-     volley   Midair Spin                     -> Plunging Volley (E in the air)
-     spin     Sky Assault                     -> Midair Spin (W in the air)
+     volley   Cyclone Sweep                     -> Downpour (E in the air)
+     spin     Skyward Assault                     -> Cyclone Sweep (W in the air)
    ============================================================ */
 
 export const LINK_KINDS: readonly LinkKind[] = ['combo', 'assault', 'blitz', 'glide', 'volley', 'spin', 'tempest'];
@@ -32,7 +32,7 @@ export const LINKS_INTO: Partial<Record<SkillKey, LinkKind>> = {
 };
 
 /** Whether this cast is a link: a link skill, the Q slot (or W's air form,
- *  the Midair Spin) inside the combo window, or a skill whose own window is
+ *  the Cyclone Sweep) inside the combo window, or a skill whose own window is
  *  open. */
 export const linksIn = (kind: SkillKey, key: SkillKey, isLinkSkill: boolean): boolean => {
   const own = LINKS_INTO[kind];
@@ -59,5 +59,5 @@ export function tickLinks(dt: number): void {
 /** The windows that let a buffered skill fire past the current one's recovery. */
 export const bufferWindowOpen = (): boolean => linkOpen('combo') || linkOpen('blitz') || linkOpen('spin');
 
-/** End a Sky Assault hover (a dive, glide, spin or volley cutting it short). */
+/** End a Skyward Assault hover (a dive, glide, spin or volley cutting it short). */
 export function endHover(): void { player.hang.t = 0; player.hang.hits = 0; }
