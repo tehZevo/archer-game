@@ -12,6 +12,10 @@ Your bread-and-butter attack **starts as a dual shot (two arrows) and grows to f
 
 You learn skills from a **menu you can open anywhere, anytime**, spending points you earn by leveling. The ability to assign points to a given skill **unlocks at levels 1, 10, 30, and 60** — four moments where new skills and upgrades open up.
 
+## Kinds of skills
+
+The kit is **mostly attacks that each carry their own movement** (a leap, a dash, a slide). There are some **utility skills and passives**, and **no active buffs** — every buff is passive, so you never have to press a key to keep one going.
+
 ## Getting stronger
 
 You get stronger by **gaining levels and spending points to learn new skills and rank up existing ones**. Your power comes from the skills you pick and rank up.
