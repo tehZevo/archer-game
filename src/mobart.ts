@@ -11,6 +11,8 @@
    sprites.ts bakes them into canvases.
    ============================================================ */
 
+import { VARIANT_ART } from './variantart';
+
 export type MobPaint = (x: number, y: number, col: string, w?: number, h?: number) => void;
 
 interface Look {
@@ -290,15 +292,8 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
   'Ice Yeti': { look: L(20, 24, '#7ab0e0', '#3a6ab8', '#e8f8ff', '#ffffff', '#c8e8ff'), plan: biped({ crystal: true, arms: true }) },
 };
 
-/** Hand-drawn enemies (sprites.ts) and their palette-swapped variants: each
- *  maps the base's exact colours to its own. */
+/** Hand-drawn enemies (sprites.ts). Their variants are drawn too (variantart.ts). */
 export const DRAWN = ['Garden Snail', 'Boar', 'Wisp', 'Iron Hog', 'Enemy Crab', 'Hermit Crab', 'Gull'];
-export const RECOLOR: Record<string, { base: string; map: Record<string, string> }> = {
-  'Red Snail': { base: 'Garden Snail', map: { '#5fb8f0': '#f07a5a', '#3f86c4': '#b8402a' } },
-  'Blue Crab': { base: 'Enemy Crab', map: { '#e8643c': '#4a8ae8', '#ff9a6a': '#9ac8ff', '#b8401f': '#2a4aa8', '#3a1208': '#0e1a3a' } },
-  'Wild Boar': { base: 'Boar', map: { '#c56f9f': '#5a3a24', '#e79ac4': '#8a5a3a', '#d07fae': '#6a4228', '#ffffff': '#f0e0b0' } },
-  'Storm Gull': { base: 'Gull', map: { '#f4f7fc': '#8a94a8', '#9aa6b8': '#3a4458', '#f0c040': '#e8e070' } },
-};
 
 /** Paint frame `f` of an enemy: 0 or 1 for its walk cycle, HURT for its hit pose. */
 export function paintMob(name: string, f: number, p: MobPaint): void {
@@ -309,5 +304,5 @@ export function paintMob(name: string, f: number, p: MobPaint): void {
 /** An enemy's box (sprite and hitbox). */
 export const mobSize = (name: string): { w: number; h: number } => ({ w: MOB_ART[name].look.w, h: MOB_ART[name].look.h });
 
-/** Does this enemy have art (painted, hand-drawn, or a palette swap of one)? */
-export const hasMobArt = (name: string): boolean => !!MOB_ART[name] || DRAWN.includes(name) || !!RECOLOR[name];
+/** Does this enemy have art (painted, hand-drawn, or a drawn variant)? */
+export const hasMobArt = (name: string): boolean => !!MOB_ART[name] || DRAWN.includes(name) || !!VARIANT_ART[name];

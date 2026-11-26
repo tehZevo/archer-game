@@ -62,7 +62,7 @@ export const P = {
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
-  SPIKE_R: 56,         // px radius of the burst around you
+  SPIKE_REACH: 72,     // px: the spikes rain down from just ahead of you out to this far in front
   SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed (slower than a jump's pop)...
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
@@ -281,7 +281,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.5, spin: SKILLS.MS.use ?? P.USE_TIME,
+  spikes: 0.55, tempest: 0.5, spin: SKILLS.MS.use ?? P.USE_TIME,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
