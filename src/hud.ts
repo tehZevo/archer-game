@@ -25,6 +25,7 @@ import { settingsUi } from './settings';
 import { drawSettings } from './settingsdraw';
 import { achUi } from './achievements';
 import { drawAchievements } from './achdraw';
+import { drawLinkHelp, linkHelp } from './linkhelp';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { STATUS } from './status';
 import { modLine } from './floormods';
@@ -238,6 +239,7 @@ function drawOverlays(w: number, h: number): void {
   if (petShop.open) { drawPetShop(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
   if (board.open) { drawBoard(); return; }
+  if (linkHelp.open) { drawLinkHelp(); return; }
   if (confirmUi.open) { drawConfirm(); return; }
   if (game.banner) {
     ctx.save();

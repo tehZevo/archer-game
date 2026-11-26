@@ -120,13 +120,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Skyward Assault -> E: Downpour isn't a link off the assault, so a press
-  // during the hover is dropped (only MS, R, Z and Q are buffered).
-  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
+  // during the hover is dropped (only MS, R, Z, S, Q and PV are buffered).
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true; player.ranks.d = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Skyward Assault hovers', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
-  tap('e');
-  check('E pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
+  tap('d');
+  check('D pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
 }
 {

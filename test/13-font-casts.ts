@@ -164,7 +164,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     `t ${player.usedT['ground-q'].toFixed(2)}`);
   step(10);
   check('...and is gone', player.usedT['ground-q'] === 0, `t ${player.usedT['ground-q'].toFixed(2)}`);
-  step(6); // the 0.6s Rush Toss cast finishes, freeing you to jump
+  step(16); // the 0.6s Rush Toss cast finishes, freeing you to jump
   tap('c'); step(6);
   tap('q');
   check('the Meteor Dive flashes the stacked air slot, not the ground one',
@@ -240,7 +240,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('a jump pressed during the use time does nothing', player.onGround && player.casting.queued === null,
     `onGround ${player.onGround} queued ${player.casting.queued}`);
   while (player.casting.useT > 0) step(1);
-  step(2);
+  step(14);
   check('...and is not buffered to fire once it ends', player.onGround);
   tap('c');
   check('once movement is free, Jump fires on the press', !player.onGround && player.vy < 0, `vy ${player.vy.toFixed(0)}`);

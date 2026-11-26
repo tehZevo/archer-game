@@ -187,7 +187,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   arena(10); const m = dummy(150);
   game.dmgNums.length = 0;
-  for (let i = 0; i < 4; i++) damage(m, 1);
+  for (let i = 0; i < 4; i++) damage(m, 1, { more: i < 3 });
   const ns = game.dmgNums.slice();
   const delays = ns.map((d) => +(d.delay ?? 0).toFixed(3)).join(',');
   const lines = ns.every((d, i) => Math.abs(ns[0].y - d.y - i * NUM_LINE) < 1e-9);

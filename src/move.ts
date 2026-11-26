@@ -176,8 +176,11 @@ const JUMP_POSE = 0.16;
 
 /** Jump. Down + Jump drops through the platform underfoot (not the ground
  *  slab): a small hop, then fall; that whole block is ignored until the
- *  player lands on something else. */
+ *  player lands on something else. While a Gale Stream streams, Jump is
+ *  instead a dive roll: a small hop and a roll that's invulnerable, and the
+ *  stream turns to fire the way you roll from. */
 function jump(): void {
+  if (streaming()) { jumpRoll(); return; }
   setPose('jump', JUMP_POSE);
   sfx.jump();
   player.skillPose = null; // a jump ends the last cast's spin / vanish pose
@@ -192,6 +195,22 @@ function jump(): void {
   player.vy = -P.JUMP_V * nimbleJump();
   if (held('left'))  { player.vx = -P.JUMP_H; if (!streaming()) player.face = -1; }
   if (held('right')) { player.vx =  P.JUMP_H; if (!streaming()) player.face =  1; }
+}
+
+/** The dive roll a Jump makes mid-Gale Stream: a short hop and a roll in the
+ *  direction you're heading (your facing if you're not), invulnerable for its
+ *  length. The stream keeps running and now fires the opposite way you rolled. */
+function jumpRoll(): void {
+  const dir = held('left') ? -1 : held('right') ? 1 : player.face;
+  setPose('jump', JUMP_POSE);
+  sfx.jump();
+  player.skillPose = null;
+  player.onGround = false;
+  player.vy = -P.ROLL_HOP_V;
+  player.vx = dir * P.ROLL_VX;
+  player.diving = true; // the roll's dive trail
+  player.invuln = P.ROLL_INVULN;
+  player.rapid.face = (dir === 1 ? -1 : 1); // fire opposite the roll
 }
 
 /** Skills that push the player around while they play. */
