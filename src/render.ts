@@ -8,20 +8,16 @@ import { game, player } from './state';
 import { HITSTUN } from './combat';
 import { mobFrame } from './mobanim';
 import { SPR } from './sprites';
-import * as TB from './tilebake';
-import { TOP_Y, tilesetFor, variantAt, type Tileset } from './tileset';
-import { areaOf, lastTown, townIndex } from './world';
+import { tilesetFor, type Tileset } from './tileset';
+import { areaOf } from './world';
 import { drawBackdrop } from './backdropdraw';
-import { PROP_H, PROP_W, propAt, propsFor } from './props';
-import { BACK_DECOR, DECOR_SIZE, paintDecor, townPal } from './towndecor';
+import { floorLayer } from './floorlayer';
 import { localPose, looks, names, peers } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { isLearned } from './progress';
 import { view, type Pose } from './ghost';
 import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, climbPhase } from './archer';
-import { NB } from './nb';
-import type { Sprite } from './sprites';
 import { clamp } from './util';
 import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
@@ -30,7 +26,7 @@ import { labelShadow, outlinedText, text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { settings } from './settings';
 import { STATUS } from './status';
-import type { Climbable, DmgNum, Fx, Mob, Portal, Shot } from './types';
+import type { DmgNum, Fx, Mob, Portal, Shot } from './types';
 
 // Base (internal) resolution. The canvas backing store IS this size; everything
 // is drawn at integer pixel coordinates, then CSS upscales it to fit the screen
@@ -64,110 +60,6 @@ function drawBackground(ts: Tileset): void {
   drawBackdrop(ctx, ts.name, game.cam.x, game.cam.y, w, h, performance.now() / 1000);
 }
 
-const TS = 16;
-/** Every block tile on the floor as (x, y, neighbours): the ground slab is
- *  split into its tiles so it gets the same variants and decorations. */
-function eachTile(f: (x: number, y: number, nb: number) => void): void {
-  for (const p of game.floor.platforms) {
-    if (p.slope) continue;
-    if (!p.ground) { f(p.x, p.y, p.nb ?? 0); continue; }
-    for (let y = p.y; y < p.y + p.h; y += TS) for (let x = p.x; x < p.x + p.w; x += TS) {
-      f(x, y, y === p.y ? NB.E | NB.W | NB.S | NB.SE | NB.SW : 255);
-    }
-  }
-}
-
-function drawPlatforms(ts: Tileset): void {
-  eachTile((x, y, nb) => ctx.drawImage(TB.block(ts, nb, variantAt(x / TS, y / TS)).c, x, y));
-  for (const p of game.floor.platforms) {
-    if (p.slope) ctx.drawImage(TB.slope(ts, p.dir ?? 1, p.part ?? 0).c, p.x, p.y);
-    else if (p.foot) ctx.drawImage(TB.slopeFoot(ts, p.foot).c, p.x, p.y);
-  }
-}
-
-/** What grows on exposed tops and hangs under exposed bottoms (drawn over
- *  ropes and ladders, so they look tied on). */
-function drawDecorations(ts: Tileset): void {
-  eachTile((x, y, nb) => {
-    const tx = x / TS, ty = y / TS;
-    if (!(nb & NB.N)) {
-      const s = TB.topDeco(ts, variantAt(tx, ty, 1), !(nb & NB.W), !(nb & NB.E));
-      if (s) ctx.drawImage(s.c, x - 2, y - TOP_Y);
-    }
-    if (!(nb & NB.S)) {
-      const s = TB.bottomDeco(ts, variantAt(tx, ty, 2));
-      if (s) ctx.drawImage(s.c, x, y + TS);
-    }
-  });
-}
-
-/** Props baked per area: one canvas per prop (see props.ts). */
-const propCanvases = new Map<string, HTMLCanvasElement[]>();
-function bakedProps(area: string): HTMLCanvasElement[] {
-  let cs = propCanvases.get(area);
-  if (!cs) {
-    cs = propsFor(area).map((paint) => {
-      const c = document.createElement('canvas');
-      c.width = PROP_W; c.height = PROP_H;
-      const g = c.getContext('2d')!;
-      paint((x, y, col, w = 1, h = 1) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); });
-      return c;
-    });
-    propCanvases.set(area, cs);
-  }
-  return cs;
-}
-
-/** Props on exposed tops with ground either side, kept clear of portals,
- *  people, ropes and ladders (they never collide; they just shouldn't hide those). */
-function drawProps(ts: Tileset): void {
-  const cs = bakedProps(ts.name);
-  const f = game.floor;
-  const clear = (x: number, y: number): boolean =>
-    !f.portals.some((p) => Math.abs(p.x - x) < 30 && Math.abs(p.y - y) < 8)
-    && !(f.npcs ?? []).some((n) => Math.abs(n.x - x) < 24 && Math.abs(n.y - y) < 8)
-    && ![...f.ropes, ...f.ladders].some((c) => Math.abs(c.x - x) < 18 && y >= c.y1 - 8 && y <= c.y2 + 8);
-  eachTile((x, y, nb) => {
-    if (nb & NB.N || !(nb & NB.W) || !(nb & NB.E)) return;
-    const i = propAt(ts.name, x / TS, y / TS);
-    if (i === null || !clear(x + TS / 2, y)) return;
-    ctx.drawImage(cs[i], x + TS / 2 - PROP_W / 2, y - PROP_H);
-  });
-}
-
-/** Town decor, baked per kind, palette and facing (see towndecor.ts). */
-const decorCanvases = new Map<string, HTMLCanvasElement>();
-function drawDecor(back: boolean): void {
-  const ti = townIndex(lastTown(game.floor.place)), pal = townPal(ti);
-  for (const d of game.floor.decor ?? []) {
-    if (BACK_DECOR.has(d.kind) !== back) continue;
-    const key = `${d.kind}.${ti}.${d.flip ? 1 : 0}`, { w, h } = DECOR_SIZE[d.kind];
-    let c = decorCanvases.get(key);
-    if (!c) {
-      c = document.createElement('canvas'); c.width = w; c.height = h;
-      const g = c.getContext('2d')!;
-      paintDecor(d.kind, pal, (x, y, col, pw = 1, ph = 1) => { g.fillStyle = col; g.fillRect(x, y, pw, ph); }, d.flip);
-      decorCanvases.set(key, c);
-    }
-    ctx.drawImage(c, Math.round(d.x - w / 2), Math.round(d.y - h));
-  }
-}
-
-/** Tile a 16x16 sprite vertically between y1 and y2 at an integer x. */
-function tileVertical(s: Sprite, x: number, y1: number, y2: number): void {
-  for (let y = y1; y < y2; y += 16) {
-    const h = Math.min(16, y2 - y);
-    ctx.drawImage(s.c, 0, 0, 16, h, x, y, 16, h);
-  }
-}
-
-function drawRope(ts: Tileset, r: Climbable): void {
-  tileVertical(TB.rope(ts), Math.round(r.x) - 8, Math.round(r.y1), Math.round(r.y2));
-}
-
-function drawLadder(ts: Tileset, l: Climbable): void {
-  tileVertical(TB.ladder(ts), Math.round(l.x) - 8, Math.round(l.y1), Math.round(l.y2));
-}
 
 function drawPortal(p: Portal): void {
   const s = SPR.portal;
@@ -552,13 +444,7 @@ export function render(): void {
   drawBackground(ts);
   ctx.save();
   ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
-  drawDecor(true); // buildings stand behind the town's levels...
-  drawPlatforms(ts);
-  drawProps(ts);
-  drawDecor(false); // ...street furniture on them
-  for (const r of game.floor.ropes) drawRope(ts, r);
-  for (const l of game.floor.ladders) drawLadder(ts, l);
-  drawDecorations(ts);
+  ctx.drawImage(floorLayer(ts), 0, 0); // everything static, baked once per floor
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
   corpses.forEach(drawCorpse);
