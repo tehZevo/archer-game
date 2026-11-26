@@ -50,6 +50,7 @@ export const P = {
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
   BLITZ_DIST: 96,      // px the blitz travels
   // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
+  DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
@@ -114,7 +115,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0.05, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0,
        desc: 'Standard jump, keeps your running momentum' },
   D: { key: 'D', name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
-       cd: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
+       cd: 0, use: 0.3, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', name: 'Sky Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.5, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,

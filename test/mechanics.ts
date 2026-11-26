@@ -2532,7 +2532,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('w');
   check('Midair Spin opens the glide window', player.links.glide > 0, `t ${player.links.glide.toFixed(2)}`);
   tap('d');
-  check('the spin links into Glide', player.cast === 'jump' && player.cd.D > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
+  check('the spin links into Glide', player.cast === 'jump' && player.casting.useT > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
 }
 
 {

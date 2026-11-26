@@ -161,6 +161,7 @@ function skillForces(dt: number): void {
   if (player.liftT > 0) { player.liftT -= dt; player.vy = -P.SPIKE_RISE_V - P.GRAVITY * dt; }
   // Midair Spin: the sweep holds you steady, so you don't fall straight through the animation
   if (player.cast === 'shoot' && player.skillPose === 'spin' && !player.onGround) player.vy = 0;
+
 }
 
 /** Catch a rope / ladder in reach (see catchClimbable); true if caught. */
