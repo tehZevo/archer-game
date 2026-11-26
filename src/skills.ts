@@ -5,7 +5,7 @@ import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
 import { closeLink, closeLinks, linkOpen, linksIn } from './links';
-import { AIR_FORM, AIR_MIN_H, assaultLeaping, cdSlot, delayTime, useTime } from './castrules';
+import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
 /** Airborne enemies Sky Assault can reach: around and below the player. */
@@ -97,6 +97,7 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   if (kind !== 'C' && kind !== 'D') {
     player.casting.useT = useTime(kind);
     player.casting.recoverT = delayTime(kind);
+    player.casting.freeze = FREEZE_CAST.has(kind);
     player.combatT = P.COMBAT_TIME;
   }
   player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift starts a new one)

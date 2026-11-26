@@ -24,6 +24,12 @@ export const heldDir = (): -1 | 0 | 1 => held('left') ? -1 : held('right') ? 1 :
  * time) blocks movement input.
  */
 export function movePlayer(dt: number, locked: boolean): void {
+  // A freezing cast (Tempest) pins you in place: no gravity, no drift.
+  if (player.casting.freeze) {
+    player.vx = 0; player.vy = 0;
+    player.animState = 'jump';
+    return;
+  }
   // Jump only leaves a climbable with Left/Right held; otherwise it does nothing.
   const offDir = heldDir();
   if (player.climb && (!pressed('c') || locked || offDir === 0)) climb(dt, locked);

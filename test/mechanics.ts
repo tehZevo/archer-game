@@ -97,7 +97,7 @@ function arena(level = 1, x = 100): void {
   for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'C', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
-  player.casting.useT = 0; player.casting.recoverT = 0; player.cast = null; player.castT = 0; player.casting.queued = null; player.hang.t = 0;
+  player.casting.useT = 0; player.casting.recoverT = 0; player.casting.freeze = 0; player.cast = null; player.castT = 0; player.casting.queued = null; player.hang.t = 0;
   closeLinks();
   player.fervor = 0; player.combatT = 0; player.regenT = 0; player.invuln = 999;
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
@@ -2559,6 +2559,35 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     `invuln ${player.invuln.toFixed(2)} castT ${player.castT.toFixed(2)}`);
   step(11); // the 0.36s storm plays out
   check('the invulnerability ends with the storm', player.invuln <= 0, `invuln ${player.invuln.toFixed(2)}`);
+  check('Tempest is a 10s cooldown', SKILLS.R.cd === 10 && player.cd.R > 9, `cd ${player.cd.R.toFixed(2)}`);
+}
+{
+  // Midair, the storm pins you completely: no falling, no drift, for its
+  // whole cast (not just the usual movement lock).
+  arena(20); player.ranks.R = 1;
+  tap('c'); step(7); // near the jump apex
+  tap('r');
+  check('Tempest freezes you midair', player.casting.freeze && player.vy === 0, `vy ${player.vy.toFixed(0)}`);
+  const y0 = player.y;
+  step(5); // half the storm
+  check('...and you stay put as it plays out', player.y === y0 && player.vy === 0, `dy ${(player.y - y0).toFixed(2)} vy ${player.vy.toFixed(0)}`);
+  step(6); // the rest of the 0.36s cast
+  check('you fall once the storm is over', !player.casting.freeze && player.y > y0, `dy ${(player.y - y0).toFixed(2)}`);
+}
+{
+  // A live Tempest window lets Dive (Q) fire straight out of the storm.
+  arena(20); player.ranks.R = 1; player.ranks.Q = 1; player.ranks.AD = 1;
+  tap('c'); step(7); // airborne, where Q is the Air Dive
+  tap('r');
+  check('Tempest opens the Dive link window', player.links.combo > 0 && player.cast === 'shoot',
+    `combo ${player.links.combo.toFixed(2)} cast ${player.cast}`);
+  const mp0 = player.mp;
+  tap('q');
+  check('Dive fires out of the storm, mid-cast', player.cast === 'rush' && player.mp < mp0,
+    `cast ${player.cast} mp ${player.mp} of ${mp0}`);
+}
+  step(12); // let the dive land, so the next block starts on the floor
+{
   // A buffered skill fires in the direction held when it releases, not when
   // it was pressed: Q left, Q right zips you back and forth
   arena(20); player.ranks.Q = 1;

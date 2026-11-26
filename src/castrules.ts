@@ -11,6 +11,10 @@ export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TI
  *  shortens it, the same way it shortens the use time. */
 export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DELAY_TIME) / (1 + passiveBonus('HA'));
 
+/** Skills that pin you in place for their whole cast (gravity and all),
+ *  rather than only locking out movement input. */
+export const FREEZE_CAST = new Set<SkillKey>(['R']);
+
 /** The link window a skill opens: its whole animation, plus a beat of free
  *  time (LINK_BUFFER) before the linked skill's animation starts. Scales with
  *  Haste, since use/delay do. */

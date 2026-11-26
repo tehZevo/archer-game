@@ -8,7 +8,7 @@ import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover, openLink } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
-import { linkWindow } from './castrules';
+import { linkWindow, useTime } from './castrules';
 import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
 import type { SkillKey, SkillRank } from './types';
 
@@ -200,9 +200,11 @@ function plungingVolley(r: SkillRank): void {
 /** Tempest: you vanish as an oval of energy sweeps up and around you,
  *  striking every enemy in a wide radius (nearest first). */
 function tempest(r: SkillRank): void {
-  pose('shoot', 0.36);
+  pose('shoot', useTime('R'));
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
+  // the storm links straight into Dive (Q in the air, Sky Toss on the ground)
+  openLink('combo', linkWindow('R'));
   sfx.shoot();
   const mx = player.x + player.face * 8, my = player.y + 13;
   const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
