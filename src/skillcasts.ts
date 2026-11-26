@@ -248,23 +248,29 @@ function skyAssault(r: SkillRank): void {
   openLink('spin', P.BARRAGE_HANG + P.ASSAULT_SPIN_LINK);
 }
 
-/** Bolt Flurry: a stream of slower green bolts; each stuns on arrival. */
+/** Bolt Flurry: a volley of 4 green bolts, flown as one animated sprite;
+ *  each hit stuns. Twin Echoes doubles the volley (a second one follows
+ *  the first), so the burst reads heavier while every hit still lands. */
 function shellBarrage(r: SkillRank): void {
   pose('shoot', 'S');
   sfx.shoot();
   const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
   const x0 = player.x + player.face * 8, y0 = player.y + 13;
-  const shots = shotCount(r);
-  for (let h = 0; h < shots; h++) {
-    const t = tg[h % (tg.length || 1)];
-    // fanned a few px apart so every bolt of the burst reads, even on a whiff
-    const fan = (h % 2 ? 1 : -1) * Math.ceil(h / 2) * 3;
-    const onHit = t ? (): void => {
-      if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < shots });
+  const shots = shotCount(r), perVolley = r.hits, volleys = Math.ceil(shots / perVolley);
+  const aim = tg.length ? tg[0].x : x0 + player.face * 200;
+  for (let v = 0; v < volleys; v++) {
+    // the volley's hits land one after another, spread over the targets
+    const onHit = tg.length ? (): void => {
+      for (let h = v * perVolley; h < Math.min(shots, (v + 1) * perVolley); h++) {
+        const t = tg[h % tg.length];
+        later((h - v * perVolley) * NUM_GAP, () => {
+          if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < shots });
+        });
+      }
     } : undefined;
-    // launched one after another from the bow
-    spawnArrow(x0, y0 + fan, t ? t.x : x0 + player.face * 200, !!t, onHit,
-      { speed: P.BOLT_V, sprite: 'bolt', dir: player.face, delay: h * NUM_GAP });
+    // the echo trails the first volley, a little lower so both show
+    spawnArrow(x0, y0 + v * 4, aim, tg.length > 0, onHit,
+      { speed: P.BOLT_V, sprite: 'flurry', dir: player.face, delay: v * perVolley * NUM_GAP });
   }
 }
 

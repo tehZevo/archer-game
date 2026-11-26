@@ -2937,12 +2937,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
-  // Bolt Flurry fires its whole burst even with nothing to hit, fanned so every bolt shows
+  // Bolt Flurry flies as one 4-bolt volley sprite, even on a whiff
   arena(30); player.ranks.Z = 3; player.ranks.S = 1;
   game.shots.length = 0;
   tap('z');
-  check('a whiffed Bolt Flurry still fires every bolt', game.shots.length === shotCount(rank('Z')), `${game.shots.length} shots`);
-  check('...fanned apart, not stacked on one line', new Set(game.shots.map((s) => Math.round(s.y))).size === game.shots.length);
+  check('a whiffed Bolt Flurry flies one volley sprite', game.shots.length === 1 && game.shots[0].sprite === 'flurry', `${game.shots.length} shots`);
+}
+
+{
+  // Twin Echoes doubles the volley, not the bolts: two sprites, all 8 hits land
+  arena(70); player.ranks.Z = 3; player.ranks.S = 1; player.ranks.ES = 1;
+  const m = dummy(160);
+  game.shots.length = 0; game.dmgNums.length = 0;
+  tap('z');
+  check('an echoed Bolt Flurry flies two volleys', game.shots.length === 2 && game.shots.every((s) => s.sprite === 'flurry'), `${game.shots.length} shots`);
+  check('...a little apart, so both show', new Set(game.shots.map((s) => Math.round(s.y))).size === 2);
+  const seen = new Set<object>();
+  for (let i = 0; i < 60; i++) { step(1); game.dmgNums.forEach((d) => seen.add(d)); }
+  check('...and still lands 8 hits', seen.size === shotCount(rank('Z')) && shotCount(rank('Z')) === 8,
+    `${seen.size} numbers, ${shotCount(rank('Z'))} shots`);
+  check('...on the enemy', m.hp < 1e6);
 }
 
 {
