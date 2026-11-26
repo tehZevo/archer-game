@@ -21,6 +21,15 @@ Do branch work in a worktree made by `npm run worktree`, not by hand. It links t
 
 The archer ships as PNG sheets in `assets/archer`, one per hair style × body type in the default look's colours (a row per pose); other looks swap colours at runtime (`lookColours`). Scenery (props, town decor per palette, backdrop layers, the portal) ships as one PNG per piece in `assets/art`, baked from `src/artsheets.ts`'s ART_GEN. Tilesets ship as PNG atlases in `assets/tiles` (each distinct piece once per piece size, with `src/tilebaked.ts` indexing every autotile/slope/decoration piece to its cell; baked from `src/tilebake.ts`). Enemies ship as PNG sheets in `assets/mobs` the same way (walk/flap frames then the hurt pose, baked from `src/sprites.ts` / `src/mobart.ts`; recoloured variants are derived from their base's sheet at runtime). Skill effects ship as PNG sprite sheets in `assets/fx` (one strip per effect, facing right, drawn additively). They are baked from the procedural generators in `src/fxsprites.ts`, which stay in the tree as the authoring source. To add or change an effect, edit its generator, run `npm run bake`, and commit the PNG along with the generated `src/fxbaked.ts`. The smoke test fails if a sheet no longer matches its generator. An effect that isn't baked still runs its generator at runtime (see `src/fxsheets.ts`).
 
+## Tests
+
+Keep the suite minimal and high-value; aim to shrink it as the game stabilizes.
+
+- **One check per behavior.** Group the assertions that prove one behavior (a value, its effect, its timing) into a single `check` with a detail string, rather than a check per field.
+- **Test the contract, not the implementation.** Assert the player-visible rule (the `linksInto` grammar, the damage, the cooldown), not every internal field that happens to exist today.
+- **Representative over exhaustive.** Cover each source of a family (one launcher, one aerial, one finisher) rather than every pair in a matrix: the `SKILLS` table is the spec, the tests spot-check its rows.
+- **One file per feature group.** Each numbered file in `test/` is one feature; keep every check of that feature in its file (no `-2` sequels) and order the blocks to read like the feature's rules.
+
 ## Conventions
 
 - All game state lives in the `game` / `player` singletons in `src/state.ts`; systems (`update`, `physics`, `combat`, …) mutate them.
