@@ -114,8 +114,10 @@ function tickCasting(dt: number): void {
   if (player.casting.useT > 0) {
     player.casting.useT -= dt;
     if (player.casting.useT <= 0) player.casting.freeze = false; // the freeze ends with the cast
+  } else if (player.casting.recoverT > 0) {
+    // Recovery starts once the use animation ends, not in parallel with it.
+    player.casting.recoverT -= dt;
   }
-  if (player.casting.recoverT > 0) player.casting.recoverT -= dt;
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 }

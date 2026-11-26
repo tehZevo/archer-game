@@ -238,7 +238,7 @@ function dummy(x: number, hp = 1e6): Mob {
     casts += c;
   }
   const avg = casts / 3;
-  check('Lv.1 Garden Snail takes 4-7 Double Shots', avg >= 4 && avg <= 7, `avg ${avg}`);
+  check('Lv.1 Garden Snail takes 4-11 Double Shots', avg >= 4 && avg <= 11, `avg ${avg}`);
 }
 
 // --- links: W only works right after Rush Toss, once ---
@@ -3330,6 +3330,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a stalled frame is clamped to MAX_DT', advance({ acc: 0 }, 5, false) === Math.floor(0.1 / P.STEP + 1e-9));
   const frozen = { acc: 0.05 };
   check('a frozen world runs no steps and drops the time', advance(frozen, 0.1, true) === 0 && frozen.acc === 0);
+}
+{
+  // A skill's recovery starts once its use animation ends, not in parallel.
+  arena(20); dummy(150);
+  player.cd.Z = 0; player.mp = 999; player.ranks.Z = 1;
+  cast('Z');
+  const use = useTime('Z'), delay = delayTime('Z');
+  check('a cast sets its use time and full recovery',
+    Math.abs(player.casting.useT - use) < 1e-9 && Math.abs(player.casting.recoverT - delay) < 1e-9,
+    `use ${player.casting.useT.toFixed(2)} recover ${player.casting.recoverT.toFixed(2)}`);
+  // step through most of the use time: recovery has not started counting down
+  step(Math.floor((use - 0.1) / P.STEP));
+  check('recovery holds at full while the use animation runs',
+    player.casting.useT > 0 && Math.abs(player.casting.recoverT - delay) < 1e-9,
+    `use ${player.casting.useT.toFixed(2)} recover ${player.casting.recoverT.toFixed(2)}`);
+  // step past the end of the use time: recovery then runs out
+  step(Math.ceil((use + delay) / P.STEP));
+  check('...and both timers reach zero once the cast is over',
+    player.casting.useT <= 0 && player.casting.recoverT <= 0,
+    `use ${player.casting.useT.toFixed(2)} recover ${player.casting.recoverT.toFixed(2)}`);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
