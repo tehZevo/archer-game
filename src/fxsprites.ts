@@ -79,6 +79,33 @@ function muzzleAnim(): FxSheet {
   });
 }
 
+/** Gale Stream muzzle: a small green gust ring snapping open at the bow,
+ *  with leaf-like sparks spun off it. Faces right; origin at the muzzle. */
+function galeMuzzleAnim(): FxSheet {
+  const W = 20, H = 18, y = H / 2;
+  return anim(W, H, 1, y, 4, (L, f) => {
+    const R = rng(41 + f), fade = 1 - f / 4, cx = 4 + f * 1.5;
+    L.ring('lime', cx, y, 2 + f * 1.2, 3.5 + f * 1.6, 1.1, 1.1 * fade, -1.5, 1.5);
+    L.line('green', 1, y, 6 + f * 3, y, 0.4, 1.2, 1.15 * fade);
+    for (let i = 0; i < 3; i++) L.spark(i ? 'green' : 'lime', cx + 2 + R() * 9, y - 6 + R() * 12, 0.95 * fade, i === 0);
+  });
+}
+
+/** Gale Stream shot: one green bolt with a twist of wind wrapped round it,
+ *  whipping out to the target. Faces right; origin at the muzzle; stretched to the target. */
+function galeShotAnim(): FxSheet {
+  const W = 64, H = 11, y = 5.5;
+  const spans: [number, number][] = [[0, 0.55], [0.2, 1], [0.6, 1], [0.88, 1]];
+  return anim(W, H, 0, y, spans.length, (L, f) => {
+    const [a, b] = spans[f], fade = f < 2 ? 1 : 1 - (f - 1) / 3;
+    const x0 = 1 + a * (W - 2), x1 = b * (W - 2);
+    L.line('lime', x0, y, x1, y, 0.3, 1.3, 1.2 * fade);
+    // the wind twisting round the bolt: a sine strand either side
+    const wy = (x: number): number => y + Math.sin((x + f * 6) / 4) * 3.2;
+    for (let x = x0; x < x1 - 2; x += 2) L.line('green', x, wy(x), x + 2, wy(x + 2), 0.5, 0.5, 0.75 * fade);
+  }, 0.35);
+}
+
 /** Arrow projectile: a long thin glowing streak. Faces right; origin at the tip. */
 function arrowAnim(): FxSheet {
   return anim(26, 7, 24, 3.5, 1, (L) => {
@@ -300,6 +327,147 @@ function swooshAnim(rp: RampName = 'cyan'): FxSheet {
     L.ring(rp, c - 3, c, 10, 12, 1.8 - f * 0.3, 1.15 * fade, a0, a1);
     L.ring(rp, c - 5, c + 1, 8, 10, 1.0, 0.7 * fade, a0 + 0.3, a1 - 0.2);
     for (let i = 0; i < 3; i++) L.spark(rp, c + R() * 12 - 2, c - 8 + R() * 16, 0.8 * fade);
+  });
+}
+
+/** A blade of light sweeping round an ellipse: its head at angle `head`,
+ *  trailing `trail` radians behind it the way it came (`dir` +1: sweeping
+ *  to larger angles, -1: smaller), thickest and brightest at the head, with
+ *  a white-hot tip. */
+function crescent(L: Light, rp: RampName, wind: RampName, cx: number, cy: number, rx: number, ry: number,
+  head: number, trail: number, dir: 1 | -1, I: number, thick = 4): void {
+  for (let k = 0; k < 5; k++) {
+    const h = head - dir * k * trail * 0.16, len = trail * (1 - k * 0.12), kx = 1 - k * 0.05;
+    const [a0, a1] = dir > 0 ? [h - len, h] : [h, h + len];
+    arc(L, k < 2 ? rp : wind, cx, cy, rx * kx, ry * kx, thick - k * 0.6, (1.3 - k * 0.2) * I, a0, a1);
+  }
+  // the white-hot tip
+  L.disc(rp, cx + Math.cos(head) * rx, cy + Math.sin(head) * ry, thick * 0.6, 1.3 * I);
+}
+
+/** A lance of light: thin at both ends, thick in the middle. */
+function lance(L: Light, rp: RampName, x0: number, y0: number, x1: number, y1: number, w: number, I: number): void {
+  const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+  L.line(rp, x0, y0, mx, my, 0.2, w, I);
+  L.line(rp, mx, my, x1, y1, w, 0.2, I);
+}
+
+/** A four-point star glint: long thin rays across and up-down, a hot core. */
+function glint(L: Light, rp: RampName, x: number, y: number, h: number, v: number, I: number): void {
+  lance(L, rp, x - h, y, x + h, y, 1.6, I);
+  lance(L, rp, x, y - v, x, y + v, 1.4, I);
+  lance(L, rp, x - v * 0.4, y - v * 0.4, x + v * 0.4, y + v * 0.4, 0.9, I * 0.8);
+  lance(L, rp, x - v * 0.4, y + v * 0.4, x + v * 0.4, y - v * 0.4, 0.9, I * 0.8);
+  L.disc(rp, x, y, 2.5, 1.3 * I);
+}
+
+/** A spray of streaks and dust kicked up off the ground at (x, y), `g` 0..1 as it settles. */
+function groundSpray(L: Light, R: () => number, x: number, y: number, g: number, n: number, reach: number): void {
+  const I = 1 - g;
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (i / (n - 1) - 0.5) * 2.2, l = reach * (0.5 + R() * 0.5) * (0.4 + g * 0.6);
+    L.line(i % 2 ? 'sky' : 'cyan', x, y, x + Math.cos(a) * l, y + Math.sin(a) * l, 1.0, 0.2, 1.05 * I);
+  }
+  for (let i = 0; i < n; i++) L.spark('sky', x + (R() * 2 - 1) * reach * 0.8, y - R() * 5, 0.9 * I, i < 2);
+}
+
+/** Skyward Assault's leap: a big crescent hooking up from her feet round
+ *  the front and over her head, a spray off the ground where she kicked off,
+ *  and a wind streak up her path. Faces right; origin at her feet where she left. */
+function assaultRiseAnim(): FxSheet {
+  const W = 72, H = 128, ox = 24, oy = H - 10, N = 7;
+  const cx = ox + 8, cy = oy - 54, rx = 28, ry = 54;
+  return anim(W, H, ox, oy, N, (L, f) => {
+    const R = rng(151 + f), p = Math.min(1, (f + 1) / 3), fade = f < 4 ? 1 : 1 - (f - 3) / 4;
+    // the head sweeps from by her feet round the front to over the top
+    crescent(L, 'sky', 'cyan', cx, cy, rx, ry, Math.PI / 2 + 0.2 - p * (Math.PI + 0.3), 0.6 + p * 1.9, -1, fade, 5);
+    // her path up: a long lance from the ground
+    lance(L, 'cyan', ox, oy, ox + 2, oy - 64 * p, 2.4, 0.9 * fade);
+    if (f < 4) groundSpray(L, R, ox, oy, f / 4, 9, 18);
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + R() * Math.PI, d = 0.9 + R() * 0.25;
+      L.spark('sky', cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d, 0.9 * fade, i < 2);
+    }
+  });
+}
+
+/** One of Skyward Assault's strikes in the air: lances of light crossing
+ *  ahead of her, a big star glint where they meet with a long streak
+ *  through it, then a crescent whipping round the glint. Faces right;
+ *  origin at the strike point. */
+function assaultBangAnim(): FxSheet {
+  const W = 96, H = 72, c = 48, m = 36, N = 6;
+  return anim(W, H, c, m, N, (L, f) => {
+    const R = rng(171 + f), fade = f < 3 ? 1 : 1 - (f - 2) / 4;
+    // two lances crossing at the strike, stabbing in from up-back and down-back
+    if (f < 3) {
+      const k = Math.min(1, (f + 1) / 2);
+      lance(L, 'sky', c - 34 * k, m - 24 * k, c + 30 * k, m + 18 * k, 2.6, 1.2);
+      lance(L, 'cyan', c - 30 * k, m + 20 * k, c + 28 * k, m - 22 * k, 2.0, 1.0);
+    }
+    // the bang: a long horizontal streak and a star glint
+    if (f >= 1 && f < 4) {
+      const g = f === 1 ? 1 : f === 2 ? 0.8 : 0.45;
+      lance(L, 'sky', c - 46 * g, m, c + 46 * g, m, 2.4, 1.2 * g);
+      glint(L, 'sky', c, m, 16 * g, 12 * g, 1.2);
+    }
+    // a crescent whipping round the glint
+    if (f >= 2) {
+      const t = (f - 2) / 3;
+      crescent(L, 'sky', 'cyan', c, m, 20, 13, -0.4 + t * 2.4, 1.6, 1, fade, 3);
+    }
+    for (let i = 0; i < 7; i++) {
+      const a = R() * Math.PI * 2, d = 8 + f * 4 + R() * 8;
+      L.spark(i % 3 ? 'sky' : 'cyan', c + Math.cos(a) * d * 1.4, m + Math.sin(a) * d, 0.9 * fade, i < 2);
+    }
+  });
+}
+
+/** Skyward Assault's last strike: lances of light driving down and ahead
+ *  from her into the ground, a star where they leave her, and a spray of
+ *  streaks and dust thrown up where they land, settling. Faces right;
+ *  origin on the ground where they land; she is `up` px above, `back` px behind. */
+export const DROP_UP = 60, DROP_BACK = 30;
+function assaultDropAnim(): FxSheet {
+  const W = 84, H = DROP_UP + 32, ox = DROP_BACK + 14, oy = H - 10, N = 8;
+  const sx = ox - DROP_BACK, sy = oy - DROP_UP;
+  return anim(W, H, ox, oy, N, (L, f) => {
+    const R = rng(191 + f), fade = f < 4 ? 1 : 1 - (f - 3) / 5;
+    // the lances: a fan from her down into the ground, reaching it by frame 1
+    if (f < 4) {
+      const k = Math.min(1, (f + 1) / 2), I = f < 2 ? 1.2 : 0.8;
+      for (const [dx, w] of [[-8, 1.4], [0, 3], [7, 1.8], [14, 1.2]] as const) {
+        lance(L, dx ? 'cyan' : 'sky', sx, sy, sx + (ox + dx - sx) * k, sy + (oy - sy) * k, w, I * fade);
+      }
+      if (f < 2) glint(L, 'sky', sx, sy, 12, 9, 1.1);
+    }
+    // the impact: a flash, then the spray settling into dust
+    if (f >= 1) {
+      const g = (f - 1) / (N - 1);
+      if (f < 3) L.disc('sky', ox, oy - 2, 6 - f, 1.3);
+      groundSpray(L, R, ox, oy, g, 11, 28);
+    }
+  });
+}
+
+/** A Skyward Assault hit on an enemy: a white flash with a crescent
+ *  orbiting it, a spiky star, then the crescent's fading arc and specks. */
+function assaultHitAnim(): FxSheet {
+  const S = 44, c = S / 2;
+  return anim(S, S, c, c, 6, (L, f) => {
+    const R = rng(211 + f), fade = f < 2 ? 1 : 1 - (f - 1) / 5;
+    if (f < 2) L.disc('sky', c, c, f === 0 ? 7 : 5, 1.35);
+    if (f >= 1 && f < 3) {
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * Math.PI * 2 + f * 0.3, l = (f === 1 ? 17 : 12) * (i % 2 ? 0.55 : 1);
+        lance(L, 'sky', c, c, c + Math.cos(a) * l, c + Math.sin(a) * l, 1.6, 1.15);
+      }
+    }
+    crescent(L, 'sky', 'cyan', c, c, 13 + f, 9 + f * 0.6, 2.2 + f * 0.7, 1.4, 1, fade, 2.4);
+    for (let i = 0; i < 6; i++) {
+      const a = R() * Math.PI * 2, d = 5 + f * 3 + R() * 6;
+      L.spark('cyan', c + Math.cos(a) * d, c + Math.sin(a) * d, 0.85 * fade);
+    }
   });
 }
 
@@ -597,4 +765,11 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   blitzTrail: () => blitzTrailAnim(),
   stunHit: () => stunHitAnim(),
   spirit: () => spiritAnim(),
+  assaultRise: () => assaultRiseAnim(),
+  assaultBang: () => assaultBangAnim(),
+  assaultDrop: () => assaultDropAnim(),
+  assaultHit: () => assaultHitAnim(),
+  galeMuzzle: () => galeMuzzleAnim(),
+  galeShot: () => galeShotAnim(),
+  galeHit: () => hitAnim(false, 'lime'),
 };

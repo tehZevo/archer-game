@@ -3,7 +3,7 @@
 
 import { MOB_TYPES } from './config';
 import { mobDeath, mobHit } from './mobvoices';
-import { noise, osc } from './synth';
+import { allow, noise, osc } from './synth';
 
 export { MOB_SOUNDS } from './mobvoices';
 
@@ -37,6 +37,32 @@ function levelUp(): void {
 export const sfx = {
   shoot: (): void => tone(660, 0.12, 'square', 0.14, 880),
   jump: (): void => tone(420, 0.16, 'sine', 0.16, 720),
+  /** Skyward Assault's leap: a rising blade of wind whooshing up, over a snap. */
+  assaultRise: (): void => {
+    noise({ dur: 0.3, vol: 0.32, filter: { type: 'bandpass', f: 500, to: 5000, q: 2 } });
+    noise({ dur: 0.05, vol: 0.25, filter: { type: 'highpass', f: 3000 } });
+    osc({ type: 'sawtooth', f: 180, to: 720, dur: 0.22, vol: 0.06, filter: { type: 'lowpass', f: 1800 } });
+  },
+  /** A strike in the air: a punchy bang, a thump under a crack. */
+  assaultBang: (): void => {
+    if (!allow('assaultBang', 2, 60)) return;
+    osc({ type: 'sine', f: 140, to: 50, dur: 0.18, vol: 0.4, drive: 0.4 });
+    noise({ dur: 0.16, vol: 0.32, filter: { type: 'lowpass', f: 2600, to: 300 }, drive: 0.3 });
+    noise({ dur: 0.04, vol: 0.22, filter: { type: 'highpass', f: 4000 } });
+  },
+  /** The last strike slashing back down: a falling whoosh into a heavy boom. */
+  assaultSlam: (): void => {
+    noise({ dur: 0.2, vol: 0.3, filter: { type: 'bandpass', f: 4500, to: 500, q: 2 } });
+    osc({ at: 0.08, type: 'sine', f: 110, to: 35, dur: 0.45, vol: 0.55, drive: 0.5 });
+    noise({ at: 0.08, dur: 0.35, vol: 0.35, filter: { type: 'lowpass', f: 1600, to: 120 }, drive: 0.4 });
+    noise({ at: 0.08, dur: 0.05, vol: 0.25, filter: { type: 'highpass', f: 3500 } });
+  },
+  /** A Gale Stream shot: an airy whip of wind and a light bowstring snap,
+   *  short enough to run at eight a second without smearing. */
+  gale: (): void => {
+    noise({ dur: 0.07, vol: 0.16, filter: { type: 'bandpass', f: 1800, to: 6500, q: 3 } });
+    osc({ type: 'triangle', f: 1250, to: 700, dur: 0.045, vol: 0.07 });
+  },
   glide: (): void => tone(300, 0.22, 'triangle', 0.18, 560),
   hit: (): void => tone(220, 0.08, 'square', 0.12, 140),
   /** Each enemy's own impact (see mobvoices.ts): a slime and a golem should not sound the same. */

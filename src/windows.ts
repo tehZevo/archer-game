@@ -3,6 +3,7 @@ import { pressed, repeated } from './input';
 import { achKey, achUi, openAchievements } from './achievements';
 import { skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
 import { shop, shopInput, trainer, trainerInput } from './economy';
+import { petShop, petShopInput } from './pets';
 import { bag, unequip, wear } from './gear';
 import { dev, devStops } from './dev';
 import { stylist, stylistKey } from './stylist';
@@ -12,7 +13,7 @@ import { openSettings, settingsKey, settingsUi } from './settings';
 import type { PauseMenu } from './types';
 
 /**
- * In-game windows that hold the world still while open: the shop, trainer,
+ * In-game windows that hold the world still while open: the shop, trainer, pet keeper,
  * stylist, quest board, settings and achievements, the dev menu and the Esc
  * pause menu. Returns true when one took this frame's input (the world
  * doesn't step).
@@ -20,6 +21,7 @@ import type { PauseMenu } from './types';
 export function windowInput(dt: number): boolean {
   if (shop.open) { shopInput(); return true; }
   if (trainer.open) { trainerInput(); return true; }
+  if (petShop.open) { petShopInput(); return true; }
   if (stylist.open) { stylistInput(); return true; }
   if (board.open) { boardInput(); return true; }
   if (confirmUi.open) { confirmInput(); return true; }
@@ -37,7 +39,7 @@ export function windowInput(dt: number): boolean {
 
 /** True while any of those windows is open (so Enter belongs to it, not the chat line). */
 export function windowOpen(): boolean {
-  return shop.open || trainer.open || stylist.open || board.open || confirmUi.open
+  return shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open
     || settingsUi.open || achUi.open || dev.open || !!game.pause;
 }
 

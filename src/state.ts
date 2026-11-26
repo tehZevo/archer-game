@@ -54,6 +54,7 @@ export const player: Player = {
   cd,
   readyT, cdMax, usedT,
   diving: false,
+  rapid: { armed: false, on: false, t: 0, face: 1 },
   blitz: { charges: P.BLITZ_MAX, t: 0 },
   cast: null, castT: 0, castTotal: 0,
   invuln: 0, invulnQuiet: false,
@@ -197,6 +198,7 @@ export function gotoPlace(place: Place): void {
   player.casting.queued = null;
   player.casting.key = null;
   player.hang.t = 0; player.liftT = 0; player.hang.hits = 0;
+  player.rapid.armed = player.rapid.on = false;
   player.rush.t = 0; player.rush.dist = 0; player.rush.carry = []; player.rush.look = null;
   player.effects.length = 0; // effects don't follow you to another floor
   if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');

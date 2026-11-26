@@ -8,7 +8,7 @@ import { shotCount } from './progress';
 import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
 import { delayTime, useTime } from './castrules';
-import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
+import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
 
 import type { SkillKey, SkillRank } from './types';
 
@@ -47,6 +47,24 @@ function twinShot(r: SkillRank): void {
     hit(shots > 1);
     eachShot(shots - 1, NUM_GAP, (more) => hit(more));
   });
+}
+
+/** One Gale Stream shot (Z held after a shot, see rapid.ts): a quick
+ *  green bolt into the closest enemy ahead, hitting it twice (more with
+ *  Twin Echoes). It fires the way the stream faces, not the way you walk. */
+function galeShot(r: SkillRank): void {
+  const face = player.rapid.face;
+  setPose('shoot', 1 / P.GALE_RATE);
+  const [m] = nearest(player.x + face * P.GALE_RANGE / 2, player.y + player.h / 2, P.GALE_RANGE, 56, 1);
+  const mx = player.x + face * 8, my = player.y + 13;
+  sfx.gale();
+  game.fx.push({ type: 'galeMuzzle', x: mx, y: my, t: FX_DUR.galeMuzzle, face });
+  const len = m ? Math.max(12, Math.abs(m.x - mx)) : P.GALE_RANGE * 0.7;
+  game.fx.push({ type: 'galeShot', x: mx, y: my, t: FX_DUR.galeShot, face, sx: len / 64 });
+  netShot(mx, my, face, len, 1);
+  if (!m) return;
+  const shots = shotCount(r);
+  eachShot(shots, 0, (more) => { if (alive([m]).length) damage(m, r.dmg, { more, fx: 'galeHit' }); });
 }
 
 /** Glide: acrobatic forward tumble; usable repeatedly in the air. Off a Sky
@@ -206,7 +224,7 @@ function skyfallVolley(r: SkillRank): void {
  *  strikes run on the fixed step in update (see the hang block). */
 function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
-  sfx.shoot();
+  sfx.assaultRise();
   hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
     .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
   const from = player.y + player.h / 2;
@@ -214,7 +232,8 @@ function skyAssault(r: SkillRank): void {
   // you ~3x higher off the top of their arc)
   player.y = Math.max(0, player.y - P.BARRAGE_UP);
   player.vx = 0; player.vy = 0; player.onGround = false;
-  game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
+  // a tall blue slash carving up from where she left to where she hangs
+  game.fx.push({ type: 'assaultRise', x: player.x, y: from, t: FX_DUR.assaultRise, face: player.face });
   // hold in the air for the cast's recovery, not a fixed barrage duration
   player.hang.t = delayTime('ab') * 2; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
@@ -250,5 +269,5 @@ export const CASTS: Partial<Record<SkillKey, Cast>> = {
   'ground-q': skyToss, eb: electricBlitz, 'air-q': airDive,
   'ground-w': skyfallVolley, ab: skyAssault, 'air-w': midairSpin,
   'ground-e': spikeLift, 'air-e': plungingVolley,
-  r: tempest, s: shellBarrage,
+  r: tempest, s: shellBarrage, 'held-z': galeShot,
 };

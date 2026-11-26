@@ -31,6 +31,9 @@ export const P = {
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Bolt Flurry bolt speed (px/s)
   Z_WINDUP: 0.10,      // s Double Shot draws the bow before the arrows fly
+  GALE_RATE: 8,        // Gale Stream shots per second (Haste speeds it up)
+  GALE_RANGE: 176,     // px ahead of you Gale Stream reaches
+  GALE_SLOW: 0.6,      // walk speed while streaming
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   DELAY_TIME: 0.2,     // s of recovery after the animation (see delayTime; links skip it)
   ACCEL: 1600,         // groundedAccelForce
@@ -49,9 +52,9 @@ export const P = {
   BLITZ_DIST: 96,      // px the blitz travels
   // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
-  DIVE_VX: 260,        // px/s forward
-  DIVE_VY: 420,        // px/s down
-  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll
+  DIVE_VX: 150,        // px/s forward (45°: equal to DIVE_VY, so the plunge is diagonal)
+  DIVE_VY: 150,        // px/s down (45°: equal to DIVE_VX)
+  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll (the two together carry ~64px, like Rush Toss)
   DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's)...
   DIVE_ROLL_DIST: 64,  // ...px it travels at most...
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
@@ -146,6 +149,11 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   ab: { key: 'ab', linksInto: ['air-w', 'r', 'z', 'ground-q'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
        cd: 0, use: 0.2, delay: 0.4, mp1: 70, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
        desc: 'After Rush Toss: leap up to launched enemies' },
+  // Fired by holding Z: after a Double Shot / Bolt Flurry, keep Z held to stream
+  // arrows into the closest enemy ahead (see rapid.ts). mp1 is per shot.
+  'held-z': { key: 'held-z', name: 'Gale Stream', tag: 'Hold Z', job: 4, minLevel: 60,
+       cd: 0, use: 0.1, mp1: 1, dmg1: 110, hits1: 2, targets1: 1,
+       desc: 'Hold Z after a shot: a stream of arrows into the closest enemy, and you can walk while firing' },
   s: { key: 's', upgrades: 'z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
        cd: 0, use: 0.6, mp1: 80, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
@@ -299,4 +307,6 @@ export const FX_DUR: Record<Fx['type'], number> = {
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
   volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
   tossTrail: 0.3, blitzTrail: 0.35,
+  galeMuzzle: 0.15, galeShot: 0.12, galeHit: 0.24,
+  assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.4, assaultHit: 0.24,
 };
