@@ -137,6 +137,9 @@ check('spending SP raises the skill rank', rank('Z').dmg > r0);
 check('attack keys are Z Q W E R, all bound', SKILL_BAR.map((s) => s.label).join('') === 'ZQWER' && SKILL_BAR.every((s) => s.skill));
 reset();
 check('Jump is movement, not a skill', !('C' in SKILLS));
+check('every upgrade names a keyed base slot', (Object.keys(SKILLS) as (keyof typeof SKILLS)[])
+  .every((k) => !SKILLS[k].upgrades || SKILLS[SKILLS[k].upgrades!].keyed));
+check('the skill bar is the keyed attack slots, Z Q W E R', SKILL_BAR.every((s) => SKILLS[s.skill].keyed));
 check('Rush Toss learned at Lv.5', !isLearned('Q'));
 player.ranks.W = 0;
 check('Rising Arrows not known until picked', !isLearned('W'));

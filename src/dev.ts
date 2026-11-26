@@ -1,6 +1,6 @@
 import { PATHS, START_TOWN, TOWNS, townArea, townDepth, type Place } from './world';
 import { bannerMsg, player } from './state';
-import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats, RETIRED } from './progress';
+import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
 import { SKILLS } from './config';
 import type { SkillKey } from './types';
 
@@ -50,7 +50,7 @@ export const maxOut = (): void => {
   player.hp = player.hpMax;
   player.mp = player.mpMax;
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
-    if (k !== 'HA' && !RETIRED.includes(k)) player.ranks[k] = SKILLS[k].maxLevel;
+    if (k !== 'HA' && !SKILLS[k].retired) player.ranks[k] = SKILLS[k].maxLevel;
   }
   bannerMsg('MAXED', 'LEVEL 100 - SKILL BAR MAXED');
 };

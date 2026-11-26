@@ -35,7 +35,7 @@ export interface SkillDef {
   maxLevel: number;
   cd: number;
   /** Use time, s: how long a cast locks other skills and movement (attack
-   *  skills default to P.USE_TIME; Jump and Glide have none). Haste shortens it. */
+   *  skills default to P.USE_TIME). Haste shortens it. */
   use?: number;
   /** Post-animation recovery (see delayTime); links skip it. Defaults to P.DELAY_TIME. */
   delay?: number;
@@ -50,6 +50,15 @@ export interface SkillDef {
   passive?: boolean;
   /** Bought with SP even though it is open from Lv.1 (otherwise Lv.1 skills come free). */
   learn?: boolean;
+  /** Fired by its own key (the base slots: see SKILL_ORDER). */
+  keyed?: boolean;
+  /** Shown on the skill bar (the attack keys; see SKILL_BAR). */
+  bar?: boolean;
+  /** The base slot this skill upgrades in place: it replaces that skill on
+   *  its key once learned, and a slot holds one upgrade branch at a time. */
+  upgrades?: SkillKey;
+  /** Off the skill list: kept for its stats, never offered or maxed out. */
+  retired?: boolean;
   /** A prerequisite skill that must be mastered (at its max rank) before this
    *  one can be learned. The skill list shows it as locked until then. */
   requires?: SkillKey;
