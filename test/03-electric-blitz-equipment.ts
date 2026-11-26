@@ -1,7 +1,7 @@
 import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES, emoteFor, setEmote, buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, shopStock, START_POTIONS, trainer, TRAINER_ITEMS, wallet, areaOf, isPathEnd, isTown, lastTown, MAP_AREAS, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, samePlace, START, TOWNS, townDepth, type Place, ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE, game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH, confirmInput, confirmUi, cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor, FONT_CHARS, textWidth, fontPng, ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout, update, advance, tick, CHASE_TURN, activeSkill, expBar, MAX_LEVEL, passiveBonus, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN, surfaceYAt, areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, type Layout, makeShape, SHAPES, TOWN_MIN_H, DRAWN, hasMobArt, HURT, MOB_ART, paintMob, VARIANT_ART, miniRect, MINI_SCALE, toMini, CAM, TILE, WORLD, ANIM_RATE, BREATH, mobFrame, BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg, barrageTargets, cast, cdSlot, delayTime, rushHolding, useTime, CASTS, MOB_SOUNDS, GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop, fmtNum, BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes, cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook, stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP, styled, DECOR_FRAMES, paintDecor, paintSmoke, SMOKE, TOWN_PALS, type DecorKind, NPC_FRAMES, npcFrame, npcRows, board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests, apply, clearSave, hasSave, load, save, snapshot, boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate, canConnect, hourStamp, net, newCode, parseCode, roomId, activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X, BLOCK_VARIANTS, hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt, PROP_H, PROP_W, propAt, PROPS, BACKDROPS, particlesAt, expToNext, killsToLevel, mobExp, dev, devStops, BASIC, clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS, openStylist, STYLIST_ROWS, devInput, windowOpen, addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap, say, archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle, ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet, keysKey, keysUi, KEY_ROWS, pet, PET, achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea, startRun, DEFS, startsLearned, clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops, READY_FLASH, cameraTarget, mobBounds, coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods, bag, BAG_SIZE, unequip, wear, STAT_KEYS, generateFloor, TOWN_PLANS, corpses, DEATH_T, DEATHS, deathOf, deathPose, closeLinks, linkable, linkHeld, bakeDeathSheet, DEATH_FRAMES, deathFrame, localPose, applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus, cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX, type Mob, type PauseMenu, type Platform, type SkillKey, climb, check, release, step, tap, landLeap, ground, arena, dummy } from './harness';
 // --- Equipment: a weapon and an armor piece ---
 {
-  arena(10); player.ranks.Z = true;
+  arena(10); player.ranks.z = true;
   clearGear();
   check('you start with nothing equipped', gear.weapon === null && gear.armor === null);
   check('an empty slot leaves damage and damage taken unchanged', gearDmg() === 1 && gearSoak() === 0);
@@ -75,7 +75,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 // --- E / R ---
 {
   // E is a two-form key: Piercing Leap on the ground, Downpour in the air
-  arena(10); player.ranks.E = true; player.ranks.PV = true;
+  arena(10); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   const near = dummy(140), behind = dummy(60);
   tap('e');
   check('Piercing Leap throws you into the air', !player.onGround && player.vy < 0);
@@ -83,9 +83,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   step(Math.ceil(0.3 / P.STEP));
   check('Piercing Leap spears the enemies in front of you as its spikes land', near.hp < 1e6);
   check('...but not the ones behind you', behind.hp === 1e6);
-  check('Piercing Leap is on a long cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
+  check('Piercing Leap is on a long cooldown', player.cd['ground-e'] > 4, `cd ${player.cd['ground-e'].toFixed(1)}`);
   // the air form, once you are back on your feet with the cooldown cleared
-  landLeap(); player.cd.E = 0;
+  landLeap(); player.cd['ground-e'] = 0;
   const under = dummy(100), beside = dummy(170);
   tap('c'); step(8);
   const yTop = player.y; player.vx = 40; tap('e'); step(1);
@@ -98,47 +98,47 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   step(30);
   check('after the volley you drop back down', player.onGround);
   // the two forms cool down apart: Piercing Leap's long cooldown never locks out the volley
-  player.cd.E = 0; player.cd['E.air'] = 0; player.casting.useT = 0;
+  player.cd['ground-e'] = 0; player.cd['ground-e.air'] = 0; player.casting.useT = 0;
   tap('e'); step(6);
-  check('Piercing Leap fills its own slot, its full length', player.cd.E > 4 && player.cdMax.E === P.SPIKE_CD && player.cd['E.air'] === 0);
+  check('Piercing Leap fills its own slot, its full length', player.cd['ground-e'] > 4 && player.cdMax['ground-e'] === P.SPIKE_CD && player.cd['ground-e.air'] === 0);
   player.casting.useT = 0; const yv = player.y; tap('e'); step(1);
-  check('Downpour still fires in the air during the Piercing Leap cooldown', player.y < yv && player.cast === 'barrage' && player.cd['E.air'] === 0 && player.cd.E > 4);
-  check('the bar shows the form you are in', cdSlot('E') === 'E.air' && cdSlot('E', false) === 'E');
+  check('Downpour still fires in the air during the Piercing Leap cooldown', player.y < yv && player.cast === 'barrage' && player.cd['ground-e.air'] === 0 && player.cd['ground-e'] > 4);
+  check('the bar shows the form you are in', cdSlot('ground-e') === 'ground-e.air' && cdSlot('ground-e', false) === 'ground-e');
   step(40);
 }
 {
   // The spike lift links into Downpour: E pressed during the rise fires as it ends
-  arena(60); player.ranks.E = true; player.ranks.PV = true;
+  arena(60); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   dummy(130);
   tap('e'); step(12); // rise to the top of the lift (the air form needs ~2/3 a jump's height)
   check('Piercing Leap lifts you (setup)', !player.onGround && player.liftT > 0, `liftT ${player.liftT.toFixed(2)}`);
   tap('e'); // Downpour (E's air form) pressed during the lift links off it
-  check('the spike lift links into Downpour', player.linkFrom === 'E' && linkable('PV'), `from ${player.linkFrom}`);
+  check('the spike lift links into Downpour', player.linkFrom === 'ground-e' && linkable('air-e'), `from ${player.linkFrom}`);
   let fired = -1;
-  for (let i = 0; i < 24 && fired < 0; i++) { step(1); if (player.casting.key === 'PV') fired = i; }
-  check('...and it fires as the lift ends', fired >= 0 && player.casting.key === 'PV', `fired ${fired}`);
+  for (let i = 0; i < 24 && fired < 0; i++) { step(1); if (player.casting.key === 'air-e') fired = i; }
+  check('...and it fires as the lift ends', fired >= 0 && player.casting.key === 'air-e', `fired ${fired}`);
 }
 {
   // A linked skill refunds 1s off Piercing Leap's cooldown (as it does Tempest's)
-  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.E = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks['ground-e'] = true;
   dummy(150);
   tap('e'); step(2);
-  check('Piercing Leap starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
+  check('Piercing Leap starts on its full cooldown', player.cd['ground-e'] > 4, `cd ${player.cd['ground-e'].toFixed(1)}`);
   landLeap(); // let the lift's hover play out and land
-  player.cd.R = 5; player.cd['W.air'] = 3; // so the Tempest and Cyclone Sweep shaves are visible too
+  player.cd.r = 5; player.cd['ground-w.air'] = 3; // so the Tempest and Cyclone Sweep shaves are visible too
   tap('q'); step(14); // the rush ends, the link window is live
-  const cd1 = player.cd.E, cdR1 = player.cd.R, cdW1 = player.cd['W.air'];
+  const cd1 = player.cd['ground-e'], cdR1 = player.cd.r, cdW1 = player.cd['ground-w.air'];
   tap('w'); step(4); // the queued volley fires as the rush clears
-  check('the linked Rising Arrows fires', player.cast === 'shoot' && player.linkFrom === 'W',
+  check('the linked Rising Arrows fires', player.cast === 'shoot' && player.linkFrom === 'ground-w',
     `cast ${player.cast} from ${player.linkFrom}`);
-  check('the link refunds 1s off Piercing Leap', Math.abs(player.cd.E - (cd1 - 1 - 4 / 30)) < 0.05,
-    `cd ${player.cd.E.toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
-  check('...and 1s off Cyclone Sweep', player.cd['W.air'] < cdW1 - 0.9 && player.cd['W.air'] > cdW1 - 1.3, `cd ${player.cd['W.air'].toFixed(2)} of ${cdW1.toFixed(2)}`);
-  check('the same link also shaves Tempest', player.cd.R < cdR1 - 0.9 && player.cd.R > cdR1 - 1.3, `cd.R ${player.cd.R.toFixed(2)} of ${cdR1.toFixed(2)}`);
+  check('the link refunds 1s off Piercing Leap', Math.abs(player.cd['ground-e'] - (cd1 - 1 - 4 / 30)) < 0.05,
+    `cd ${player.cd['ground-e'].toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
+  check('...and 1s off Cyclone Sweep', player.cd['ground-w.air'] < cdW1 - 0.9 && player.cd['ground-w.air'] > cdW1 - 1.3, `cd ${player.cd['ground-w.air'].toFixed(2)} of ${cdW1.toFixed(2)}`);
+  check('the same link also shaves Tempest', player.cd.r < cdR1 - 0.9 && player.cd.r > cdR1 - 1.3, `cd.r ${player.cd.r.toFixed(2)} of ${cdR1.toFixed(2)}`);
 }
 {
   // Cyclone Sweep (W in the air): one sweep per 4s, and a slow rise
-  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.MS = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   tap('c'); step(70);
   check('back on the ground', player.onGround);
   const m = dummy(140);
@@ -147,31 +147,31 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   let rising = true;
   for (let i = 0; i < 12; i++) { const y = player.y; step(1); rising &&= player.y < y; } // the sweep's four hits stagger out, lifting you
   const hp1 = m.hp; player.casting.useT = 0; tap('w'); step(2);
-  check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['W.air'] > 3, `hp ${m.hp} hp1 ${hp1} cd ${player.cd['W.air'].toFixed(2)}`);
+  check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['ground-w.air'] > 3, `hp ${m.hp} hp1 ${hp1} cd ${player.cd['ground-w.air'].toFixed(2)}`);
   check('the spin lifts you slowly', rising && ySpin - player.y < 15, `rose ${(ySpin - player.y).toFixed(1)}px`);
-  check('the spin cools down for 8s', player.cdMax['W.air'] === P.SPIN_CD && P.SPIN_CD === 8);
+  check('the spin cools down for 8s', player.cdMax['ground-w.air'] === P.SPIN_CD && P.SPIN_CD === 8);
 }
 {
   // Q and Meteor Dive: both paced by the use time alone, no cooldowns
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('q');
-  check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.6 && player.cdMax.Q === 0 && player.casting.useT > 0);
-  step(40); player.cd.Q = 0;
+  check('the ground rush has no cooldown, only a use time', SKILLS['ground-q'].cd === 0 && SKILLS['ground-q'].use === 0.6 && player.cdMax['ground-q'] === 0 && player.casting.useT > 0);
+  step(40); player.cd['ground-q'] = 0;
   tap('c'); step(6); tap('q');
-  check('the Meteor Dive has no cooldown, only a use time', SKILLS.AD.cd === 0 && player.cd['Q.air'] === 0 && player.casting.useT > 0 && player.casting.recoverT > 0,
-    `cd ${player.cd['Q.air'].toFixed(2)} use ${player.casting.useT.toFixed(2)}`);
+  check('the Meteor Dive has no cooldown, only a use time', SKILLS['air-q'].cd === 0 && player.cd['ground-q.air'] === 0 && player.casting.useT > 0 && player.casting.recoverT > 0,
+    `cd ${player.cd['ground-q.air'].toFixed(2)} use ${player.casting.useT.toFixed(2)}`);
   step(40);
 }
 {
   // The Meteor Dive's follow-ups fire off its landing, not its coil, and a
   // Double Shot pressed mid-plunge waits out the landing roll.
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   dummy(150);
   tap('c'); step(8);
   tap('q');
-  check('a follow-up pressed at the coil waits for the landing', linkable('W') && linkHeld('W'));
+  check('a follow-up pressed at the coil waits for the landing', linkable('ground-w') && linkHeld('ground-w'));
   step(4); tap('z');
-  check('a Double Shot pressed mid-plunge is buffered', player.casting.queued === 'Z', `queued ${player.casting.queued}`);
+  check('a Double Shot pressed mid-plunge is buffered', player.casting.queued === 'z', `queued ${player.casting.queued}`);
   let rolled = false, firedRolling = false;
   for (let i = 0; i < 40 && player.casting.queued; i++) {
     step(1);
@@ -184,49 +184,49 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // The Meteor Dive links into the grounded kit: pressed as the dive lands,
   // the next skill fires without the use-time wait
-  arena(20); player.ranks.Q = true; player.ranks.AD = true; player.ranks.W = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true; player.ranks['ground-w'] = true;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive has landed, its links released', linkable('W') && !linkHeld('W'), `from ${player.linkFrom}`);
+  check('the dive has landed, its links released', linkable('ground-w') && !linkHeld('ground-w'), `from ${player.linkFrom}`);
   const mp0 = player.mp;
   tap('w');
-  check('Rising Arrows links out of the dive', player.mp < mp0 && player.linkFrom === 'W', `mp ${player.mp} from ${player.linkFrom}`);
+  check('Rising Arrows links out of the dive', player.mp < mp0 && player.linkFrom === 'ground-w', `mp ${player.mp} from ${player.linkFrom}`);
 }
 {
-  arena(25); player.ranks.R = true;
+  arena(25); player.ranks.r = true;
   const a = dummy(130), b = dummy(170);
   tap('r'); step(15);
   check('Tempest hits every enemy caught in the sweep', a.hp < 1e6 && b.hp < 1e6);
   const hp = a.hp; player.casting.useT = 0; tap('r'); step(5);
-  check('Tempest is on a long cooldown', a.hp === hp && player.cd.R > 4);
+  check('Tempest is on a long cooldown', a.hp === hp && player.cd.r > 4);
 }
 {
   // ready-glow: the bar icon flashes the moment a cooldown runs out
-  arena(20); player.ranks.E = true;
+  arena(20); player.ranks['ground-e'] = true;
   tap('e');
-  check('casting starts the cooldown with no glow', player.cd.E > 0 && player.readyT.E === 0);
-  for (let i = 0; i < 400 && player.cd.E > 0; i++) step(1);
-  check('the glow flashes as the cooldown ends', player.cd.E === 0 && player.readyT.E > 0, `cd ${player.cd.E.toFixed(2)} readyT ${player.readyT.E.toFixed(2)}`);
+  check('casting starts the cooldown with no glow', player.cd['ground-e'] > 0 && player.readyT['ground-e'] === 0);
+  for (let i = 0; i < 400 && player.cd['ground-e'] > 0; i++) step(1);
+  check('the glow flashes as the cooldown ends', player.cd['ground-e'] === 0 && player.readyT['ground-e'] > 0, `cd ${player.cd['ground-e'].toFixed(2)} readyT ${player.readyT['ground-e'].toFixed(2)}`);
   step(8);
-  check('the glow fades as the flash plays out', player.readyT.E > 0 && player.readyT.E < READY_FLASH, `readyT ${player.readyT.E.toFixed(2)}`);
+  check('the glow fades as the flash plays out', player.readyT['ground-e'] > 0 && player.readyT['ground-e'] < READY_FLASH, `readyT ${player.readyT['ground-e'].toFixed(2)}`);
   step(10);
-  check('the glow is gone once the flash is over', player.readyT.E === 0);
+  check('the glow is gone once the flash is over', player.readyT['ground-e'] === 0);
 }
 {
   // Haste: +attack speed shortens use time, never cooldowns; Double Shot is paced by use time alone
   arena(25); dummy(130);
-  cast('Z');
+  cast('z');
   const base = player.casting.useT;
-  check('Double Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
-  player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = true; cast('R');
-  const rCd = player.cd.R, rUse = player.casting.useT;
-  player.ranks.HA = true; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
+  check('Double Shot has a use time and no cooldown', base > 0.4 && player.cd.z === 0);
+  player.casting.useT = 0; player.casting.recoverT = 0; player.cd.r = 0; player.ranks.r = true; cast('r');
+  const rCd = player.cd.r, rUse = player.casting.useT;
+  player.ranks.ha = true; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.r = 0; cast('r');
   check('Haste shortens use time by 20% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.2) < 1e-6);
-  check('Haste leaves cooldowns alone', player.cd.R === rCd);
-  player.casting.useT = 0; player.casting.recoverT = 0; cast('Z');
+  check('Haste leaves cooldowns alone', player.cd.r === rCd);
+  player.casting.useT = 0; player.casting.recoverT = 0; cast('z');
   check('a hasted Double Shot fires about 20% faster', Math.abs(player.casting.useT - base / 1.2) < 1e-6);
-  player.ranks.HA = false; player.ranks.R = false;
+  player.ranks.ha = false; player.ranks.r = false;
 }
 
 // --- private instances ---

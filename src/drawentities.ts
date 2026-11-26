@@ -279,7 +279,7 @@ export function drawPlayer(): void {
   // Twin Echoes: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and
   // stands ready the rest of the time.
-  if (isLearned('ES')) {
+  if (isLearned('es')) {
     const t = performance.now() / 1000;
     const pose = player.cast ? 'shoot' : localPose();
     drawArcher(myLook(), player.x - player.face * 14, player.y + player.h, player.face, pose, t, 0.45,

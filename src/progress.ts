@@ -130,7 +130,7 @@ export function rank(key: SkillKey): SkillRank {
 /** How many arrows an attack fires: its own shots, doubled by the Twin Echoes
  *  passive's shadow archer. The shadow always procs (a minimum of one lot),
  *  and its arrows are counted here rather than folded into `hits`. */
-export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('ES')));
+export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('es')));
 
 /** A passive's current bonus: 0 until learned, then its authored value. */
 export function passiveBonus(key: SkillKey): number {
@@ -143,8 +143,8 @@ export const isLearned = (key: SkillKey): boolean => player.ranks[activeSkill(ke
    A passive that makes the archer quicker on her feet: +40% move speed and
    +20% jump height once learned. These two multipliers are applied where the
    base walk speed and jump velocity are read (see move.ts). */
-export const nimbleSpeed = (): number => isLearned('NI') ? 1.4 : 1;
-export const nimbleJump = (): number => isLearned('NI') ? 1.2 : 1;
+export const nimbleSpeed = (): number => isLearned('ni') ? 1.4 : 1;
+export const nimbleJump = (): number => isLearned('ni') ? 1.2 : 1;
 
 /**
  * The skill currently bound to a bar slot. The Z slot starts as Double Shot
@@ -180,7 +180,7 @@ export const SKILL_PICK_EVERY = 5;
 // The air forms of Q, W and E (Meteor Dive, Cyclone Sweep, Downpour) are
 // their own skills, but on the list they show the key they're used on, not
 // their own abbreviation.
-const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 'E' };
+const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { 'air-q': 'ground-q', 'air-w': 'ground-w', 'air-e': 'ground-e' };
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {

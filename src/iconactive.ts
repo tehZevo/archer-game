@@ -4,7 +4,7 @@ import type { SkillKey } from './types';
  *  forms, and Glide. 10x10, in iconpal.ts's colours (see icons.ts). */
 export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
   // Double Shot: two arrows side by side
-  Z: [
+  z: [
     '..........',
     '.g....a...',
     '.gg.xxaa..',
@@ -17,7 +17,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..........',
   ],
   // Bolt Flurry: a fan of green bolts with a stun star
-  S: [
+  s: [
     '.......g..',
     '......ggg.',
     '..eeE..g..',
@@ -30,7 +30,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     'eeeeeE....',
   ],
   // Glide: a feather with a swoosh
-  D: [
+  d: [
     '.......xx.',
     '......xaax',
     '.....xaaax',
@@ -43,7 +43,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '...AAA.AA.',
   ],
   // Rush Toss: an arrow launching up off the ground, with lift lines
-  Q: [
+  'ground-q': [
     '....aa....',
     '...aaaa...',
     '..aaaaaa..',
@@ -56,7 +56,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '.GGGGGGGG.',
   ],
   // Electric Blitz: a lightning bolt
-  EB: [
+  eb: [
     '.....aa...',
     '....aaa...',
     '...aaaa...',
@@ -69,7 +69,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '.aaa......',
   ],
   // Rising Arrows: arrows raining down at an angle
-  W: [
+  'ground-w': [
     '.x....x...',
     '..x....x..',
     '...a....a.',
@@ -82,7 +82,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     'gggggggggg',
   ],
   // Skyward Assault: rising chevrons with strike slashes
-  AB: [
+  ab: [
     '....ii....',
     '...iiii...',
     '..ii..ii..',
@@ -95,7 +95,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..I.II.I..',
   ],
   // Piercing Leap: purple spikes erupting from the ground
-  E: [
+  'ground-e': [
     '....p.....',
     '....p.....',
     '...pPp....',
@@ -108,7 +108,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '.D.D..D.D.',
   ],
   // Meteor Dive: an arrow diving down-right, with a speed streak
-  AD: [
+  'air-q': [
     'yy........',
     'yyy....YY.',
     '.yyy..YYY.',
@@ -121,7 +121,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     'bb........',
   ],
   // Cyclone Sweep: a circular blade arc
-  MS: [
+  'air-w': [
     '...RRRR...',
     '.RR....RR.',
     '.R..n...R.',
@@ -134,7 +134,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..........',
   ],
   // Downpour: orange arrows (green fletching) raining onto a green target
-  PV: [
+  'air-e': [
     '.e..e..e..',
     '.r..r..r..',
     '.r..r..r..',
@@ -147,7 +147,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     'EEEEEEEEE.',
   ],
   // Tempest: a purple storm ring with a pink swirl inside
-  R: [
+  r: [
     '...PPPP...',
     '.PP....PP.',
     'P..kkk...P',

@@ -14,7 +14,7 @@ import type {
 const MOB_TYPES_BY_NAME: Record<string, MobType> = Object.fromEntries(MOB_TYPES.map((m) => [m.n, m]));
 
 /** Cooldown slots: every key, plus the air forms of Q, W and E. */
-const SLOTS = [...SKILL_ORDER, 'Q.air', 'W.air', 'E.air'];
+const SLOTS = [...SKILL_ORDER, 'ground-q.air', 'ground-w.air', 'ground-e.air'];
 const cd: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 const cdMax: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 

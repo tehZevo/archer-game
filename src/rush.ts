@@ -59,7 +59,7 @@ export function updateRush(dt: number): void {
 
 /** Scoop up the enemies the slide runs into; the charge itself hits each once. */
 function grab(face: number): void {
-  const r = rank('Q');
+  const r = rank('ground-q');
   // the grab reaches a little behind you too, so an enemy you just passed is still scooped up
   const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
   for (const m of hitbox(grabX, player.y + player.h / 2, P.RUSH_GRAB + P.RUSH_GRAB_BACK, 40)) {
@@ -99,7 +99,7 @@ export function endRush(): void {
  * charge (`blitz`).
  */
 export function groundRush(inPlace: boolean, blitz: boolean): void {
-  pose('rush', blitz ? 'EB' : 'Q');
+  pose('rush', blitz ? 'eb' : 'ground-q');
   if (inPlace) armStrike(true)();
   else {
     slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST, 'rush', blitz ? 'blitzRush' : 'tossRush');
@@ -129,7 +129,7 @@ function slide(v: number, t: number, dist: number, fx: FxKind = 'rush', look: Ru
 /** The rush's strike: the carried enemies, then the nearest ones ahead. `fx`
  *  is the burst under each target (the dive's landing has its own). */
 function strike(inPlace: boolean, face: number, fx: FxKind): void {
-  const r = rank('Q');
+  const r = rank('ground-q');
   const carried = player.rush.carry.map((c) => c.m);
   player.rush.carry = [];
   const cx = inPlace ? player.x : player.x + face * 24;

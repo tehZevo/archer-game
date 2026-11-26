@@ -6,7 +6,7 @@ import { pet } from './pets';
 import { bag, BAG_SIZE, gear } from './gear';
 import type { GearItem, GearKind } from './gear';
 import { runBonus } from './achievements';
-import { SKILL_ORDER, SKILLS } from './config';
+import { LEGACY_KEYS, SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
 import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
 import type { SkillKey } from './types';
@@ -86,6 +86,10 @@ const int = (v: unknown, lo: number, hi: number, dflt: number): number => {
  *  through untouched. */
 export function migrate(d: SaveData): SaveData {
   const v = d.v ?? 0;
+  // a save written before the key rename stores the terse codes; map them to
+  // the current slugs (RA, the retired Rising Arrow, folds into Double Shot).
+  if (d.ranks) d.ranks = Object.fromEntries(
+    Object.entries(d.ranks).map(([k, val]) => [LEGACY_KEYS[k] ?? k, val]));
   if (v >= VERSION) return d;
   // v2 and earlier saved a global stage number; v3 replaced it with a town id
   if (v < 3 && !d.town) d.town = 'mossgate';

@@ -45,7 +45,7 @@ export const maxOut = (): void => {
   player.hp = player.hpMax;
   player.mp = player.mpMax;
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
-    if (k !== 'HA') player.ranks[k] = true;
+    if (k !== 'ha') player.ranks[k] = true;
   }
   bannerMsg('MAXED', 'LEVEL 100 - SKILL BAR MAXED');
 };

@@ -272,11 +272,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 // --- a whiffed Z shot still shows one arrow per hit ---
 {
   arena(1); game.mobs.length = 0; game.fx.length = 0;
-  player.cd.Z = 0; player.casting.useT = 0;
+  player.cd.z = 0; player.casting.useT = 0;
   const seen = new Set<object>();
   setKey('z', true); step(1); setKey('z', false);
   for (let i = 0; i < Math.ceil((P.Z_WINDUP + 0.3) / P.STEP); i++) { step(1); game.fx.filter((f) => f.type === 'tracer').forEach((f) => seen.add(f)); }
   const n = seen.size;
-  check('a Z shot with nothing in range still fires every arrow', n === rank('Z').hits, `${n} tracers for ${rank('Z').hits} hits`);
+  check('a Z shot with nothing in range still fires every arrow', n === rank('z').hits, `${n} tracers for ${rank('z').hits} hits`);
   release();
 }

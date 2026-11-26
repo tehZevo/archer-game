@@ -3,7 +3,7 @@ import { nextPlace } from './world';
 import { EMOTES } from './emotes';
 import { netEmote } from './net';
 import { bump } from './achievements';
-import { CAM, P, SKILL_ORDER } from './config';
+import { CAM, P, SKILL_ORDER, slotOf } from './config';
 import { cameraTarget, gainExp, game, gotoPlace, logMsg, player, READY_FLASH, spawnWave } from './state';
 import { pressed } from './input';
 import { revive } from './combat';
@@ -65,7 +65,7 @@ function tickPlayer(dt: number): void {
   if (player.blitz.charges < P.BLITZ_MAX && (player.blitz.t += dt) >= P.BLITZ_CHARGE_T) {
     player.blitz.charges++;
     player.blitz.t = player.blitz.charges >= P.BLITZ_MAX ? 0 : player.blitz.t - P.BLITZ_CHARGE_T;
-    player.readyT.Q = READY_FLASH; // a charge is back: the Q icon flashes
+    player.readyT['ground-q'] = READY_FLASH; // a charge is back: the Q icon flashes
   }
   for (const k of Object.keys(player.cd)) {
     player.usedT[k] = Math.max(0, (player.usedT[k] ?? 0) - dt); // the cast flash fades
@@ -84,7 +84,7 @@ function keyInput(): boolean {
   EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });
   // Each key fires its own skill (an upgrade fires from its base's key, an air
   // form from its ground form's: see castrules.AIR_FORM).
-  for (const k of SKILL_ORDER) if (pressed(k)) cast(k);
+  for (const k of SKILL_ORDER) if (pressed(slotOf(k))) cast(k);
   // dev keys (?dev only): [ levels up, ] warps to the next floor, \ maxes out
   if (!dev.on) return false;
   if (pressed('[')) gainExp(player.expNext - player.exp);
@@ -125,7 +125,7 @@ function bufferHeld(): boolean {
   const queued = player.casting.queued;
   if (!queued) return false;
   // a chained Double Shot waits out the slide itself
-  if (queued === 'Z' && player.rush.t > 0) return true;
+  if (queued === 'z' && player.rush.t > 0) return true;
   // a link waits for the cast it links off to reach its recovery
   const kind = skillFor(queued);
   if (linkable(kind)) return linkHeld(kind);
@@ -144,7 +144,7 @@ function fireBuffered(): void {
   if (aim !== 0) player.face = aim;
   if (bufferHeld()) return;
   player.casting.queued = null;
-  cast(k, k === 'Z');
+  cast(k, k === 'z');
 }
 
 /** Up beside a town NPC talks to them; standing on a portal, Up warps to

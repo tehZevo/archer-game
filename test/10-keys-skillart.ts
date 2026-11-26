@@ -4,7 +4,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   resetBinds();
   check('by default every action is on its own key', ACTIONS.every((a) => binds[a.id] === a.id && actionFor(a.id) === a.id));
   bindKey('z', 'j');
-  check('a rebound key drives its action', actionFor('j') === 'z' && keyName('Z') === 'J');
+  check('a rebound key drives its action', actionFor('j') === 'z' && keyName('z') === 'J');
   check("the action's old key does nothing now", actionFor('z') === '');
   check('keys that are not actions pass through', actionFor('left') === 'left' && actionFor('escape') === 'escape');
   bindKey('c', 'j');
@@ -35,7 +35,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   settingsKey('escape');
   // in game: the rebound key's action is what the game sees
   bindKey('a', 'h');
-  check('the HUD and menus label the bound key', keyName('a') === 'H' && keyName('s') === 'S');
+  check('the HUD and menus label the bound key', keyName('a') === 'H' && keyName('s') === 's');
   resetBinds();
 }
 
@@ -44,16 +44,16 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const ready = (): void => { for (const k of Object.keys(player.cd)) player.cd[k] = 0; player.casting.useT = 0; player.mp = 999; };
   const fxOf = (t: string): boolean => game.fx.some((f) => f.type === t);
   const air = (): void => { player.y -= 40; player.vy = 0; player.onGround = false; };
-  arena(30); player.ranks.E = true; player.ranks.W = true; player.ranks.MS = true; player.ranks.R = true;
+  arena(30); player.ranks['ground-e'] = true; player.ranks['ground-w'] = true; player.ranks['air-w'] = true; player.ranks.r = true;
   ready(); game.fx.length = 0; tap('e');
   check('Piercing Leap erupts spikes from the ground', fxOf('spikes') && !fxOf('rush'));
-  arena(30); player.ranks.W = true; player.ranks.MS = true; ready(); air(); game.fx.length = 0; tap('w');
+  arena(30); player.ranks['ground-w'] = true; player.ranks['air-w'] = true; ready(); air(); game.fx.length = 0; tap('w');
   check('the Cyclone Sweep whirls blades round you and spins the archer', fxOf('spin') && localPose() === 'spin');
-  arena(30); player.ranks.R = true; ready(); game.fx.length = 0; tap('r');
+  arena(30); player.ranks.r = true; ready(); game.fx.length = 0; tap('r');
   check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
   step(43);
   check('...and she is back once it ends', localPose() !== 'vanish');
-  arena(30); player.ranks.AD = true; ready(); air(); tap('q'); step(4); // past the windup
+  arena(30); player.ranks['air-q'] = true; ready(); air(); tap('q'); step(4); // past the windup
   check('the Meteor Dive draws its dive pose', player.diving && localPose() === 'dive');
   release();
 }

@@ -99,7 +99,7 @@ function skillSlot(k: SkillKey, cs: string, x: number, y: number): void {
   let frac = Math.min(1, (player.cd[cs] || 0) / (player.cdMax[cs] || 1));
   // Electric Blitz banks charges rather than cooling down: with none left,
   // the recharge shows like a cooldown
-  if (s.key === 'EB' && player.blitz.charges <= 0) frac = 1 - player.blitz.t / P.BLITZ_CHARGE_T;
+  if (s.key === 'eb' && player.blitz.charges <= 0) frac = 1 - player.blitz.t / P.BLITZ_CHARGE_T;
   ctx.globalAlpha = learned ? 1 : 0.4;
   ctx.drawImage(skillIcon(s.key), x, y);
   ctx.globalAlpha = 1;
@@ -107,7 +107,7 @@ function skillSlot(k: SkillKey, cs: string, x: number, y: number): void {
   if (frac > 0) { ctx.fillStyle = '#000a'; ctx.fillRect(x, y, ICON, Math.ceil(ICON * frac)); }
   // ...and how many are in the bank (a lit pip each), with the next one
   // filling in as a thin line under them
-  if (s.key === 'EB') {
+  if (s.key === 'eb') {
     for (let c = 0; c < P.BLITZ_MAX; c++) {
       ctx.fillStyle = c < player.blitz.charges ? '#6fd3ff' : '#0007';
       ctx.fillRect(x + 1 + c * 3, y + ICON - 3, 2, 2);

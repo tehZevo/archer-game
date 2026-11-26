@@ -60,13 +60,13 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   // Q rushes chain into Double Shot: Z pressed during the rush fires the moment
   // it ends, and right after it at once. The chain skips the rush's ending lag
   // once: one quick shot, not repeated uses.
-  if (kind === 'Z' && !chained && (player.rush.t > 0 || rushHolding())) return buffer('Z');
-  if (kind === 'Z' && chainsZ()) chained = true;
+  if (kind === 'z' && !chained && (player.rush.t > 0 || rushHolding())) return buffer('z');
+  if (kind === 'z' && chainsZ()) chained = true;
 
   // A link doesn't skip the skill's cooldown.
   if (player.cd[cdSlot(key, airborne)] > 0) return null;
   // Electric Blitz spends a banked charge (Down + Q, the strike in place, needs none).
-  if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
+  if (kind === 'eb' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
   // An attack skill's use time (and its recovery) blocks every other skill;
   // a link bypasses it. Only a skill the current cast links into is buffered to
@@ -75,8 +75,8 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   if (busy && !linked && !chained) return null;
 
   // Attack skills need both hands on the bow: on a ladder only Glide works.
-  if (player.climb && kind !== 'D') return null;
-  if (kind === 'D' && !airborne) return null;
+  if (player.climb && kind !== 'd') return null;
+  if (kind === 'd' && !airborne) return null;
   return { linked, chained };
 }
 
@@ -99,8 +99,8 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   // refills a Blitz, and the Cyclone Sweep's cooldown.
   player.fervor = Math.min(5, player.fervor + 1);
   player.fervorT = 9;
-  player.cd.R = Math.max(0, player.cd.R - 1);
-  player.cd.E = Math.max(0, player.cd.E - 1);
-  player.cd['W.air'] = Math.max(0, player.cd['W.air'] - 1);
+  player.cd.r = Math.max(0, player.cd.r - 1);
+  player.cd['ground-e'] = Math.max(0, player.cd['ground-e'] - 1);
+  player.cd['ground-w.air'] = Math.max(0, player.cd['ground-w.air'] - 1);
   if (player.blitz.charges < P.BLITZ_MAX) player.blitz.t += 1;
 }

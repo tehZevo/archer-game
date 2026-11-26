@@ -14,15 +14,15 @@ const CLIMB: Pad[] = [
 ];
 const SKILLS: Pad[] = [
   { id: 'c', label: 'C' },
-  { id: 'd', label: 'D' },
-  { id: 'z', label: 'Z' },
-  { id: 'q', label: 'Q' },
-  { id: 'w', label: 'W' },
-  { id: 'e', label: 'E' },
-  { id: 'r', label: 'R' },
+  { id: 'd', label: 'd' },
+  { id: 'z', label: 'z' },
+  { id: 'q', label: 'ground-q' },
+  { id: 'w', label: 'ground-w' },
+  { id: 'e', label: 'ground-e' },
+  { id: 'r', label: 'r' },
   { id: 'x', label: 'X' },
   { id: 'a', label: 'A' },
-  { id: 's', label: 'S' },
+  { id: 's', label: 's' },
   { id: 'escape', label: 'II' },
   { id: 'chat', label: '…' },
 ];

@@ -64,20 +64,20 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
   check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
-  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = true; player.ranks.Z = false;
+  wallet.coins = RESPEC_PRICES.swap; player.ranks.s = true; player.ranks.z = false;
   tap('up');
   check('Up beside the trainer opens the trainer', trainer.open && trainer.sel === 0);
   tap('z');
-  check('a branch swap keeps the rank and takes the coins', player.ranks.Z === true && player.ranks.S === false && wallet.coins === 0);
+  check('a branch swap keeps the rank and takes the coins', player.ranks.z === true && player.ranks.s === false && wallet.coins === 0);
   tap('escape');
 
-  player.ranks.S = false; player.ranks.Z = true; player.stats.dex = 4; player.ap = 0; player.sp = 0;
+  player.ranks.s = false; player.ranks.z = true; player.stats.dex = 4; player.ap = 0; player.sp = 0;
   wallet.coins = RESPEC_PRICES.reset;
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent (Glide too)',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === true && player.sp === 4 && player.ranks.D === false && wallet.coins === 0,
-    `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.z === true && player.sp === 4 && player.ranks.d === false && wallet.coins === 0,
+    `ap ${player.ap} sp ${player.sp} Z ${player.ranks.z}`);
   tap('escape');
   release();
 
@@ -123,19 +123,19 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Glide and the climb rush are bought with SP, not given
-  check('a new archer has Double Shot free, Glide not yet', DEFS.D.learn === true && startsLearned('Z') && !startsLearned('D'));
-  arena(1); player.ranks.D = false; player.sp = 1;
-  check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'D' && !r.learned && !!r.action) && spendSkill('D') && player.ranks.D === true);
-  check('Acrobatics opens at Lv.10', DEFS.AC.minLevel === 10 && !skillRows().some((r) => r.key === 'AC'));
+  check('a new archer has Double Shot free, Glide not yet', DEFS.d.learn === true && startsLearned('z') && !startsLearned('d'));
+  arena(1); player.ranks.d = false; player.sp = 1;
+  check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'd' && !r.learned && !!r.action) && spendSkill('d') && player.ranks.d === true);
+  check('Acrobatics opens at Lv.10', DEFS.ac.minLevel === 10 && !skillRows().some((r) => r.key === 'ac'));
   const onRope = (): void => {
     const c = [...game.floor.ropes, ...game.floor.ladders][0];
     player.climb = c; player.x = c.x; player.y = c.y2 - player.h - 1; player.onGround = false; player.vx = player.vy = 0;
   };
-  arena(10); player.ranks.AC = false; onRope();
+  arena(10); player.ranks.ac = false; onRope();
   setKey('up', true); tap('c');
   check('without Acrobatics, Up + Jump on a rope does not rush', !player.climbRush);
   release();
-  arena(10); player.ranks.AC = true; onRope();
+  arena(10); player.ranks.ac = true; onRope();
   setKey('up', true); tap('c');
   check('with it, Up + Jump rushes up the rope', player.climbRush);
   check('...trailing green rising streaks', game.fx.some((f) => f.type === 'climbRise'));
@@ -145,7 +145,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   // Acrobatics' flat climb-speed bonus is gone: a plain Up climb rises at the
   // base speed with or without it (the passive now only gives the climb-rush).
   const climbOneStep = (ac: number): number => {
-    arena(10); player.ranks.AC = ac;
+    arena(10); player.ranks.ac = ac;
     const c = [...game.floor.ropes, ...game.floor.ladders][0];
     player.climb = c; player.x = c.x; player.y = c.y2 - player.h - 1; player.onGround = false; player.vx = player.vy = 0;
     const y0 = player.y; setKey('up', true); step(1); setKey('up', false);
