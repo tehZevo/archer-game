@@ -147,7 +147,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const hp1 = m.hp; player.casting.useT = 0; tap('w'); step(2);
   check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['ground-w.air'] > 3, `hp ${m.hp} hp1 ${hp1} cd ${player.cd['ground-w.air'].toFixed(2)}`);
   check('the spin lifts you slowly', rising && ySpin - player.y < 15, `rose ${(ySpin - player.y).toFixed(1)}px`);
-  check('the spin cools down for 4s', player.cdMax['ground-w.air'] === P.SPIN_CD && P.SPIN_CD === 4);
+  check('the spin cools down for 8s', player.cdMax['ground-w.air'] === P.SPIN_CD && P.SPIN_CD === 8);
 }
 {
   // Q and Meteor Dive: both paced by the use time alone, no cooldowns

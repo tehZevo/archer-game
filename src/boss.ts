@@ -89,7 +89,11 @@ export function spawnBoss(): void {
  *  how often it misses (see missChance). */
 export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolean {
   if (player.invuln > 0) return false;
-  if (Math.random() < missChance(attackerLvl, player.level)) return false;
+  if (Math.random() < missChance(attackerLvl, player.level)) {
+    // a missed attack shows "MISS" over the player, like the player's own misses
+    game.dmgNums.push({ x: player.x, y: player.y - 14, v: 0, t: 1, crit: false, vy: -80, txt: 'MISS', col: '#ffffff' });
+    return false;
+  }
   if (fromX !== undefined && !player.climb && player.hang.t <= 0) {
     const away = Math.sign(player.x - fromX) || -player.face;
     player.vx = away * P.HIT_PUSH;

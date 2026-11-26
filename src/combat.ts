@@ -30,6 +30,9 @@ export const CRIT_BASE = 1.5;
 export const critMult = (): number => CRIT_BASE + critOverflowPoints() * 0.02;
 /** Built-in damage bonus, raised by the Power Surge passive. */
 export const passiveDmg = (): number => 1.20 + passiveBonus('pp');
+/** Twin Echoes doubles your arrows (see shotCount) at the cost of per-hit
+ *  damage: each arrow deals 60%, so total damage rises from 100% to ~120%. */
+export const twinEchoMult = (): number => passiveBonus('es') > 0 ? 0.6 : 1;
 
 /** Level-based miss rate: each level the target stands above the attacker
  *  adds 5% to the chance of missing it (capped), and the same in reverse.
@@ -59,7 +62,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
     return;
   }
   // the weapon in hand multiplies everything the bow fires
-  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * rand(0.92, 1.08);
+  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * twinEchoMult() * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
   if (crit) dmg *= critMult();
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Rush Toss airborne bonus

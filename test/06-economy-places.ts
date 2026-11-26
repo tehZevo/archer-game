@@ -98,7 +98,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('the game starts in the Harbor, a town below the Beach', START.town === 'saltwick' && areaOf(START) === 'Harbor' && placeName(START) === 'Saltwick Port'
     && pathsFrom('saltwick').length === 1 && pathsFrom('saltwick')[0].name === 'Sunlit Shore');
   check('the Tide Pools are a high branch, past the Sunken Ruins', depthOfPath('tidepools') >= 5 && pathsInto(PATHS.find((p) => p.id === 'tidepools')!.from)[0].name === 'Sunken Ruins');
-  check('places read as area + floor on its path, or the town', placeName(START) === 'Saltwick Port' && placeName({ path: 'shore', floor: 1 }) === 'Sunlit Shore 1' && placeName({ path: 'woods', floor: 2 }) === 'Whispering Woods 2');
+  check('places read as the area (no floor number), or the town', placeName(START) === 'Saltwick Port' && placeName({ path: 'shore', floor: 1 }) === 'Sunlit Shore' && placeName({ path: 'woods', floor: 2 }) === 'Whispering Woods');
   check('every town is named apart', placeName({ town: 'mossgate' }) === 'Mossgate Village' && placeName({ town: 'lanternhollow' }) === 'Lanternhollow Town'
     && new Set(TOWNS.map((t) => t.name)).size === TOWNS.length);
   check('paths are climbed one way: a town\'s ways up all lead to deeper towns', PATHS.every((p) => townDepth(p.to) > townDepth(p.from)));
@@ -110,10 +110,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
   release(); gotoPlace({ town: 'driftwood' });
   const [l, r, d] = game.floor.portals.map((p) => p.label);
-  check('town portals are labelled with where they go', l === 'Whispering Woods 1' && r === 'Sunny Meadows 1' && d === 'Saltwick Port', `${l} | ${r} | ${d}`);
+  check('town portals are labelled with where they go', l === 'Whispering Woods' && r === 'Sunny Meadows' && d === 'Saltwick Port', `${l} | ${r} | ${d}`);
   gotoPlace({ path: 'meadows', floor: 5 });
   check('the way into a town is labelled with its own name', game.floor.portal.label === 'Lanternhollow Town');
-  check('the HUD place follows your path', placeName(game.floor.place) === 'Sunny Meadows 5');
+  check('the HUD place follows your path', placeName(game.floor.place) === 'Sunny Meadows');
   gotoPlace({ town: 'sporehollow' });
   check('a town at the end of a branch has only its way down', game.floor.portals.length === 1 && game.floor.portals[0].down === true);
   gotoPlace(nextPlace(game.floor.place));

@@ -96,11 +96,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   setKey('`', true); step(1); setKey('`', false); step(1);
   check('` opens the dev menu', dev.open);
   const stops = devStops();
-  check('the dev menu lists Beach 1 and every town', placeKey(stops[0].place) === 'shore-1' && stops.length === TOWNS.length + 1
-    && stops.slice(1).every((s, i) => placeKey(s.place) === TOWNS[i].id && s.name.trim() === TOWNS[i].name));
-  check('the dev menu labels towns by their area', stops[2].label === 'Sunlit Shore');
-  dev.sel = 2; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
-  check('picking a town warps there and closes the menu', samePlace(game.floor.place, stops[2].place) && game.floor.town && !dev.open);
+  check('the dev menu is a flat list of each area (1st floor) and every town',
+    placeKey(stops[0].place) === 'shore-1' && stops.length === PATHS.length + TOWNS.length
+    && stops.slice(PATHS.length).every((s, i) => placeKey(s.place) === TOWNS[i].id && s.name === `${TOWNS[i].name} (town)`));
+  check('non-town areas show their level and towns are marked (town)',
+    stops[0].name === 'Sunlit Shore Lv.1' && stops[PATHS.length].name === 'Saltwick Port (town)');
+  dev.sel = PATHS.length; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
+  check('picking a town warps there and closes the menu', samePlace(game.floor.place, stops[PATHS.length].place) && game.floor.town && !dev.open);
   dev.on = false;
   // text chat
   check('chat keeps only what the font draws, upper-cased and capped',
