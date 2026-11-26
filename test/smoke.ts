@@ -68,13 +68,13 @@ player.ranks.D = 1; player.cd.D = 0;
 player.onGround = false; player.y = 500;
 setKey('d', true);
 step(1);
-// Glide commits you for its 0.3s use time; it has no cooldown to gate re-use.
-check('Glide has a 0.3s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.3) < 0.05,
+// Glide commits you for its 0.2s use time; it has no cooldown to gate re-use.
+check('Glide has a 0.2s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.2) < 0.05,
   `cd ${player.cd.D} use ${player.casting.useT.toFixed(2)}`);
 check('Glide launches forward > up', Math.abs(player.vx) > Math.abs(player.vy));
 check('Glide consumes MP', player.mp < player.mpMax);
 setKey('d', false);
-step(9); // the 0.3s glide animation finishes
+step(7); // the 0.2s glide animation finishes
 setKey('d', true);
 step(1);
 check('Glide can be used again mid-air', player.casting.useT > 0 && player.onGround === false,
