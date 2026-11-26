@@ -120,7 +120,7 @@ export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string): DmgN
     // a slow drift (it was 70px/s): fast enough to feel alive, slow enough that
     // a number doesn't rise into the line the next one appears on
     x: m.x, y: m.y - 8 - k * NUM_LINE, v, t: 1, crit, delay: at - now, txt,
-    vy: -12, col: crit ? '#ffd166' : '#ffffff',
+    vy: -12, col: crit ? '#ff4d4d' : '#ffb347',
   };
 }
 
