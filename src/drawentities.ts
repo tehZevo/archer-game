@@ -1,3 +1,4 @@
+import { drawLoop } from './drawfx';
 import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { ELITE, FX_DUR, P } from './config';
 import { deathPose, DEATH_T, ghostRise, getPlayerDeath, tombDrop, type Corpse } from './deaths';
@@ -281,6 +282,10 @@ export function drawPlayer(): void {
     const pose = player.cast ? 'shoot' : localPose();
     drawArcher(myLook(), player.x - player.face * 14, player.y + player.h, player.face, pose, t, 0.45,
       player.cast ? player.castTotal - player.castT : undefined, ECHO_TINT);
+  }
+  // a ground rush's own aura streams behind her while she slides
+  if (player.rush.t > 0 && player.rush.look) {
+    drawLoop(player.rush.look, player.x, player.y + player.h, performance.now() / 1000, 16, Math.sign(player.vx) || player.face);
   }
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     invulnAlpha(), player.castTotal - player.castT);

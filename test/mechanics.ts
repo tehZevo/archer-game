@@ -628,6 +628,22 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
   check('the shadow doubles a mid-air Downpour too', shotCount(rank('PV')) === 4, `${shotCount(rank('PV'))}`);
 }
+{
+  // each ground rush wears its own aura and scuffs the floor it slides over
+  arena(20); player.ranks.Q = 1;
+  game.fx.length = 0;
+  tap('q'); step(4);
+  check('Rush Toss slides in its own aura', player.rush.t > 0 && player.rush.look === 'tossRush');
+  check('...scuffing the ground behind it', game.fx.some((f) => f.type === 'tossTrail'));
+  arena(20); player.ranks.Q = 3; player.ranks.EB = 1;
+  game.fx.length = 0;
+  tap('q'); step(4);
+  check('Electric Blitz has its own, distinct aura and scuffs', player.rush.look === 'blitzRush' && game.fx.some((f) => f.type === 'blitzTrail') && !game.fx.some((f) => f.type === 'tossTrail'));
+  arena(20); player.ranks.Q = 1;
+  setKey('down', true); tap('q'); setKey('down', false);
+  check('an in-place rush has no slide aura', !(player.rush.t > 0 && player.rush.look));
+  player.blitz.charges = P.BLITZ_MAX; player.cd.Q = 0; player.readyT.Q = 0; // leave Q as the blitz tests expect
+}
 // --- Electric Blitz: Q's charged upgrade ---
 {
   arena(20); player.ranks.Q = 3; player.ranks.EB = 1;

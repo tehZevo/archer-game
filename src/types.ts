@@ -249,6 +249,10 @@ export interface RushState {
   goal: number;
   /** Enemies being pushed along, at their distance ahead of the player. */
   carry: { m: Mob; off: number }[];
+  /** The slide's own effect on the archer, and the scuffs it leaves (null: none, e.g. the dive). */
+  look?: RushLook | null;
+  /** px slid since the last ground scuff. */
+  scuff?: number;
 }
 
 export interface Hover {
@@ -364,7 +368,9 @@ export interface Shot {
 /** Effects are all baked animations (see fxsprites.ts). */
 export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
   | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit'
-  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand';
+  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand' | 'tossTrail' | 'blitzTrail';
+/** The looping effect on the archer for a ground rush's slide (see drawRushAura). */
+export type RushLook = 'tossRush' | 'blitzRush';
 
 export interface Fx {
   type: FxKind;

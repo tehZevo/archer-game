@@ -46,6 +46,12 @@ function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 
 }
 
 
+/** A looping effect sheet at (x, y), stepping `fps` frames a second of time `t`. */
+export function drawLoop(name: string, x: number, y: number, t: number, fps: number, face = 1): void {
+  const n = FX()[name].frames.length;
+  drawAnim(name, x, y, (Math.floor(t * fps) % n + 0.5) / n, face);
+}
+
 export function drawFx(f: Fx): void {
   drawAnim(f.type, f.x, f.y, 1 - f.t / FX_DUR[f.type], f.face ?? 1, f.sx ?? 1);
 }

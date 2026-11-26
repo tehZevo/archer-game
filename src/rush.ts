@@ -1,5 +1,5 @@
 import { FX_DUR, P } from './config';
-import type { FxKind } from './types';
+import type { FxKind, RushLook } from './types';
 import { game, mobBounds, player } from './state';
 import { damage, hitbox } from './combat';
 import { surfaceBetween, surfaceYAt } from './physics';
@@ -18,11 +18,27 @@ export function clearRushStrike(): void {
 }
 
 /** Start a slide (or the Meteor Dive's plunge) that scoops up enemies for `t` seconds. */
-export function startSlide(t: number, goal = 0): void {
+export function startSlide(t: number, goal = 0, look: RushLook | null = null): void {
   player.rush.t = t;
   player.rush.dist = 0;
   player.rush.goal = goal;
   player.rush.carry = [];
+  player.rush.look = look;
+  player.rush.scuff = 0;
+}
+
+/** px between the scuffs a ground rush leaves on the floor. */
+const SCUFF_GAP = 12;
+/** Leave a fading scuff where the slide has been (Rush Toss: dust and wind;
+ *  Electric Blitz: scorch and sparks). */
+function scuff(dx: number): void {
+  const look = player.rush.look;
+  if (!look || !player.onGround) return;
+  player.rush.scuff = (player.rush.scuff ?? 0) + dx;
+  if (player.rush.scuff < SCUFF_GAP) return;
+  player.rush.scuff -= SCUFF_GAP;
+  const type = look === 'blitzRush' ? 'blitzTrail' : 'tossTrail';
+  game.fx.push({ type, x: player.x, y: player.y + player.h, t: FX_DUR[type], face: Math.sign(player.vx) || player.face });
 }
 
 /**
@@ -34,6 +50,7 @@ export function updateRush(dt: number): void {
   if (player.rush.t <= 0) return;
   player.rush.t -= dt;
   player.rush.dist += Math.abs(player.vx) * dt;
+  scuff(Math.abs(player.vx) * dt);
   const face = Math.sign(player.vx) || player.face;
   grab(face);
   push(face);
@@ -87,7 +104,7 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
   pose('rush', blitz ? 'EB' : 'Q');
   if (inPlace) armStrike(true)();
   else {
-    slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST);
+    slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST, 'rush', blitz ? 'blitzRush' : 'tossRush');
     if (blitz) player.blitz.charges--;
   }
   openLink('combo', linkWindow(blitz ? 'EB' : 'Q'));
@@ -104,11 +121,12 @@ function armStrike(inPlace: boolean, fx: FxKind = 'rush'): () => void {
   return rushStrike;
 }
 
-/** Slide forward at `v` px/s, for at most `t` s or `dist` px, striking (with burst `fx`) at the end. */
-function slide(v: number, t: number, dist: number, fx: FxKind = 'rush'): void {
+/** Slide forward at `v` px/s, for at most `t` s or `dist` px, striking (with
+ *  burst `fx`) at the end; `look` is the slide's own effect on the archer. */
+function slide(v: number, t: number, dist: number, fx: FxKind = 'rush', look: RushLook | null = null): void {
   armStrike(false, fx);
   player.vx = player.face * v;
-  startSlide(t, dist);
+  startSlide(t, dist, look);
 }
 
 /** The rush's strike: the carried enemies, then the nearest ones ahead. `fx`
