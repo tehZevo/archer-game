@@ -1,4 +1,4 @@
-import { mobLevel, PATHS, placeTier, TOWNS, type Place } from './world';
+import { mobLevel, PATHS, placeTier, TOWNS, townDepth, type Path, type Place, type Town } from './world';
 import { bannerMsg, player } from './state';
 import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
 import { SKILLS } from './config';
@@ -20,14 +20,20 @@ export const dev = {
   sel: 0,
 };
 
-/** The dev menu's rows: a single flat list of every area — each path's first
- *  floor (with the level its mobs are) and every town (marked "(town)"). Each
- *  row is prefixed with its tier ("T1", "T2", …): the tier of the town you
- *  climb up from to reach it. */
-export const devStops = (): { place: Place; name: string }[] => [
-  ...PATHS.map((p) => ({ place: { path: p.id, floor: 1 }, name: `T${placeTier({ path: p.id, floor: 1 })} ${p.name} Lv.${mobLevel({ path: p.id, floor: 1 })}` })),
-  ...TOWNS.map((t) => ({ place: { town: t.id }, name: `T${placeTier({ town: t.id })} ${t.name} (town)` })),
-];
+/** The dev menu's rows: a single flat list of every town (marked "(town)") and
+ *  every area's first floor (with the level its mobs are), sorted by tier, each
+ *  town placed right before the areas it links up to. Each row is prefixed with
+ *  its tier ("T1", "T2", …): the tier of the town you climb up from to reach it. */
+export const devStops = (): { place: Place; name: string }[] => {
+  const area = (p: Path): { place: Place; name: string } => {
+    const place = { path: p.id, floor: 1 };
+    return { place, name: `T${placeTier(place)} ${p.name} Lv.${mobLevel(place)}` };
+  };
+  const town = (t: Town): { place: Place; name: string } => ({ place: { town: t.id }, name: `T${placeTier({ town: t.id })} ${t.name} (town)` });
+  // by tier; each town comes right before the areas that climb up out of it
+  const towns = [...TOWNS].sort((a, b) => townDepth(a.id) - townDepth(b.id));
+  return towns.flatMap((t) => [town(t), ...PATHS.filter((p) => p.from === t.id).map(area)]);
+};
 
 /** Dev menu rows shown at once (it scrolls to keep the selection in view). */
 export const DEV_ROWS = 12;
