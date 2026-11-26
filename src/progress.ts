@@ -192,7 +192,7 @@ const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 
 // TODO: Vault Shot, Rising Arrow and Backstep Shot stay in the game's code
 // (their cast cases, stats and icons) but are off the acquirable list for now;
 // reconsider bringing them back once the Q/W combo (rush, then launch) is in.
-const RETIRED: SkillKey[] = ['BS', 'VS', 'RA'];
+export const RETIRED: SkillKey[] = ['BS', 'VS', 'RA'];
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {

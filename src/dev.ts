@@ -1,7 +1,7 @@
 import { PATHS, START_TOWN, TOWNS, townArea, townDepth, type Place } from './world';
 import { bannerMsg, player } from './state';
-import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
-import { SKILLS, SKILL_BAR } from './config';
+import { activeSkill, AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats, RETIRED } from './progress';
+import { SKILL_BAR } from './config';
 
 /* ============================================================
    DEV MODE
@@ -49,6 +49,10 @@ export const maxOut = (): void => {
   recalcStats();
   player.hp = player.hpMax;
   player.mp = player.mpMax;
-  for (const { skill } of SKILL_BAR) if (skill) player.ranks[skill] = SKILLS[skill].maxLevel;
+  for (const { skill } of SKILL_BAR) {
+    if (!skill) continue;
+    const s = activeSkill(skill);
+    if (!RETIRED.includes(s.key)) player.ranks[s.key] = s.maxLevel;
+  }
   bannerMsg('MAXED', 'LEVEL 100 - SKILL BAR MAXED');
 };
