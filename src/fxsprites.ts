@@ -162,6 +162,26 @@ function spinAnim(rp: RampName = 'red'): FxSheet {
   });
 }
 
+/** Cyclone Sweep's whirl, drawn in place of the archer while the sweep
+ *  plays: a body-sized vortex of red bands wound round a white-hot core,
+ *  the bands advancing round it frame by frame so the turn is in the art.
+ *  Origin at the middle (the archer's body middle). */
+export const CYCLONE_FRAMES = 8;
+function cycloneAnim(): FxSheet {
+  const W = 36, H = 40, c = W / 2, m = H / 2;
+  return anim(W, H, c, m, CYCLONE_FRAMES, (L, f) => {
+    const R = rng(131 + f), spin = (f / CYCLONE_FRAMES) * Math.PI * 2;
+    L.disc('red', c, m, 6, 1.3);                       // the white-hot core
+    L.line('red', c, m - 11, c, m + 11, 1.2, 1.2, 1.1); // the body's axis, a bright streak
+    // three bands wound at different radii, each sweeping its own arc
+    for (let b = 0; b < 3; b++) {
+      const a0 = spin + b * (Math.PI * 2 / 3), rx = 8 + b * 2.5, ry = 13 + b * 2;
+      arc(L, b === 2 ? 'orange' : 'red', c, m, rx, ry, 1.6 - b * 0.3, 1.15 - b * 0.15, a0, a0 + 2.2);
+    }
+    for (let i = 0; i < 3; i++) { const a = spin + R() * 6.28; L.spark('orange', c + Math.cos(a) * 15, m + Math.sin(a) * 18, 0.9, i === 0); }
+  });
+}
+
 /** Level up: a gold pillar of light at the player's feet with rings and
  *  rising sparkles. Origin at the feet. */
 function levelUpAnim(): FxSheet {
@@ -498,6 +518,7 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   spikes: () => spikesAnim(),
   tempest: () => tempestAnim(),
   spin: () => spinAnim(),
+  cyclone: () => cycloneAnim(),
   levelUp: () => levelUpAnim(),
   rush: () => rushAnim(),
   diveLand: () => rushAnim('yellow', 'gold'),

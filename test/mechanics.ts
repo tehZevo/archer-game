@@ -60,7 +60,7 @@ import { openStylist, STYLIST_ROWS } from '../src/stylist';
 import { devInput } from '../src/windows';
 import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
 import { say } from '../src/net';
-import { archerFrame, climbPhase, GRIDS, POSE_FPS, poseCycle } from '../src/archer';
+import { archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
@@ -3267,6 +3267,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('c');
   check('once movement is free, Jump fires on the press', !player.onGround && player.vy < 0, `vy ${player.vy.toFixed(0)}`);
 }
+{
+  // the dive's pitch is drawn into the frame (no canvas rotation): a square
+  // frame holding the same figure, turned head-down
+  const g = GRIDS.dive[0], p = pitch(g, DIVE_PITCH);
+  const ink = (r: string[]): number => r.join('').replace(/\./g, '').length;
+  check('a pitched frame is square and holds the whole figure', p.length === p[0].length && p.length >= Math.hypot(g[0].length, g.length));
+  check('...with about the same number of pixels', Math.abs(ink(p) - ink(g)) / ink(g) < 0.2, `${ink(p)} vs ${ink(g)}`);
+  check('...and no new colours', [...new Set(p.join(''))].every((ch) => g.join('').includes(ch)));
+  check('a zero pitch keeps the figure upright (centred in the square)', pitch(g, 0).filter((r) => r.includes('h')).length >= 1);
+}
+
 {
   // The loop contract (loop.ts): a key tap is consumed by the first physics
   // step that sees it, so a frame that runs several catch-up steps doesn't

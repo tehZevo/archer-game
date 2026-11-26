@@ -7,6 +7,7 @@ import tracer from '../assets/fx/tracer.png';
 import spikes from '../assets/fx/spikes.png';
 import tempest from '../assets/fx/tempest.png';
 import spin from '../assets/fx/spin.png';
+import cyclone from '../assets/fx/cyclone.png';
 import levelUp from '../assets/fx/levelUp.png';
 import rush from '../assets/fx/rush.png';
 import diveLand from '../assets/fx/diveLand.png';
@@ -41,6 +42,7 @@ export const BAKED: Record<string, BakedSheet> = {
   spikes: { src: spikes, w: 122, h: 40, n: 8, ox: 61, oy: 37 },
   tempest: { src: tempest, w: 168, h: 72, n: 10, ox: 84, oy: 48 },
   spin: { src: spin, w: 52, h: 52, n: 6, ox: 26, oy: 38 },
+  cyclone: { src: cyclone, w: 36, h: 40, n: 8, ox: 18, oy: 20 },
   levelUp: { src: levelUp, w: 44, h: 70, n: 10, ox: 22, oy: 66 },
   rush: { src: rush, w: 30, h: 52, n: 8, ox: 15, oy: 48 },
   diveLand: { src: diveLand, w: 30, h: 52, n: 8, ox: 15, oy: 48 },

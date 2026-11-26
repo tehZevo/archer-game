@@ -119,8 +119,9 @@ const CLIMB = [
    '.....ollolloo...', '.....ollo.llo...', '.....obbo.obbo..', '.....obbo.obbo..', '.....oooo.oooo..', '................'],
 ];
 
-// Cyclone Sweep: tucked tight, knees pulled up, bow held out (render.ts
-// whirls the frame round a full turn).
+// Cyclone Sweep: tucked tight, knees pulled up, bow held out. (While the
+// sweep plays the archer is drawn as its glowing whirl instead, the
+// 'cyclone' effect sheet; this frame is the pose either side of it.)
 const SPIN_LOWER = [
   '....olllllloo...',
   '....ollllllbbo..',
@@ -131,7 +132,7 @@ const SPIN_LOWER = [
 ];
 
 // Meteor Dive: stretched out head-first, bow reaching ahead, legs together
-// and trailing (render.ts pitches the frame down the line of the dive).
+// and trailing, pitched down the line of the dive at bake time (pitch()).
 // The second frame flutters the feet.
 const DIVE_LEGS = [
   ['.....olllloo....', '.....olllloo....', '.....ollllo.....', '.....obbbbo.....', '.....obbbbo.....', '.....oooooo.....'],
@@ -141,6 +142,52 @@ const DIVE_LEGS = [
 /** Every other pixel gone: the Tempest's shimmer as you blink out. */
 const dither = (g: string[], odd: number): string[] =>
   g.map((r, y) => [...r].map((ch, x) => ((x + y + odd) % 2 ? '.' : ch)).join(''));
+
+/* ---------------- pitching a frame (no canvas rotation) ----------------
+   The dive's head-down angle lives in the frame itself: the grid is scaled
+   up 4x with EPX (which rounds off diagonal edges instead of blocking
+   them), turned, and sampled back down at each pixel's centre, so the
+   pitched archer is still clean pixel art. The result is a square frame
+   centred on the body's middle (drawArcher centres every frame there). */
+
+/** How far the Meteor Dive pitches you head-down, radians (clockwise, facing right). */
+export const DIVE_PITCH = 0.8;
+
+/** EPX / Scale2x: each pixel becomes 4, corners taking a neighbour's colour
+ *  where two neighbours agree, so slopes stay smooth. */
+function epx(g: string[]): string[] {
+  const h = g.length, w = g[0].length, at = (x: number, y: number): string => g[Math.max(0, Math.min(h - 1, y))][Math.max(0, Math.min(w - 1, x))];
+  const out: string[] = [];
+  for (let y = 0; y < h; y++) {
+    let r0 = '', r1 = '';
+    for (let x = 0; x < w; x++) {
+      const p = at(x, y), a = at(x, y - 1), b = at(x + 1, y), c = at(x - 1, y), d = at(x, y + 1);
+      r0 += (c === a && c !== d && a !== b ? a : p) + (a === b && a !== c && b !== d ? b : p);
+      r1 += (d === c && d !== b && c !== a ? c : p) + (b === d && b !== a && d !== c ? d : p);
+    }
+    out.push(r0, r1);
+  }
+  return out;
+}
+
+/** The grid turned by `a` radians about its middle, into a square frame big enough to hold it. */
+export function pitch(g: string[], a: number): string[] {
+  const big = epx(epx(g)), K = 4, h = g.length, w = g[0].length;
+  const S = Math.ceil(Math.hypot(w, h)) + 1 & ~1; // even, so the middle is a pixel corner
+  const cos = Math.cos(a), sin = Math.sin(a), out: string[] = [];
+  for (let y = 0; y < S; y++) {
+    let row = '';
+    for (let x = 0; x < S; x++) {
+      const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2;
+      // back from the output pixel to the source: the inverse turn
+      const sx = (cos * dx + sin * dy + w / 2) * K, sy = (-sin * dx + cos * dy + h / 2) * K;
+      const ix = Math.floor(sx), iy = Math.floor(sy);
+      row += ix >= 0 && iy >= 0 && ix < w * K && iy < h * K ? big[iy][ix] : '.';
+    }
+    out.push(row);
+  }
+  return out;
+}
 
 /** Swap one row band of a frame: rows [from, from + band.length). */
 function withRows(base: string[], from: number, band: string[]): string[] {
@@ -277,11 +324,12 @@ export function styled(grid: string[], pose: ArcherPose, style: number, body = 0
   return g;
 }
 
-/** Bake a grid; frames are ARCHER_W wide except wider ones (prone). */
+/** Bake a grid; frames are ARCHER_W x ARCHER_H except wider ones (prone)
+ *  and the pitched dive's square ones. */
 function bake(grid: string[], flip: boolean, pal: Record<string, string>): HTMLCanvasElement {
   const c = document.createElement('canvas');
   const W = grid[0].length;
-  c.width = W; c.height = ARCHER_H;
+  c.width = W; c.height = grid.length;
   const x = c.getContext('2d') as CanvasRenderingContext2D;
   grid.forEach((row, y) => {
     for (let i = 0; i < W; i++) {
@@ -297,7 +345,8 @@ export function bakeArcher(look: Look = DEFAULT_LOOK): Record<ArcherPose, HTMLCa
   const pal = { ...PAL, ...lookPalette(look) };
   const out = {} as Record<ArcherPose, HTMLCanvasElement[]>;
   for (const p of Object.keys(GRIDS) as ArcherPose[]) {
-    const grids = GRIDS[p].map((g) => styled(g, p, look.style, look.body));
+    // the dive is pitched after the hair and face are on it, so they turn too
+    const grids = GRIDS[p].map((g) => styled(g, p, look.style, look.body)).map((g) => (p === 'dive' ? pitch(g, DIVE_PITCH) : g));
     out[p] = grids.map((g) => bake(g, false, pal));
     if (p === 'climb') out[p].push(bake(grids[0], true, pal));
   }
