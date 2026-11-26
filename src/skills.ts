@@ -7,6 +7,7 @@ import { sfx } from './audio';
 import { netShot } from './net';
 import { activeSkill, isLearned, passiveBonus, rank, shotCount } from './progress';
 import type { SkillKey } from './types';
+import { closeLink, closeLinks, endHover, linkOpen, linksIn, openLink } from './links';
 
 /** Airborne enemies Sky Assault can reach: around and below the player. */
 export function barrageTargets() {
@@ -27,20 +28,20 @@ let rushStrike: (() => void) | null = null;
  * strike when the slide ends (time up, slowed down, or left the ground).
  */
 export function updateRush(dt: number): void {
-  if (player.rushT <= 0) return;
-  player.rushT -= dt;
-  player.rushDist += Math.abs(player.vx) * dt;
+  if (player.rush.t <= 0) return;
+  player.rush.t -= dt;
+  player.rush.dist += Math.abs(player.vx) * dt;
   const face = Math.sign(player.vx) || player.face;
   // the grab reaches a little behind you too, so an enemy you just passed is still scooped up
   const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
   for (const m of hitbox(grabX, player.y + player.h / 2, P.RUSH_GRAB + P.RUSH_GRAB_BACK, 40)) {
-    if (player.rushCarry.length >= rank('Q').targets) break; // carry only as many as it hits
-    if (player.rushCarry.some((c) => c.m === m)) continue;
-    player.rushCarry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
+    if (player.rush.carry.length >= rank('Q').targets) break; // carry only as many as it hits
+    if (player.rush.carry.some((c) => c.m === m)) continue;
+    player.rush.carry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
     damage(m, rank('Q').dmg * P.RUSH_HIT); // the charge itself hits, once per enemy (this can kill it)
   }
-  player.rushCarry = player.rushCarry.filter((c) => game.mobs.includes(c.m));
-  for (const c of player.rushCarry) {
+  player.rush.carry = player.rush.carry.filter((c) => game.mobs.includes(c.m));
+  for (const c of player.rush.carry) {
     const m = c.m;
     const [lo, hi] = mobBounds(m);
     m.x = Math.max(lo, Math.min(hi, player.x + face * c.off)); m.vx = 0;
@@ -52,12 +53,12 @@ export function updateRush(dt: number): void {
   }
   // the slide covers its fixed distance: contact with an enemy slows you, but
   // the slide keeps going until the distance (or the ground, or the clock) ends
-  if (player.rushDist >= player.rushGoal || player.rushT <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
+  if (player.rush.dist >= player.rush.goal || player.rush.t <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 
 /** End a Sky Toss slide now and land its strike. */
 export function endRush(): void {
-  player.rushT = 0;
+  player.rush.t = 0;
   rushStrike?.();
 }
 
@@ -76,8 +77,8 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
   const face = player.face;
   rushStrike = (): void => {
     rushStrike = null;
-    const carried = player.rushCarry.map((c) => c.m);
-    player.rushCarry = [];
+    const carried = player.rush.carry.map((c) => c.m);
+    player.rush.carry = [];
     const cx = inPlace ? player.x : player.x + face * 24;
     const near = hitbox(cx, player.y + player.h / 2, 96, 64).filter((m) => !carried.includes(m));
     const tg = [...carried, ...near].filter((m) => game.mobs.includes(m)).slice(0, r.targets);
@@ -99,13 +100,13 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
   if (inPlace) rushStrike();
   else {
     player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
-    player.rushT = P.RUSH_MAX;
-    player.rushDist = 0;
-    player.rushGoal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
-    player.rushCarry = [];
-    if (blitz) player.blitzCharges--;
+    player.rush.t = P.RUSH_MAX;
+    player.rush.dist = 0;
+    player.rush.goal = blitz ? P.BLITZ_DIST : P.RUSH_DIST;
+    player.rush.carry = [];
+    if (blitz) player.blitz.charges--;
   }
-  player.combo = 1.1; player.comboT = 1.1;
+  openLink('combo', 1.1);
 }
 
 /** The Air Dive touched down: roll straight into the real ground rush (its
@@ -150,7 +151,7 @@ export const AIR_MIN_H = (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
 /** Sky Assault's opening leap is still playing (a Midair Spin pressed now is
  *  buffered; once it's done the sweep fires straight out of the hover). */
 export const assaultLeaping = (): boolean =>
-  player.cast === 'barrage' && player.hangT > 0 && player.castTotal - player.castT < P.ASSAULT_LEAP;
+  player.cast === 'barrage' && player.hang.t > 0 && player.castTotal - player.castT < P.ASSAULT_LEAP;
 
 export function cast(key: SkillKey, chained = false): void {
   const ground = activeSkill(key);
@@ -179,19 +180,16 @@ export function cast(key: SkillKey, chained = false): void {
   // also opens a window for the Plunging Volley, chaining the aerial kit.
   // (The Q-slot window covers whichever ground rush is equipped: Sky Toss
   // or its Electric Blitz upgrade, so the Air Dive flows into both.)
-  const linked = LINKED_SKILLS.includes(kind) || (key === 'Q' && player.combo > 0) ||
-    (kind === 'R' && player.assaultLinkT > 0) || (kind === 'EB' && player.blitzLinkT > 0) ||
-    (kind === 'D' && player.glideLinkT > 0) || (kind === 'PV' && player.volleyLinkT > 0) ||
-    (kind === 'MS' && player.spinLinkT > 0);
+  const linked = linksIn(kind, key, LINKED_SKILLS.includes(kind));
   // Link skills only work right after Sky Toss, once per Sky Toss. The Midair
   // Spin is the exception: W in the air is a standalone sweep. (Sky Assault is
   // W's upgrade and has no air form, so it stays gated by the link window.)
-  if (LINKED_SKILLS.includes(kind) && player.combo <= 0 && kind !== 'MS') return;
+  if (LINKED_SKILLS.includes(kind) && !linkOpen('combo') && kind !== 'MS') return;
   // Chaining: a link pressed while Sky Toss is still playing waits for it to finish.
-  if (linked && player.cast === 'rush' && player.castT > 0) { player.queued = key; return; }
+  if (linked && player.cast === 'rush' && player.castT > 0) { player.casting.queued = key; return; }
   // Sky Assault's own animation buffers the sweep it links into, so pressing
   // W on the way up lands as the leap peaks
-  if (kind === 'MS' && player.spinLinkT > 0 && assaultLeaping()) { player.queued = key; return; }
+  if (kind === 'MS' && linkOpen('spin') && assaultLeaping()) { player.casting.queued = key; return; }
   // Input buffering: a link pressed during the source skill's post-animation
   // recovery is kept and fires on the first free frame (the rush's own
   // queue above covers its animation). Links bypass the animation itself, so
@@ -200,8 +198,8 @@ export function cast(key: SkillKey, chained = false): void {
   // it ends, and right after it (while its link window is open) at once. The
   // chain skips the rush's ending lag once, so it grants one quick shot, not
   // repeated uses while the window is open.
-  if (kind === 'Z' && !chained && (player.rushT > 0 || (player.cast === 'rush' && player.castT > 0))) { player.queued = 'Z'; return; }
-  if (kind === 'Z' && player.combo > 0) { chained = true; player.combo = 0; player.comboT = 0; }
+  if (kind === 'Z' && !chained && (player.rush.t > 0 || (player.cast === 'rush' && player.castT > 0))) { player.casting.queued = 'Z'; return; }
+  if (kind === 'Z' && linkOpen('combo')) { chained = true; closeLink('combo'); }
   // the Midair Spin is on its own cooldown even though W is a link skill,
   // so one jump can't chain sweeps all the way up
   const slot = cdSlot(key, airborne);
@@ -209,13 +207,13 @@ export function cast(key: SkillKey, chained = false): void {
   if (player.cd[slot] > 0 && (!linked || spin)) return;
   // Electric Blitz spends a banked charge: with none left, nothing happens
   // (Down + Q, the strike in place, needs no charge)
-  if (kind === 'EB' && !airborne && !held('down') && player.blitzCharges <= 0) return;
+  if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return;
   if (player.mp < r.mp) return;
   // An attack skill's use time blocks every other skill; a linked skill bypasses it.
   // ...except that the airborne kit (Plunging Volley, Glide, and the Q-slot
   // rush you land into) cuts a Sky Assault hover short, so W -> E flows
-  const fromHover = player.hangT > 0 && (kind === 'PV' || kind === 'D' || kind === 'MS' || key === 'Q');
-  if ((player.useT > 0 || player.recoverT > 0) && !linked && !fromHover && !chained) return;
+  const fromHover = player.hang.t > 0 && (kind === 'PV' || kind === 'D' || kind === 'MS' || key === 'Q');
+  if ((player.casting.useT > 0 || player.casting.recoverT > 0) && !linked && !fromHover && !chained) return;
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return;
@@ -227,26 +225,21 @@ export function cast(key: SkillKey, chained = false): void {
 
   player.mp -= r.mp;
   player.cd[slot] = player.cdMax[slot] = formCd(kind);
-  if (kind !== 'C' && kind !== 'D') { player.useT = useTime(kind); player.recoverT = delayTime(kind); player.combatT = P.COMBAT_TIME; }
+  if (kind !== 'C' && kind !== 'D') { player.casting.useT = useTime(kind); player.casting.recoverT = delayTime(kind); player.combatT = P.COMBAT_TIME; }
   player.liftT = 0; // any other skill ends a Spike Lift's push (Spike Lift itself starts a new one below)
   player.skillPose = null; // the spin / vanish of the last cast is over (set again below)
 
   // Fervor: skills chained off Sky Toss stack final damage. The link
   // consumes the window, so it can't be chained again without another Sky Toss.
   if (linked) {
-    player.combo = 0; player.comboT = 0;
-    player.assaultLinkT = 0; // a linked Tempest spends the post-assault window
-    player.blitzLinkT = 0; // a linked blitz spends its own window too
-    player.glideLinkT = 0; // a linked glide spends the aerial skill's window
-    player.volleyLinkT = 0; // ...and so does a linked volley spend the spin's
-    player.spinLinkT = 0; // ...and a linked sweep spends the assault's window
+    closeLinks(); // a link spends every open window: chaining again needs a fresh one
     player.fervor = Math.min(5, player.fervor + 1);
     player.fervorT = 9;
     // linked skills also shorten Tempest's and Spike Lift's long cooldowns
     // and refill a Blitz: spending a link refunds a second off each
     player.cd.R = Math.max(0, player.cd.R - 1);
     player.cd.E = Math.max(0, player.cd.E - 1);
-    if (player.blitzCharges < P.BLITZ_MAX) player.blitzT += 1;
+    if (player.blitz.charges < P.BLITZ_MAX) player.blitz.t += 1;
   }
 
   switch (kind) {
@@ -315,7 +308,7 @@ export function cast(key: SkillKey, chained = false): void {
       // Glide: acrobatic forward tumble; usable repeatedly in the air.
       // Off a Sky Assault hover it ends the hover, so the tumble carries you
       // (the hover's own per-frame vx/vy reset would otherwise eat it).
-      player.hangT = 0; player.hangHits = 0;
+      endHover();
       player.cast = 'jump'; player.castT = 0.18; player.castTotal = 0.18;
       sfx.glide();
       const dir = player.face;          // launch in the direction you're facing
@@ -332,21 +325,21 @@ export function cast(key: SkillKey, chained = false): void {
       // Air Dive (Q's air form, its own skill): plunge diagonally down,
       // carrying the enemies under and in front of you, and roll into the
       // ground rush on landing. (drawn in its dive pose: see localPose)
-      player.hangT = 0; player.hangHits = 0; // out of a Sky Assault hover (the
+      endHover(); // out of a Sky Assault hover (the
       // dive's own momentum takes over immediately, no stuck dive pose)
       player.cast = 'rush'; player.castT = P.DIVE_TIME; player.castTotal = P.DIVE_TIME;
       sfx.jump();
       player.vx = player.face * P.DIVE_VX;
       player.vy = P.DIVE_VY;
-      player.rushT = P.DIVE_TIME; player.rushDist = 0; player.rushCarry = [];
+      player.rush.t = P.DIVE_TIME; player.rush.dist = 0; player.rush.carry = [];
       player.diving = true;
       // the dive itself stabs down into the enemies under and in front of
       // you, for the full Sky Toss hit (one strike, at this skill's damage)
       hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
         .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
       rushStrike = null; // (a strike left over from an earlier rush must not land now)
-      player.combo = 1.1; player.comboT = 1.1;
-      player.glideLinkT = P.GLIDE_LINK; // and it links into a Glide
+      openLink('combo', 1.1);
+      openLink('glide', P.GLIDE_LINK); // and it links into a Glide
       break;
     }
 
@@ -357,7 +350,7 @@ export function cast(key: SkillKey, chained = false): void {
       groundRush(held('down'), s.key === 'EB');
       // the blitz's self-link window: the next blitz (with a charge banked)
       // fires immediately, skipping this one's ending lag
-      if (kind === 'EB') player.blitzLinkT = P.BLITZ_LINK;
+      if (kind === 'EB') openLink('blitz', P.BLITZ_LINK);
       break;
     }
 
@@ -408,7 +401,7 @@ export function cast(key: SkillKey, chained = false): void {
       player.vx = -face * P.VAULT_VX;
       player.vy = -P.VAULT_VY;
       game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: -face });
-      player.combo = 1.4; player.comboT = 1.4;
+      openLink('combo', 1.4);
       break;
     }
 
@@ -428,7 +421,7 @@ export function cast(key: SkillKey, chained = false): void {
       player.vx = face * P.RISE_VX;
       player.vy = -P.RISE_VY;
       game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face });
-      player.combo = 1.4; player.comboT = 1.4;
+      openLink('combo', 1.4);
       break;
     }
 
@@ -444,7 +437,7 @@ export function cast(key: SkillKey, chained = false): void {
       player.onGround = false;
       // the launch opens the link window, so Air Dive (Q in the air) can
       // start on the way up
-      player.combo = 1.4; player.comboT = 1.4;
+      openLink('combo', 1.4);
       break;
     }
 
@@ -452,7 +445,7 @@ export function cast(key: SkillKey, chained = false): void {
       // Plunging Volley (E's air form, its own skill): a small upward bump
       // (no freeze: you keep your drift and fall right after) as arrows rain
       // straight down into a column beneath you, hitting every enemy in it.
-      player.hangT = 0; player.hangHits = 0; // out of a Sky Assault hover
+      endHover(); // out of a Sky Assault hover
       player.cast = 'barrage'; player.castT = P.PLUNGE_POSE; player.castTotal = P.PLUNGE_POSE;
       sfx.shoot();
       const feet = player.y + player.h;
@@ -473,8 +466,8 @@ export function cast(key: SkillKey, chained = false): void {
       }
       // the volley opens the link window, so Midair Spin (W in the air)
       // follows the rain without waiting for it to land
-      if (tg.length) { player.combo = 1.4; player.comboT = 1.4; }
-      player.glideLinkT = P.GLIDE_LINK; // and into a Glide
+      if (tg.length) { openLink('combo', 1.4); }
+      openLink('glide', P.GLIDE_LINK); // and into a Glide
       break;
     }
 
@@ -503,9 +496,9 @@ export function cast(key: SkillKey, chained = false): void {
       // hitting every enemy in reach.
       player.cast = 'shoot'; player.castT = 0.30; player.castTotal = 0.30;
       player.skillPose = 'spin';
-      player.hangT = 0; player.hangHits = 0; // swept out of a Sky Assault hover: the spin takes over
-      player.glideLinkT = P.GLIDE_LINK; // the spin links into a Glide...
-      player.volleyLinkT = P.SPIN_VOLLEY; // ...and into a Plunging Volley
+      endHover(); // swept out of a Sky Assault hover: the spin takes over
+      openLink('glide', P.GLIDE_LINK); // the spin links into a Glide...
+      openLink('volley', P.SPIN_VOLLEY); // ...and into a Plunging Volley
       sfx.shoot();
       game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
       const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
@@ -551,11 +544,11 @@ export function cast(key: SkillKey, chained = false): void {
       player.y = Math.max(0, player.y - P.BARRAGE_UP);
       player.vx = 0; player.vy = 0; player.onGround = false;
       game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
-      player.hangT = P.BARRAGE_HANG; player.hangHits = r.hits; player.hangHitT = 0;
-      player.hangDmg = r.dmg; player.hangTargets = r.targets;
+      player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
+      player.hang.dmg = r.dmg; player.hang.targets = r.targets;
       // the leap links into Midair Spin (W in the air): the window stays open
       // through the hover, so the sweep fires out of it with no extra lag
-      player.spinLinkT = P.BARRAGE_HANG + P.ASSAULT_SPIN_LINK;
+      openLink('spin', P.BARRAGE_HANG + P.ASSAULT_SPIN_LINK);
       break;
     }
 

@@ -89,7 +89,7 @@ export function spawnBoss(): void {
 export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolean {
   if (player.invuln > 0) return false;
   if (Math.random() < missChance(attackerLvl, player.level)) return false;
-  if (fromX !== undefined && !player.climb && player.hangT <= 0) {
+  if (fromX !== undefined && !player.climb && player.hang.t <= 0) {
     const away = Math.sign(player.x - fromX) || -player.face;
     player.vx = away * P.HIT_PUSH;
     player.vy = Math.min(player.vy, -P.HIT_HOP);
