@@ -69,7 +69,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   target.aggro = true;
   if (Math.random() < missChance(game.player.level, target.level)) {
     // the MISS rides the same floating-number treatment as a hit
-    game.dmgNums.push(stackedNum(target, 0, false, 'MISS'));
+    game.dmgNums.push(stackedNum(target, 0, false, 'MISS', opts.more));
     // and it buys a moment of safety: the same i-frames a hit would grant,
     // without the flashing sprite (the shot is spent, you're not re-hit)
     game.player.invuln = Math.max(game.player.invuln, MISS_IFRAMES);
@@ -90,7 +90,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);
   if (!opts.noFx) game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: hx, y: hy, t: opts.fx === 'stunHit' ? 0.3 : crit && !opts.fx ? 0.28 : 0.24, face: -game.player.face }); // streaks point back at the shooter
   sfx.mobHit(target.name); // every line of a multi-hit stack sounds like this enemy
-  game.dmgNums.push(stackedNum(target, dmg, crit));
+  game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   // A launcher pops the enemy straight up: cancel its horizontal drift so it
   // rises in place (and is there for the aerial follow-up).
@@ -105,17 +105,17 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   // element on you — see update.ts. The mob keeps any effect it already has.)
 }
 
-/** Multi-hit numbers stack: each hit on the same enemy shows NUM_GAP after the
- *  previous one, a line higher, instead of all landing at once in a pile. A
- *  pause longer than NUM_RESET starts a new stack. */
+/** Multi-hit numbers stack: a single cast's hits stack one line higher each,
+ *  staggered NUM_GAP apart, and the stack closes when the cast's last hit (the
+ *  one with no `more`) lands — so the number of lines is the cast's hit count,
+ *  not a time window. */
 export const NUM_GAP = 0.125, NUM_LINE = 9, NUM_MAX = 8;
-const NUM_RESET = 0.4;
-export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string): DmgNum {
+export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string, more = false): DmgNum {
   const now = game.time;
-  const fresh = m.numAt === undefined || now - m.numAt > NUM_RESET;
-  const k = fresh ? 0 : ((m.numK ?? 0) + 1) % NUM_MAX;
-  const at = fresh ? now : Math.max(now, m.numAt! + NUM_GAP);
-  m.numAt = at; m.numK = k;
+  const k = m.numK ?? 0;
+  const at = m.numK === undefined ? now : Math.max(now, (m.numAt ?? now) + NUM_GAP);
+  m.numAt = at;
+  m.numK = more ? Math.min(k + 1, NUM_MAX - 1) : undefined;
   return {
     // a slow drift (it was 70px/s): fast enough to feel alive, slow enough that
     // a number doesn't rise into the line the next one appears on
