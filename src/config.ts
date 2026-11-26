@@ -49,9 +49,9 @@ export const P = {
   BLITZ_DIST: 96,      // px the blitz travels
   // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
-  DIVE_VX: 260,        // px/s forward
-  DIVE_VY: 420,        // px/s down
-  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll
+  DIVE_VX: 150,        // px/s forward (45°: equal to DIVE_VY, so the plunge is diagonal)
+  DIVE_VY: 150,        // px/s down (45°: equal to DIVE_VX)
+  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll (the two together carry ~64px, like Rush Toss)
   DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's)...
   DIVE_ROLL_DIST: 64,  // ...px it travels at most...
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
