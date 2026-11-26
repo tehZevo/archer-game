@@ -31,7 +31,7 @@ import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { cdSlot, delayTime } from '../src/castrules';
+import { cdSlot, delayTime, linkWindow } from '../src/castrules';
 import { CASTS } from '../src/skillcasts';
 import { MOB_SOUNDS } from '../src/audio';
 import { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
@@ -2681,6 +2681,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.AD = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
+  openLink('combo', linkWindow('AD')); // the hover's own follow-up window
   tap('q');
   check('Air Dive off the hover snaps out of the assault', player.hang.t === 0 && player.cast === 'rush' && player.diving,
     `hangT ${player.hang.t.toFixed(2)} cast ${player.cast}`);
@@ -2999,6 +3000,33 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   stand(); tap('up'); confirmUi.yes = true; tap('z');
   check('...saying yes travels to that town', game.floor.town && placeKey(game.floor.place) === 'driftwood',
     placeKey(game.floor.place));
+}
+{
+  // Tempest's own window (a) runs down like the others and (b) is what a
+  // Sky Assault's Tempest link rides, so the storm is ready on its cooldown.
+  arena(20); player.ranks.R = 1;
+  tap('r');
+  const t0 = player.links.tempest;
+  check('the storm opens its window for its own cast', t0 > 0 && t0 < 2, `t ${t0.toFixed(2)}`);
+  step(60); // 2s: well past the window
+  check('...and it runs down, not forever', player.links.tempest === 0, `t ${player.links.tempest.toFixed(2)}`);
+  tap('r'); step(1); closeLinks();
+  check('...and closeLinks shuts it too', player.links.tempest === 0, `t ${player.links.tempest.toFixed(2)}`);
+}
+{
+  // A Tempest linked off a landed Sky Assault still pays its 10s cooldown.
+  arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
+  dummy(130);
+  tap('q'); step(14); tap('w'); step(40);
+  check('the assault has landed with its window open', player.onGround && player.links.assault > 0,
+    `assault ${player.links.assault.toFixed(2)}`);
+  tap('r');
+  // The 10s cooldown, less the 1s every link shaves off it (see pay).
+  check('the linked Tempest fires off the landing and pays its cooldown',
+    player.cast === 'shoot' && player.cd.R > 8 && player.cd.R < 10, `cast ${player.cast} cd ${player.cd.R.toFixed(2)}`);
+  tap('r');
+  check('...so a second cast right away is spent', player.cd.R > 8 && player.cast === 'shoot' && player.castT > 0,
+    `cd ${player.cd.R.toFixed(2)} cast ${player.cast}`);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

@@ -68,9 +68,9 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   if (kind === 'Z' && !chained && (player.rush.t > 0 || rushPlaying)) return buffer('Z');
   if (kind === 'Z' && linkOpen('combo')) { chained = true; closeLink('combo'); }
 
-  // The Midair Spin keeps its own cooldown even as a link, so one jump can't
-  // chain sweeps all the way up.
-  if (player.cd[cdSlot(key, airborne)] > 0 && (!linked || kind === 'MS')) return null;
+  // The Midair Spin and Tempest keep their own cooldown even as a link, so one
+  // jump can't chain sweeps all the way up and a Storm isn't ready next Assault.
+  if (player.cd[cdSlot(key, airborne)] > 0 && (!linked || kind === 'MS' || kind === 'R')) return null;
   // Electric Blitz spends a banked charge (Down + Q, the strike in place, needs none).
   if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
@@ -105,8 +105,8 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.skillPose = null; // the spin / vanish of the last cast is over
   if (!linked) return;
   // Fervor: each link stacks final damage, and spends every open window, so
-  closeLinks();
-  // and Spike Lift's long cooldowns and refill a Blitz.
+  // one link ends the whole combo. And it shaves the two long cooldowns and
+  // refills a Blitz.
   closeLinks();
   player.fervor = Math.min(5, player.fervor + 1);
   player.fervorT = 9;
