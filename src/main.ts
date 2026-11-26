@@ -4,7 +4,7 @@ import { START } from './world';
 import { rank, spendSp } from './progress';
 import { advance, MAX_DT } from './loop';
 import { render, resize } from './render';
-import { bindMenuClicks } from './hud';
+import { bindMenuClicks } from './pausemenu';
 import { cv } from './canvas';
 import { buildTouch } from './touch';
 import * as net from './net';
