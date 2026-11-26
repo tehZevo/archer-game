@@ -149,10 +149,6 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
        cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
-  // Branch upgrades: each competes with the other upgrade on the same slot.
-  RA: { key: 'RA', linksInto: LAUNCHER_LINKS, upgrades: 'Q', retired: true, name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60,
-       cd: 0.80, mp1: 7, dmg1: 380, targets1: 8,
-       desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; their effect is `bonus` (0 until learned).
   ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 2,
