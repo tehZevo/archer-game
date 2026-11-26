@@ -100,14 +100,24 @@ function electricBlitz(): void {
   groundRush(held('down'), true);
 }
 
-/** Piercing Leap (E's ground form): spikes erupt in a burst around you and throw
- *  you into the air. */
+/** Seconds until Piercing Leap's spike lands this far in front of you
+ *  (matching the effect: the first drops at once, the farthest last). */
+export const spikeLands = (d: number): number =>
+  (2 + 3.2 * Math.min(1, d / P.SPIKE_REACH)) * FX_DUR.spikes / 10;
+
+/** Piercing Leap (E's ground form): spikes rain out of the sky onto the
+ *  ground in front of you, nearest first, and throw you into the air. Each
+ *  enemy in front is speared as its spike lands. */
 function spikeLift(r: SkillRank): void {
   pose('barrage', 'E');
   sfx.jump();
-  game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
-  hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64)
-    .slice(0, r.targets).forEach((m) => damage(m, P.SPIKE_DMG, { fx: 'spikeHit' }));
+  const face = player.face, x0 = player.x;
+  game.fx.push({ type: 'spikes', x: x0, y: player.y + player.h, t: FX_DUR.spikes, face });
+  hitbox(x0 + face * P.SPIKE_REACH / 2, player.y + player.h / 2, P.SPIKE_REACH, 64)
+    .slice(0, r.targets)
+    .forEach((m) => later(spikeLands(Math.abs(m.x - x0)), () => {
+      if (game.mobs.includes(m)) damage(m, P.SPIKE_DMG, { fx: 'spikeHit' });
+    }));
   // The launch is a fixed lift off the floor, not a stack on top of a jump:
   // cast on the way up, you keep whatever the jump has already given you.
   const floor = game.floor.platforms[0].y - player.h;

@@ -9,32 +9,54 @@
  */
 import { anim, arc, rng, type FxSheet, type Light, type RampName } from './fxlight';
 
-/** Hit: a spiky starburst that collapses into an expanding oval shockwave and sparkle dust. */
+/** A hit's burst at (c, cy): a spiky starburst that collapses into an
+ *  expanding oval shockwave and sparkle dust, over frames 0..5. */
+function burst(L: Light, f: number, c: number, cy: number, big: boolean, rp: RampName): void {
+  const R = rng(7 + (big ? 100 : 0));
+  const rays = big ? 10 : 8;
+  if (f <= 1) {
+    const len = (big ? 18 : 13) * (f === 0 ? 1 : 0.6);
+    for (let i = 0; i < rays; i++) {
+      const a = (i / rays) * Math.PI * 2 + 0.2, l = len * (i % 2 ? 0.55 : 1);
+      L.line(rp, c, cy, c + Math.cos(a) * l, cy + Math.sin(a) * l, 1.6, 0.4, 1);
+    }
+    L.disc(rp, c, cy, f === 0 ? 4.5 : 3.5, 1.3);
+  }
+  if (f >= 1 && f <= 4) {
+    const g = f / 4;
+    L.ring(rp, c, cy, (big ? 6 : 4) + g * (big ? 8 : 6), (big ? 9 : 7) + g * (big ? 7 : 5), 1.0, 0.55 * (1 - g * 0.8));
+  }
+  if (f >= 2) {
+    const n = big ? 12 : 8, fade = 1 - (f - 2) / 4;
+    for (let i = 0; i < n; i++) {
+      const a = R() * Math.PI * 2, d = 3 + R() * (big ? 12 : 9) + f * 1.5;
+      L.spark(rp, c + Math.cos(a) * d, cy + Math.sin(a) * d, 0.9 * fade, R() < 0.25);
+    }
+    if (f === 2) L.disc(rp, c, cy, 2.5, 0.9);
+  }
+}
+
+/** Hit: a burst centred on the struck enemy. */
 function hitAnim(big: boolean, rp: RampName): FxSheet {
   const S = big ? 41 : 31, c = S / 2;
-  return anim(S, S, c, c, 6, (L, f) => {
-    const R = rng(7 + (big ? 100 : 0));
-    const rays = big ? 10 : 8;
-    if (f <= 1) {
-      const len = (big ? 18 : 13) * (f === 0 ? 1 : 0.6);
-      for (let i = 0; i < rays; i++) {
-        const a = (i / rays) * Math.PI * 2 + 0.2, l = len * (i % 2 ? 0.55 : 1);
-        L.line(rp, c, c, c + Math.cos(a) * l, c + Math.sin(a) * l, 1.6, 0.4, 1);
-      }
-      L.disc(rp, c, c, f === 0 ? 4.5 : 3.5, 1.3);
-    }
-    if (f >= 1 && f <= 4) {
-      const g = f / 4;
-      L.ring(rp, c, c, (big ? 6 : 4) + g * (big ? 8 : 6), (big ? 9 : 7) + g * (big ? 7 : 5), 1.0, 0.55 * (1 - g * 0.8));
-    }
-    if (f >= 2) {
-      const n = big ? 12 : 8, fade = 1 - (f - 2) / 4;
-      for (let i = 0; i < n; i++) {
-        const a = R() * Math.PI * 2, d = 3 + R() * (big ? 12 : 9) + f * 1.5;
-        L.spark(rp, c + Math.cos(a) * d, c + Math.sin(a) * d, 0.9 * fade, R() < 0.25);
-      }
-      if (f === 2) L.disc(rp, c, c, 2.5, 0.9);
-    }
+  return anim(S, S, c, c, 6, (L, f) => burst(L, f, c, c, big, rp));
+}
+
+/** One falling spike: a pink-tipped purple shard, point down, with its
+ *  streak trailing up behind it. `tip` is where its point is. */
+function fallingSpike(L: Light, x: number, tip: number, len: number, I: number): void {
+  L.line('purple', x, tip - len * 2.4, x, tip - len, 0.3, 2.0, 0.65 * I); // the streak
+  L.line('purple', x, tip - len, x, tip, 3.8, 0.4, 1.2 * I);              // the shard
+  L.line('pink', x, tip - len * 0.85, x, tip - 1, 1.4, 0.3, 1.15 * I);    // its bright core
+}
+
+/** Piercing Leap's hit: a spike drops out of the sky onto the enemy and
+ *  bursts purple on it. Origin at the enemy's middle. */
+function spikeHitAnim(): FxSheet {
+  const W = 31, H = 52, c = W / 2, cy = H - W / 2;
+  return anim(W, H, c, cy, 7, (L, f) => {
+    if (f < 2) fallingSpike(L, c, f === 0 ? cy - 14 : cy, 16, 1);
+    if (f >= 1) burst(L, f - 1, c, cy, false, f === 1 ? 'pink' : 'purple');
   });
 }
 
@@ -79,30 +101,38 @@ function tracerAnim(): FxSheet {
   }, 0.35);
 }
 
-/** Piercing Leap: a burst of glowing spikes erupting from the ground on
- *  both sides of you, nearest first, then sinking back with dust at their
- *  bases. Origin at your feet. */
-function spikesAnim(body: RampName = 'purple', core: RampName = 'pink'): FxSheet {
-  const R0 = 56, W = R0 * 2 + 10, H = 40, bx = W / 2, by = H - 3;
-  // each spike: offset from you, height, lean
+/** Piercing Leap: purple spikes rain out of a rift in the sky onto the
+ *  ground in front of you, nearest first, each spearing in with a burst
+ *  and a puff of dust, then sinking away. Faces right; origin at your feet,
+ *  so the spikes land from just ahead of you out to SPIKE_REACH. */
+function spikesAnim(): FxSheet {
+  const REACH = 72, W = REACH + 16, H = 96, ox = 4, by = H - 4, N = 10;
   const r = rng(91);
-  const spikes = Array.from({ length: 14 }, (_, i) => {
-    const side = i % 2 ? 1 : -1, d = 6 + (i >> 1) * 7.5 + r() * 3;
-    return { x: bx + side * d, h: 16 + r() * 14 - d * 0.08, lean: side * (1.5 + r() * 3), at: d / R0 };
-  });
-  return anim(W, H, bx, by, 8, (L, f) => {
-    const R = rng(93 + f), now = f / 7;
+  const spikes = Array.from({ length: 8 }, (_, i) => ({
+    x: ox + 10 + i * ((REACH - 10) / 7) + (r() * 4 - 2), len: 17 + r() * 8, at: i * 0.45 + r() * 0.3,
+  }));
+  return anim(W, H, ox, by, N, (L, f) => {
+    const R = rng(93 + f), fade = f < N - 3 ? 1 : (N - f) / 3;
+    // the rift they fall from, tearing open across the sky
+    const open = Math.min(1, (f + 1) / 3);
+    L.line('purple', ox + REACH / 2 - (REACH / 2 + 4) * open, 6, ox + REACH / 2 + (REACH / 2 + 4) * open, 6, 1.6, 1.6, 0.9 * fade);
+    L.line('pink', ox + REACH / 2 - REACH / 2 * open, 6, ox + REACH / 2 + REACH / 2 * open, 6, 0.6, 0.6, 1.0 * fade);
     for (const s of spikes) {
-      const t = (now - s.at * 0.45) / 0.55; // each one erupts a little after the one inside it
-      if (t <= 0 || t >= 1) continue;
-      const up = t < 0.3 ? t / 0.3 : 1 - (t - 0.3) / 0.7 * 0.8, h = s.h * up;
-      L.line(body, s.x, by, s.x + s.lean * up, by - h, 2.6, 0.3, 1.15 * (t < 0.7 ? 1 : (1 - t) / 0.3));
-      L.line(core, s.x, by - 1, s.x + s.lean * up * 0.8, by - h * 0.8, 0.9, 0.2, 1.1);
-      if (t < 0.6) for (let k = 0; k < 2; k++) L.disc('dust', s.x + (R() * 2 - 1) * 4, by - R() * 2, 1.4 + R(), 0.8 * (1 - t));
+      const t = f - s.at; // frames since this one dropped
+      if (t < 0) continue;
+      if (t < 2) { fallingSpike(L, s.x, 8 + (by + 3 - 8) * ((t + 1) / 2) ** 2, s.len, 1); continue; }
+      // landed: speared into the ground, sinking as it fades
+      const k = t - 2, stuck = Math.max(0, 1 - k / 5);
+      if (stuck <= 0) continue;
+      L.line('purple', s.x, by + 2, s.x, by + 2 - s.len * 0.8 * stuck, 3.4, 0.4, 1.15 * stuck);
+      L.line('pink', s.x, by + 1, s.x, by + 2 - s.len * 0.6 * stuck, 1.2, 0.3, 1.05 * stuck);
+      if (k < 2) {
+        L.disc(k === 0 ? 'pink' : 'purple', s.x, by - 2, 6 - k * 2, 1.25);
+        L.ring('purple', s.x, by, 3 + k * 3, 1.2 + k * 0.6, 0.9, 0.85);
+        for (let i = 0; i < 3; i++) L.spark(i ? 'purple' : 'pink', s.x + (R() * 2 - 1) * 6, by - 4 - R() * 12, 1.0, i === 0);
+      }
+      if (k < 3) for (let i = 0; i < 2; i++) L.disc('dust', s.x + (R() * 2 - 1) * 5, by - R() * 2, 1.4 + R(), 0.8 * (1 - k / 3));
     }
-    // the ground cracks open under them
-    const crack = Math.min(1, now * 2.5) * R0, fade = 1 - now;
-    L.line(body, bx - crack, by + 1, bx + crack, by + 1, 0.6, 0.6, 0.8 * fade);
   }, 0.4);
 }
 
@@ -550,7 +580,7 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   skySwoosh: () => swooshAnim('sky'),
   // per-skill hit sparks, in each attack's colour
   diveHit: () => hitAnim(false, 'yellow'),
-  spikeHit: () => hitAnim(false, 'purple'),
+  spikeHit: () => spikeHitAnim(),
   tempestHit: () => hitAnim(false, 'pink'),
   skyHit: () => hitAnim(false, 'sky'),
   spinHit: () => hitAnim(false, 'red'),
