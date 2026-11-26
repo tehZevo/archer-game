@@ -16,6 +16,9 @@ export const P = {
   WALK: 66,            // halved from 131
   JUMP_V: 189,         // 10% under 210
   JUMP_H: 81.25,       // halved from 162.5
+  ROLL_HOP_V: 120,     // a Gale Stream jump's small hop (less than a full jump)
+  ROLL_VX: 150,        // ...and the dive roll's forward speed, px/s
+  ROLL_INVULN: 0.3,    // s of invulnerability the dive roll grants
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
   CLIMB: 90,           // rope/ladder climb speed, px/s (was 140)
