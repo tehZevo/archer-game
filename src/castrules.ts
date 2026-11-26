@@ -11,6 +11,11 @@ export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TI
  *  shortens it, the same way it shortens the use time. */
 export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DELAY_TIME) / (1 + passiveBonus('HA'));
 
+/** The link window a skill opens: its whole animation, plus a beat of free
+ *  time (LINK_BUFFER) before the linked skill's animation starts. Scales with
+ *  Haste, since use/delay do. */
+export const linkWindow = (kind: SkillKey): number => useTime(kind) + delayTime(kind) + P.LINK_BUFFER;
+
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };

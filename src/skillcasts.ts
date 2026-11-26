@@ -8,6 +8,7 @@ import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover, openLink } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
+import { linkWindow } from './castrules';
 import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
 import type { SkillKey, SkillRank } from './types';
 
@@ -95,8 +96,8 @@ function airDive(r: SkillRank): void {
   hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
     .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
-  openLink('combo', 1.1);
-  openLink('glide', P.GLIDE_LINK); // and it links into a Glide
+  openLink('combo', linkWindow('AD'));
+  openLink('glide', linkWindow('AD')); // and it links into a Glide
 }
 
 /** Sky Toss (Q on the ground): the ground rush (see rush.ts). */
@@ -108,7 +109,7 @@ function skyToss(): void {
  *  (with a charge banked) fire at once, skipping this one's ending lag. */
 function electricBlitz(): void {
   groundRush(held('down'), true);
-  openLink('blitz', P.BLITZ_LINK);
+  openLink('blitz', linkWindow('EB'));
 }
 
 /** Backstep Shot (retired): hop backward (still facing forward) while the
@@ -134,7 +135,7 @@ function backstepShot(r: SkillRank): void {
 
 /** Vault Shot and Rising Arrow (retired): launch the enemies ahead and leap
  *  (backward if `back`), opening the link window for an airborne W. */
-function launchLeap(r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
+function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
   pose('rush', 0.34);
   sfx.jump();
   const face = player.face;
@@ -147,15 +148,15 @@ function launchLeap(r: SkillRank, reach: number, w: number, back: boolean, vx: n
   player.vx = dir * vx;
   player.vy = -vy;
   game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: dir });
-  openLink('combo', 1.4);
+  openLink('combo', linkWindow(kind));
 }
 
 /** Vault Shot: leap backward, away from the enemies it launches. */
-const vaultShot: Cast = (r) => launchLeap(r, 40, 96, true, P.VAULT_VX, P.VAULT_VY);
+const vaultShot: Cast = (r) => launchLeap('VS', r, 40, 96, true, P.VAULT_VX, P.VAULT_VY);
 
 /** Rising Arrow: jump up with the enemies it launches (the same launch speed,
  *  so you climb together). */
-const risingArrow: Cast = (r) => launchLeap(r, 30, 80, false, P.RISE_VX, P.RISE_VY);
+const risingArrow: Cast = (r) => launchLeap('RA', r, 30, 80, false, P.RISE_VX, P.RISE_VY);
 
 /** Spike Lift (E's ground form): spikes erupt in a burst around you and throw
  *  you into the air. */
@@ -168,7 +169,7 @@ function spikeLift(r: SkillRank): void {
   player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
   player.onGround = false;
   // the launch opens the link window, so Air Dive (Q in the air) can start on the way up
-  openLink('combo', 1.4);
+  openLink('combo', linkWindow('E'));
 }
 
 /** Plunging Volley (E's air form): a small upward bump (no freeze: you keep
@@ -192,8 +193,8 @@ function plungingVolley(r: SkillRank): void {
     alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more }));
   });
   // a hit opens the link window, so Midair Spin follows the rain at once
-  if (tg.length) openLink('combo', 1.4);
-  openLink('glide', P.GLIDE_LINK); // and into a Glide
+  if (tg.length) openLink('combo', linkWindow('PV'));
+  openLink('glide', linkWindow('PV')); // and into a Glide
 }
 
 /** Tempest: you vanish as an oval of energy sweeps up and around you,
@@ -218,8 +219,8 @@ function midairSpin(r: SkillRank): void {
   pose('shoot', 0.30);
   player.skillPose = 'spin';
   endHover(); // swept out of a Sky Assault hover: the spin takes over
-  openLink('glide', P.GLIDE_LINK); // the spin links into a Glide...
-  openLink('volley', P.SPIN_VOLLEY); // ...and into a Plunging Volley
+  openLink('glide', linkWindow('MS')); // the spin links into a Glide...
+  openLink('volley', linkWindow('MS')); // ...and into a Plunging Volley
   sfx.shoot();
   game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
   const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);

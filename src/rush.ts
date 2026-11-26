@@ -5,6 +5,7 @@ import { surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
 import { rank, shotCount } from './progress';
 import { openLink } from './links';
+import { linkWindow } from './castrules';
 import { alive, eachShot, fxUnder, pose } from './skillfx';
 
 /** The pending Sky Toss strike, fired when the slide ends. */
@@ -95,7 +96,7 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
     startSlide(P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST);
     if (blitz) player.blitz.charges--;
   }
-  openLink('combo', 1.1);
+  openLink('combo', linkWindow(blitz ? 'EB' : 'Q'));
 }
 
 /** The rush's strike: the carried enemies, then the nearest ones ahead. */
