@@ -33,6 +33,8 @@ export interface Tileset {
   /** Top decoration variants that are all plants, swaying in the breeze
    *  (drawn live, see SWAY); the others (stones, posts, stumps) hold still. */
   sway?: number[];
+  /** Top decoration variants that glow, pulsing brighter (crystals, glowing caps). */
+  glow?: number[];
   bottom?(p: Paint, v: number): void;
   rope(p: Paint): void;
   ladder(p: Paint): void;

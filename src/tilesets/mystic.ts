@@ -21,6 +21,7 @@ function spike(p: Paint, x: number, y: number, h: number, w: number, lit: string
 /* ---------------- Mushroom Grotto: giant mushroom caps with gills, glowing mycelium ---------------- */
 const grotto: Tileset = {
   name: 'Mushroom Grotto',
+  glow: [1],
   sky: ['#160e22', '#241634', '#0e0818'],
   fill(x, y, v) {
     // dark spongy loam threaded with glowing mycelium
@@ -84,6 +85,7 @@ const grotto: Tileset = {
 const SHARDS = [0, 1, 2, 3].map((v) => [3 + hash(v, 1, 120) * 10, 4 + hash(v, 2, 121) * 8, v === 1 ? 3.5 : v === 3 ? 2 : 0] as const);
 const crystal: Tileset = {
   name: 'Crystal Caverns',
+  glow: [0, 1, 2, 3],
   sky: ['#100c24', '#1c1640', '#0a0818'],
   fill(x, y, v) {
     // a crystal: a diamond, lit on its upper-left faces

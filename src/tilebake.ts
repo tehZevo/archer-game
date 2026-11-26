@@ -54,7 +54,7 @@ export function pieces(ts: Tileset): [string, () => Sprite | null][] {
   for (let v = 0; v < 4; v++) {
     for (const w of [false, true]) for (const e of [false, true]) {
       out.push([K.top(ts, v, w, e), () => topDeco(ts, v, w, e)]);
-      if (sways(ts, v)) for (const f of [1, 3]) out.push([K.top(ts, v, w, e) + `|${f}`, () => topDeco(ts, v, w, e, f)]);
+      for (const f of liveFrames(ts, v)) out.push([K.top(ts, v, w, e) + `|${f}`, () => topDeco(ts, v, w, e, f)]);
     }
     out.push([K.bottom(ts, v), () => bottomDeco(ts, v)]);
   }
@@ -179,12 +179,33 @@ export function slopeFoot(ts: Tileset, dir: 1 | -1): Sprite {
  *  than SWAY_ROWS above the surface by this many pixels. */
 export const SWAY = [0, 1, 0, -1], SWAY_FPS = 2.5, SWAY_ROWS = 3;
 export const sways = (ts: Tileset, v: number): boolean => !!ts.top && !!ts.sway?.includes(v);
+/** Glowing growth: a 4-frame pulse, each frame mixing the deco this far toward white. */
+export const GLOW = [0, 0.18, 0.36, 0.18];
+export const glows = (ts: Tileset, v: number): boolean => !!ts.top && !!ts.glow?.includes(v);
+/** Whether a top decoration moves (drawn live, not in the static layer). */
+export const livesTop = (ts: Tileset, v: number): boolean => sways(ts, v) || glows(ts, v);
+/** The distinct moving frames of a top decoration (frame 0 is the still one). */
+const liveFrames = (ts: Tileset, v: number): number[] => sways(ts, v) ? [1, 3] : glows(ts, v) ? [1, 2] : [];
 
 /** Decoration standing on an exposed top (TOP_W x TOP_H; drawn 2px left of
  *  and TOP_Y above the tile), in sway frame `f` if its plants sway. */
 export function topDeco(ts: Tileset, v: number, w: boolean, e: boolean, f = 0): Sprite | null {
   if (!ts.top) return null;
   const top = ts.top, lean = sways(ts, v) ? SWAY[f % SWAY.length] : 0;
+  const glow = glows(ts, v) ? GLOW[f % GLOW.length] : 0;
+  if (glow) {
+    const still = topDeco(ts, v, w, e) as Sprite, g = f % GLOW.length === 3 ? 1 : f % GLOW.length;
+    if (g !== f) return topDeco(ts, v, w, e, g);
+    return cached(ts, K.top(ts, v, w, e) + `|${f}`, TOP_W, TOP_H, (s) => {
+      const a = still.g.px, b = s.g.px;
+      for (let i = 0; i < a.length; i += 4) {
+        // only the growth above the surface lights up, not the ground's rim
+        if (!a[i + 3] || (i / 4 / TOP_W | 0) >= TOP_Y) { b.set(a.subarray(i, i + 4), i); continue; }
+        for (let k = 0; k < 3; k++) b[i + k] = Math.round(a[i + k] + (255 - a[i + k]) * glow);
+        b[i + 3] = a[i + 3];
+      }
+    });
+  }
   if (lean) {
     const still = topDeco(ts, v, w, e) as Sprite;
     return cached(ts, K.top(ts, v, w, e) + `|${f}`, TOP_W, TOP_H, (s) => {
