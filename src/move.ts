@@ -132,7 +132,7 @@ function walk(dt: number, locked: boolean): void {
 /** Horizontal control: accelerate toward the walk speed on the ground (ice
  *  slows the pickup and the stop); in the air, keep momentum and only brake. */
 function steer(dt: number, locked: boolean): void {
-  const slow = (player.cast === 'rush' ? 0.55 : 1) * slowFactor(player); // chill slows you
+  const slow = (player.cast === 'rush' || player.cast === 'dive' ? 0.55 : 1) * slowFactor(player); // chill slows you
   let target = 0;
   if (!locked && held('left'))  { target = -P.WALK * slow; player.face = -1; }
   if (!locked && held('right')) { target =  P.WALK * slow; player.face =  1; }

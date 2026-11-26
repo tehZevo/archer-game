@@ -20,7 +20,7 @@ import { dev, maxOut } from './dev';
 import { bossAlive, portalOpen, updateQuakes } from './boss';
 import { updatePet } from './pets';
 import { updateStatus } from './status';
-import { bufferWindowOpen, linkOpen, ownWindowOpen, tickLinks } from './links';
+import { bufferWindowOpen, comboOpen, ownWindowOpen, tickLinks } from './links';
 import { windowInput } from './windows';
 import { openConfirm } from './confirm';
 import { updateMobs } from './mobai';
@@ -84,7 +84,7 @@ function keyInput(): boolean {
   EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });
   // Basic attack during Rush Toss's link window casts the link skill
   // (Rising Arrows, or Skyward Assault once upgraded).
-  const linkZ = pressed('z') && linkOpen('combo') && isLearned('W');
+  const linkZ = pressed('z') && comboOpen() && isLearned('W');
   if (linkZ) cast('W');
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
   // holding Jump keeps jumping: re-jump on every landing

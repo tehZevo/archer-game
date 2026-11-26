@@ -92,12 +92,13 @@ function airDive(r: SkillRank): void {
   sfx.jump();
   // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP, the yellow
   // arrows leading the way, and the pose covers the coil as well as the plunge.
-  pose('rush', 'AD');
+  pose('dive', 'AD');
   player.vx = player.vy = 0;
   game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
-  openLink('combo', linkWindow('AD'));
-  openLink('glide', linkWindow('AD')); // and it links into a Glide
+  // The follow-up window opens off the landing (see rush.landDive); a Glide,
+  // the dive's only airborne way out, links off the coil and plunge.
+  openLink('glide', linkWindow('AD'));
   // The plunge starts at the end of the coil, and lands on the enemies below.
   later(P.DIVE_WINDUP, () => {
     player.vx = player.face * P.DIVE_VX; // the diagonal plunge

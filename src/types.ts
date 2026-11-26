@@ -215,7 +215,7 @@ export interface Body {
 }
 
 /** The link windows a skill can open (see links.ts). */
-export type LinkKind = 'combo' | 'assault' | 'blitz' | 'glide' | 'volley' | 'spin' | 'tempest';
+export type LinkKind = 'combo' | 'dive' | 'assault' | 'blitz' | 'glide' | 'volley' | 'spin' | 'tempest';
 
 export interface Casting {
   /** s left of the current skill's use time: no other skills or movement. */
@@ -355,7 +355,7 @@ export interface Shot {
 /** Effects are all baked animations (see fxsprites.ts). */
 export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
   | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit'
-  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup';
+  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand';
 
 export interface Fx {
   type: FxKind;

@@ -507,7 +507,8 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   }
   check('the rush starts the moment the dive lands', landed >= 0 && rushing === landed, `landed ${landed} rush ${rushing}`);
   step(20);
-  check('...and its strike lands, opening the link window', m.hp < 1e6 && player.links.combo > 0);
+  check('...and its strike lands, opening the dive\'s own link window', m.hp < 1e6 && player.links.dive > 0 && player.links.combo === 0,
+    `dive ${player.links.dive.toFixed(2)} combo ${player.links.combo.toFixed(2)}`);
 }
 {
   // Cyclone Sweep: W's air form sweeps the enemies around you
@@ -797,13 +798,33 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(40);
 }
 {
+  // The Meteor Dive's follow-up window opens off its landing, not its coil,
+  // and a Double Shot pressed mid-plunge waits out the landing roll.
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  dummy(150);
+  tap('c'); step(8);
+  tap('q');
+  check('the dive opens no follow-up window at the coil', player.links.dive === 0 && player.links.combo === 0,
+    `dive ${player.links.dive.toFixed(2)} combo ${player.links.combo.toFixed(2)}`);
+  step(4); tap('z');
+  check('a Double Shot pressed mid-plunge is buffered', player.casting.queued === 'Z', `queued ${player.casting.queued}`);
+  let rolled = false, firedRolling = false;
+  for (let i = 0; i < 40 && player.casting.queued; i++) {
+    step(1);
+    if (player.onGround && player.rush.t > 0) rolled = true;
+    if (player.cast === 'shoot' && player.rush.t > 0) firedRolling = true;
+  }
+  check('...and fires once the landing roll\'s strike lands, not during it', rolled && !firedRolling && player.cast === 'shoot',
+    `rolled ${rolled} firedRolling ${firedRolling} cast ${player.cast}`);
+}
+{
   // The Meteor Dive's link window carries into the grounded kit: pressed as the
   // dive lands (window open), the next skill fires without the use-time wait
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1; player.ranks.W = 1;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive is still airborne-to-landed with its window open', player.links.combo > 0, `combo ${player.links.combo.toFixed(2)}`);
+  check('the dive has landed with its window open', player.links.dive > 0, `dive ${player.links.dive.toFixed(2)}`);
   const mp0 = player.mp;
   tap('w');
   check('Rising Arrows links out of the dive', player.mp < mp0 && player.links.combo <= 0, `mp ${player.mp} combo ${player.links.combo.toFixed(2)}`);
@@ -2472,10 +2493,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('c'); step(1);
   const mp0 = player.mp;
   tap('q');
-  check('Meteor Dive needs real height: early in the jump', player.cast !== 'rush' && player.mp === mp0, `cast ${player.cast}`);
+  check('Meteor Dive needs real height: early in the jump', player.cast !== 'dive' && player.mp === mp0, `cast ${player.cast}`);
   step(7);
   tap('q');
-  check('Meteor Dive fires near the jump apex', player.cast === 'rush' && player.mp < mp0, `cast ${player.cast}`);
+  check('Meteor Dive fires near the jump apex', player.cast === 'dive' && player.mp < mp0, `cast ${player.cast}`);
 }
 {
   // ...and on Cyclone Sweep
@@ -2587,7 +2608,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     `tempest ${player.links.tempest.toFixed(2)} cast ${player.cast}`);
   const mp0 = player.mp;
   tap('q');
-  check('Dive fires out of the storm, mid-cast', player.cast === 'rush' && player.mp < mp0,
+  check('Dive fires out of the storm, mid-cast', player.cast === 'dive' && player.mp < mp0,
     `cast ${player.cast} mp ${player.mp} of ${mp0}`);
   step(12); // let the dive land, so the next block starts on the floor
   // The storm's window is its own: it unlocks Dive, not the whole aerial kit.
@@ -2643,7 +2664,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive opens the Q-slot window with a Blitz equipped', player.links.combo > 0, `combo ${player.links.combo.toFixed(2)}`);
+  check('the dive opens the Q-slot window with a Blitz equipped', player.links.dive > 0, `dive ${player.links.dive.toFixed(2)}`);
   const charges0 = player.blitz.charges;
   tap('q'); step(1); // the landing rush's tail is buffered, not dropped
   check('the blitz fires off the dive, no use-time wait', player.blitz.charges === charges0 - 1 && player.cast === 'rush',
@@ -2686,7 +2707,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('q'); step(14); tap('w'); step(3);
   openLink('combo', linkWindow('AD')); // the hover's own follow-up window
   tap('q'); step(4); // past the windup
-  check('Meteor Dive off the hover snaps out of the assault', player.hang.t === 0 && player.cast === 'rush' && player.diving,
+  check('Meteor Dive off the hover snaps out of the assault', player.hang.t === 0 && player.cast === 'dive' && player.diving,
     `hangT ${player.hang.t.toFixed(2)} cast ${player.cast}`);
   step(2);
   check('...and the dive plays out (no hover freeze)', player.hang.t === 0 && (player.diving || player.rush.t > 0),

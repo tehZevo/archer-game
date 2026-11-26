@@ -4,7 +4,7 @@ import { held } from './input';
 import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
-import { closeLink, closeLinks, linkOpen, linksIn } from './links';
+import { closeCombo, closeLinks, comboOpen, linkOpen, linksIn } from './links';
 import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, offHover, rushHolding, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
@@ -55,7 +55,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   // window, a blitz off its own, the aerial kit off each other's windows.)
   const linked = linksIn(kind, key, linkSkill);
   // Link skills only work right after Rush Toss, once per Rush Toss.
-  if (linkSkill && !linkOpen('combo')) return null;
+  if (linkSkill && !comboOpen()) return null;
   const rushPlaying = rushHolding();
   // A link pressed while Rush Toss is still playing waits for it to finish.
   if (linked && rushPlaying) return buffer(key);
@@ -66,7 +66,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   // it ends, and right after it (while its link window is open) at once. The
   // chain skips the rush's ending lag once: one quick shot, not repeated uses.
   if (kind === 'Z' && !chained && (player.rush.t > 0 || rushPlaying)) return buffer('Z');
-  if (kind === 'Z' && linkOpen('combo')) { chained = true; closeLink('combo'); }
+  if (kind === 'Z' && comboOpen()) { chained = true; closeCombo(); }
 
   // The Cyclone Sweep and Tempest keep their own cooldown even as a link, so one
   // jump can't chain sweeps all the way up and a Storm isn't ready next Assault.
