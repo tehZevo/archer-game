@@ -179,25 +179,31 @@ export function breath(a: MobAnim): Sprite {
   breaths.set(a, (s = new Sprite(w, g.h, out)));
   return s;
 }
-/** The flinch's second beat: the hurt pose with its upper half thrown back a
- *  pixel (away from the facing), alternating with the hurt pose in hitstun. */
-const recoils = new WeakMap<MobAnim, Sprite>();
-export function recoil(a: MobAnim): Sprite {
-  let s = recoils.get(a);
-  if (s) return s;
-  const g = a.hurt.g, w = g.w, out = newGrid(w, g.h);
+/** A frame with its upper half leant a pixel: back (dx -1, away from the
+ *  facing) or forward (dx 1). */
+function lean(src: Sprite, dx: 1 | -1): Sprite {
+  const g = src.g, w = g.w, out = newGrid(w, g.h);
   out.px.set(g.px);
   let top = 0;
   while (top < g.h && !Array.from({ length: w }, (_, x) => g.px[(top * w + x) * 4 + 3]).some(Boolean)) top++;
   const mid = top + Math.floor((g.h - top) / 2);
   for (let y = top; y < mid; y++) {
     const row = y * w * 4;
-    out.px.copyWithin(row, row + 4, row + w * 4);
-    out.px.fill(0, row + (w - 1) * 4, row + w * 4);
+    if (dx < 0) { out.px.copyWithin(row, row + 4, row + w * 4); out.px.fill(0, row + (w - 1) * 4, row + w * 4); }
+    else { out.px.copyWithin(row + 4, row, row + (w - 1) * 4); out.px.fill(0, row, row + 4); }
   }
-  recoils.set(a, (s = new Sprite(w, g.h, out)));
-  return s;
+  return new Sprite(w, g.h, out);
 }
+const leans = new WeakMap<MobAnim, { recoil: Sprite; lunge: Sprite }>();
+const leansOf = (a: MobAnim): { recoil: Sprite; lunge: Sprite } => {
+  let l = leans.get(a);
+  if (!l) leans.set(a, (l = { recoil: lean(a.hurt, -1), lunge: lean(a.frames[0], 1) }));
+  return l;
+};
+/** The flinch's second beat: the hurt pose thrown back, alternating with the hurt pose in hitstun. */
+export const recoil = (a: MobAnim): Sprite => leansOf(a).recoil;
+/** The strike: frame 0 thrown forward, just as it bumps into you. */
+export const lunge = (a: MobAnim): Sprite => leansOf(a).lunge;
 const recolorAnim = (a: MobAnim, map: Record<string, string>): MobAnim =>
   ({ frames: a.frames.map((f) => recolor(f, map)), fps: a.fps, hurt: recolor(a.hurt, map) });
 

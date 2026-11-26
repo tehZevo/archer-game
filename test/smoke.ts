@@ -17,7 +17,7 @@ import { FX_GEN } from '../src/fxsprites';
 import { packStrip } from '../src/grid';
 import { decodePng } from '../scripts/png';
 import { BAKED_MOBS } from '../src/mobbaked';
-import { breath, mobAnim, MOB_GEN, recoil } from '../src/sprites';
+import { breath, lunge, mobAnim, MOB_GEN, recoil } from '../src/sprites';
 import { slug } from '../scripts/slug';
 import { game, player, gainExp, gotoPlace } from '../src/state';
 import { nextPlace, placeKey, START } from '../src/world';
@@ -276,6 +276,10 @@ setKey('up', false);
   check('every enemy recoils when hurt: the hurt pose thrown back, same size', Object.keys(MOB_GEN).every((n) => {
     const a = mobAnim(n)!, r = recoil(a);
     return r.w === a.hurt.w && r.h === a.hurt.h && r.g.px.join() !== a.hurt.g.px.join();
+  }));
+  check('every enemy lunges: its standing frame thrown forward, same size', Object.keys(MOB_GEN).every((n) => {
+    const a = mobAnim(n)!, l = lunge(a);
+    return l.w === a.frames[0].w && l.g.px.join() !== a.frames[0].g.px.join() && l.g.px.join() !== recoil(a).g.px.join();
   }));
   check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }
