@@ -795,19 +795,18 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('the same link also shaves Tempest', player.cd.R < cdR1 - 0.9 && player.cd.R > cdR1 - 1.3, `cd.R ${player.cd.R.toFixed(2)} of ${cdR1.toFixed(2)}`);
 }
 {
-  // Cyclone Sweep (W in the air): one sweep per 4s, and no extra rise
+  // Cyclone Sweep (W in the air): one sweep per 4s, and a slow rise
   arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
-  tap('c'); let apex0 = player.y;
-  for (let i = 0; i < 30; i++) { step(1); apex0 = Math.min(apex0, player.y); }
-  step(40);
+  tap('c'); step(70);
   check('back on the ground', player.onGround);
   const m = dummy(140);
-  tap('c'); step(3); tap('w'); step(12); // the sweep's four hits stagger out
+  tap('c'); step(8); tap('w');
+  const ySpin = player.y;
+  let rising = true;
+  for (let i = 0; i < 12; i++) { const y = player.y; step(1); rising &&= player.y < y; } // the sweep's four hits stagger out, lifting you
   const hp1 = m.hp; player.casting.useT = 0; tap('w'); step(2);
-  check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['W.air'] > 3);
-  let apex = player.y;
-  for (let i = 0; i < 30; i++) { tap('w'); step(1); apex = Math.min(apex, player.y); }
-  check('spinning adds no rise beyond your jump', apex >= apex0 - 1, `apex ${apex.toFixed(1)} vs ${apex0.toFixed(1)}`);
+  check('W can\'t be spammed in the air (a second spin waits out its cooldown)', hp1 < 1e6 && m.hp === hp1 && player.cd['W.air'] > 3, `hp ${m.hp} hp1 ${hp1} cd ${player.cd['W.air'].toFixed(2)}`);
+  check('the spin lifts you slowly', rising && ySpin - player.y < 15, `rose ${(ySpin - player.y).toFixed(1)}px`);
   check('the spin cools down for 4s', player.cdMax['W.air'] === P.SPIN_CD && P.SPIN_CD === 4);
 }
 {
@@ -2596,7 +2595,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('W in the air is Cyclone Sweep, not Skyward Assault', player.cast === 'shoot' && player.skillPose === 'spin' && player.cd['W.air'] > 0 && player.hang.t === 0,
     `cast ${player.cast} pose ${player.skillPose} cd ${player.cd['W.air'].toFixed(1)}`);
   check('the sweep hits the enemy below', m.hp < 1e6);
-  step(30);
+  step(40);
   check('the spin does not hover', player.onGround);
 }
 
@@ -2621,9 +2620,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('r');
   check('Tempest freezes you midair', player.casting.freeze && player.vy === 0, `vy ${player.vy.toFixed(0)}`);
   const y0 = player.y;
-  step(21); // half the storm
+  step(10); // half the storm
   check('...and you stay put as it plays out', player.y === y0 && player.vy === 0, `dy ${(player.y - y0).toFixed(2)} vy ${player.vy.toFixed(0)}`);
-  step(22); // the rest of the 1.4s cast
+  step(11); // the rest of the 0.7s cast
   check('you fall once the storm is over', !player.casting.freeze && player.y > y0, `dy ${(player.y - y0).toFixed(2)}`);
 }
 {

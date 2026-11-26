@@ -11,7 +11,7 @@ export const P = {
   HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
   HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
-  GRAVITY: 858,        // px/s^2 (lowered from 2000, then 1040, then 780)
+  GRAVITY: 772.2,      // px/s^2 (lowered from 2000, then 1040, 780, then 858)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
   JUMP_V: 242.4,       // 10% under the old 269.3: a ~34px jump at 858 gravity
@@ -21,7 +21,7 @@ export const P = {
   CLIMB: 90,           // rope/ladder climb speed, px/s (was 140)
   DROP_HOP_V: 110,     // Down+Jump hop before falling through (v²/2g ≈ 6px)
   GLIDE_VX: 190,       // Glide forward launch speed, px/s (was 160; ×1-1.3 with rank)
-  GLIDE_VY_MAX: 200,   // max upward speed after Glide (v²/2g ≈ 10px of extra rise)
+  GLIDE_VY_MAX: 180,   // max upward speed after Glide (v²/2g ≈ 10px of extra rise)
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
@@ -67,6 +67,7 @@ export const P = {
   SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed (slower than a jump's pop)...
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
+  SPIN_RISE_V: 22.5,   // px/s: the midair sweep lifts you at this steady speed (was a slow fall)
   SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Downpour link opens (the tail of the longer sweep pose)
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
 
@@ -111,7 +112,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders; climb faster' },
   D: { key: 'D', keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
-       cd: 0, use: 0.2, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
+       cd: 0, use: 0.4, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.6, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
@@ -120,7 +121,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.9, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 4, targets1: 4, targetsMax: 4,
        desc: 'Airborne-only volley after Rush Toss' },
   E: { key: 'E', keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: P.SPIKE_CD, use: 1.3, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
+       cd: P.SPIKE_CD, use: 0.7, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
@@ -131,10 +132,10 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: P.SPIN_CD, use: 0.8, mp1: 3, mpMax: 5, dmg1: 200, dmgMax: 200, hits1: 4, hitsMax: 4, targets1: 8, targetsMax: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
   PV: { key: 'PV', name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 0.8, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
+       cd: 0, use: 0.4, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 10.0, use: 1.4, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
+       cd: 10.0, use: 0.7, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 3, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,

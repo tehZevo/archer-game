@@ -194,8 +194,12 @@ function skillForces(dt: number): void {
     // post-gravity speeds, so this moves you exactly `rise` px/s this step
     player.vy = -Math.min(P.SPIKE_RISE_V, left / dt) - P.GRAVITY * dt / 2;
   }
-  // Cyclone Sweep: the sweep holds you steady, so you don't fall straight through the animation
-  if (player.cast === 'shoot' && player.skillPose === 'spin' && !player.onGround) player.vy = 0;
+  // Cyclone Sweep: the sweep lifts you gently, so you rise slowly through the animation
+  if (player.cast === 'shoot' && player.skillPose === 'spin' && !player.onGround) {
+    // half a step of gravity: integrate() moves on the average of the pre- and
+    // post-gravity speeds, so this lifts you exactly SPIN_RISE_V px/s this step
+    player.vy = -P.SPIN_RISE_V - P.GRAVITY * dt / 2;
+  }
 
 }
 

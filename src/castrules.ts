@@ -65,7 +65,7 @@ export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.cli
 /** Aerial skills need real height, not just any airtime: ~2/3 of the default
  *  jump's peak (v²/2g ≈ 35px), so shallow jumps don't trigger the full
  *  aerial combo. */
-export const AIR_MIN_H = (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
+export const AIR_MIN_H = 1.1 * (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
 
 /** Skyward Assault's opening leap is still playing (a Cyclone Sweep pressed now is
  *  buffered; once it's done the sweep fires straight out of the hover). */

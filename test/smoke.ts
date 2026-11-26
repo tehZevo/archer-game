@@ -85,8 +85,8 @@ player.ranks.D = 1; player.cd.D = 0;
 player.onGround = false; player.y = 500;
 setKey('d', true);
 step(1);
-// Glide commits you for its 0.2s use time; it has no cooldown to gate re-use.
-check('Glide has a 0.2s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.2) < 0.05,
+// Glide commits you for its 0.4s use time; it has no cooldown to gate re-use.
+check('Glide has a 0.4s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.4) < 0.05,
   `cd ${player.cd.D} use ${player.casting.useT.toFixed(2)}`);
 check('Glide launches forward > up', Math.abs(player.vx) > Math.abs(player.vy));
 check('Glide consumes MP', player.mp < player.mpMax);
@@ -158,6 +158,12 @@ check('every skill has an icon glyph', (Object.keys(SKILLS) as (keyof typeof ICO
 check('every upgrade names a keyed base slot', (Object.keys(SKILLS) as (keyof typeof SKILLS)[])
   .every((k) => !SKILLS[k].upgrades || SKILLS[SKILLS[k].upgrades!].keyed));
 check('the skill bar is the keyed attack slots, Z Q W E R', SKILL_BAR.every((s) => SKILLS[s.skill].keyed));
+// Use times are authored in 100ms steps (the default is P.USE_TIME).
+const offGrid = (Object.keys(SKILLS) as (keyof typeof SKILLS)[])
+  .map((k) => [k, SKILLS[k].use ?? P.USE_TIME] as const)
+  .filter(([, use]) => Math.abs(use * 10 - Math.round(use * 10)) > 1e-9)
+  .map(([k]) => k);
+check('every skill use time is a multiple of 100ms', offGrid.length === 0, offGrid.join(', '));
 check('Rush Toss learned at Lv.5', !isLearned('Q'));
 player.ranks.W = 0;
 check('Rising Arrows not known until picked', !isLearned('W'));
