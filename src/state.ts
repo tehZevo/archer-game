@@ -112,7 +112,7 @@ export { mobLevel } from './world';
 // Enemy HP and damage scale exponentially with the floor's level, anchored at
 // Lv.1 and Lv.100 and shaped per species by its base hp / dmg. Bosses use the
 // same curves (see boss.ts), so a boss and its base mob scale identically.
-export const LV_1_HP = 30, LV_100_HP = 200000;
+export const LV_1_HP = 70, LV_100_HP = 200000;
 export const LV_1_DMG = 10, LV_100_DMG = 4000;
 export const LEVEL_SPAN = 99; // the Lv.1 → Lv.100 range the anchors span
 
