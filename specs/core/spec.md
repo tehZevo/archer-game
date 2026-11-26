@@ -32,3 +32,7 @@ You get stronger by **gaining levels and spending points to learn new skills and
 ## Alone or together
 
 It's **mostly a single-player game**, but with **simple multiplayer interactions** — you can share a floor with other players and see them, keeping things light rather than a deep online experience.
+
+## The look
+
+The game is **2D pixel art** — pixel-art characters in a side-view world, like a classic 2D MMO.
