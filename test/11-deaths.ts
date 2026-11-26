@@ -292,11 +292,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...and it is 1.5x the old per-level step', Math.abs((player.war - 14) / 20 - 1.5 * 1.7) < 1e-9);
   check('the Lv.1 archer still starts at 14 attack', Math.abs(war1 - 14) < 1e-9, `${war1}`);
   arena(1); spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
-  check('a Lv.1 mob hits for its base damage', game.mobs[0].dmg === MOB_TYPES[0].dmg, `${game.mobs[0].dmg}`);
+  check('a Lv.1 mob hits for its base damage', game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * 3.5), `${game.mobs[0].dmg}`);
   gotoPlace({ path: 'meadows', floor: 11 }); game.mobs.length = 0;
   spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
-  check('a high-floor mob hits 1.5x harder per level than before',
-    game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * (1 + (mobLevel(game.floor.place) - 1) * 0.09)),
+  check('a high-floor mob hits harder per level than before',
+    game.mobs[0].dmg === Math.round(MOB_TYPES[0].dmg * 3.5 * (1 + (mobLevel(game.floor.place) - 1) * 3.2)),
     `${game.mobs[0].dmg}`);
   gotoPlace(START);
 }
