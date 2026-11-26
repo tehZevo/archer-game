@@ -104,22 +104,22 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // Actives: 3 ranks; stats step from rank 1 to rank 3 so every rank is a big jump.
   // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
   // cooldown, so their pace is their use time alone (which Haste speeds up).
-  Z: { key: 'Z', name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
+  Z: { key: 'Z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
        cd: 0, use: 0.7, mp1: 2, mpMax: 3, dmg1: 80, dmgMax: 120, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 4,
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 3, passive: true,
         cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders; climb faster' },
-  D: { key: 'D', name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
+  D: { key: 'D', keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
        cd: 0, use: 0.2, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
-  Q: { key: 'Q', name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
+  Q: { key: 'Q', keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.6, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
        desc: 'Launch enemies airborne, opens the link window' },
-  W: { key: 'W', name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
+  W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 4, targets1: 4, targetsMax: 4,
        desc: 'Airborne-only volley after Rush Toss' },
-  E: { key: 'E', name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+  E: { key: 'E', keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIKE_CD, use: 1.3, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
@@ -133,20 +133,20 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   PV: { key: 'PV', name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.8, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
+  R: { key: 'R', keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 10.0, use: 1.4, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
-  EB: { key: 'EB', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+  EB: { key: 'EB', upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 3, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
+  AB: { key: 'AB', upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 4, hitsMax: 4, targets1: 6, targetsMax: 6, requires: 'W',
        desc: 'After Rush Toss: leap up to launched enemies' },
-  S: { key: 'S', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 3,
+  S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.6, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Branch upgrades: each competes with the other upgrade on the same slot.
-  RA: { key: 'RA', name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+  RA: { key: 'RA', upgrades: 'Q', retired: true, name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
        desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
@@ -170,18 +170,15 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
 /** Skills you start with at rank 1 (Lv.1 skills, except those bought with SP). */
 export const startsLearned = (k: SkillKey): boolean => SKILLS[k].minLevel <= 1 && !SKILLS[k].learn;
 
-export const SKILL_ORDER: SkillKey[] = ['Z', 'D', 'AC', 'Q', 'W', 'E', 'R']; // upgrades (S, AB) share their slot's key
+/** The skills fired by their own key (an upgrade fires from its base's key,
+ *  an air form from its ground form's: see castrules.AIR_FORM). */
+export const SKILL_ORDER: SkillKey[] = (Object.keys(SKILLS) as SkillKey[]).filter((k) => SKILLS[k].keyed);
 
-/** The buttons shown in the on-canvas skill bar. Z is the main attack slot:
- *  Double Shot early, upgraded to Bolt Flurry at Lv.30. */
-/** Attack keys Z (main), Q, W, E, R. Slots upgrade in place (see UPGRADES in progress.ts). */
-export const SKILL_BAR: { label: string; skill: SkillKey | null }[] = [
-  { label: 'Z', skill: 'Z' },
-  { label: 'Q', skill: 'Q' },
-  { label: 'W', skill: 'W' },
-  { label: 'E', skill: 'E' },
-  { label: 'R', skill: 'R' },
-];
+/** The buttons shown in the on-canvas skill bar: the attack keys Z (main), Q,
+ *  W, E, R. Slots upgrade in place (Double Shot to Bolt Flurry at Lv.30). */
+export const SKILL_BAR: { label: string; skill: SkillKey }[] = SKILL_ORDER
+  .filter((k) => SKILLS[k].bar)
+  .map((k) => ({ label: k, skill: k }));
 
 /** Skills that consume the Rush Toss link window and stack Fervor. */
 export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];

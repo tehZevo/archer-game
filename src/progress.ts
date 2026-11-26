@@ -1,5 +1,5 @@
 import type { JobDef, PauseMenu, SkillDef, SkillKey, SkillRank, StatKey } from './types';
-import { SKILLS, SKILL_ORDER } from './config';
+import { SKILLS } from './config';
 import { player } from './state';
 import { fmtNum } from './util';
 
@@ -109,11 +109,6 @@ export function spendStat(key: StatKey): boolean {
 /** SP awarded on top of the per-level point when reaching each job. */
 export const SP_PER_LEVEL = 1;
 
-export const UNLOCKED_AT: Record<SkillKey, number> = SKILL_ORDER.reduce(
-  (o, k) => ((o[k] = SKILLS[k].minLevel), o),
-  {} as Record<SkillKey, number>,
-);
-
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 /**
@@ -161,13 +156,15 @@ export function activeSkill(key: SkillKey): SkillDef {
   return SKILLS[up ?? key];
 }
 
-/** The upgrade branches available on a slot (e.g. Z → Bolt Flurry or Backstep Shot). */
-export const upgradesOf = (base: SkillKey): SkillKey[] =>
-  (Object.keys(UPGRADES) as SkillKey[]).filter((u) => UPGRADES[u] === base);
+/** Every skill key, in SKILLS order. */
+const ALL_SKILLS = Object.keys(SKILLS) as SkillKey[];
+
+/** The upgrade branches available on a slot (e.g. Q → Electric Blitz). */
+export const upgradesOf = (base: SkillKey): SkillKey[] => ALL_SKILLS.filter((u) => SKILLS[u].upgrades === base);
 
 /** True once another branch on the same slot has been taken: this one is locked out. */
 export const branchLocked = (key: SkillKey): boolean => {
-  const base = UPGRADES[key];
+  const base = SKILLS[key].upgrades;
   return !!base && upgradesOf(base).some((u) => u !== key && player.ranks[u] > 0);
 };
 
@@ -180,16 +177,11 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
    takes a slot upgrade (Double Shot -> Bolt Flurry, Rising Arrows ->
    Skyward Assault), or raises a learned skill's rank. */
 export const SKILL_PICK_EVERY = 5;
-/** Slot upgrades: the upgrade replaces the base skill on its key. A slot with
- *  several upgrades is a branch: taking one locks the others out for good. */
-const UPGRADES: Partial<Record<SkillKey, SkillKey>> = { S: 'Z', AB: 'W', RA: 'Q', EB: 'Q' };
 
 // The air forms of Q, W and E (Meteor Dive, Cyclone Sweep, Downpour) are
 // their own skills, but on the list they show the key they're used on, not
 // their own abbreviation.
 const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 'E' };
-
-export const RETIRED: SkillKey[] = ['RA'];
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {
@@ -209,9 +201,9 @@ export interface SkillRow {
 export function skillRows(): SkillRow[] {
   const rows: SkillRow[] = [];
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
-    if (RETIRED.includes(k)) continue;
-    const s = SKILLS[k], have = player.ranks[k] || 0, base = UPGRADES[k];
-    const upgradedAway = Object.entries(UPGRADES).some(([u, b]) => b === k && player.ranks[u as SkillKey] > 0);
+    if (SKILLS[k].retired) continue;
+    const s = SKILLS[k], have = player.ranks[k] || 0, base = s.upgrades;
+    const upgradedAway = upgradesOf(k).some((u) => player.ranks[u] > 0);
     if (upgradedAway || branchLocked(k)) continue;
     const slot = s.passive ? '' : base ?? AIR_FORM_KEY[k] ?? k;
     if (have === 0) {
@@ -246,7 +238,7 @@ export function skillRows(): SkillRow[] {
 
 /** The sibling branches taking this upgrade would lock out ('' if none). */
 function rivals(k: SkillKey): string {
-  const others = upgradesOf(UPGRADES[k] as SkillKey).filter((u) => u !== k);
+  const others = upgradesOf(SKILLS[k].upgrades as SkillKey).filter((u) => u !== k);
   return others.map((u) => SKILLS[u].name).join(', ');
 }
 
