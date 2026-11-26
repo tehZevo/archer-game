@@ -12,6 +12,7 @@ import type { LinkKind, SkillKey } from './types';
      combo    Sky Toss / Air Dive / launchers -> the link skills (W, AB, Z chain, and
                 W in the air: the Midair Spin)
      assault  Sky Assault's hover ending      -> Tempest (R)
+     tempest  Tempest                         -> Dive (Q in the air)
      blitz    Electric Blitz                  -> the next blitz
      glide    the aerial skills               -> Glide (D)
      volley   Midair Spin                     -> Plunging Volley (E in the air)
@@ -22,7 +23,7 @@ export const LINK_KINDS: readonly LinkKind[] = ['combo', 'assault', 'blitz', 'gl
 
 /** A fresh set of windows, all shut. */
 export const noLinks = (): Record<LinkKind, number> =>
-  ({ combo: 0, assault: 0, blitz: 0, glide: 0, volley: 0, spin: 0 });
+  ({ combo: 0, assault: 0, blitz: 0, glide: 0, volley: 0, spin: 0, tempest: 0 });
 
 /** The window each skill links out of (besides the link skills and the
  *  Q slot, which ride the combo window: see linksIn). */
@@ -35,8 +36,11 @@ export const LINKS_INTO: Partial<Record<SkillKey, LinkKind>> = {
  *  open. */
 export const linksIn = (kind: SkillKey, key: SkillKey, isLinkSkill: boolean): boolean => {
   const own = LINKS_INTO[kind];
-  const ridesCombo = (key === 'Q' || (key === 'W' && kind === 'MS')) && linkOpen('combo');
-  return isLinkSkill || ridesCombo || (own !== undefined && linkOpen(own));
+  // The Q slot rides the combo window (the launchers' follow-up) and Tempest's
+  // own window; W's air form rides the combo window too.
+  const ridesQ = key === 'Q' && (linkOpen('combo') || linkOpen('tempest'));
+  const ridesW = key === 'W' && kind === 'MS' && linkOpen('combo');
+  return isLinkSkill || ridesQ || ridesW || (own !== undefined && linkOpen(own));
 };
 
 /** Open (or re-open) a window for s seconds. */

@@ -105,7 +105,7 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.skillPose = null; // the spin / vanish of the last cast is over
   if (!linked) return;
   // Fervor: each link stacks final damage, and spends every open window, so
-  // chaining again needs a fresh one. Links also take a second off Tempest's
+  closeLinks();
   // and Spike Lift's long cooldowns and refill a Blitz.
   closeLinks();
   player.fervor = Math.min(5, player.fervor + 1);
