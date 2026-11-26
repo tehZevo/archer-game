@@ -10,6 +10,7 @@ import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
 import { confirmInput, confirmUi } from './confirm';
 import { openSettings, settingsKey, settingsUi } from './settings';
+import { closeLinkHelp, linkHelp, linkHelpKey, openLinkHelp } from './linkhelp';
 import type { PauseMenu } from './types';
 
 /**
@@ -28,6 +29,9 @@ export function windowInput(dt: number): boolean {
   // the settings window (from the Esc menu) sits over the paused game
   if (settingsUi.open) { settingsInput(); return true; }
   if (achUi.open) { achInput(); return true; }
+  // the skill-links help screen (H): shows each skill and what it links into
+  if (linkHelp.open) { linkHelpInput(); return true; }
+  if (pressed('h')) { openLinkHelp(); return true; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return true; }
@@ -40,7 +44,7 @@ export function windowInput(dt: number): boolean {
 /** True while any of those windows is open (so Enter belongs to it, not the chat line). */
 export function windowOpen(): boolean {
   return shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open
-    || settingsUi.open || achUi.open || dev.open || !!game.pause;
+    || settingsUi.open || achUi.open || linkHelp.open || dev.open || !!game.pause;
 }
 
 /** Z, Enter or Space: confirm in any window. */
@@ -64,6 +68,12 @@ function settingsInput(): void {
 function achInput(): void {
   for (const k of ['up', 'down', 'escape'] as const) if (pressed(k)) achKey(k);
   if (confirmed() || pressed('x')) achKey('escape');
+}
+
+/** The skill-links help screen: Up/Down scrolls, Esc / H / X closes. */
+function linkHelpInput(): void {
+  for (const k of ['up', 'down', 'escape'] as const) if (pressed(k)) linkHelpKey(k);
+  if (pressed('h') || pressed('x')) closeLinkHelp();
 }
 
 /** Dev menu: Up/Down picks a stop, Z/Enter warps there, Esc or ` closes. */
