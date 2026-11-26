@@ -86,20 +86,21 @@ function glide(): void {
  *  (see landDive). */
 function airDive(r: SkillRank): void {
   endHover(); // the dive's own momentum takes over at once, no stuck dive pose
-  pose('rush', P.DIVE_TIME);
   sfx.jump();
-  // yellow arrows streak down and forward ahead of her, leading the plunge
+  // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP, the yellow
+  // arrows leading the way, and the pose covers the coil as well as the plunge.
+  pose('rush', P.DIVE_WINDUP + P.DIVE_TIME);
+  player.vx = player.vy = 0;
   game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });
-  player.vx = player.face * P.DIVE_VX; // the diagonal plunge starts on the press
-  player.vy = P.DIVE_VY;
-  startSlide(P.DIVE_TIME);
-  player.diving = true;
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
   openLink('combo', linkWindow('AD'));
   openLink('glide', linkWindow('AD')); // and it links into a Glide
-  // The windup is the dive's coil before it bites: the plunge carries her down
-  // for DIVE_WINDUP before the arrows land on the enemies below.
+  // The plunge starts at the end of the coil, and lands on the enemies below.
   later(P.DIVE_WINDUP, () => {
+    player.vx = player.face * P.DIVE_VX; // the diagonal plunge
+    player.vy = P.DIVE_VY;
+    startSlide(P.DIVE_TIME);
+    player.diving = true;
     hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
       .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
   });
@@ -175,6 +176,7 @@ function spikeLift(r: SkillRank): void {
   // cast on the way up, you keep whatever the jump has already given you.
   const floor = game.floor.platforms[0].y - player.h;
   const gained = Math.max(0, floor - (player.y + player.h));
+  player.vx = 0; // you plant in place and rise straight up, no run momentum carried
   player.vy = -Math.max(0, P.SPIKE_RISE_V - gained * 4);
   player.liftT = P.SPIKE_RISE_T * (1 - Math.min(1, gained / P.SPIKE_LIFT_H));
   player.onGround = false;
@@ -230,6 +232,7 @@ function tempest(r: SkillRank): void {
  *  in reach several times. */
 function midairSpin(r: SkillRank): void {
   pose('shoot', 0.30);
+  player.vx = player.vy = 0; // the sweep holds its spot: no drifting on the jump's momentum
   player.skillPose = 'spin';
   endHover(); // swept out of a Sky Assault hover: the spin takes over
   sfx.shoot();
