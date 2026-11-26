@@ -143,6 +143,11 @@ for (let q = [START_TOWN]; q.length;) {
 /** How many paths up from the start a town is (the start is 0). */
 export const townDepth = (id: string): number => DEPTH.get(id) ?? 0;
 
+/** A place's tier: the tier of the town you climb up from to reach it, the
+ *  start town being tier 1. A path's tier is its start town's; a town's is its
+ *  own. (Shown in the dev menu's area list.) */
+export const placeTier = (p: Place): number => townDepth(lastTown(p)) + 1;
+
 export const isTown = (p: Place): p is { town: string } => 'town' in p;
 
 /** A place's short id, for room names and seeds: "woods-3", or a town's own id. */
