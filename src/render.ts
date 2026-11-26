@@ -17,7 +17,7 @@ import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { isLearned } from './progress';
 import { view, type Pose } from './ghost';
-import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, climbPhase } from './archer';
+import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, poseCycle } from './archer';
 import { clamp } from './util';
 import { BOSS, portalOpen, quakes, QUAKE_T, windingUp } from './boss';
 import { drawHUD } from './hud';
@@ -232,11 +232,13 @@ function drawQuake(q: { x: number; y: number; t: number }): void {
   }
 }
 
-/** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s). */
-function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string): void {
+/** Draw an archer (the local player or a ghost) with feet at (x, feet), in a pose frame at cycle time t (s).
+ *  `breathe` (off for the other players) cycles the idle's second frame, the
+ *  one that sinks the body a pixel: a ghost standing still should stand still. */
+function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string, breathe = true): void {
   // Climbing steps hand over hand with distance climbed, not time, so it
   // holds still while hanging on the rope.
-  const frame = archerFrame(archerFrames(look), pose, pose === 'climb' ? climbPhase(feet) : t, since);
+  const frame = archerFrame(archerFrames(look), pose, poseCycle(pose, feet, t, breathe), since);
   const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
   ctx.globalAlpha = alpha * (pose === 'vanish' ? vanishAlpha(since ?? 0) : 1);
@@ -306,7 +308,8 @@ function drawGhosts(): void {
     // is washed in their colour instead
     const look = looks.get(id);
     if (g.pose === 'dive') drawDiveTrail(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, now / 1000, 0.85, look ? undefined : col);
-    drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since, look ? undefined : col);
+    drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since,
+      look ? undefined : col, false);
     const name = names.get(id);
     if (name) {
       const nx = Math.round(g.x), ny = Math.round(g.y) - 10;
