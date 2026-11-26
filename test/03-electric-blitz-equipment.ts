@@ -286,3 +286,16 @@ check('new poses go on the end of the networked list (older clients read them as
   check('a walk with Down held is as fast as without', Math.abs((300 - player.x) - downWalk) < 0.01, `${(300 - player.x).toFixed(2)} vs ${downWalk.toFixed(2)}`);
   release();
 }
+
+// --- Bubble: a passive that takes a flat 30% off every hit ---
+{
+  arena(30); clearGear();
+  const take = (): number => {
+    player.invuln = 0; player.hp = player.hpMax;
+    const before = player.hp; hurtPlayer(100, undefined, 200); return before - player.hp;
+  };
+  player.ranks.bu = false; const plain = take();
+  player.ranks.bu = true; const bubbled = take();
+  player.ranks.bu = false; player.invuln = 999;
+  check('Bubble takes a flat 30% off each hit', plain === 100 && bubbled === 70, `${plain} -> ${bubbled}`);
+}

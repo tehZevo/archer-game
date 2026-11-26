@@ -180,6 +180,10 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   ni: { key: 'ni', name: 'Nimble', tag: 'Passive', job: 2, minLevel: 10, passive: true,
         cd: 0, mp1: 0, dmg1: 0,
         desc: 'Move speed up 40%, jump height up 20%' },
+  // A defensive passive: a bubble that blunts every hit.
+  bu: { key: 'bu', name: 'Bubble', tag: 'Passive', job: 3, minLevel: 30, passive: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.3,
+        desc: 'A bubble shields you: damage taken down 30%' },
 };
 
 /** Skills you start with at rank 1 (Lv.1 skills, except those bought with SP). */
