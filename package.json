@@ -10,7 +10,6 @@
     "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --loader:.png=dataurl --watch=forever",
     "dev": "npm run build:dev & python3 -m http.server 8000 --bind 0.0.0.0",
     "build:dev": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --loader:.png=dataurl --watch=forever",
-    "worktree": "sh scripts/worktree.sh",
     "start": "python3 -m http.server 8000 --bind 0.0.0.0",
     "bake": "esbuild scripts/bake.ts --bundle --outfile=.tmp/bake.cjs --platform=node --target=node18 --loader:.png=dataurl --log-level=warning && node .tmp/bake.cjs",
     "fxpreview": "esbuild scripts/fxpreview.ts --bundle --outfile=.tmp/fxpreview.cjs --platform=node --target=node18 --loader:.png=dataurl --log-level=warning && node .tmp/fxpreview.cjs"
