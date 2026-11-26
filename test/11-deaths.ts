@@ -87,16 +87,16 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Aerial skills link into Glide: pressed while the cast is still going,
   // D fires the moment its animation ends (skipping the recovery)
-  arena(20); player.ranks.d = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
+  arena(20); player.ranks.d = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true; player.ranks['air-w'] = true;
   dummy(100);
-  tap('c'); step(8);
+  tap('c'); step(4);
   tap('e');
-  check('the volley links into Glide', linkable('d') && player.casting.useT > 0, `use ${player.casting.useT.toFixed(2)}`);
-  tap('d');
-  check('...pressed mid-volley, D waits for the animation', player.casting.queued === 'd', `queued ${player.casting.queued}`);
+  check('the volley links into Cyclone Sweep', linkable('air-w') && player.casting.useT > 0, `use ${player.casting.useT.toFixed(2)}`);
+  tap('w');
+  check('...pressed mid-volley, W waits for the animation', player.casting.queued === 'ground-w', `queued ${player.casting.queued}`);
   let wait = 0;
   while (player.casting.queued && wait < 30) { step(1); wait++; }
-  check('...then fires as it ends', player.cast === 'jump' && Math.abs(wait * P.STEP - useTime('air-e')) < 0.07,
+  check('...then fires as it ends', player.cast === 'shoot' && Math.abs(wait * P.STEP - useTime('air-e')) < 0.07,
     `cast ${player.cast} after ${(wait * P.STEP).toFixed(2)}s`);
 }
 {

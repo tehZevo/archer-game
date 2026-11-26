@@ -44,7 +44,7 @@ export function update(dt: number): void {
   tickWaves(dt);
   tickCasting(dt);
   updateRapid(dt);
-  movePlayer(dt, player.casting.useT > 0); // a skill's use time blocks movement input
+  movePlayer(dt, player.casting.useT > 0 || player.casting.recoverT > 0); // a skill's use and recovery time block movement input
   if (usePortal()) return;
   tickWorld(dt);
   tickEffects(dt);

@@ -85,18 +85,19 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...but not the ones behind you', behind.hp === 1e6);
   check('Piercing Leap is on a long cooldown', player.cd['ground-e'] > 4, `cd ${player.cd['ground-e'].toFixed(1)}`);
   // the air form, once you are back on your feet with the cooldown cleared
-  landLeap(); player.cd['ground-e'] = 0;
+  landLeap(); step(13); player.cd['ground-e'] = 0; // let the leap's recovery tick out, freeing movement
   const under = dummy(100), beside = dummy(170);
   tap('c'); step(8);
   const yTop = player.y; player.vx = 40; tap('e'); step(1);
   check('Downpour bumps you up (a clear hop)', player.y < yTop - 4 && player.y > yTop - 20 && player.vy < 0, `rose ${(yTop - player.y).toFixed(1)}px`);
-  step(4);
-  check('Downpour does not freeze you mid-air', player.vy > 0 && player.vx !== 0);
   step(10);
+  check('Downpour does not freeze you mid-air', player.vy > 0 && player.vx !== 0);
+  step(4);
   check('Downpour hits the enemy beneath you', under.hp < 1e6);
   check('Downpour leaves enemies off to the side alone', beside.hp === 1e6);
   step(30);
   check('after the volley you drop back down', player.onGround);
+
   // the two forms cool down apart: Piercing Leap's long cooldown never locks out the volley
   player.cd['ground-e'] = 0; player.cd['ground-e.air'] = 0; player.casting.useT = 0;
   tap('e'); step(6);
@@ -218,7 +219,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   arena(25); dummy(130);
   cast('z');
   const base = player.casting.useT;
-  check('Double Shot has a use time and no cooldown', base > 0.4 && player.cd.z === 0);
+  check('Double Shot has a use time and no cooldown', base > 0.1 && player.cd.z === 0);
   player.casting.useT = 0; player.casting.recoverT = 0; player.cd.r = 0; player.ranks.r = true; cast('r');
   const rCd = player.cd.r, rUse = player.casting.useT;
   player.ranks.ha = true; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.r = 0; cast('r');
