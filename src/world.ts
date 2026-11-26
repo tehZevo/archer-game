@@ -164,7 +164,7 @@ export function cleanPlace(v: unknown): Place | null {
 export const areaOf = (p: Place): string => (isTown(p) ? townArea(p.town) : pathById(p.path)?.name ?? 'Harbor');
 
 /** What players call a place: "Whispering Woods 3", or the town's name. */
-export const placeName = (p: Place): string => (isTown(p) ? townById(p.town).name : `${areaOf(p)} ${p.floor}`);
+export const placeName = (p: Place): string => (isTown(p) ? townById(p.town).name : areaOf(p));
 
 /** The last floor of a path, right before its end town: the boss floor. */
 export const isPathEnd = (p: Place): boolean => !isTown(p) && p.floor === pathById(p.path)?.floors;
