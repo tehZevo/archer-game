@@ -137,6 +137,32 @@ function recolor(src: Sprite, map: Record<string, string>): Sprite {
 export interface MobAnim { frames: Sprite[]; fps: number; hurt: Sprite }
 const anim = (draw: (f: number) => Sprite, n: number, fps: number, hurt: () => Sprite): MobAnim =>
   ({ frames: Array.from({ length: n }, (_, f) => draw(f)), fps, hurt: hurt() });
+/** Cel shading over a mob frame: inside the outline, the pixel just over the
+ *  lower outline darkens and the one just under the upper outline lightens,
+ *  so every body reads round. (Done on load, after any recolour, so the
+ *  shades follow each variant's colours.) */
+export function shade(src: Sprite): Sprite {
+  const g = src.g, w = g.w, h = g.h, out = newGrid(w, h);
+  out.px.set(g.px);
+  const a = (x: number, y: number): number => (x < 0 || y < 0 || x >= w || y >= h ? 0 : g.px[(y * w + x) * 4 + 3]);
+  // the outline: opaque pixels touching the outside
+  const rim = (x: number, y: number): boolean => !!a(x, y) && (!a(x - 1, y) || !a(x + 1, y) || !a(x, y - 1) || !a(x, y + 1));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!a(x, y) || rim(x, y)) continue;
+    const k = rim(x, y + 1) ? -0.22 : rim(x, y - 1) ? 0.16 : 0;
+    if (!k) continue;
+    const i = (y * w + x) * 4;
+    for (let c = 0; c < 3; c++) out.px[i + c] = Math.round(k < 0 ? g.px[i + c] * (1 + k) : g.px[i + c] + (255 - g.px[i + c]) * k);
+  }
+  return new Sprite(w, h, out);
+}
+const shadedAnims = new WeakMap<MobAnim, MobAnim>();
+const shaded = (a: MobAnim): MobAnim => {
+  let s = shadedAnims.get(a);
+  if (!s) shadedAnims.set(a, (s = { frames: a.frames.map(shade), fps: a.fps, hurt: shade(a.hurt) }));
+  return s;
+};
+
 /** A standing enemy's out-breath: frame 0 with its upper half sunk a pixel
  *  onto the lower (made once per animation, so recolours and baked sheets get it too). */
 const breaths = new WeakMap<MobAnim, Sprite>();
@@ -323,9 +349,13 @@ export function loadMobSheets(): void {
 
 /** An enemy's animation: its baked sheet, or its painter's until that loads (undefined: no art). */
 export function mobAnim(name: string): MobAnim | undefined {
+  const a = rawAnim(name);
+  return a && shaded(a);
+}
+function rawAnim(name: string): MobAnim | undefined {
   const rc = RECOLOR[name];
   if (rc) {
-    const base = mobAnim(rc.base);
+    const base = rawAnim(rc.base);
     if (!base) return undefined;
     let r = recolored.get(name);
     if (!r || r.from !== base) recolored.set(name, (r = { from: base, a: recolorAnim(base, rc.map) }));
