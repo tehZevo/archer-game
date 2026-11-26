@@ -11,10 +11,10 @@ export const P = {
   HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
   HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
-  GRAVITY: 1040,       // px/s^2 (lowered from 2000)
+  GRAVITY: 858,        // px/s^2 (lowered from 2000, then 1040, then 780)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
-  JUMP_V: 269.3,       // √(2·g·34.9): a ~35px jump (25% lower than the old 46.5px) at 1040 gravity
+  JUMP_V: 242.4,       // 10% under the old 269.3: a ~34px jump at 858 gravity
   JUMP_H: 81.25,       // halved from 162.5
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
