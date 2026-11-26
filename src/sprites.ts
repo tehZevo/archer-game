@@ -2,8 +2,9 @@
 // grids (so they run headless: the bake writes them to PNG, see
 // scripts/bake.ts), and turned into canvases when first drawn.
 
-import { FRAMES, HURT, MOB_ART, RECOLOR, mobSize, paintMob } from './mobart';
-import { canvasGrid, fillRect, gridCanvas, hexRgb, newGrid, type Grid } from './grid';
+import { FRAMES, HURT, MOB_ART, mobSize, paintMob } from './mobart';
+import { VARIANT_ART } from './variantart';
+import { canvasGrid, fillRect, gridCanvas, newGrid, type Grid } from './grid';
 import { BAKED_MOBS } from './mobbaked';
 
 /** A sprite's pixels, and its canvas (made on first draw). */
@@ -120,27 +121,13 @@ function hogHurt(): Sprite {
   return s;
 }
 
-/** A copy of a sprite with some exact colours swapped (map keys are #rrggbb). */
-function recolor(src: Sprite, map: Record<string, string>): Sprite {
-  const s = make(src.w, src.h), d = s.g.px;
-  d.set(src.g.px);
-  const hex = (v: number): string => v.toString(16).padStart(2, '0');
-  for (let i = 0; i < d.length; i += 4) {
-    if (!d[i + 3]) continue;
-    const to = map[`#${hex(d[i])}${hex(d[i + 1])}${hex(d[i + 2])}`];
-    if (to) [d[i], d[i + 1], d[i + 2]] = hexRgb(to);
-  }
-  return s;
-}
-
 /** An enemy's walk/flap cycle, how fast it plays, and its hurt pose. */
 export interface MobAnim { frames: Sprite[]; fps: number; hurt: Sprite }
 const anim = (draw: (f: number) => Sprite, n: number, fps: number, hurt: () => Sprite): MobAnim =>
   ({ frames: Array.from({ length: n }, (_, f) => draw(f)), fps, hurt: hurt() });
 /** Cel shading over a mob frame: inside the outline, the pixel just over the
  *  lower outline darkens and the one just under the upper outline lightens,
- *  so every body reads round. (Done on load, after any recolour, so the
- *  shades follow each variant's colours.) */
+ *  so every body reads round. (Done on load.) */
 export function shade(src: Sprite): Sprite {
   const g = src.g, w = g.w, h = g.h, out = newGrid(w, h);
   out.px.set(g.px);
@@ -164,7 +151,7 @@ const shaded = (a: MobAnim): MobAnim => {
 };
 
 /** A standing enemy's out-breath: frame 0 with its upper half sunk a pixel
- *  onto the lower (made once per animation, so recolours and baked sheets get it too). */
+ *  onto the lower (made once per animation, so baked sheets get it too). */
 const breaths = new WeakMap<MobAnim, Sprite>();
 export function breath(a: MobAnim): Sprite {
   let s = breaths.get(a);
@@ -204,9 +191,6 @@ const leansOf = (a: MobAnim): { recoil: Sprite; lunge: Sprite } => {
 export const recoil = (a: MobAnim): Sprite => leansOf(a).recoil;
 /** The strike: frame 0 thrown forward, just as it bumps into you. */
 export const lunge = (a: MobAnim): Sprite => leansOf(a).lunge;
-const recolorAnim = (a: MobAnim, map: Record<string, string>): MobAnim =>
-  ({ frames: a.frames.map((f) => recolor(f, map)), fps: a.fps, hurt: recolor(a.hurt, map) });
-
 /** A glowing warp pad. */
 function portalSprite(): Sprite {
   const s = make(20, 28);
@@ -336,9 +320,8 @@ export const portalGrid = (): Grid => portalSprite().g;
    Enemies ship as PNG sheets (assets/mobs/<name>.png): the walk/flap
    frames then the hurt pose, in one strip, facing right. They are baked
    from the painters above (npm run bake), which stay as the source and as
-   the fallback until a sheet has loaded. Palette-swapped variants
-   (RECOLOR: Red Snail, Blue Crab...) are recoloured from their base's
-   sheet at runtime, so they follow it. */
+   the fallback until a sheet has loaded. The hand-drawn enemies' variants
+   (Red Snail, Blue Crab...) are drawn as their own creatures (variantart.ts). */
 
 /** Every base enemy's painter: its frames in order, how fast they play, and its hurt pose. */
 export const MOB_GEN: Record<string, () => MobAnim> = {
@@ -349,6 +332,8 @@ export const MOB_GEN: Record<string, () => MobAnim> = {
   'Enemy Crab': () => anim(crabSprite, 4, 7, crabHurt),
   'Hermit Crab': () => anim(hermitSprite, 4, 5, hermitHurt),
   'Gull': () => anim(gullSprite, 4, 10, gullHurt),
+  ...Object.fromEntries(Object.entries(VARIANT_ART).map(([n, v]) =>
+    [n, () => anim((f) => grid(v.rows(f), v.pal), 4, v.fps, () => grid(v.hurt(), v.pal))])),
   ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, () => artMob(n, MOB_ART[n].look.w > 17 ? 12 : 14)])),
 };
 
@@ -357,7 +342,6 @@ export interface BakedMob { src: string; w: number; h: number; n: number; fps: n
 
 const loaded = new Map<string, MobAnim>();
 const generated = new Map<string, MobAnim>();
-const recolored = new Map<string, { from: MobAnim; a: MobAnim }>();
 
 /** Start decoding every baked enemy sheet (no-op headless). */
 export function loadMobSheets(): void {
@@ -378,14 +362,6 @@ export function mobAnim(name: string): MobAnim | undefined {
   return a && shaded(a);
 }
 function rawAnim(name: string): MobAnim | undefined {
-  const rc = RECOLOR[name];
-  if (rc) {
-    const base = rawAnim(rc.base);
-    if (!base) return undefined;
-    let r = recolored.get(name);
-    if (!r || r.from !== base) recolored.set(name, (r = { from: base, a: recolorAnim(base, rc.map) }));
-    return r.a;
-  }
   const got = loaded.get(name) ?? generated.get(name);
   if (got || !MOB_GEN[name]) return got;
   const a = MOB_GEN[name]();
