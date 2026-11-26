@@ -3,7 +3,7 @@ import { game, player } from './state';
 import { held, pressed } from './input';
 import { catchClimbable, collideGround, integrate, surfaceAt, surfaceBetween } from './physics';
 import { damage } from './combat';
-import { passiveBonus } from './progress';
+import { nimbleJump, nimbleSpeed, passiveBonus } from './progress';
 import { sfx } from './audio';
 import { grip } from './floormods';
 import { slowFactor } from './status';
@@ -137,8 +137,9 @@ function walk(dt: number, locked: boolean): void {
 function steer(dt: number, locked: boolean): void {
   const slow = (player.cast === 'rush' || player.cast === 'dive' ? 0.55 : 1) * slowFactor(player); // chill slows you
   let target = 0;
-  if (!locked && held('left'))  { target = -P.WALK * slow; player.face = -1; }
-  if (!locked && held('right')) { target =  P.WALK * slow; player.face =  1; }
+  const speed = P.WALK * nimbleSpeed();
+  if (!locked && held('left'))  { target = -speed * slow; player.face = -1; }
+  if (!locked && held('right')) { target =  speed * slow; player.face =  1; }
   if (!player.onGround) {
     // holding against your motion brakes toward a standstill but never turns you around
     if (target !== 0 && Math.sign(target) === -Math.sign(player.vx)) {
@@ -171,7 +172,7 @@ function jump(): void {
     player.vy = -P.DROP_HOP_V;
     return;
   }
-  player.vy = -P.JUMP_V;
+  player.vy = -P.JUMP_V * nimbleJump();
   if (held('left'))  { player.vx = -P.JUMP_H; player.face = -1; }
   if (held('right')) { player.vx =  P.JUMP_H; player.face =  1; }
 }

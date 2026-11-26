@@ -210,7 +210,7 @@ function dummy(x: number, hp = 1e6): Mob {
   check('down-jump + Glide never falls through from above', through === 0, `${through}/${trials}`);
 }
 
-// --- combat: Double Shot draws, then hits the 2 closest enemies twice ---
+// --- combat: Double Shot draws, then hits the closest enemies twice ---
 {
   arena();
   const far = dummy(190), near = dummy(130), mid = dummy(160);
@@ -224,7 +224,7 @@ function dummy(x: number, hp = 1e6): Mob {
   check('Double Shot: first hit lands on release', firstHit);
   check('Double Shot: the animation lasts its use time', Math.abs(player.castTotal - useTime('Z')) < 1e-9,
     `pose ${player.castTotal.toFixed(2)} use ${useTime('Z').toFixed(2)}`);
-  check('Double Shot: closest two take both hits, the third none', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 && far.hp === 1e6);
+  check('Double Shot: each target takes both hits', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 - one * 1.5 && far.hp < 1e6);
 }
 
 // --- balance: a Lv.1 Garden Snail takes a few Double Shots ---
@@ -238,7 +238,7 @@ function dummy(x: number, hp = 1e6): Mob {
     casts += c;
   }
   const avg = casts / 3;
-  check('Lv.1 Garden Snail takes 4-7 Double Shots', avg >= 4 && avg <= 7, `avg ${avg}`);
+  check('Lv.1 Garden Snail takes 2-5 Double Shots', avg >= 2 && avg <= 5, `avg ${avg}`);
 }
 
 // --- links: W only works right after Rush Toss, once ---
@@ -401,21 +401,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- progression: an upgrade starts at rank 1, not its base skill's rank ---
 {
   arena(30);
-  player.ranks.Z = 3; player.sp = 1;
+  player.ranks.Z = 1; player.sp = 1;
   spendSkill('S');
   check('upgrading Double Shot to Bolt Flurry starts at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
   check('movement skills are never offered for ranks', !skillRows().some((r) => r.key === 'D' && r.action));
 }
 
-// --- an upgrade needs its base skill maxed ---
+// --- an upgrade needs its base skill learned (its single rank) ---
 {
   arena(30);
-  player.ranks.Z = 2; player.sp = 1;
+  player.ranks.Z = 0; player.sp = 1;
+  check('an upgrade isn\'t offered until its base is learned', !skillRows().some((r) => r.key === 'S'));
+  player.ranks.Z = 1;
   const row = skillRows().find((r) => r.key === 'S');
-  check('an upgrade shows before its base is maxed, but locked with a reason', !!row && row.action === '' && !!row.need?.includes('Double Shot'));
-  check('...and an SP can\'t take it', !spendSkill('S') && player.ranks.S === 0 && player.sp === 1);
-  player.ranks.Z = 3;
-  check('with the base maxed it can be taken', spendSkill('S') && activeSkill('Z').key === 'S');
+  check('with the base learned, the upgrade is offered', !!row && row.action.startsWith('Upgrade'));
+  check('...and an SP takes it', spendSkill('S') && player.ranks.S === 1 && player.sp === 0);
 }
 
 // --- ghosts: few rich packets, smooth playback ---
@@ -453,15 +453,15 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- a skill's prerequisite must be mastered before it unlocks ---
 {
   arena(60);
-  player.ranks.Q = 1; player.ranks.W = 1;
+  player.ranks.Q = 0; player.ranks.W = 1;
   const ad = skillRows().find((r) => r.key === 'AD');
   check('Meteor Dive is locked until Rush Toss is mastered', !!ad && ad.action === '' && !!ad.need?.includes('Rush Toss'), ad?.need);
-  player.ranks.Q = 3;
+  player.ranks.Q = 1;
   const ad2 = skillRows().find((r) => r.key === 'AD');
   check('...and unlocks once Rush Toss is at max rank', !!ad2 && ad2.action.startsWith('Learn'));
   const ms = skillRows().find((r) => r.key === 'MS');
   check('Cyclone Sweep is locked until Skyward Assault is mastered', !!ms && ms.action === '' && !!ms.need?.includes('Skyward Assault'), ms?.need);
-  player.ranks.AB = 3;
+  player.ranks.AB = 1;
   const ms2 = skillRows().find((r) => r.key === 'MS');
   check('...and unlocks once Skyward Assault is at max rank', !!ms2 && ms2.action.startsWith('Learn'));
 }
@@ -624,7 +624,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('...and it scales with the skill\'s own rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   player.ranks.ES = 3;
   check('Twin Echoes stays doubled at max rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 3);
+  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 1);
   player.ranks.ES = 0;
   check("a passive's bonus is one lot of arrows until learned", shotCount(rank('Z')) === 2);
   arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
@@ -1019,7 +1019,7 @@ check('new poses go on the end of the networked list (older clients read them as
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
   arena(35); gotoPlace({ town: 'mossgate' });
-  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 3; player.ranks.W = 3; player.ranks.E = 2;
+  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 1; player.ranks.W = 1; player.ranks.E = 1;
   save();
   const want = JSON.stringify(snapshot());
   arena(1); player.ap = 0; player.sp = 0; player.ranks.W = 0; player.ranks.E = 0;
@@ -1033,10 +1033,10 @@ check('new poses go on the end of the networked list (older clients read them as
   check('a save in a town gone from the map resumes at the start', samePlace(load(), START));
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt save is ignored', apply('junk') === null);
-  check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 3 }, town: 'mossgate' }) !== null
-    && player.level === 50 && player.ap === 3 && player.ranks.Z === 3);
+  check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 1 }, town: 'mossgate' }) !== null
+    && player.level === 50 && player.ap === 3 && player.ranks.Z === 1);
   apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, RA: 1, EB: 1 }, town: 0 });
-  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 3 && player.ranks.RA + player.ranks.EB === 1);
+  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 1 && player.ranks.RA + player.ranks.EB === 1);
   clearSave();
   check('reset forgets the save', !hasSave() && samePlace(load(), START));
   delete (globalThis as { localStorage?: unknown }).localStorage;
@@ -1528,19 +1528,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
   check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
-  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 2; player.ranks.Z = 0;
+  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 1; player.ranks.Z = 0;
   tap('up');
   check('Up beside the trainer opens the trainer', trainer.open && trainer.sel === 0);
   tap('z');
-  check('a branch swap keeps the rank and takes the coins', player.ranks.Z === 2 && player.ranks.S === 0 && wallet.coins === 0);
+  check('a branch swap keeps the rank and takes the coins', player.ranks.Z === 1 && player.ranks.S === 0 && wallet.coins === 0);
   tap('escape');
 
-  player.ranks.S = 0; player.ranks.Z = 3; player.stats.dex = 4; player.ap = 0; player.sp = 0;
+  player.ranks.S = 0; player.ranks.Z = 1; player.stats.dex = 4; player.ap = 0; player.sp = 0;
   wallet.coins = RESPEC_PRICES.reset;
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent (Glide too)',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 5 && player.ranks.D === 0 && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 3 && player.ranks.D === 0 && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
@@ -2747,17 +2747,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     `diving ${player.diving} rushT ${player.rush.t.toFixed(2)}`);}
 
 {
-  // Damage rework: the new per-skill hit/damage numbers
-  check('Double Shot hits up to 4 targets at 80% -> 120% per hit',
-    SKILLS.Z.targetsMax === 4 && SKILLS.Z.dmg1 === 80 && SKILLS.Z.dmgMax === 120);
-  check('Rising Arrows fires 4 (not 6) at max', SKILLS.W.hits1 === 4 && SKILLS.W.hitsMax === 4);
-  check('Skyward Assault strikes 4 (not 8) at max', SKILLS.AB.hits1 === 4 && SKILLS.AB.hitsMax === 4);
-  check('Cyclone Sweep sweeps 4 hits at 200%', SKILLS.MS.hits1 === 4 && SKILLS.MS.hitsMax === 4 && SKILLS.MS.dmg1 === 200 && SKILLS.MS.dmgMax === 200);
-  check('Electric Blitz strikes twice', SKILLS.EB.hits1 === 2 && SKILLS.EB.hitsMax === 2);
-  check('Tempest storms up to 8 hits at 140-200% each', SKILLS.R.hitsMax === 8 && SKILLS.R.dmg1 === 140 && SKILLS.R.dmgMax === 200);
-  check('Meteor Dive lands one Rush Toss-strength hit', SKILLS.AD.hits1 === 1 && SKILLS.AD.dmg1 === 250 && SKILLS.AD.dmgMax === 400);
+  // Single-rank skills: each carries its (former) max-level hit/damage numbers
+  check('Double Shot hits up to 4 targets at 120% per hit',
+    SKILLS.Z.targets1 === 4 && SKILLS.Z.dmg1 === 120 && SKILLS.Z.maxLevel === 1);
+  check('Rising Arrows fires 4', SKILLS.W.hits1 === 4);
+  check('Skyward Assault strikes 4', SKILLS.AB.hits1 === 4);
+  check('Cyclone Sweep sweeps 4 hits at 200%', SKILLS.MS.hits1 === 4 && SKILLS.MS.dmg1 === 200);
+  check('Electric Blitz strikes twice', SKILLS.EB.hits1 === 2);
+  check('Tempest storms up to 8 hits at 200% each', SKILLS.R.hits1 === 8 && SKILLS.R.dmg1 === 200);
+  check('Meteor Dive lands one Rush Toss-strength hit', SKILLS.AD.hits1 === 1 && SKILLS.AD.dmg1 === 400);
   // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
-  arena(20); player.ranks.Q = 3; player.ranks.EB = 3;
+  arena(20); player.ranks.Q = 1; player.ranks.EB = 1;
   player.blitz.charges = P.BLITZ_MAX;
   const m = dummy(140);
   tap('q'); step(24); // the slide ends and the strike lands (both hits)
