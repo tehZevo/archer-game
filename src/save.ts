@@ -32,7 +32,7 @@ export interface SaveData {
   ap: number;
   sp: number;
   stats: Record<string, number>;
-  ranks: Record<string, number>;
+  ranks: Record<string, boolean>;
   /** The town you resume in (its id, see world.ts): the latest one you passed. */
   town: string;
   /** Coins and potions (absent in older saves: start empty). */
@@ -105,12 +105,12 @@ export function apply(d: unknown): Place | null {
   player.sp = int(s.sp, 0, 999, 0);
   for (const k of STAT_KEYS) player.stats[k] = int(s.stats?.[k], 0, 999, 0);
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
-    if (s.ranks && k in s.ranks) player.ranks[k] = int(s.ranks[k], 0, SKILLS[k].maxLevel, player.ranks[k]);
+    if (s.ranks && k in s.ranks) player.ranks[k] = !!s.ranks[k];
   }
   // a slot can hold only one upgrade branch: if a save claims several, keep the first
   for (const base of SKILL_ORDER) {
-    const taken = upgradesOf(base).filter((u) => player.ranks[u] > 0);
-    taken.slice(1).forEach((u) => { player.ranks[u] = 0; });
+    const taken = upgradesOf(base).filter((u) => player.ranks[u]);
+    taken.slice(1).forEach((u) => { player.ranks[u] = false; });
   }
   player.job = jobForLevel(player.level);
   recalcStats();

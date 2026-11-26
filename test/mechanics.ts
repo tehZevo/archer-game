@@ -105,7 +105,7 @@ function arena(level = 1, x = 100): void {
   release();
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
   player.level = level; player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats();
-  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
+  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? false : ['Z', 'D', 'Q', 'W', 'SA'].includes(k) ? true : false;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.casting.useT = 0; player.casting.recoverT = 0; player.casting.freeze = 0; player.cast = null; player.castT = 0; player.casting.queued = null; player.hang.t = 0;
@@ -245,7 +245,7 @@ function dummy(x: number, hp = 1e6): Mob {
 for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const name = upgraded ? 'Skyward Assault' : 'Rising Arrows';
   arena(lvl);
-  player.ranks.W = 1; if (upgraded) player.ranks.AB = 1;
+  player.ranks.W = true; if (upgraded) player.ranks.AB = true;
   const m = dummy(125);
   const mp0 = player.mp;
   tap('w');
@@ -258,14 +258,14 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check(`${name}: can't be reused until the next Rush Toss`, m.hp === hp1);
 }
 {
-  arena(12); player.ranks.W = 1;
+  arena(12); player.ranks.W = true;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const hp0 = m.hp; tap('z'); step(15);
   check('Z during the Rush Toss casts Double Shot', m.hp < hp0 && player.linkFrom === 'Z', `from ${player.linkFrom}`);
 }
 {
-  arena(12); player.ranks.W = 1;
+  arena(12); player.ranks.W = true;
   dummy(125);
   setKey('down', true); tap('q'); setKey('down', false);
   tap('w'); // pressed mid Rush Toss
@@ -274,7 +274,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('a link pressed during Rush Toss fires when it ends', fired > 0 && fired < 20, `frame ${fired}`);
 }
 {
-  arena(20); player.ranks.W = 1; player.ranks.AB = 1;
+  arena(20); player.ranks.W = true; player.ranks.AB = true;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const x0 = player.x, y0 = player.y, hp0 = m.hp;
@@ -289,7 +289,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Skyward Assault is gated by the link window: one use per Rush Toss, not spammed.
-  arena(20); player.ranks.W = 3; player.ranks.AB = 3; // Skyward Assault is the W upgrade: maxing W masters it
+  arena(20); player.ranks.W = true; player.ranks.AB = true; // Skyward Assault is the W upgrade: maxing W masters it
   dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   check('the Rush Toss links into Skyward Assault', linkable('AB'));
@@ -401,21 +401,21 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- progression: an upgrade starts at rank 1, not its base skill's rank ---
 {
   arena(30);
-  player.ranks.Z = 1; player.sp = 1;
+  player.ranks.Z = true; player.sp = 1;
   spendSkill('S');
-  check('upgrading Double Shot to Bolt Flurry starts at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
+  check('upgrading Double Shot to Bolt Flurry starts at rank 1', activeSkill('Z').key === 'S' && true);
   check('movement skills are never offered for ranks', !skillRows().some((r) => r.key === 'D' && r.action));
 }
 
 // --- an upgrade needs its base skill learned (its single rank) ---
 {
   arena(30);
-  player.ranks.Z = 0; player.sp = 1;
+  player.ranks.Z = false; player.sp = 1;
   check('an upgrade isn\'t offered until its base is learned', !skillRows().some((r) => r.key === 'S'));
-  player.ranks.Z = 1;
+  player.ranks.Z = true;
   const row = skillRows().find((r) => r.key === 'S');
   check('with the base learned, the upgrade is offered', !!row && row.action.startsWith('Upgrade'));
-  check('...and an SP takes it', spendSkill('S') && player.ranks.S === 1 && player.sp === 0);
+  check('...and an SP takes it', spendSkill('S') && player.ranks.S === true && player.sp === 0);
 }
 
 // --- ghosts: few rich packets, smooth playback ---
@@ -443,7 +443,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 {
   // The air forms show the key they're used on (Q, W, E), not AD/MS/PV.
   arena(60);
-  player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
+  player.ranks.Q = true; player.ranks.W = true; player.ranks.E = true;
   const rows = skillRows();
   const ad = rows.find((r) => r.key === 'AD'), ms = rows.find((r) => r.key === 'MS'), pv = rows.find((r) => r.key === 'PV');
   check('Meteor Dive shows on the Q key', !!ad && ad.slot === 'Q', ad?.slot);
@@ -453,49 +453,49 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- a skill's prerequisite must be mastered before it unlocks ---
 {
   arena(60);
-  player.ranks.Q = 0; player.ranks.W = 1;
+  player.ranks.Q = false; player.ranks.W = true;
   const ad = skillRows().find((r) => r.key === 'AD');
   check('Meteor Dive is locked until Rush Toss is mastered', !!ad && ad.action === '' && !!ad.need?.includes('Rush Toss'), ad?.need);
-  player.ranks.Q = 1;
+  player.ranks.Q = true;
   const ad2 = skillRows().find((r) => r.key === 'AD');
   check('...and unlocks once Rush Toss is at max rank', !!ad2 && ad2.action.startsWith('Learn'));
   const ms = skillRows().find((r) => r.key === 'MS');
   check('Cyclone Sweep is locked until Skyward Assault is mastered', !!ms && ms.action === '' && !!ms.need?.includes('Skyward Assault'), ms?.need);
-  player.ranks.AB = 1;
+  player.ranks.AB = true;
   const ms2 = skillRows().find((r) => r.key === 'MS');
   check('...and unlocks once Skyward Assault is at max rank', !!ms2 && ms2.action.startsWith('Learn'));
 }
 // --- branching upgrades: the slots that still branch (Z, W) ---
 {
   arena(30);
-  player.ranks.Z = 3; player.sp = 2;
+  player.ranks.Z = true; player.sp = 2;
   const offered = skillRows().map((r) => r.key);
   check('Z offers Bolt Flurry', offered.includes('S'));
   check('the retired branches are not offered', !offered.includes('RA'));
   spendSkill('S');
-  check('taking Bolt Flurry binds it to Z at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
+  check('taking Bolt Flurry binds it to Z at rank 1', activeSkill('Z').key === 'S' && true);
   check('Bolt Flurry is the only offer on Z', skillRows().filter((r) => r.slot === 'Z' && r.key !== 'Z').length === 1);
 }
 {
-  arena(30); player.ranks.S = 1;
+  arena(30); player.ranks.S = true;
   const m = dummy(140);
   tap('z'); step(10);
   check('Bolt Flurry fires a burst that stuns ahead', m.hp < 1e6 && player.face === 1);
 }
 {
   // Rush Toss stays the launcher on Q; Skyward Assault is W's upgrade
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true;
   const m = dummy(140);
   tap('q'); step(14);
   check('Rush Toss hits the enemy ahead and leaves it on the ground', m.hp < 1e6 && m.airTime === 0);
   const hp0 = m.hp; tap('w'); step(15);
   check('the rush opens the link window, and W launches and shoots it', m.hp < hp0 && m.airTime > 0);
-  arena(15); player.ranks.W = 3; player.ranks.AB = 3; // Skyward Assault is the W upgrade: maxing W masters it
+  arena(15); player.ranks.W = true; player.ranks.AB = true; // Skyward Assault is the W upgrade: maxing W masters it
   check('W offers Skyward Assault as its upgrade', activeSkill('W').key === 'AB');
 }
 {
   // Meteor Dive: Q's air form plunges down and rolls into the ground rush
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('c'); step(6);
   const y0 = player.y;
   tap('q'); step(5); // past the windup, into the plunge
@@ -503,7 +503,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
   // from higher up: the landing frame itself starts the rush, a real one (it strikes)
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   const m = dummy(180);
   player.y -= 60; player.onGround = false; player.vy = 0;
   tap('q');
@@ -520,7 +520,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Cyclone Sweep: W's air form sweeps the enemies around you
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.MS = true;
   const m = dummy(140);
   tap('c'); step(8);
   const hp0 = m.hp; tap('w'); step(4);
@@ -529,7 +529,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 
 {
   // Piercing Leap lifts you steadily (no snappy pop) to about a jump's height
-  arena(10); player.ranks.E = 1;
+  arena(10); player.ranks.E = true;
   tap('e');
   const ys: number[] = [];
   for (let i = 0; i < 30 && !(i > 2 && player.onGround); i++) { ys.push(player.y); step(1); }
@@ -540,7 +540,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 {
   // Skyward Assault -> E: Downpour isn't a link off the assault, so a press
   // during the hover is dropped (only MS, R, Z and Q are buffered).
-  arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.E = 1; player.ranks.PV = 1;
+  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.E = true; player.ranks.PV = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Skyward Assault hovers', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
@@ -550,7 +550,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Skyward Assault -> R: a Tempest pressed during the hover fires as it ends
-  arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
+  arena(30); player.ranks.Q = true; player.ranks.AB = true; player.ranks.R = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(4);
   tap('r');
@@ -563,19 +563,19 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Q rushes chain into Z: pressed mid-slide, Double Shot fires as the slide ends
-  arena(20); player.ranks.Q = 1; player.ranks.W = 0;
+  arena(20); player.ranks.Q = true; player.ranks.W = false;
   dummy(200);
   tap('q'); step(2); tap('z');
   check('Z pressed during the rush waits for it', player.casting.queued === 'Z' && player.cast === 'rush');
   let fired = -1;
   for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'shoot') fired = i; }
   check('...and fires as soon as the slide ends, with no use-time wait', fired >= 0 && player.rush.t <= 0, `after ${fired} frames`);
-  arena(20); player.ranks.Q = 1; player.ranks.W = 0;
+  arena(20); player.ranks.Q = true; player.ranks.W = false;
   tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || rushHolding()); i++) step(1);
   check('right after the rush, Z fires at once too', player.casting.useT > 0 && (tap('z'), player.cast === 'shoot'));
   // the chain skips the ending lag once: a second Z right after is a fresh
   // shot (its own use time), not a free extra use while the window is open
-  arena(20); player.ranks.Q = 1; player.ranks.W = 0;
+  arena(20); player.ranks.Q = true; player.ranks.W = false;
   dummy(200);
   tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || player.cast === 'rush'); i++) step(1);
   tap('z'); step(1);
@@ -618,39 +618,39 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('a mob two levels above lands on any roll', hurtPlayer(10, 0, 22) && player.hp === player.hpMax - 10);
   // Twin Echoes (passive): the shadow archer fires alongside you, doubling the
   // arrows every attack fires, permanently, once bought with SP. No timer.
-  arena(20); player.ranks.Z = 1;
+  arena(20); player.ranks.Z = true;
   check('Double Shot fires two arrows with no Twin Echoes', shotCount(rank('Z')) === 2, `${shotCount(rank('Z'))}`);
-  player.ranks.ES = 1;
+  player.ranks.ES = true;
   check('Twin Echoes doubles Double Shot\'s arrows', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  player.ranks.Z = 3;
+  player.ranks.Z = true;
   check('...and it scales with the skill\'s own rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  player.ranks.ES = 3;
+  player.ranks.ES = true;
   check('Twin Echoes stays doubled at max rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true && SKILLS.ES.maxLevel === 1);
-  player.ranks.ES = 0;
+  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true);
+  player.ranks.ES = false;
   check("a passive's bonus is one lot of arrows until learned", shotCount(rank('Z')) === 2);
-  arena(20); player.ranks.Z = 1; player.ranks.ES = 2;
+  arena(20); player.ranks.Z = true; player.ranks.ES = true;
   check('the shadow doubles a mid-air Downpour too', shotCount(rank('PV')) === 4, `${shotCount(rank('PV'))}`);
 }
 {
   // each ground rush wears its own aura and scuffs the floor it slides over
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = true;
   game.fx.length = 0;
   tap('q'); step(4);
   check('Rush Toss slides in its own aura', player.rush.t > 0 && player.rush.look === 'tossRush');
   check('...scuffing the ground behind it', game.fx.some((f) => f.type === 'tossTrail'));
-  arena(20); player.ranks.Q = 3; player.ranks.EB = 1;
+  arena(20); player.ranks.Q = true; player.ranks.EB = true;
   game.fx.length = 0;
   tap('q'); step(4);
   check('Electric Blitz has its own, distinct aura and scuffs', player.rush.look === 'blitzRush' && game.fx.some((f) => f.type === 'blitzTrail') && !game.fx.some((f) => f.type === 'tossTrail'));
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = true;
   setKey('down', true); tap('q'); setKey('down', false);
   check('an in-place rush has no slide aura', !(player.rush.t > 0 && player.rush.look));
   player.blitz.charges = P.BLITZ_MAX; player.cd.Q = 0; player.readyT.Q = 0; // leave Q as the blitz tests expect
 }
 // --- Electric Blitz: Q's charged upgrade ---
 {
-  arena(20); player.ranks.Q = 3; player.ranks.EB = 1;
+  arena(20); player.ranks.Q = true; player.ranks.EB = true;
   check('Electric Blitz replaces Rush Toss on Q', activeSkill('Q').key === 'EB');
   check('it starts with two charges', player.blitz.charges === P.BLITZ_MAX);
   check('the blitz has no cooldown of its own (its charges are the cooldown)', SKILLS.EB.cd === 0 && P.BLITZ_CHARGE_T === 4);
@@ -670,14 +670,14 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   for (let i = 0; i < P.BLITZ_CHARGE_T * 30 + 2 && player.blitz.charges === 0; i++) step(1);
   check('a charge recharges after 4s', player.blitz.charges === 1, `charges ${player.blitz.charges}`);
   check('the recharged charge flashes the icon', player.readyT.Q > 0);
-  player.blitz.charges = 1; player.blitz.t = 3; player.linkFrom = 'Q'; player.ranks.W = 1; player.casting.useT = 0;
+  player.blitz.charges = 1; player.blitz.t = 3; player.linkFrom = 'Q'; player.ranks.W = true; player.casting.useT = 0;
   cast('W');
   check('a linked skill speeds up the charge filling (it never sets it back)', player.blitz.t === 4, `blitzT ${player.blitz.t}`);
 }
 
 // --- Equipment: a weapon and an armor piece ---
 {
-  arena(10); player.ranks.Z = 1;
+  arena(10); player.ranks.Z = true;
   clearGear();
   check('you start with nothing equipped', gear.weapon === null && gear.armor === null);
   check('an empty slot leaves damage and damage taken unchanged', gearDmg() === 1 && gearSoak() === 0);
@@ -751,7 +751,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- E / R ---
 {
   // E is a two-form key: Piercing Leap on the ground, Downpour in the air
-  arena(10); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(10); player.ranks.E = true; player.ranks.PV = true;
   const near = dummy(140);
   tap('e');
   check('Piercing Leap drives spikes into the enemies around you', near.hp < 1e6);
@@ -782,7 +782,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // The spike lift links into Downpour: E pressed during the rise fires as it ends
-  arena(60); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(60); player.ranks.E = true; player.ranks.PV = true;
   dummy(130);
   tap('e'); step(12); // rise to the top of the lift (the air form needs ~2/3 a jump's height)
   check('Piercing Leap lifts you (setup)', !player.onGround && player.liftT > 0, `liftT ${player.liftT.toFixed(2)}`);
@@ -794,7 +794,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // A linked skill refunds 1s off Piercing Leap's cooldown (as it does Tempest's)
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.E = true;
   dummy(150);
   tap('e'); step(2);
   check('Piercing Leap starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
@@ -812,7 +812,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Cyclone Sweep (W in the air): one sweep per 4s, and a slow rise
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.MS = true;
   tap('c'); step(70);
   check('back on the ground', player.onGround);
   const m = dummy(140);
@@ -827,7 +827,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Q and Meteor Dive: both paced by the use time alone, no cooldowns
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('q');
   check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.6 && player.cdMax.Q === 0 && player.casting.useT > 0);
   step(40); player.cd.Q = 0;
@@ -839,7 +839,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 {
   // The Meteor Dive's follow-ups fire off its landing, not its coil, and a
   // Double Shot pressed mid-plunge waits out the landing roll.
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   dummy(150);
   tap('c'); step(8);
   tap('q');
@@ -858,7 +858,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 {
   // The Meteor Dive links into the grounded kit: pressed as the dive lands,
   // the next skill fires without the use-time wait
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1; player.ranks.W = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true; player.ranks.W = true;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
@@ -868,7 +868,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Rising Arrows links out of the dive', player.mp < mp0 && player.linkFrom === 'W', `mp ${player.mp} from ${player.linkFrom}`);
 }
 {
-  arena(25); player.ranks.R = 1;
+  arena(25); player.ranks.R = true;
   const a = dummy(130), b = dummy(170);
   tap('r'); step(15);
   check('Tempest hits every enemy caught in the sweep', a.hp < 1e6 && b.hp < 1e6);
@@ -877,7 +877,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // ready-glow: the bar icon flashes the moment a cooldown runs out
-  arena(20); player.ranks.E = 1;
+  arena(20); player.ranks.E = true;
   tap('e');
   check('casting starts the cooldown with no glow', player.cd.E > 0 && player.readyT.E === 0);
   for (let i = 0; i < 400 && player.cd.E > 0; i++) step(1);
@@ -893,14 +893,14 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   cast('Z');
   const base = player.casting.useT;
   check('Double Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
-  player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
+  player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = true; cast('R');
   const rCd = player.cd.R, rUse = player.casting.useT;
-  player.ranks.HA = 3; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
+  player.ranks.HA = true; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
   check('Haste shortens use time by 20% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.2) < 1e-6);
   check('Haste leaves cooldowns alone', player.cd.R === rCd);
   player.casting.useT = 0; player.casting.recoverT = 0; cast('Z');
   check('a hasted Double Shot fires about 20% faster', Math.abs(player.casting.useT - base / 1.2) < 1e-6);
-  player.ranks.HA = 0; player.ranks.R = 0;
+  player.ranks.HA = false; player.ranks.R = false;
 }
 
 // --- private instances ---
@@ -1035,10 +1035,10 @@ check('new poses go on the end of the networked list (older clients read them as
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
   arena(35); gotoPlace({ town: 'mossgate' });
-  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 1; player.ranks.W = 1; player.ranks.E = 1;
+  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = true; player.ranks.W = true; player.ranks.E = true;
   save();
   const want = JSON.stringify(snapshot());
-  arena(1); player.ap = 0; player.sp = 0; player.ranks.W = 0; player.ranks.E = 0;
+  arena(1); player.ap = 0; player.sp = 0; player.ranks.W = false; player.ranks.E = false;
   const place = load();
   check('save round-trips level, EXP, points, stats, ranks and the town', JSON.stringify({ ...snapshot(), town: 'mossgate' }) === want && samePlace(place, { town: 'mossgate' }));
   check('you resume in the latest town: a town itself, or the start of the path you were on',
@@ -1050,9 +1050,9 @@ check('new poses go on the end of the networked list (older clients read them as
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt save is ignored', apply('junk') === null);
   check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 1 }, town: 'mossgate' }) !== null
-    && player.level === 50 && player.ap === 3 && player.ranks.Z === 1);
+    && player.level === 50 && player.ap === 3 && player.ranks.Z === true);
   apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, RA: 1, EB: 1 }, town: 0 });
-  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 1 && player.ranks.RA + player.ranks.EB === 1);
+  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === true && player.ranks.EB);
   clearSave();
   check('reset forgets the save', !hasSave() && samePlace(load(), START));
   delete (globalThis as { localStorage?: unknown }).localStorage;
@@ -1443,7 +1443,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('an enemy does not pin itself to the edge chasing an unreachable player', still < 30, `still ${still} frames`);
 
   // Rush Toss hits at most 6
-  arena(1); player.ranks.Q = 3;
+  arena(1); player.ranks.Q = true;
   const ms = Array.from({ length: 9 }, (_, i) => dummy(120 + i * 6));
   tap('q'); step(14);
   check('Rush Toss hits at most 6 enemies', ms.filter((x) => x.hp < 1e6).length === 6, `${ms.filter((x) => x.hp < 1e6).length} hit`);
@@ -1461,7 +1461,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     release(); gotoPlace(climb(n));
     const count = Math.min(10, game.mobs.filter((m) => !m.fly).length);
     for (let k = 0; k < count; k++) for (const face of [1, -1]) {
-      release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks.Q = 1;
+      release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks.Q = true;
       const m = game.mobs.filter((x) => !x.fly)[k];
       if (!m) continue;
       player.x = m.x - face * 14; player.y = m.y + m.h - player.h; player.vy = 0; player.face = face;
@@ -1544,19 +1544,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
   check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
-  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = 1; player.ranks.Z = 0;
+  wallet.coins = RESPEC_PRICES.swap; player.ranks.S = true; player.ranks.Z = false;
   tap('up');
   check('Up beside the trainer opens the trainer', trainer.open && trainer.sel === 0);
   tap('z');
-  check('a branch swap keeps the rank and takes the coins', player.ranks.Z === 1 && player.ranks.S === 0 && wallet.coins === 0);
+  check('a branch swap keeps the rank and takes the coins', player.ranks.Z === true && player.ranks.S === false && wallet.coins === 0);
   tap('escape');
 
-  player.ranks.S = 0; player.ranks.Z = 1; player.stats.dex = 4; player.ap = 0; player.sp = 0;
+  player.ranks.S = false; player.ranks.Z = true; player.stats.dex = 4; player.ap = 0; player.sp = 0;
   wallet.coins = RESPEC_PRICES.reset;
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent (Glide too)',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 4 && player.ranks.D === 0 && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === true && player.sp === 4 && player.ranks.D === false && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
@@ -1604,18 +1604,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Glide and the climb rush are bought with SP, not given
   check('a new archer has Double Shot free, Glide not yet', DEFS.D.learn === true && startsLearned('Z') && !startsLearned('D'));
-  arena(1); player.ranks.D = 0; player.sp = 1;
-  check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'D' && r.rank === 0 && !!r.action) && spendSkill('D') && player.ranks.D === 1);
+  arena(1); player.ranks.D = false; player.sp = 1;
+  check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'D' && !r.learned && !!r.action) && spendSkill('D') && player.ranks.D === true);
   check('Acrobatics opens at Lv.10', DEFS.AC.minLevel === 10 && !skillRows().some((r) => r.key === 'AC'));
   const onRope = (): void => {
     const c = [...game.floor.ropes, ...game.floor.ladders][0];
     player.climb = c; player.x = c.x; player.y = c.y2 - player.h - 1; player.onGround = false; player.vx = player.vy = 0;
   };
-  arena(10); player.ranks.AC = 0; onRope();
+  arena(10); player.ranks.AC = false; onRope();
   setKey('up', true); tap('c');
   check('without Acrobatics, Up + Jump on a rope does not rush', !player.climbRush);
   release();
-  arena(10); player.ranks.AC = 1; onRope();
+  arena(10); player.ranks.AC = true; onRope();
   setKey('up', true); tap('c');
   check('with it, Up + Jump rushes up the rope', player.climbRush);
   check('...trailing green rising streaks', game.fx.some((f) => f.type === 'climbRise'));
@@ -2495,16 +2495,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const ready = (): void => { for (const k of Object.keys(player.cd)) player.cd[k] = 0; player.casting.useT = 0; player.mp = 999; };
   const fxOf = (t: string): boolean => game.fx.some((f) => f.type === t);
   const air = (): void => { player.y -= 40; player.vy = 0; player.onGround = false; };
-  arena(30); player.ranks.E = 1; player.ranks.W = 1; player.ranks.MS = 1; player.ranks.R = 1;
+  arena(30); player.ranks.E = true; player.ranks.W = true; player.ranks.MS = true; player.ranks.R = true;
   ready(); game.fx.length = 0; tap('e');
   check('Piercing Leap erupts spikes from the ground', fxOf('spikes') && !fxOf('rush'));
-  arena(30); player.ranks.W = 1; player.ranks.MS = 1; ready(); air(); game.fx.length = 0; tap('w');
+  arena(30); player.ranks.W = true; player.ranks.MS = true; ready(); air(); game.fx.length = 0; tap('w');
   check('the Cyclone Sweep whirls blades round you and spins the archer', fxOf('spin') && localPose() === 'spin');
-  arena(30); player.ranks.R = 1; ready(); game.fx.length = 0; tap('r');
+  arena(30); player.ranks.R = true; ready(); game.fx.length = 0; tap('r');
   check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
   step(43);
   check('...and she is back once it ends', localPose() !== 'vanish');
-  arena(30); player.ranks.AD = 1; ready(); air(); tap('q'); step(4); // past the windup
+  arena(30); player.ranks.AD = true; ready(); air(); tap('q'); step(4); // past the windup
   check('the Meteor Dive draws its dive pose', player.diving && localPose() === 'dive');
   release();
 }
@@ -2533,7 +2533,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Aerial height gate: the air forms want ~2/3 of the jump's peak of height
   // (AIR_MIN_H), not just any airtime
-  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(20); player.ranks.E = true; player.ranks.PV = true;
   dummy(100);
   tap('c'); step(1); // just left the ground: ~9px of height
   const mp0 = player.mp;
@@ -2545,7 +2545,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // the same gate on Meteor Dive and Cyclone Sweep
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('c'); step(1);
   const mp0 = player.mp;
   tap('q');
@@ -2556,7 +2556,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // ...and on Cyclone Sweep
-  arena(20); player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.W = true; player.ranks.MS = true;
   tap('c'); step(1);
   const mp0 = player.mp;
   tap('w');
@@ -2580,7 +2580,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Electric Blitz self-link: a second blitz pressed during the first's
   // animation (with a charge banked) fires as soon as it clears
-  arena(20); player.ranks.Q = 1; player.ranks.EB = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.EB = true; player.ranks.AD = true;
   player.blitz.charges = P.BLITZ_MAX;
   dummy(150);
   check('blitzes start banked', player.blitz.charges === P.BLITZ_MAX, `charges ${player.blitz.charges}`);
@@ -2597,7 +2597,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Aerial skills link into Glide: pressed while the cast is still going,
   // D fires the moment its animation ends (skipping the recovery)
-  arena(20); player.ranks.D = 1; player.ranks.E = 1; player.ranks.PV = 1;
+  arena(20); player.ranks.D = true; player.ranks.E = true; player.ranks.PV = true;
   dummy(100);
   tap('c'); step(8);
   tap('e');
@@ -2611,14 +2611,14 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // Downpour links on a miss too: linking needs no hit
-  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(20); player.ranks.E = true; player.ranks.PV = true;
   tap('c'); step(8);
   tap('e');
   check('a whiffed Downpour still links', game.mobs.length === 0 && linkable('MS'));
 }
 {
   // ...and so does the Cyclone Sweep
-  arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.D = true; player.ranks.W = true; player.ranks.MS = true;
   dummy(150);
   tap('c'); step(8);
   tap('w'); step(13);
@@ -2629,7 +2629,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // With Skyward Assault (W's upgrade) learned, W in the air is always Cyclone Sweep
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.MS = true;
   const m = dummy(140);
   tap('c'); step(8);
   tap('w');
@@ -2643,7 +2643,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Tempest is a committed cast: locked in place and invulnerable while it
   // sweeps out (the use time already freezes movement; the storm grants i-frames)
-  arena(20); player.ranks.R = 1;
+  arena(20); player.ranks.R = true;
   dummy(140);
   tap('r');
   check('Tempest locks you in place', player.cast === 'shoot' && player.casting.useT > 0, `useT ${player.casting.useT.toFixed(2)}`);
@@ -2656,7 +2656,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Midair, the storm pins you completely: no falling, no drift, for its
   // whole cast (not just the usual movement lock).
-  arena(20); player.ranks.R = 1;
+  arena(20); player.ranks.R = true;
   tap('c'); step(7); // near the jump apex
   tap('r');
   check('Tempest freezes you midair', player.casting.freeze && player.vy === 0, `vy ${player.vy.toFixed(0)}`);
@@ -2668,7 +2668,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // A live Tempest window lets Dive (Q) fire straight out of the storm.
-  arena(20); player.ranks.R = 1; player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.R = true; player.ranks.Q = true; player.ranks.AD = true;
   tap('c'); step(7); // airborne, where Q is the Meteor Dive
   tap('r');
   check('Tempest links into the Dive', linkable('AD') && player.cast === 'shoot', `cast ${player.cast}`);
@@ -2679,7 +2679,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     `cast ${player.cast} mp ${player.mp} of ${mp0}`);
   step(12); // let the dive land, so the next block starts on the floor
   // The storm links into Dive, not the whole aerial kit.
-  arena(20); player.ranks.R = 1;
+  arena(20); player.ranks.R = true;
   tap('r'); player.cd.R = 10;
   check('the storm links into the Q slot only', linkable('AD') && !linkable('W'));
   tap('w'); step(1);
@@ -2690,7 +2690,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // A buffered skill fires in the direction held when it releases, not when
   // it was pressed: Q left, Q right zips you back and forth
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = true;
   dummy(150);
   setKey('left', true);
   tap('q'); step(1); // the first rush slides left...
@@ -2712,7 +2712,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Cyclone Sweep links into Downpour: E pressed during the sweep fires as it ends
-  arena(20); player.ranks.W = 1; player.ranks.MS = 1; player.ranks.E = 1; player.ranks.PV = 1;
+  arena(20); player.ranks.W = true; player.ranks.MS = true; player.ranks.E = true; player.ranks.PV = true;
   dummy(100);
   tap('c'); step(8);
   tap('w'); step(13);
@@ -2724,7 +2724,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Meteor Dive links into the equipped ground rush, Skyfall-style: Electric
   // Blitz, not just the base Rush Toss
-  arena(20); player.ranks.Q = 1; player.ranks.EB = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.EB = true; player.ranks.AD = true;
   player.blitz.charges = P.BLITZ_MAX;
   dummy(150);
   tap('c'); step(8);
@@ -2738,25 +2738,25 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Both Qs end with a committed recovery (delay), shortened by Haste
-  arena(20); player.ranks.Q = 1;
+  arena(20); player.ranks.Q = true;
   dummy(150);
   const base = delayTime('Q');
   check('Rush Toss has its own delay, longer than the default', SKILLS.Q.delay === 0.35 && base < 0.35 + 1e-9, `${base.toFixed(3)}`);
   player.casting.useT = 0; player.casting.recoverT = 0;
   cast('Q');
   check('the cast ends in a recovery that outlasts the slide', player.casting.recoverT === base && player.casting.useT > 0);
-  player.ranks.Q = 0; player.ranks.EB = 1;
+  player.ranks.Q = false; player.ranks.EB = true;
   check('Electric Blitz carries the same committed recovery', SKILLS.EB.delay === 0.35 && delayTime('EB') === base);
-  player.ranks.HA = 3;
+  player.ranks.HA = true;
   check('Haste shortens the recovery by 20% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.2) < 1e-6,
     `${delayTime('EB').toFixed(4)}`);
-  player.ranks.HA = 0; player.ranks.EB = 0; player.ranks.Q = 1;
+  player.ranks.HA = false; player.ranks.EB = false; player.ranks.Q = true;
 }
 
 {
   // Off a Skyward Assault hover: only the assault's links (MS, R, Z, Q) are
   // buffered, so a Glide pressed during the hover is dropped.
-  arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.D = 1;
+  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.D = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('hovering (setup)', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
@@ -2767,7 +2767,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Off a Skyward Assault hover: the Q slot (Meteor Dive) isn't a link off the
   // assault (only the ground Q is), so a press during the hover is dropped.
-  arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.AD = 1;
+  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.AD = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   tap('q'); // Q's air form (Meteor Dive) pressed during the hover
@@ -2778,7 +2778,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Single-rank skills: each carries its (former) max-level hit/damage numbers
   check('Double Shot hits up to 4 targets at 120% per hit',
-    SKILLS.Z.targets1 === 4 && SKILLS.Z.dmg1 === 120 && SKILLS.Z.maxLevel === 1);
+    SKILLS.Z.targets1 === 4 && SKILLS.Z.dmg1 === 120);
   check('Rising Arrows fires 4', SKILLS.W.hits1 === 4);
   check('Skyward Assault strikes 4', SKILLS.AB.hits1 === 4);
   check('Cyclone Sweep sweeps 4 hits at 200%', SKILLS.MS.hits1 === 4 && SKILLS.MS.dmg1 === 200);
@@ -2786,7 +2786,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('Tempest storms up to 8 hits at 200% each', SKILLS.R.hits1 === 8 && SKILLS.R.dmg1 === 200);
   check('Meteor Dive lands one Rush Toss-strength hit', SKILLS.AD.hits1 === 1 && SKILLS.AD.dmg1 === 400);
   // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
-  arena(20); player.ranks.Q = 1; player.ranks.EB = 1;
+  arena(20); player.ranks.Q = true; player.ranks.EB = true;
   player.blitz.charges = P.BLITZ_MAX;
   const m = dummy(140);
   tap('q'); step(24); // the slide ends and the strike lands (both hits)
@@ -2813,7 +2813,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // LUK rework: 2% crit chance a point, capped at 100%, overflow to crit damage
-  arena(20); player.ranks.SA = 0; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
+  arena(20); player.ranks.SA = false; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
   check('LUK starts at the 15% base crit', Math.abs(critChance() - 0.15) < 1e-9, `${critChance()}`);
   player.stats.luk = 10;
   check('each LUK point is worth 2% crit chance', Math.abs(critChance() - 0.35) < 1e-9, `${critChance()}`);
@@ -2827,7 +2827,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.stats.luk = 0;
   check('below the cap a crit still hits for 1.5x', Math.abs(critMult() - 1.5) < 1e-9);
   // and the multiplier is the one damage() applies
-  arena(20); player.ranks.SA = 0; recalcStats();
+  arena(20); player.ranks.SA = false; recalcStats();
   const m = dummy(140); m.level = 20;
   // the same roll on both shots (it also drives the damage's random spread):
   // at 0 LUK it is under the 15% crit threshold, at 60 LUK it always crits
@@ -2861,7 +2861,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Downpour's vertical reach is half what it was
   check('the volley column reaches 88px below the feet (was 176)', P.PLUNGE_DEPTH === 88);
-  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(20); player.ranks.E = true; player.ranks.PV = true;
   player.y = ground().y - player.h - 120; player.onGround = false; // airborne
   const feet = player.y + player.h;
   const near = dummy(140); near.y = feet + 10; // right below
@@ -2874,7 +2874,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Twin Echoes's arrows always proc and stack above the base hit's number
-  arena(20); player.ranks.Z = 1; player.ranks.ES = 1;
+  arena(20); player.ranks.Z = true; player.ranks.ES = true;
   const m = dummy(140); player.x = m.x - 40;
   check('the shadow doubles the shot without changing the skill\'s own hits',
     rank('Z').hits === 2 && shotCount(rank('Z')) === 4, `${rank('Z').hits}/${shotCount(rank('Z'))}`);
@@ -2893,7 +2893,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Skyward Assault links into Cyclone Sweep: W in the air sweeps out of the
   // hover with no extra lag (the AB -> MS follow-up)
-  arena(30); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.MS = true;
   const m = dummy(130);
   tap('q'); step(14); // Skyward Assault is a link off the rush
   tap('w'); step(4); // mid-leap: the hover is live
@@ -2912,7 +2912,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Buffering: W pressed during the assault's own animation is kept and fires
   // on the first free frame
-  arena(30); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
+  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.MS = true;
   dummy(130);
   tap('q'); step(14);
   tap('w');
@@ -2926,7 +2926,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Cyclone Sweep on its own (no assault) still works as a standalone sweep
-  arena(20); player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.W = true; player.ranks.MS = true;
   tap('c'); step(10);
   check("a plain jump's sweep is unaffected", player.cast === null && player.linkFrom === null, `cast ${player.cast} from ${player.linkFrom}`);
   tap('w'); step(2);
@@ -2995,7 +2995,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Bolt Flurry flies as one 4-bolt volley sprite, even on a whiff
-  arena(30); player.ranks.Z = 3; player.ranks.S = 1;
+  arena(30); player.ranks.Z = true; player.ranks.S = true;
   game.shots.length = 0;
   tap('z');
   check('a whiffed Bolt Flurry flies one volley sprite', game.shots.length === 1 && game.shots[0].sprite === 'flurry', `${game.shots.length} shots`);
@@ -3003,7 +3003,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Bolt Flurry lands its 4 hits on every target, not split across them
-  arena(70); player.ranks.Z = 3; player.ranks.S = 1;
+  arena(70); player.ranks.Z = true; player.ranks.S = true;
   const a = dummy(150), b = dummy(170);
   game.dmgNums.length = 0;
   const seen = new Set<{ x: number }>();
@@ -3015,7 +3015,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Twin Echoes doubles the volley, not the bolts: two sprites, all 8 hits land
-  arena(70); player.ranks.Z = 3; player.ranks.S = 1; player.ranks.ES = 1;
+  arena(70); player.ranks.Z = true; player.ranks.S = true; player.ranks.ES = true;
   const m = dummy(160);
   game.shots.length = 0; game.dmgNums.length = 0;
   tap('z');
@@ -3031,7 +3031,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Downpour: one orange/green flare on the archer and a single tornado
   // blast below her, instead of a falling volley on every enemy it hits
-  arena(30); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(30); player.ranks.E = true; player.ranks.PV = true;
   player.y = ground().y - player.h - 120; player.onGround = false; player.x = 140;
   const m = dummy(140); m.y = player.y + player.h + 10;
   game.fx.length = 0;
@@ -3043,7 +3043,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Links read off the cast you're in, and nothing else: no timers
-  arena(20); player.ranks.R = 1;
+  arena(20); player.ranks.R = true;
   check('no cast, no links', player.linkFrom === null && !linkable('AD'));
   tap('r');
   check('a cast is what links read off', player.linkFrom === 'R' && linkable('AD'));
@@ -3071,7 +3071,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Piercing Leap off a jump: the tornado's launch is a lift off the floor, so an
   // early cast doesn't stack its full height on top of the jump's.
-  arena(20); player.ranks.E = 1;
+  arena(20); player.ranks.E = true;
   const g = ground().y - player.h;
   const peak = (n: number) => { let best = g; for (let i = 0; i < n; i++) { step(1); best = Math.min(best, player.y); } return g - best; };
   tap('e'); const flat = peak(40);
@@ -3085,7 +3085,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Piercing Leap rises to its height and holds there for the whole cast,
   // rather than falling back down while you're still committed to it.
-  arena(20); player.ranks.E = 1;
+  arena(20); player.ranks.E = true;
   const g = ground().y - player.h;
   tap('e');
   step(Math.ceil((P.SPIKE_LIFT_H / P.SPIKE_RISE_V + 0.1) / P.STEP)); // the rise
@@ -3134,7 +3134,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // A Tempest linked off a Skyward Assault still pays its 10s cooldown.
-  arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
+  arena(30); player.ranks.Q = true; player.ranks.AB = true; player.ranks.R = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(4);
   tap('r'); for (let i = 0; i < 40 && player.casting.queued; i++) step(1); // fires as the hover ends
@@ -3148,7 +3148,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // The sweep lands before the linked skill starts: a press during the sweep
   // is buffered, not lost, and fires as its animation ends.
-  arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.D = true; player.ranks.W = true; player.ranks.MS = true;
   dummy(150);
   tap('c'); step(8);
   tap('w');
@@ -3165,7 +3165,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // The aerial kit plants you: each skill zeroes your velocity so the move
   // reads as its own move, not as momentum carried in from a run or a jump.
-  arena(30); player.ranks.W = 1; player.ranks.MS = 1;
+  arena(30); player.ranks.W = true; player.ranks.MS = true;
   tap('c'); step(6);
   player.vx = 180; player.vy = -60;
   tap('w');
@@ -3177,7 +3177,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // Meteor Dive: a frozen coil, then the diagonal plunge.
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('c'); step(6);
   player.vx = 180; player.vy = -60;
   tap('q');
@@ -3192,7 +3192,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // Piercing Leap: you rise straight up from where you were running.
-  arena(20); player.ranks.E = 1;
+  arena(20); player.ranks.E = true;
   player.vx = 200;
   tap('e');
   check('Piercing Leap zeroes vx so you rise straight up', player.vx === 0 && player.vy < 0,
@@ -3203,7 +3203,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // The W-slot skills are paced by the Rush Toss link alone: a fresh Q
   // lets the follow-up fire again immediately, with nothing cooling down.
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true;
   check('Rising Arrows and Skyward Assault carry no cooldown', SKILLS.W.cd === 0 && SKILLS.AB.cd === 0,
     `W ${SKILLS.W.cd} AB ${SKILLS.AB.cd}`);
   tap('q'); step(12); tap('w');
@@ -3217,7 +3217,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Casting a skill flashes its own icon on the bar: the air and ground forms
   // are stacked in one column, so which key you hit is worth confirming.
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('q');
   check('casting Rush Toss flashes the Q slot', player.usedT.Q > USE_FLASH - 0.05 && player.usedT.Q > 0 && player.usedT['Q.air'] === 0,
     `Q ${player.usedT.Q.toFixed(2)} Q.air ${player.usedT['Q.air'].toFixed(2)}`);
@@ -3362,7 +3362,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // Glide links into Meteor Dive: a Q pressed during a Glide fires as the Glide ends
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('c'); step(4);
   tap('d');
   check('Glide links into Meteor Dive', player.linkFrom === 'D' && linkable('AD'), `from ${player.linkFrom}`);

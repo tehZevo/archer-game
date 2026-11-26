@@ -68,19 +68,6 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..aaa.....',
     '.aaa......',
   ],
-  // Rising Arrow: an arrow climbing beside a launched target, with lift lines
-  RA: [
-    '....a.....',
-    '...aaa....',
-    '..a.x.a.r.',
-    '....x..rRr',
-    '.a..x...r.',
-    '.a..x.....',
-    '....x..a..',
-    '....x..a..',
-    '...w.w....',
-    'gggggggggg',
-  ],
   // Rising Arrows: arrows raining down at an angle
   W: [
     '.x....x...',

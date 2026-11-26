@@ -191,8 +191,8 @@ export function swapBranch(slot: SkillKey): boolean {
   if (wallet.coins < RESPEC_PRICES.swap) return false;
   const list = slotBranches(slot), cur = activeSkill(slot).key;
   const next = list[(list.indexOf(cur) + 1) % list.length];
-  const keep = Math.min(player.ranks[cur] || 1, SKILLS[next].maxLevel);
-  list.forEach((k) => { player.ranks[k] = k === next ? keep : 0; });
+  const keep = player.ranks[cur];
+  list.forEach((k) => { player.ranks[k] = k === next ? keep : false; });
   wallet.coins -= RESPEC_PRICES.swap;
   sfx.coin();
   return true;
@@ -206,8 +206,8 @@ export function resetPoints(): boolean {
   if (wallet.coins < RESPEC_PRICES.reset) return false;
   player.ap += STAT_KEYS.reduce((n, k) => n + player.stats[k], 0);
   STAT_KEYS.forEach((k) => { player.stats[k] = 0; });
-  player.sp += (Object.keys(player.ranks) as SkillKey[]).reduce((n, k) => n + (player.ranks[k] || 0), 0) - FREE_RANKS;
-  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = startsLearned(k) ? 1 : 0; });
+  player.sp += (Object.keys(player.ranks) as SkillKey[]).reduce((n, k) => n + (player.ranks[k] ? 1 : 0), 0) - FREE_RANKS;
+  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = startsLearned(k); });
   recalcStats();
   wallet.coins -= RESPEC_PRICES.reset;
   sfx.coin();

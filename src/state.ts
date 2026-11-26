@@ -24,9 +24,9 @@ const readyT: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0
 export const USE_FLASH = 0.3;
 const usedT: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 
-const ranks: Record<SkillKey, number> = (Object.keys(SKILLS) as SkillKey[]).reduce(
-  (o, k) => ((o[k] = startsLearned(k) ? 1 : 0), o),
-  {} as Record<SkillKey, number>,
+const ranks: Record<SkillKey, boolean> = (Object.keys(SKILLS) as SkillKey[]).reduce(
+  (o, k) => ((o[k] = startsLearned(k)), o),
+  {} as Record<SkillKey, boolean>,
 );
 
 const start = statsForLevel(1);
