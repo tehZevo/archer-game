@@ -3082,5 +3082,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const x0 = player.x; step(6);
   check('...and the climb stays on the spot it started', Math.abs(player.x - x0) < 1, `dx ${(player.x - x0).toFixed(1)}`);
 }
+{
+  // The W-slot skills are paced by the Sky Toss link window alone: a fresh Q
+  // lets the follow-up fire again immediately, with nothing cooling down.
+  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1;
+  check('Skyfall Volley and Sky Assault carry no cooldown', SKILLS.W.cd === 0 && SKILLS.AB.cd === 0,
+    `W ${SKILLS.W.cd} AB ${SKILLS.AB.cd}`);
+  tap('q'); step(20); tap('w');
+  check('...and casting the Volley leaves nothing to cool down', player.cd.W === 0 && player.cast === 'barrage',
+    `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
+  step(30);
+  tap('q'); step(20); tap('w');
+  check('...so the next Sky Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd.W === 0,
+    `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
+}
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
