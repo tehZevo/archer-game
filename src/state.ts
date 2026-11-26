@@ -110,19 +110,28 @@ export function mobBounds(m: Mob): [number, number] {
 export { mobLevel } from './world';
 
 // Enemy HP and damage scale exponentially with the floor's level, anchored at
-// Lv.1 and Lv.100 and shaped per species by its base hp / dmg.
+// Lv.1 and Lv.100 and shaped per species by its base hp / dmg. Bosses use the
+// same curves (see boss.ts), so a boss and its base mob scale identically.
 export const LV_1_HP = 30, LV_100_HP = 200000;
 export const LV_1_DMG = 10, LV_100_DMG = 4000;
 export const LEVEL_SPAN = 99; // the Lv.1 → Lv.100 range the anchors span
 
+/** The 0→1 position in the Lv.1 → Lv.100 curve a given level sits at. */
+export const levelCurve = (level: number): number => (level - 1) / LEVEL_SPAN;
+/** A mob's HP at `level`: the exponential curve × its per-species base hp. */
+export const mobHp = (type: MobType, level: number, hpMult = 1): number =>
+  Math.round(LV_1_HP * (LV_100_HP / LV_1_HP) ** levelCurve(level) * (type.hp / 100) * hpMult);
+/** A mob's max damage at `level`: the exponential curve × its per-species base dmg. */
+export const mobDmg = (type: MobType, level: number, dmgMult = 1): number =>
+  Math.round(LV_1_DMG * (LV_100_DMG / LV_1_DMG) ** levelCurve(level) * (type.dmg / 3) * dmgMult);
+
 export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
   const level = mobLevel(game.floor.place);
-  const t = (level - 1) / LEVEL_SPAN; // 0 at Lv.1, 1 at Lv.100
   const e = elite ? ELITE : { SCALE: 1, HP: 1, DMG: 1, EXP: 1 };
-  const hp = Math.round(LV_1_HP * (LV_100_HP / LV_1_HP) ** t * (type.hp / 100) * e.HP);
+  const hp = mobHp(type, level, e.HP);
   // its damage is a random 50%-100% of this max, so two mobs of a kind don't hit alike
-  const dmgMax = Math.round(LV_1_DMG * (LV_100_DMG / LV_1_DMG) ** t * (type.dmg / 3) * e.DMG);
+  const dmgMax = mobDmg(type, level, e.DMG);
   const w = Math.round(type.w * e.SCALE), h = Math.round(type.h * e.SCALE);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
