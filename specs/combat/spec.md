@@ -1,9 +1,22 @@
 # Combat
 
-Attacks target a compact hitbox in the facing direction (a short reach in front of the player, about body height); projectile attacks land their hit when the shot reaches the enemy (Twin Shot has no projectile and hits instantly); multi-hit skills re-evaluate the box each tick, like classic MMO attack frames. Damage scales with the player's WAR stat (level and DEX), a passive multiplier, and Fervor, with ±8% variance and a 15% base crit rate (×1.5) that rises with LUK. Hits show floating damage numbers (gold when crit) and a brief hit flash.
+Combat is the heart of the game: firing a chain of archer skills at monsters.
 
-Mobs patrol their platform and ignore the player until attacked; once hit, a mob chases the player. Touching any mob hurts; contact means the visible sprites overlap. Killed mobs give EXP (no floating EXP number). A mob's EXP depends on its level, not the player's; for now a mob's level is the floor number, so out-levelling a floor slows your levelling and climbing speeds it up. Most platforms (and the ground) are spawn zones holding a group: 4 enemies on the shortest platforms, up to 8 on the longest (the ground holds 4); enemies return in periodic waves that top every zone back up to its max, never beyond. Mobs patrol within their own platform and never leave it, turning back at its ends; a chasing mob whose player is off its platform goes back to patrolling instead of waiting at the edge: they can't walk, be pushed or be knocked off its edge, and a launched mob only ever lands back on its own platform (it passes through any other). Mob strength is keyed to the floor (higher floors, tougher mobs): Garden Snail → Boar → Wisp → Iron Hog.
+## Combos
 
-Sky Toss slides the player a short way forward along the ground (no hop) and launches mobs airborne; airborne-targeted hits gain a 30% bonus. The player has invulnerability frames after taking a hit, and death revives at the floor's ground slab.
+You **mix skills freely** — a free-flowing string of whatever skills are ready and applicable right now. The things that shape what you can throw next are:
 
-HP and MP regenerate in small ticks (5% of max every 5s). HP doesn't regenerate in combat, i.e. within 5s of attacking or being hit; MP always does.
+- **Cooldowns** — a skill needs a beat to recharge after you use it.
+- **Use conditions** — some skills work in certain situations (an aerial skill in the air, a ground skill on the ground), and some become available once you've used another one first.
+
+## Feel
+
+The combo feels **weighted**: each skill plays out fully before the next one starts. Committing to a skill commits you for its whole animation, so each attack lands with weight and the next begins once it's done.
+
+## Surviving
+
+Combat is **moderately forgiving**: you have a health bar that takes a middling number of hits before you go down.
+
+## Enemies
+
+You fight a **mix**: groups of small monsters you clear out, plus occasional big bosses that take a longer combo to bring down.
