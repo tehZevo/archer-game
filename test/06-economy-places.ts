@@ -59,10 +59,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
   // the trainer: from the third town up, respec for coins
   gotoPlace(START);
-  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 1 && game.floor.npcs![0].kind === 'shop');
+  check('the first town has a shopkeeper and no trainer', game.floor.npcs!.filter((n) => !['stylist', 'board', 'pets'].includes(n.kind)).length === 1 && game.floor.npcs![0].kind === 'shop');
   gotoPlace({ town: 'mossgate' });
   const coachAt = game.floor.npcs!.find((n) => n.kind === 'trainer')!;
-  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => n.kind !== 'stylist' && n.kind !== 'board').length === 2);
+  check('the third town has a trainer beside the shopkeeper', !!coachAt && game.floor.npcs!.filter((n) => !['stylist', 'board', 'pets'].includes(n.kind)).length === 2);
   player.x = coachAt.x; player.y = coachAt.y - player.h; player.vy = 0; player.onGround = true; player.climb = null;
   wallet.coins = RESPEC_PRICES.swap; player.ranks.s = true; player.ranks.z = false;
   tap('up');

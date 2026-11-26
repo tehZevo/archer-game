@@ -2,7 +2,7 @@ import { CARRY_MAX, resetWallet, START_POTIONS, wallet } from './economy';
 import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
-import { pet } from './pets';
+import { clearPets, loadPets, pet, type PetKind } from './pets';
 import { bag, BAG_SIZE, gear } from './gear';
 import type { GearItem, GearKind } from './gear';
 import { runBonus } from './achievements';
@@ -40,8 +40,9 @@ export interface SaveData {
   potions?: { hp: number; mp: number };
   /** Active quests (absent in older saves: none). */
   quests?: Quest[];
-  /** Owns the pet (absent in older saves: no). */
-  pet?: boolean;
+  /** The pets you own, and the one following you (absent: none). */
+  pets?: PetKind[];
+  petKind?: PetKind | null;
   /** The equipped weapon and armor (absent in older saves: nothing worn). */
   gear?: { weapon: GearItem | null; armor: GearItem | null };
   /** Spare gear (absent in older saves: an empty bag). */
@@ -61,7 +62,7 @@ export function snapshot(): SaveData {
     town: lastTown(game.floor.place),
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
-    pet: pet.owned,
+    pets: [...pet.owned], petKind: pet.kind,
     gear: { weapon: gear.weapon, armor: gear.armor },
     bag: bag.map((i) => ({ ...i })),
   };
@@ -123,7 +124,7 @@ export function apply(d: unknown): Place | null {
   wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, START_POTIONS);
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, START_POTIONS);
   loadQuests(s.quests);
-  pet.owned = s.pet === true;
+  loadPets(s.pets, s.petKind);
   gear.weapon = cleanGear(s.gear?.weapon, 'weapon');
   gear.armor = cleanGear(s.gear?.armor, 'armor');
   bag.length = 0;
@@ -159,6 +160,7 @@ export function hasSave(): boolean {
 export function clearSave(): void {
   try { store()?.removeItem(KEY); } catch { /* ignore */ }
   resetWallet(); // gold and potions start over with the character
+  clearPets(); // ...and so do the pets
 }
 
 let since = 0;

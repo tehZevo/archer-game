@@ -1,4 +1,6 @@
 import { shop, trainer } from './economy';
+import { petShop } from './pets';
+import { drawPetShop } from './petdraw';
 import { confirmUi, drawConfirm } from './confirm';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
@@ -233,6 +235,7 @@ function drawOverlays(w: number, h: number): void {
   if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); if (achUi.open) drawAchievements(w, h); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
+  if (petShop.open) { drawPetShop(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
   if (board.open) { drawBoard(); return; }
   if (confirmUi.open) { drawConfirm(); return; }
@@ -256,7 +259,7 @@ function drawHUDItems(): void {
   drawMinimap(); // under the skill bar
   const ey = drawStatusEffects(pad, drawBottomBars(pad));
   drawChatLog(ey);
-  if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
+  if (dev.open || game.pause || shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
   drawOverlays(w, h);
 }
 

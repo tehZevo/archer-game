@@ -131,11 +131,18 @@ export function updateGear(dt: number): void {
     if (!picking) continue;
     if (Math.abs(d.x - player.x) > 14) continue;
     if (Math.abs(d.y - (player.y + player.h)) > 16) continue;
-    const on = isUpgrade(d.item);
-    if (!equip(d.item)) continue; // no upgrade and the bag is full: leave it lying
-    gearDrops.splice(i, 1);
-    logMsg(`${on ? 'Equipped' : 'Bagged'} ${d.item.name} Lv.${d.item.lvl}`);
+    takeGear(d);
   }
+}
+
+/** Take a piece off the floor: worn if it's an upgrade, else bagged. False
+ *  (and it stays lying there) when it's no upgrade and the bag is full. */
+export function takeGear(d: GearDrop): boolean {
+  const on = isUpgrade(d.item);
+  if (!equip(d.item)) return false;
+  gearDrops.splice(gearDrops.indexOf(d), 1);
+  logMsg(`${on ? 'Equipped' : 'Bagged'} ${d.item.name} Lv.${d.item.lvl}`);
+  return true;
 }
 
 /* The two numbers everything else reads. */

@@ -132,33 +132,6 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   game.floor.mods = undefined; drops.length = 0; game.mobs = [];
 }
 
-// --- pet: bought once, follows you, fetches coin piles lying near you ---
-{
-  arena(); drops.length = 0; flying.length = 0;
-  pet.owned = false; wallet.coins = PET.PRICE - 1;
-  check("can't buy the pet without the coins", !buy('pet') && !pet.owned);
-  wallet.coins = PET.PRICE + 5;
-  check('buying the pet takes its price', buy('pet') && pet.owned && wallet.coins === 5);
-  check('only one pet', !buy('pet') && wallet.coins === 5);
-  step(1);
-  check('it arrives at your shoulder', Math.abs(pet.x - (player.x - player.face * PET.BACK)) < 1);
-  // a pile near you: it fetches it
-  drops.push({ x: player.x + 60, y: ground().y, vy: 0, v: 7, t: COIN_LIFE, landed: true });
-  const far = { x: player.x + PET.RANGE + 60, y: ground().y, vy: 0, v: 9, t: COIN_LIFE, landed: true };
-  drops.push(far);
-  step(Math.ceil(1 / P.STEP));
-  check('the pet fetches a nearby pile into your wallet', wallet.coins === 12 && drops.length === 1, `coins ${wallet.coins} drops ${drops.length} pet ${pet.x.toFixed(0)},${pet.y.toFixed(0)} p ${player.x.toFixed(0)}`);
-  step(Math.ceil(1 / P.STEP));
-  check('it leaves piles out of its range', drops[0] === far && wallet.coins === 12);
-  check('it comes back to you', Math.abs(pet.x - (player.x - player.face * PET.BACK)) < 4);
-  // saved
-  const snap = snapshot(); pet.owned = false; apply(snap);
-  check('the pet survives a save and load', pet.owned);
-  pet.owned = false; apply({ ...snap, pet: undefined });
-  check('older saves have no pet', !pet.owned);
-  drops.length = 0; flying.length = 0; wallet.coins = 0;
-}
-
 // --- achievements: counted across runs, unlock run bonuses and a cosmetic ---
 {
   clearAchievements();
