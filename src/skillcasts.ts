@@ -231,7 +231,7 @@ function tempest(r: SkillRank): void {
 /** Midair Spin (W's air form): a 360° sweep around you, cutting every enemy
  *  in reach several times. */
 function midairSpin(r: SkillRank): void {
-  pose('shoot', 0.30);
+  pose('shoot', P.SPIN_ANIM);
   player.vx = player.vy = 0; // the sweep holds its spot: no drifting on the jump's momentum
   player.skillPose = 'spin';
   endHover(); // swept out of a Sky Assault hover: the spin takes over

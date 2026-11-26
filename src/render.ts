@@ -253,7 +253,7 @@ function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pos
 }
 
 /** The Midair Spin's whole turn takes this long, s (its cast time). */
-const SPIN_TURN_T = 0.3;
+const SPIN_TURN_T = P.SPIN_ANIM;
 /** How far the Air Dive pitches you head-down, radians. */
 const DIVE_PITCH = 0.8;
 /** Tempest: you blink out, stay gone while the sweep goes round, and

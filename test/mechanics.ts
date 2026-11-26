@@ -2530,7 +2530,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(20); player.ranks.C = 1; player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
   dummy(150);
   tap('c'); step(8);
-  tap('w'); step(8); // the sweep plays, then its window opens
+  tap('w'); step(13); // the sweep plays, then its window opens
   check('Midair Spin opens the glide window', player.links.glide > 0, `t ${player.links.glide.toFixed(2)}`);
   tap('d');
   check('the spin links into Glide', player.cast === 'jump' && player.casting.useT > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
@@ -2626,7 +2626,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(20); player.ranks.W = 1; player.ranks.MS = 1; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(100);
   tap('c'); step(8);
-  tap('w'); step(8); // the sweep plays, then its window opens
+  tap('w'); step(13); // the sweep plays, then its window opens
   check('the spin opens the volley window', player.links.volley > 0 && player.casting.useT > 0, `t ${player.links.volley.toFixed(2)}`);
   tap('e');
   check('the spin links into Plunging Volley', player.cast === 'barrage' && player.links.volley <= 0,
@@ -3038,9 +3038,11 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the sweep hits on the cast', player.cast === 'shoot' && game.mobs[0].hp < 1e6, `hp ${game.mobs[0].hp}`);
   check('...and its link windows start shut', player.links.glide === 0 && player.links.volley === 0,
     `glide ${player.links.glide.toFixed(2)} volley ${player.links.volley.toFixed(2)}`);
+  check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > P.SPIN_ANIM - 0.1,
+    `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${P.SPIN_ANIM}`);
   tap('d');
   check('a Glide pressed in the gap is buffered, not lost', player.casting.queued === 'D', `queued ${player.casting.queued}`);
-  step(8); // past SPIN_LINK_DELAY
+  step(18); // past SPIN_LINK_DELAY
   check('...and it fires once the window opens', player.cast === 'jump' && player.casting.useT > 0,
     `cast ${player.cast} useT ${player.casting.useT.toFixed(2)}`);
 }
