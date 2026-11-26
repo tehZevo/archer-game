@@ -3,7 +3,7 @@ import type { SkillKey } from './types';
 /** Glyphs for the passive skills. 10x10, in iconpal.ts's colours (see icons.ts). */
 export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
   // Twin Echoes: an arrow with a ghosted twin firing behind it
-  ES: [
+  es: [
     '.......aa.',
     '......aaa.',
     '.....xaa..',
@@ -16,7 +16,7 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '...y......',
   ],
   // Precision: a crosshair
-  SA: [
+  sa: [
     '....g.....',
     '...GgG....',
     '..G.g.G...',
@@ -29,7 +29,7 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..........',
   ],
   // Haste: an arrowhead with speed lines trailing it
-  HA: [
+  ha: [
     '..........',
     '.......g..',
     'aaa.....g.',
@@ -42,7 +42,7 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..........',
   ],
   // Power Surge: a lightning bolt
-  PP: [
+  pp: [
     '......rr..',
     '.....rr...',
     '....rr....',
@@ -55,7 +55,7 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '...r......',
   ],
   // Acrobatics: a rope ladder
-  AC: [
+  ac: [
     '...LLLL...',
     '...L..L...',
     '...LLLL...',
@@ -68,7 +68,7 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '...L..L...',
   ],
   // Fervor: a flame
-  IR: [
+  ir: [
     '....R.....',
     '...RR..R..',
     '...RRRRR..',
@@ -79,5 +79,18 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '.RrgggrrR.',
     '..RrgrrR..',
     '...RRRR...',
+  ],
+  // Nimble: a boot (quick on her feet)
+  ni: [
+    '..........',
+    '.......aa.',
+    '......aaa.',
+    '.....aaa..',
+    '....aaa...',
+    '...aaa....',
+    '..aaaa....',
+    '.aaaaaaa..',
+    '.aaaaaaa..',
+    '.aaaaaa...',
   ],
 };

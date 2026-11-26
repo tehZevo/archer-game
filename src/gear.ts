@@ -1,5 +1,6 @@
 import { COIN_LIFE } from './economy';
 import { game, logMsg, player } from './state';
+import { pressed } from './input';
 import type { Floor, Mob } from './types';
 
 /* ============================================================
@@ -119,13 +120,15 @@ export function dropGear(m: Mob): void {
   gearDrops.push({ item: gearFor(kind, m.level), x: m.x, y: m.y + m.h - 4, t: COIN_LIFE });
 }
 
-/** Fade the pieces left on the floor and pick up the ones under you. */
+/** Fade the pieces left on the floor and pick up (with X) the ones under you. */
 export function updateGear(dt: number): void {
   if (onFloor !== game.floor) { gearDrops.length = 0; onFloor = game.floor; }
+  const picking = pressed('x'); // gear is picked up with X, not on contact
   for (let i = gearDrops.length - 1; i >= 0; i--) {
     const d = gearDrops[i];
     d.t -= dt;
     if (d.t <= 0) { gearDrops.splice(i, 1); continue; }
+    if (!picking) continue;
     if (Math.abs(d.x - player.x) > 14) continue;
     if (Math.abs(d.y - (player.y + player.h)) > 16) continue;
     const on = isUpgrade(d.item);

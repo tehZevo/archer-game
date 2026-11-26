@@ -5,6 +5,7 @@ import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsFor
 import { runtime } from './runtime';
 import { spawnBoss } from './boss';
 import { visitArea } from './achievements';
+import { sfx } from './audio';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
 } from './types';
@@ -13,7 +14,7 @@ import type {
 const MOB_TYPES_BY_NAME: Record<string, MobType> = Object.fromEntries(MOB_TYPES.map((m) => [m.n, m]));
 
 /** Cooldown slots: every key, plus the air forms of Q, W and E. */
-const SLOTS = [...SKILL_ORDER, 'Q.air', 'W.air', 'E.air'];
+const SLOTS = [...SKILL_ORDER, 'ground-q.air', 'ground-w.air', 'ground-e.air'];
 const cd: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 const cdMax: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 
@@ -24,9 +25,9 @@ const readyT: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0
 export const USE_FLASH = 0.3;
 const usedT: Record<string, number> = Object.fromEntries(SLOTS.map((k) => [k, 0]));
 
-const ranks: Record<SkillKey, number> = (Object.keys(SKILLS) as SkillKey[]).reduce(
-  (o, k) => ((o[k] = startsLearned(k) ? 1 : 0), o),
-  {} as Record<SkillKey, number>,
+const ranks: Record<SkillKey, boolean> = (Object.keys(SKILLS) as SkillKey[]).reduce(
+  (o, k) => ((o[k] = startsLearned(k)), o),
+  {} as Record<SkillKey, boolean>,
 );
 
 const start = statsForLevel(1);
@@ -254,6 +255,7 @@ function levelUp(): void {
   const pick = player.level % SKILL_PICK_EVERY === 0;
   if (pick) player.sp += 1;
   game.fx.push({ type: 'levelUp', x: player.x, y: player.y + player.h, t: 0.9, follow: true });
+  sfx.levelUp();
   bannerMsg(`LEVEL ${player.level}`, `+1 AP${pick ? ' +1 SP' : ''} - ESC TO SPEND`);
   logMsg(`Reached <b>Level ${player.level}</b>`);
 }

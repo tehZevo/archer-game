@@ -21,7 +21,7 @@ import type { SkillKey } from './types';
    ============================================================ */
 
 /** The rushes: Double Shot chains off them (see skills.gate). */
-const RUSHES = new Set<SkillKey>(['Q', 'EB', 'AD']);
+const RUSHES = new Set<SkillKey>(['ground-q', 'eb', 'air-q']);
 
 /** Whether a press of `kind` right now links off the current cast. */
 export const linkable = (kind: SkillKey): boolean =>
@@ -35,7 +35,7 @@ export function linkHeld(kind: SkillKey): boolean {
   const from = player.linkFrom;
   if (from === null) return false;
   if (RUSHES.has(from)) return rushHolding();
-  if (from === 'AB') return kind === 'R' ? player.hang.t > 0 : assaultLeaping();
+  if (from === 'ab') return kind === 'r' ? player.hang.t > 0 : assaultLeaping();
   return player.casting.useT > 0;
 }
 

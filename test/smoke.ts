@@ -77,21 +77,21 @@ setKey('c', false);
 
 // --- 5. Glide: bought with SP from Lv.1; launches forward more than up, 0.3s cd, costs MP ---
 reset();
-player.ranks.D = 0;
+player.ranks.d = 0;
 player.onGround = false; player.y = 500;
 setKey('d', true); step(1); setKey('d', false);
-check('Glide needs its SP first', player.cd.D === 0);
-player.ranks.D = 1; player.cd.D = 0;
+check('Glide needs its SP first', player.cd.d === 0);
+player.ranks.d = 1; player.cd.d = 0;
 player.onGround = false; player.y = 500;
 setKey('d', true);
 step(1);
-// Glide commits you for its 0.4s use time; it has no cooldown to gate re-use.
-check('Glide has a 0.4s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.4) < 0.05,
-  `cd ${player.cd.D} use ${player.casting.useT.toFixed(2)}`);
+// Glide commits you for its 0.2s use time; it has no cooldown to gate re-use.
+check('Glide has a 0.2s use time and no cooldown', player.cd.d === 0 && Math.abs(player.casting.useT - 0.2) < 0.05,
+  `cd ${player.cd.d} use ${player.casting.useT.toFixed(2)}`);
 check('Glide launches forward > up', Math.abs(player.vx) > Math.abs(player.vy));
 check('Glide consumes MP', player.mp < player.mpMax);
 setKey('d', false);
-step(7); // the 0.2s glide animation finishes
+step(20); // the use time (0.2s) then the 0.4s recovery clears, freeing the next cast
 setKey('d', true);
 step(1);
 check('Glide can be used again mid-air', player.casting.useT > 0 && player.onGround === false,
@@ -136,22 +136,21 @@ const vit0 = player.stats.vit, hp0 = player.hpMax;
 tap('down'); tap('z'); // VIT
 check('pause menu spends AP on a stat', player.stats.vit === vit0 + 1 && player.hpMax > hp0 && player.ap === 8);
 tap('right'); // skills column
-const wRow = skillRows().findIndex((r) => r.key === 'W');
+const wRow = skillRows().findIndex((r) => r.key === 'ground-w');
 for (let i = 0; i < wRow; i++) tap('down');
 tap('z');
-check('pause menu spends SP to learn Rising Arrows', isLearned('W') && player.sp === 1);
+check('pause menu spends SP to learn Rising Arrows', isLearned('ground-w') && player.sp === 1);
 tap('escape');
 check('esc resumes', !game.pause);
 
-// --- 9. skill ranks: SP raises a skill's damage multiplier ---
+// --- 9. skills are acquired or not (no rank levels): stats are the authored form ---
 reset();
-const r0 = rank('Z').dmg;
-player.sp = 10;
-spendSp('Z');
-check('spending SP raises the skill rank', rank('Z').dmg > r0);
+check('skills are a single rank', rank('z').dmg === SKILLS.z.dmg1 / 100 && rank('z').hits === (SKILLS.z.hits1 ?? 1),
+  `dmg ${rank('z').dmg} hits ${rank('z').hits}`);
 
 // --- 10. skill bar exposes the 4 buttons; unlock cadence every 5 levels ---
-check('attack keys are Z Q W E R, all bound', SKILL_BAR.map((s) => s.label).join('') === 'ZQWER' && SKILL_BAR.every((s) => s.skill));
+check('attack keys are z, ground-q, ground-w, ground-e, r, all bound',
+  SKILL_BAR.map((s) => s.label).join(',') === 'z,ground-q,ground-w,ground-e,r' && SKILL_BAR.every((s) => s.skill));
 reset();
 check('Jump is movement, not a skill', !('C' in SKILLS));
 check('every skill has an icon glyph', (Object.keys(SKILLS) as (keyof typeof ICON_GLYPHS)[]).every((k) => ICON_GLYPHS[k]?.length === GLYPH));
@@ -164,9 +163,9 @@ const offGrid = (Object.keys(SKILLS) as (keyof typeof SKILLS)[])
   .filter(([, use]) => Math.abs(use * 10 - Math.round(use * 10)) > 1e-9)
   .map(([k]) => k);
 check('every skill use time is a multiple of 100ms', offGrid.length === 0, offGrid.join(', '));
-check('Rush Toss learned at Lv.5', !isLearned('Q'));
-player.ranks.W = 0;
-check('Rising Arrows not known until picked', !isLearned('W'));
+check('Rush Toss learned at Lv.5', !isLearned('ground-q'));
+player.ranks['ground-w'] = 0;
+check('Rising Arrows not known until picked', !isLearned('ground-w'));
 
 // --- 11. portal ascends to the next floor ---
 reset();

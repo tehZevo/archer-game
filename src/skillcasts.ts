@@ -7,7 +7,7 @@ import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
-import { useTime } from './castrules';
+import { delayTime, useTime } from './castrules';
 import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
 
 import type { SkillKey, SkillRank } from './types';
@@ -21,9 +21,11 @@ import type { SkillKey, SkillRank } from './types';
 type Cast = (r: SkillRank) => void;
 
 /** Double Shot: draw the bow (a short windup), release a volley that whips
- *  out to the closest enemies (no projectile), then follow through. */
+ *  out to the closest enemies (no projectile), then follow through. Off a
+ *  Skyward Assault hover it's a ground link, so it drops you (see links.ts). */
 function twinShot(r: SkillRank): void {
-  pose('shoot', 'Z');
+  endHover();
+  pose('shoot', 'z');
   const face = player.face;
   const tg = nearest(player.x + face * 64, player.y + player.h / 2, 128, 56, r.targets);
   later(P.Z_WINDUP, () => {
@@ -52,7 +54,7 @@ function twinShot(r: SkillRank): void {
  *  own per-frame vx/vy reset would otherwise eat it). */
 function glide(): void {
   endHover();
-  pose('jump', 'D');
+  pose('jump', 'd');
   sfx.glide();
   const dir = player.face;          // launch in the direction you're facing
   player.vx = dir * P.GLIDE_VX;     // launches forward...
@@ -70,7 +72,7 @@ function airDive(r: SkillRank): void {
   sfx.jump();
   // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP, the yellow
   // arrows leading the way, and the pose covers the coil as well as the plunge.
-  pose('dive', 'AD');
+  pose('dive', 'air-q');
   player.vx = player.vy = 0;
   game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
@@ -85,8 +87,10 @@ function airDive(r: SkillRank): void {
   });
 }
 
-/** Rush Toss (Q on the ground): the ground rush (see rush.ts). */
+/** Rush Toss (Q on the ground): the ground rush (see rush.ts). Off a Skyward
+ *  Assault hover it's a ground link, so it drops you (see links.ts). */
 function skyToss(): void {
+  endHover();
   groundRush(held('down'), false);
 }
 
@@ -96,35 +100,24 @@ function electricBlitz(): void {
   groundRush(held('down'), true);
 }
 
-/** Rising Arrow (retired): launch the enemies ahead and leap up with them,
- *  linking into an airborne W. */
-function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
-  pose('rush', kind);
-  sfx.jump();
-  const face = player.face;
-  const cx = player.x + face * reach;
-  const tg = hitbox(cx, player.y + player.h / 2, w, 64).slice(0, r.targets);
-  fxUnder('rush', tg, cx, player.y + player.h, 0.4);
-  tg.forEach((m) => damage(m, r.dmg, { launch: true }));
-  player.onGround = false;
-  const dir = back ? -face : face;
-  player.vx = dir * vx;
-  player.vy = -vy;
-  game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: dir });
-}
+/** Seconds until Piercing Leap's spike lands this far in front of you
+ *  (matching the effect: the first drops at once, the farthest last). */
+export const spikeLands = (d: number): number =>
+  (2 + 3.2 * Math.min(1, d / P.SPIKE_REACH)) * FX_DUR.spikes / 10;
 
-/** Rising Arrow: jump up with the enemies it launches (the same launch speed,
- *  so you climb together). */
-const risingArrow: Cast = (r) => launchLeap('RA', r, 30, 80, false, P.RISE_VX, P.RISE_VY);
-
-/** Piercing Leap (E's ground form): spikes erupt in a burst around you and throw
- *  you into the air. */
+/** Piercing Leap (E's ground form): spikes rain out of the sky onto the
+ *  ground in front of you, nearest first, and throw you into the air. Each
+ *  enemy in front is speared as its spike lands. */
 function spikeLift(r: SkillRank): void {
-  pose('barrage', 'E');
+  pose('barrage', 'ground-e');
   sfx.jump();
-  game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
-  hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64)
-    .slice(0, r.targets).forEach((m) => damage(m, P.SPIKE_DMG, { fx: 'spikeHit' }));
+  const face = player.face, x0 = player.x;
+  game.fx.push({ type: 'spikes', x: x0, y: player.y + player.h, t: FX_DUR.spikes, face });
+  hitbox(x0 + face * P.SPIKE_REACH / 2, player.y + player.h / 2, P.SPIKE_REACH, 64)
+    .slice(0, r.targets)
+    .forEach((m) => later(spikeLands(Math.abs(m.x - x0)), () => {
+      if (game.mobs.includes(m)) damage(m, P.SPIKE_DMG, { fx: 'spikeHit' });
+    }));
   // The launch is a fixed lift off the floor, not a stack on top of a jump:
   // cast on the way up, you keep whatever the jump has already given you.
   const floor = game.floor.platforms[0].y - player.h;
@@ -135,7 +128,7 @@ function spikeLift(r: SkillRank): void {
   // commitment does. move.skillForces drives it; any other skill ends it.
   const feet = player.y + player.h;
   player.liftTop = Math.min(feet, feet + gained - P.SPIKE_LIFT_H);
-  player.liftT = useTime('E');
+  player.liftT = useTime('ground-e');
   player.vy = 0;
   player.onGround = false;
 }
@@ -145,14 +138,15 @@ function spikeLift(r: SkillRank): void {
  *  column beneath you, hitting every enemy in it. */
 function plungingVolley(r: SkillRank): void {
   endHover();
-  pose('barrage', 'PV');
+  pose('barrage', 'air-e');
   sfx.shoot();
   const feet = player.y + player.h;
   const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
     .filter((m) => m.y + m.h > feet) // beneath you, not beside you
     .sort((a, b) => a.y - b.y)
     .slice(0, r.targets);
-  player.vy -= P.PLUNGE_HOP; // stacks on the current momentum, not a fixed reset
+  // leave a faster existing upward speed untouched; otherwise add the hop, capped at -PLUNGE_MAX
+  player.vy = player.vy < -P.PLUNGE_MAX ? player.vy : Math.max(player.vy - P.PLUNGE_HOP, -P.PLUNGE_MAX);
   // one flare on her and a single tornado blast driving down below her (no
   // per-enemy rain: the blast is the hit effect)
   game.fx.push({ type: 'volleyFlare', x: player.x, y: player.y + player.h / 2, t: FX_DUR.volleyFlare });
@@ -165,7 +159,7 @@ function plungingVolley(r: SkillRank): void {
 /** Tempest: you vanish as an oval of energy sweeps up and around you,
  *  striking every enemy in a wide radius (nearest first). */
 function tempest(r: SkillRank): void {
-  pose('shoot', 'R');
+  pose('shoot', 'r');
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
   sfx.shoot();
@@ -181,7 +175,7 @@ function tempest(r: SkillRank): void {
 /** Cyclone Sweep (W's air form): a 360° sweep around you, cutting every enemy
  *  in reach several times. */
 function midairSpin(r: SkillRank): void {
-  pose('shoot', 'MS');
+  pose('shoot', 'air-w');
   player.vx = player.vy = 0; // the sweep holds its spot: no drifting on the jump's momentum
   player.skillPose = 'spin';
   endHover(); // swept out of a Skyward Assault hover: the spin takes over
@@ -197,7 +191,7 @@ function midairSpin(r: SkillRank): void {
  *  shoot them before they land. Q's rush gathers them up first, and only a
  *  link off it makes this available. */
 function skyfallVolley(r: SkillRank): void {
-  pose('shoot', 'W');
+  pose('shoot', 'ground-w');
   sfx.shoot();
   const face = player.face;
   const tg = hitbox(player.x + face * 30, player.y + player.h / 2, 110, 80).slice(0, r.targets);
@@ -211,7 +205,7 @@ function skyfallVolley(r: SkillRank): void {
  *  enemy in reach for a moment before dropping with normal gravity. The
  *  strikes run on the fixed step in update (see the hang block). */
 function skyAssault(r: SkillRank): void {
-  pose('barrage', 'AB');
+  pose('barrage', 'ab');
   sfx.shoot();
   hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
     .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
@@ -221,7 +215,8 @@ function skyAssault(r: SkillRank): void {
   player.y = Math.max(0, player.y - P.BARRAGE_UP);
   player.vx = 0; player.vy = 0; player.onGround = false;
   game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
-  player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
+  // hold in the air for the cast's recovery, not a fixed barrage duration
+  player.hang.t = delayTime('ab') * 2; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
 }
 
@@ -229,7 +224,7 @@ function skyAssault(r: SkillRank): void {
  *  every target takes all 4 hits, and each hit stuns. Twin Echoes doubles the volley (a second one follows
  *  the first), so the burst reads heavier while every hit still lands. */
 function shellBarrage(r: SkillRank): void {
-  pose('shoot', 'S');
+  pose('shoot', 's');
   sfx.shoot();
   const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
   const x0 = player.x + player.face * 8, y0 = player.y + 13;
@@ -251,10 +246,9 @@ function shellBarrage(r: SkillRank): void {
 }
 
 export const CASTS: Partial<Record<SkillKey, Cast>> = {
-  Z: twinShot, D: glide,
-  Q: skyToss, EB: electricBlitz, AD: airDive,
-  W: skyfallVolley, AB: skyAssault, MS: midairSpin,
-  E: spikeLift, PV: plungingVolley,
-  R: tempest, S: shellBarrage,
-  RA: risingArrow,
+  z: twinShot, d: glide,
+  'ground-q': skyToss, eb: electricBlitz, 'air-q': airDive,
+  'ground-w': skyfallVolley, ab: skyAssault, 'air-w': midairSpin,
+  'ground-e': spikeLift, 'air-e': plungingVolley,
+  r: tempest, s: shellBarrage,
 };

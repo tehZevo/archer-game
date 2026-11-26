@@ -94,7 +94,7 @@ export function boardInput(): void {
   const r = rows[board.sel];
   if (r && (pressed('z') || pressed('enter') || pressed(' '))) {
     const ok = r.active === null ? accept(r.q) : turnIn(r.active);
-    if (ok) { sfx.levelUp(); board.sel = Math.min(board.sel, Math.max(0, boardRows().length - 1)); }
+    if (ok) { sfx.reward(); board.sel = Math.min(board.sel, Math.max(0, boardRows().length - 1)); }
   }
   if (r && r.active !== null && pressed('x')) { abandon(r.active); board.sel = Math.min(board.sel, Math.max(0, boardRows().length - 1)); }
   if (pressed('escape')) board.open = false;

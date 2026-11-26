@@ -11,6 +11,8 @@
    sprites.ts bakes them into canvases.
    ============================================================ */
 
+import { VARIANT_ART } from './variantart';
+
 export type MobPaint = (x: number, y: number, col: string, w?: number, h?: number) => void;
 
 interface Look {
@@ -251,6 +253,22 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
   'Void Blossom': { look: L(18, 18, '#8a4ad8', '#3a1a5a', '#d8a0ff', '#f0d8ff', '#2a0e4a'), plan: bloom },
   'Null Wraith': { look: L(14, 18, '#2a1a3a', '#120a1a', '#5a3a7a', '#d8a0ff', '#8a4ad8'), plan: blob({ tentacles: true, hood: true }) },
 
+  // Ember Wastes
+  'Cinder Hound': { look: L(20, 15, '#3a2a26', '#1e1412', '#6a5a54', '#ff7a1a', '#ff9a40'), plan: quad({ ears: true, tail: true, snout: true }) },
+  'Ash Wisp': { look: L(14, 14, '#ff9a40', '#a8401a', '#ffe070', '#2a0e04', '#ffd070'), plan: blob({ sparkle: true, drip: true }) },
+  // Old Keep
+  'Armor Knight': { look: L(16, 22, '#8a8e9c', '#4e5262', '#c8ccd8', '#ff5a3a', '#a83a3a'), plan: biped({ helm: true, arms: true }) },
+  'Keep Rat': { look: L(16, 11, '#6a5a4a', '#3a2e24', '#a8988a', '#ff4a3a', '#d8a0a0'), plan: quad({ ears: true, tail: true, snout: true }) },
+  // Chapel Spire
+  Gargoyle: { look: L(20, 14, '#7a7a84', '#4a4a54', '#a8a8b4', '#ff3a3a', '#5a5a64'), plan: flier({ beak: true }) },
+  'Choir Spirit': { look: L(14, 18, '#fff0c8', '#c8a860', '#ffffff', '#3a2a10', '#f0c860'), plan: blob({ hood: true, tentacles: true }) },
+  // Sky Reef
+  'Reef Ray': { look: L(22, 16, '#5ad8c8', '#2a8a8a', '#d8fff8', '#0a2a2a', '#ff9ab8'), plan: flier({ stripes: true }) },
+  'Coral Crawler': { look: L(18, 12, '#ff9ab8', '#c85a78', '#ffd8e4', '#1a0a10', '#5ad8c8'), plan: bug({ spikes: true }) },
+  // Frozen Summit
+  Yeti: { look: L(20, 24, '#f0f6ff', '#a8c0dc', '#ffffff', '#3a6ab8', '#7ab0e0'), plan: biped({ rocky: true, arms: true }) },
+  'Frost Wolf': { look: L(22, 15, '#c8dcf0', '#7a98bc', '#ffffff', '#3ad8ff', '#e8f8ff'), plan: quad({ ears: true, tail: true, snout: true }) },
+
   // variants: a cousin of an area's enemy, with its own look (see MOB_TYPES' `of`)
   'Horned Beetle': { look: L(18, 12, '#8a5a2a', '#4a2a10', '#e8b870', '#fff0a0', '#e8c040'), plan: bug({ spikes: true }) },
   'Brown Hare': { look: L(15, 16, '#a8784a', '#6a4a2a', '#e8d0b0', '#1a1010', '#f0b0a0'), plan: hopper({ ears: true }) },
@@ -267,17 +285,15 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
   'Dark Reflection': { look: L(12, 22, '#2a3a5a', '#141a2e', '#4a5a8a', '#ff4a5a', '#8a9ac8'), plan: biped({}) },
   'Comet Golem': { look: L(20, 22, '#4a5a7a', '#2a3248', '#7a8ab0', '#7af0ff', '#5ad8ff'), plan: biped({ rocky: true, arms: true }) },
   'Thorn Blossom': { look: L(18, 18, '#d83a5a', '#1a4a2a', '#ff90a8', '#fff0a0', '#5a1a2a'), plan: bloom },
+  'Magma Hound': { look: L(20, 15, '#a8401a', '#5a1a0a', '#ffb040', '#ffe070', '#ff7a1a'), plan: quad({ horns: true, tail: true, snout: true }) },
+  'Black Knight': { look: L(16, 22, '#2a2c34', '#14161c', '#4e5262', '#ff3a3a', '#8a1a1a'), plan: biped({ helm: true, arms: true, rocky: true }) },
+  'Bronze Gargoyle': { look: L(20, 14, '#a8803a', '#5a4418', '#f0c860', '#3ad8ff', '#6a4a20'), plan: flier({ beak: true, gear: true }) },
+  'Storm Ray': { look: L(22, 16, '#3a4a7a', '#1a2448', '#ffe870', '#ffe870', '#8a9ac8'), plan: flier({ stripes: true, gear: true }) },
+  'Ice Yeti': { look: L(20, 24, '#7ab0e0', '#3a6ab8', '#e8f8ff', '#ffffff', '#c8e8ff'), plan: biped({ crystal: true, arms: true }) },
 };
 
-/** Hand-drawn enemies (sprites.ts) and their palette-swapped variants: each
- *  maps the base's exact colours to its own. */
+/** Hand-drawn enemies (sprites.ts). Their variants are drawn too (variantart.ts). */
 export const DRAWN = ['Garden Snail', 'Boar', 'Wisp', 'Iron Hog', 'Enemy Crab', 'Hermit Crab', 'Gull'];
-export const RECOLOR: Record<string, { base: string; map: Record<string, string> }> = {
-  'Red Snail': { base: 'Garden Snail', map: { '#5fb8f0': '#f07a5a', '#3f86c4': '#b8402a' } },
-  'Blue Crab': { base: 'Enemy Crab', map: { '#e8643c': '#4a8ae8', '#ff9a6a': '#9ac8ff', '#b8401f': '#2a4aa8', '#3a1208': '#0e1a3a' } },
-  'Wild Boar': { base: 'Boar', map: { '#c56f9f': '#5a3a24', '#e79ac4': '#8a5a3a', '#d07fae': '#6a4228', '#ffffff': '#f0e0b0' } },
-  'Storm Gull': { base: 'Gull', map: { '#f4f7fc': '#8a94a8', '#9aa6b8': '#3a4458', '#f0c040': '#e8e070' } },
-};
 
 /** Paint frame `f` of an enemy: 0 or 1 for its walk cycle, HURT for its hit pose. */
 export function paintMob(name: string, f: number, p: MobPaint): void {
@@ -288,5 +304,5 @@ export function paintMob(name: string, f: number, p: MobPaint): void {
 /** An enemy's box (sprite and hitbox). */
 export const mobSize = (name: string): { w: number; h: number } => ({ w: MOB_ART[name].look.w, h: MOB_ART[name].look.h });
 
-/** Does this enemy have art (painted, hand-drawn, or a palette swap of one)? */
-export const hasMobArt = (name: string): boolean => !!MOB_ART[name] || DRAWN.includes(name) || !!RECOLOR[name];
+/** Does this enemy have art (painted, hand-drawn, or a drawn variant)? */
+export const hasMobArt = (name: string): boolean => !!MOB_ART[name] || DRAWN.includes(name) || !!VARIANT_ART[name];

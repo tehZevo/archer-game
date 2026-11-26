@@ -16,20 +16,38 @@ import { closeLinks } from './links';
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
 /** Fervor's per-stack bonus grows with the passive's rank. */
-export const fervorMult = (): number => 1 + (0.08 + passiveBonus('IR')) * game.player.fervor;
+export const fervorMult = (): number => 1 + (0.08 + passiveBonus('ir')) * game.player.fervor;
 /** Base 15% crit, raised 2% a point by LUK and the Precision passive. */
 export const CRIT_PER_POINT = 0.02;
 export const critChance = (): number =>
-  Math.min(1, 0.15 + game.player.stats.luk * CRIT_PER_POINT + passiveBonus('SA'));
+  Math.min(1, 0.15 + game.player.stats.luk * CRIT_PER_POINT + passiveBonus('sa'));
 /** LUK points spent past the 100% crit chance cap (the base 15% counts
  *  toward it, so the cap is reached well before 50 points). */
 export const critOverflowPoints = (): number =>
-  Math.max(0, game.player.stats.luk - Math.ceil((1 - 0.15 - passiveBonus('SA')) / CRIT_PER_POINT));
+  Math.max(0, game.player.stats.luk - Math.ceil((1 - 0.15 - passiveBonus('sa')) / CRIT_PER_POINT));
 /** Crits hit for 1.5x, plus 2% for every LUK point past the cap. */
 export const CRIT_BASE = 1.5;
 export const critMult = (): number => CRIT_BASE + critOverflowPoints() * 0.02;
 /** Built-in damage bonus, raised by the Power Surge passive. */
-export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
+export const passiveDmg = (): number => 1.20 + passiveBonus('pp');
+/** Twin Echoes doubles your arrows (see shotCount) at the cost of per-hit
+ *  damage: each arrow deals 60%, so total damage rises from 100% to ~120%. */
+export const twinEchoMult = (): number => passiveBonus('es') > 0 ? 0.6 : 1;
+
+/* ---- The damage pipeline, in three parts (see damage()). ---- */
+
+/** (1) Base attack: the player's raw attack stat (level + DEX, see recalcStats)
+ *  scaled by the weapon's bonus. This is the "attack" the whole build raises. */
+export const baseAttack = (): number => game.player.war * gearDmg();
+
+/** (2) Modifiers: multiplicative buffs stacked on base attack — passives
+ *  (Power Surge, Twin Echoes) and stacks (Fervor). Crit, variance and the
+ *  airborne bonus are per-hit and applied in damage(), not here. */
+export const damageModifiers = (): number => passiveDmg() * twinEchoMult() * fervorMult();
+
+/** (3) Applied damage, before the target's defense: base attack × modifiers ×
+ *  the attack skill's own multiplier (mult, e.g. Double Shot's 120%). */
+export const appliedDamage = (mult: number): number => baseAttack() * damageModifiers() * mult;
 
 /** Level-based miss rate: each level the target stands above the attacker
  *  adds 5% to the chance of missing it (capped), and the same in reverse.
@@ -58,8 +76,8 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
     game.player.invulnQuiet = true;
     return;
   }
-  // the weapon in hand multiplies everything the bow fires
-  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * rand(0.92, 1.08);
+  // the weapon in hand multiplies everything the bow fires (see baseAttack)
+  let dmg = appliedDamage(mult) * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
   if (crit) dmg *= critMult();
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Rush Toss airborne bonus
@@ -74,7 +92,9 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   sfx.mobHit(target.name); // every line of a multi-hit stack sounds like this enemy
   game.dmgNums.push(stackedNum(target, dmg, crit));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
-  if (opts.launch) { target.airTime = 1.1; target.vy = -430; target.y -= 4; }
+  // A launcher pops the enemy straight up: cancel its horizontal drift so it
+  // rises in place (and is there for the aerial follow-up).
+  if (opts.launch) { target.airTime = 1.1; target.vx = 0; target.vy = -430; target.y -= 4; }
   if (target.hp <= 0) {
     // overkill from a multi-hit attack: the rest of its hits still land (and
     // show their numbers) before it dies
@@ -116,6 +136,7 @@ export function killMob(m: Mob): void {
   if (m.boss) bump('bosses');
   localKill(); // shared with the instance: speeds up other players' waves
   addCorpse(m, m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1); // it dies its own way (deaths.ts)
+  sfx.mobDeath(m.name, !!(m.boss || m.elite)); // ...and sounds its own way (mobvoices.ts)
   gainExp(m.exp);
   dropCoins(m);
   dropGear(m); // a rare piece of gear, scaled to the enemy's level

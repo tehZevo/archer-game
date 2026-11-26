@@ -4,16 +4,16 @@ import { passiveBonus } from './progress';
 import type { SkillKey } from './types';
 
 /** A skill's use time, shortened by Haste (+N% attack speed: time / (1 + N)). */
-export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('HA'));
+export const useTime = (kind: SkillKey): number => (SKILLS[kind].use ?? P.USE_TIME) / (1 + passiveBonus('ha'));
 
 /** Recovery after the animation ends: movement frees up at useT's end, a new
  *  skill waits out this delay. Links skip it (see cast). Attack speed (Haste)
  *  shortens it, the same way it shortens the use time. */
-export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DELAY_TIME) / (1 + passiveBonus('HA'));
+export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DELAY_TIME) / (1 + passiveBonus('ha'));
 
 /** Skills that pin you in place for their whole cast (gravity and all),
  *  rather than only locking out movement input. */
-export const FREEZE_CAST = new Set<SkillKey>(['R']);
+export const FREEZE_CAST = new Set<SkillKey>(['r']);
 
 /** Whether a rush (or the Meteor Dive that borrows its pose) is still in its
  *  slide-and-strike phase, holding back links pressed during it. This is a
@@ -31,25 +31,16 @@ export const rushHolding = (): boolean => {
 /** Movement skills a rope/ladder grab cuts short: grabbing the climb is the
  *  next move, so it doesn't wait out the Glide's use time the way an attack's
  *  animation would. (Jump already frees you — see move.climb.) */
-export const GRAB_THROUGH = new Set<SkillKey>(['D']);
+export const GRAB_THROUGH = new Set<SkillKey>(['d']);
 
 /** Whether a climbable can be grabbed right now: out of any use time, or in
  *  one belonging to a movement skill. */
 export const grabCancels = (): boolean =>
   player.casting.useT <= 0 || (player.casting.key !== null && GRAB_THROUGH.has(player.casting.key));
 
-/** The aerial kit you can pull out of a Skyward Assault hover: each of these
- *  calls links.endHover, so the move starts on the press, not at the hover's
- *  end (see skills.gate). */
-export const AIR_KIT = new Set<SkillKey>(['D', 'PV', 'MS', 'AD']);
-
-/** Whether a press right now cuts a Skyward Assault hover short. */
-export const offHover = (kind: SkillKey): boolean =>
-  player.hang.t > 0 && AIR_KIT.has(kind);
-
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Meteor Dive), W (Cyclone Sweep), E (Downpour). */
-export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };
+export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { 'ground-q': 'air-q', 'ground-w': 'air-w', 'ground-e': 'air-e' };
 
 /** The cooldown slot a key uses right now: its air form's ("E.air") in the
  *  air, else its own. (Skyward Assault is W's ground-only upgrade: W in the air

@@ -11,17 +11,17 @@ export const P = {
   HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
   HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
-  GRAVITY: 772.2,      // px/s^2 (lowered from 2000, then 1040, 780, then 858)
+  GRAVITY: 694.98,     // px/s^2 (10% under 772.2)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
-  JUMP_V: 242.4,       // 10% under the old 269.3: a ~34px jump at 858 gravity
+  JUMP_V: 189,         // 10% under 210
   JUMP_H: 81.25,       // halved from 162.5
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
   CLIMB: 90,           // rope/ladder climb speed, px/s (was 140)
   DROP_HOP_V: 110,     // Down+Jump hop before falling through (v²/2g ≈ 6px)
   GLIDE_VX: 190,       // Glide forward launch speed, px/s (was 160; ×1-1.3 with rank)
-  GLIDE_VY_MAX: 180,   // max upward speed after Glide (v²/2g ≈ 10px of extra rise)
+  GLIDE_VY_MAX: 162,   // max upward speed after Glide (10% under 180)
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
@@ -57,16 +57,17 @@ export const P = {
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
   PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
-  PLUNGE_HOP: 112.5,   // px/s (was 150) added to your current momentum (stacks: a falling cast lifts less)
+  PLUNGE_HOP: 121.5,   // px/s bump added to your upward velocity (10% under 135)
+  PLUNGE_MAX: 160,     // ...capped so vy never exceeds -160 (upward); faster speeds are left untouched
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
-  SPIKE_R: 56,         // px radius of the burst around you
+  SPIKE_REACH: 72,     // px: the spikes rain down from just ahead of you out to this far in front
   SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed (slower than a jump's pop)...
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
   SPIN_RISE_V: 22.5,   // px/s: the midair sweep lifts you at this steady speed (was a slow fall)
-  SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
+  SPIN_CD: 8,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
@@ -101,73 +102,73 @@ export const TILE = 16;
 /** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Downpour, the
  *  Meteor Dive's landing) links into: the link skills, the Q slot (Meteor
  *  Dive in the air) and W's air form, the Cyclone Sweep. */
-const LAUNCHER_LINKS: SkillKey[] = ['W', 'AB', 'Q', 'EB', 'AD', 'MS'];
+const LAUNCHER_LINKS: SkillKey[] = ['ground-w', 'ab', 'ground-q', 'eb', 'air-q', 'air-w'];
 
 export const SKILLS: Record<SkillKey, SkillDef> = {
-  // Actives: 3 ranks; stats step from rank 1 to rank 3 so every rank is a big jump.
+  // Every skill is a single rank: its stats are the (former) max-level form.
   // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
   // cooldown, so their pace is their use time alone (which Haste speeds up).
-  Z: { key: 'Z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 3,
-       cd: 0, use: 0.7, mp1: 2, mpMax: 3, dmg1: 80, dmgMax: 120, hits1: 2, hitsMax: 2, targets1: 2, targetsMax: 4,
+  z: { key: 'z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1,
+       cd: 0, use: 0.6, mp1: 3, dmg1: 120, hits1: 2, targets1: 4,
        desc: 'Hits the closest enemies in range twice' },
-  AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 3, passive: true,
-        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.15, bonusMax: 0.6,
-        desc: 'Up + Jump rushes up ropes and ladders; climb faster' },
-  D: { key: 'D', keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
-       cd: 0, use: 0.4, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
+  ac: { key: 'ac', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, passive: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
+        desc: 'Up + Jump rushes up ropes and ladders' },
+  d: { key: 'd', linksInto: ['air-q'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, learn: true,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 2, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },
-  Q: { key: 'Q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
-       cd: 0, use: 0.6, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
+  'ground-q': { key: 'ground-q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
+       cd: 0, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
-  W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
-       cd: 0, use: 0.9, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 4, targets1: 4, targetsMax: 4,
+  'ground-w': { key: 'ground-w', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
+       cd: 0, use: 0.2, delay: 0.6, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
-  E: { key: 'E', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: P.SPIKE_CD, use: 0.7, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
+  'ground-e': { key: 'ground-e', linksInto: [...LAUNCHER_LINKS, 'air-e'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
+       cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
-  // The air forms of Q, W and E: their own rows, ranks and unlock levels,
-  // each with no cooldown (use time only) and chaining into its ground form.
-  AD: { key: 'AD', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 1.1, mp1: 3, mpMax: 4, dmg1: 250, dmgMax: 400, hits1: 1, hitsMax: 1, requires: 'Q',
+  // The air forms of Q, W and E: their own rows and unlock levels, each with
+  // no cooldown (use time only) and chaining into its ground form.
+  'air-q': { key: 'air-q', linksInto: [...LAUNCHER_LINKS, 'd', 'ground-e'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30,
+       cd: 0, use: 1.1, mp1: 4, dmg1: 400, hits1: 1, requires: 'ground-q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
-  MS: { key: 'MS', linksInto: ['D', 'PV'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
-       cd: P.SPIN_CD, use: 0.8, mp1: 3, mpMax: 5, dmg1: 200, dmgMax: 200, hits1: 4, hitsMax: 4, targets1: 8, targetsMax: 8, requires: 'AB',
+  'air-w': { key: 'air-w', linksInto: ['d', 'air-e'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
+       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
        desc: 'Mid-air W: a 360-degree sweep around you' },
-  PV: { key: 'PV', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
+  'air-e': { key: 'air-e', linksInto: [...LAUNCHER_LINKS, 'd'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 7, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', linksInto: ['Q', 'EB', 'AD'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 10.0, use: 0.7, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
+  r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,
+       cd: 10.0, use: 0.7, mp1: 14, dmg1: 200, hits1: 8, targets1: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
-  EB: { key: 'EB', linksInto: LAUNCHER_LINKS, upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 0, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,
+  eb: { key: 'eb', linksInto: LAUNCHER_LINKS, upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
+       cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', linksInto: ['MS', 'R'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 0.9, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 4, hitsMax: 4, targets1: 6, targetsMax: 6, requires: 'W',
+  ab: { key: 'ab', linksInto: ['air-w', 'r', 'z', 'ground-q'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
        desc: 'After Rush Toss: leap up to launched enemies' },
-  S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 0.6, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
+  s: { key: 's', upgrades: 'z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
+       cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
-  // Branch upgrades: each competes with the other upgrade on the same slot.
-  RA: { key: 'RA', linksInto: LAUNCHER_LINKS, upgrades: 'Q', retired: true, name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
-       desc: 'Launch enemies ahead and rise with them' },
-  // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
-  ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, maxLevel: 3, passive: true,
-        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 2, bonusMax: 2,
+  // Passives: no key; their effect is `bonus` (0 until learned).
+  es: { key: 'es', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 30, passive: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 2,
         desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire' },
-  SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, maxLevel: 3, passive: true,
-        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.07, bonusMax: 0.21,
+  sa: { key: 'sa', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true, learn: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.21,
         desc: 'Crit chance up' },
-  PP: { key: 'PP', name: 'Power Surge', tag: 'Passive', job: 4, minLevel: 60, maxLevel: 3, passive: true,
-        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.1, bonusMax: 0.3,
+  pp: { key: 'pp', name: 'Power Surge', tag: 'Passive', job: 4, minLevel: 60, passive: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.3,
         desc: 'All damage up' },
-  IR: { key: 'IR', name: 'Fervor', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 3, passive: true,
-        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.12,
+  ir: { key: 'ir', name: 'Fervor', tag: 'Passive', job: 2, minLevel: 10, passive: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.12,
         desc: 'Each Fervor stack gives more damage' },
-  HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 3, minLevel: 30, maxLevel: 3, passive: true,
-        cd: 0, mp1: 0, mpMax: 0, dmg1: 0, dmgMax: 0, bonus1: 0.04, bonusMax: 0.1,
+  ha: { key: 'ha', name: 'Haste', tag: 'Passive', job: 3, minLevel: 60, passive: true,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.2,
         desc: 'Attack speed up (shorter use time, not cooldowns)' },
+  // A movement passive: faster and higher jumps.
+  ni: { key: 'ni', name: 'Nimble', tag: 'Passive', job: 2, minLevel: 10, passive: true,
+        cd: 0, mp1: 0, dmg1: 0,
+        desc: 'Move speed up 40%, jump height up 20%' },
 };
 
 /** Skills you start with at rank 1 (Lv.1 skills, except those bought with SP). */
@@ -177,6 +178,10 @@ export const startsLearned = (k: SkillKey): boolean => SKILLS[k].minLevel <= 1 &
  *  an air form from its ground form's: see castrules.AIR_FORM). */
 export const SKILL_ORDER: SkillKey[] = (Object.keys(SKILLS) as SkillKey[]).filter((k) => SKILLS[k].keyed);
 
+/** The keyboard binding id (the slot letter) a skill key is bound to: the
+ *  ground/air prefix is dropped, so ground-q and air-q both use the Q key. */
+export const slotOf = (k: SkillKey): string => (k.includes('-') ? k.split('-')[1] : k);
+
 /** The buttons shown in the on-canvas skill bar: the attack keys Z (main), Q,
  *  W, E, R. Slots upgrade in place (Double Shot to Bolt Flurry at Lv.30). */
 export const SKILL_BAR: { label: string; skill: SkillKey }[] = SKILL_ORDER
@@ -184,7 +189,15 @@ export const SKILL_BAR: { label: string; skill: SkillKey }[] = SKILL_ORDER
   .map((k) => ({ label: k, skill: k }));
 
 /** Skills that only work as a link (off Rush Toss and the other launchers). */
-export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
+export const LINKED_SKILLS: SkillKey[] = ['ground-w', 'ab'];
+
+/** The old terse key codes (pre-slug), mapped to their current slug, so saves
+ *  written before the rename load correctly. RA (Rising Arrow) is retired. */
+export const LEGACY_KEYS: Record<string, SkillKey> = {
+  Z: 'z', AC: 'ac', D: 'd', Q: 'ground-q', W: 'ground-w', E: 'ground-e', R: 'r',
+  AB: 'ab', S: 's', EB: 'eb', AD: 'air-q', PV: 'air-e', MS: 'air-w', ES: 'es',
+  SA: 'sa', PP: 'pp', IR: 'ir', HA: 'ha', NI: 'ni', RA: 'z',
+};
 
 /* ---------------- mobs ---------------- */
 export const MOB_TYPES: MobType[] = [
@@ -221,6 +234,21 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Star Sprite',    lvl: 36, hp: 180, ...mobSize('Star Sprite'),    spd: 120, dmg: 4, col: '#fff0a0', fly: true, areas: ['Starfall Observatory'] },
   { n: 'Meteor Golem',   lvl: 36, hp: 360, ...mobSize('Meteor Golem'),   spd: 45,  dmg: 6, col: '#6a4a3a', areas: ['Starfall Observatory'] },
   { n: 'Void Blossom',   lvl: 40, hp: 300, ...mobSize('Void Blossom'),   spd: 30,  dmg: 6, col: '#8a4ad8', areas: ['Void Garden'] },
+  // Ember Wastes
+  { n: 'Cinder Hound',   lvl: 18, hp: 270, ...mobSize('Cinder Hound'),   spd: 100, dmg: 5, col: '#3a2a26', areas: ['Ember Wastes'] },
+  { n: 'Ash Wisp',       lvl: 18, hp: 180, ...mobSize('Ash Wisp'),       spd: 95,  dmg: 4, col: '#ff9a40', fly: true, areas: ['Ember Wastes'] },
+  // Old Keep
+  { n: 'Armor Knight',   lvl: 18, hp: 330, ...mobSize('Armor Knight'),   spd: 45,  dmg: 5, col: '#8a8e9c', areas: ['Old Keep'] },
+  { n: 'Keep Rat',       lvl: 17, hp: 190, ...mobSize('Keep Rat'),       spd: 110, dmg: 4, col: '#6a5a4a', areas: ['Old Keep'] },
+  // Chapel Spire
+  { n: 'Gargoyle',       lvl: 25, hp: 260, ...mobSize('Gargoyle'),       spd: 100, dmg: 5, col: '#7a7a84', fly: true, areas: ['Chapel Spire'] },
+  { n: 'Choir Spirit',   lvl: 25, hp: 220, ...mobSize('Choir Spirit'),   spd: 70,  dmg: 5, col: '#fff0c8', fly: true, areas: ['Chapel Spire'] },
+  // Sky Reef
+  { n: 'Reef Ray',       lvl: 33, hp: 240, ...mobSize('Reef Ray'),       spd: 115, dmg: 5, col: '#5ad8c8', fly: true, areas: ['Sky Reef'] },
+  { n: 'Coral Crawler',  lvl: 33, hp: 330, ...mobSize('Coral Crawler'),  spd: 50,  dmg: 6, col: '#ff9ab8', areas: ['Sky Reef'] },
+  // Frozen Summit
+  { n: 'Yeti',           lvl: 34, hp: 380, ...mobSize('Yeti'),           spd: 55,  dmg: 7, col: '#f0f6ff', areas: ['Frozen Summit'] },
+  { n: 'Frost Wolf',     lvl: 33, hp: 280, ...mobSize('Frost Wolf'),     spd: 115, dmg: 6, col: '#c8dcf0', areas: ['Frozen Summit'] },
   { n: 'Null Wraith',    lvl: 40, hp: 220, ...mobSize('Null Wraith'),    spd: 100, dmg: 5, col: '#2a1a3a', fly: true, areas: ['Void Garden'] },
 
   // variants: cousins of an area's enemies at about the same level, with their own
@@ -245,6 +273,11 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Dark Reflection', of: 'Reflection',     lvl: 31, hp: 280, ...mobSize('Dark Reflection'), spd: 95,  dmg: 6, col: '#2a3a5a' },
   { n: 'Comet Golem',     of: 'Meteor Golem',   lvl: 37, hp: 330, ...mobSize('Comet Golem'),     spd: 58,  dmg: 6, col: '#4a5a7a' },
   { n: 'Thorn Blossom',   of: 'Void Blossom',   lvl: 41, hp: 340, ...mobSize('Thorn Blossom'),   spd: 30,  dmg: 7, col: '#d83a5a' },
+  { n: 'Magma Hound',     of: 'Cinder Hound',   lvl: 19, hp: 300, ...mobSize('Magma Hound'),     spd: 105, dmg: 6, col: '#a8401a' },
+  { n: 'Black Knight',    of: 'Armor Knight',   lvl: 19, hp: 380, ...mobSize('Black Knight'),    spd: 42,  dmg: 6, col: '#2a2c34' },
+  { n: 'Bronze Gargoyle', of: 'Gargoyle',       lvl: 26, hp: 300, ...mobSize('Bronze Gargoyle'), spd: 95,  dmg: 6, col: '#a8803a', fly: true },
+  { n: 'Storm Ray',       of: 'Reef Ray',       lvl: 34, hp: 270, ...mobSize('Storm Ray'),       spd: 125, dmg: 6, col: '#3a4a7a', fly: true },
+  { n: 'Ice Yeti',        of: 'Yeti',           lvl: 35, hp: 420, ...mobSize('Ice Yeti'),        spd: 50,  dmg: 8, col: '#7ab0e0' },
 ];
 // a variant without its own areas lives wherever its base does
 for (const m of MOB_TYPES) if (m.of && !m.areas) m.areas = MOB_TYPES.find((b) => b.n === m.of)?.areas;
@@ -260,7 +293,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.5, spin: SKILLS.MS.use ?? P.USE_TIME,
+  spikes: 0.55, tempest: 0.5, spin: SKILLS['air-w'].use ?? P.USE_TIME,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,

@@ -1,6 +1,7 @@
 import type { JobDef, PauseMenu, SkillDef, SkillKey, SkillRank, StatKey } from './types';
 import { SKILLS } from './config';
 import { player } from './state';
+import { dev } from './dev';
 import { fmtNum } from './util';
 
 /* ============================================================
@@ -109,50 +110,48 @@ export function spendStat(key: StatKey): boolean {
 /** SP awarded on top of the per-level point when reaching each job. */
 export const SP_PER_LEVEL = 1;
 
-const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
-
 /**
  * Resolve a skill's live stats from its current SP rank. A skill that has not
  * been learned yet behaves as its Lv.1 self, matching classic MMOs' free skill grant.
  */
 export function rank(key: SkillKey): SkillRank {
   const s = activeSkill(key);
-  const level = Math.max(1, player.ranks[s.key] || 1);
-  const t = s.maxLevel === 1 ? 0 : (Math.min(level, s.maxLevel) - 1) / (s.maxLevel - 1);
   return {
-    level,
-    maxLevel: s.maxLevel,
-    mp: Math.round(lerp(s.mp1, s.mpMax, t)),
-    dmg: lerp(s.dmg1, s.dmgMax, t) / 100,
+    mp: s.mp1,
+    dmg: s.dmg1 / 100,
     // The skill's own shots. Twin Echoes is a separate multiplier (see shots()):
     // keeping the two apart is what lets the shadow's arrows ride the same
     // damage-number stack as the base volley instead of colliding with it.
-    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)),
-    targets: Math.round(lerp(s.targets1 ?? 1, s.targetsMax ?? 1, t)),
+    hits: s.hits1 ?? 1,
+    targets: s.targets1 ?? 1,
   };
 }
 
 /** How many arrows an attack fires: its own shots, doubled by the Twin Echoes
  *  passive's shadow archer. The shadow always procs (a minimum of one lot),
  *  and its arrows are counted here rather than folded into `hits`. */
-export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('ES')));
+export const shotCount = (r: SkillRank): number => r.hits * Math.max(1, Math.round(passiveBonus('es')));
 
-/** A passive's current bonus: 0 until learned, then steps up per rank. */
+/** A passive's current bonus: 0 until learned, then its authored value. */
 export function passiveBonus(key: SkillKey): number {
-  const s = SKILLS[key], r = player.ranks[key] || 0;
-  if (!r) return 0;
-  const t = s.maxLevel === 1 ? 0 : (Math.min(r, s.maxLevel) - 1) / (s.maxLevel - 1);
-  return lerp(s.bonus1 ?? 0, s.bonusMax ?? 0, t);
+  return player.ranks[key] ? (SKILLS[key].bonus1 ?? 0) : 0;
 }
 
-export const isLearned = (key: SkillKey): boolean => (player.ranks[activeSkill(key).key] || 0) > 0;
+export const isLearned = (key: SkillKey): boolean => player.ranks[activeSkill(key).key];
+
+/* ---------------- Nimble ----------------
+   A passive that makes the archer quicker on her feet: +40% move speed and
+   +20% jump height once learned. These two multipliers are applied where the
+   base walk speed and jump velocity are read (see move.ts). */
+export const nimbleSpeed = (): number => isLearned('ni') ? 1.4 : 1;
+export const nimbleJump = (): number => isLearned('ni') ? 1.2 : 1;
 
 /**
  * The skill currently bound to a bar slot. The Z slot starts as Double Shot
  * and is upgraded to Bolt Flurry (a strict upgrade) once it unlocks.
  */
 export function activeSkill(key: SkillKey): SkillDef {
-  const up = upgradesOf(key).find((u) => player.ranks[u] > 0);
+  const up = upgradesOf(key).find((u) => player.ranks[u]);
   return SKILLS[up ?? key];
 }
 
@@ -165,7 +164,7 @@ export const upgradesOf = (base: SkillKey): SkillKey[] => ALL_SKILLS.filter((u) 
 /** True once another branch on the same slot has been taken: this one is locked out. */
 export const branchLocked = (key: SkillKey): boolean => {
   const base = SKILLS[key].upgrades;
-  return !!base && upgradesOf(base).some((u) => u !== key && player.ranks[u] > 0);
+  return !!base && upgradesOf(base).some((u) => u !== key && player.ranks[u]);
 };
 
 /** Spend one SP on the skill in a bar slot (its upgrade, if taken). */
@@ -181,7 +180,7 @@ export const SKILL_PICK_EVERY = 5;
 // The air forms of Q, W and E (Meteor Dive, Cyclone Sweep, Downpour) are
 // their own skills, but on the list they show the key they're used on, not
 // their own abbreviation.
-const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { AD: 'Q', MS: 'W', PV: 'E' };
+const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { 'air-q': 'ground-q', 'air-w': 'ground-w', 'air-e': 'ground-e' };
 
 /** One line of the pause menu's skill list. */
 export interface SkillRow {
@@ -189,11 +188,11 @@ export interface SkillRow {
   /** Bar key for actives, '' for passives. */
   slot: string;
   name: string;
-  rank: number;
-  max: number;
+  /** True once the skill is acquired (a skill is learned or not). */
+  learned: boolean;
   /** What one SP would do here, or '' if nothing. */
   action: string;
-  /** Why it can't be taken yet (an upgrade whose base isn't maxed), if so. */
+  /** Why it can't be taken yet (an upgrade whose base isn't learned), if so. */
   need?: string;
 }
 
@@ -201,36 +200,26 @@ export interface SkillRow {
 export function skillRows(): SkillRow[] {
   const rows: SkillRow[] = [];
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
-    if (SKILLS[k].retired) continue;
-    const s = SKILLS[k], have = player.ranks[k] || 0, base = s.upgrades;
-    const upgradedAway = upgradesOf(k).some((u) => player.ranks[u] > 0);
+    const s = SKILLS[k], learned = player.ranks[k], base = s.upgrades;
+    const upgradedAway = upgradesOf(k).some((u) => player.ranks[u]);
     if (upgradedAway || branchLocked(k)) continue;
     const slot = s.passive ? '' : base ?? AIR_FORM_KEY[k] ?? k;
-    if (have === 0) {
-      if (s.minLevel > player.level || (base && !(player.ranks[base] > 0))) continue;
+    if (!learned) {
+      if (s.minLevel > player.level || (base && !player.ranks[base])) continue;
       // a prerequisite skill (e.g. Cyclone Sweep needs Skyward Assault) must be
-      // mastered first: the row shows what's needed until it is
+      // learned first: the row shows what's needed until it is
       const req = s.requires ? SKILLS[s.requires] : null;
-      if (req && player.ranks[s.requires!] < req.maxLevel) {
-        rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel, action: '',
-          need: `Needs ${req.name} at max rank (${player.ranks[s.requires!]}/${req.maxLevel}): ${s.desc}` });
+      if (req && !player.ranks[s.requires!]) {
+        rows.push({ key: k, slot, name: s.name, learned: false, action: '',
+          need: `Needs ${req.name}: ${s.desc}` });
         continue;
       }
-      // an upgrade builds on its base skill: shown once the base is learned,
-      // but only taken once the base is at its max rank
-      const b = base ? SKILLS[base] : null;
-      if (b && player.ranks[base!] < b.maxLevel) {
-        rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel, action: '',
-          need: `Needs ${b.name} at max rank (${player.ranks[base!]}/${b.maxLevel}): ${s.desc}` });
-        continue;
-      }
-      rows.push({ key: k, slot, name: s.name, rank: 0, max: s.maxLevel,
+      rows.push({ key: k, slot, name: s.name, learned: false,
         action: !base ? `Learn: ${s.desc}`
           : rivals(k) ? `${s.desc}. Locks ${rivals(k)}`
           : `Upgrade ${SKILLS[base].name}: ${s.desc}` });
     } else {
-      rows.push({ key: k, slot, name: s.name, rank: have, max: s.maxLevel,
-        action: have < s.maxLevel ? `Rank ${have + 1}: ${s.desc}` : '' });
+      rows.push({ key: k, slot, name: s.name, learned: true, action: '' });
     }
   }
   return rows;
@@ -244,11 +233,14 @@ function rivals(k: SkillKey): string {
 
 /** Spend one SP on a skill row: learn, upgrade (keeping the base's rank), or rank up. */
 export function spendSkill(key: SkillKey): boolean {
+  // In dev mode a skill toggles freely: no SP is spent.
+  if (dev.on) {
+    player.ranks[key] = !player.ranks[key];
+    return true;
+  }
   const row = skillRows().find((r) => r.key === key);
   if (player.sp <= 0 || !row || !row.action) return false;
-  // an upgrade starts at rank 1, not at its base skill's rank: the first SP
-  // on Skyward Assault buys rank 1, whatever rank Rising Arrows is at
-  player.ranks[key] = row.rank > 0 ? row.rank + 1 : 1;
+  player.ranks[key] = true;
   player.sp--;
   return true;
 }

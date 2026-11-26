@@ -16,6 +16,8 @@
    zigzag, open: see LAYOUTS in floor.ts).
    ============================================================ */
 
+import { BACKDROPS } from './backdrop';
+
 /** A town: its id, its name, and (only where no path leads in) the area whose look it takes. */
 export interface Town {
   id: string;
@@ -114,19 +116,26 @@ export const isTownId = (id: string): boolean => TOWN_BY_ID.has(id);
 /** A town's index in TOWNS (picks its layout and palette). */
 export const townIndex = (id: string): number => Math.max(0, TOWNS.findIndex((t) => t.id === id));
 
-/** The paths a town leads up into, left to right. */
-export const pathsFrom = (town: string): Path[] => PATHS.filter((p) => p.from === town);
+/** A path is warpable (reachable from a town's portals) when its area has a
+ *  backdrop. The backdrop-less maps stay in PATHS for the dev menu, which
+ *  warps to towns directly, so they remain testable. */
+export const isWarpable = (p: Path): boolean => p.name in BACKDROPS;
+
+/** The paths a town leads up into, left to right (backdrop-less ones hidden). */
+export const pathsFrom = (town: string): Path[] => PATHS.filter((p) => p.from === town && isWarpable(p));
 /** The paths that end at a town (each gives it a way back down to the path's start). */
 export const pathsInto = (town: string): Path[] => PATHS.filter((p) => p.to === town);
 
 /** The area a town takes its look from. */
 export const townArea = (id: string): string => townById(id).area ?? pathsInto(id)[0]?.name ?? 'Harbor';
 
-/** Steps up from the start to each town (fewest paths climbed). */
+/** Steps up from the start to each town (fewest paths climbed). Depth spans
+ *  the whole map, including the backdrop-less paths hidden from portals. */
+const allPathsFrom = (town: string): Path[] => PATHS.filter((p) => p.from === town);
 const DEPTH = new Map<string, number>([[START_TOWN, 0]]);
 for (let q = [START_TOWN]; q.length;) {
   const next: string[] = [];
-  for (const t of q) for (const p of pathsFrom(t)) {
+  for (const t of q) for (const p of allPathsFrom(t)) {
     if (!DEPTH.has(p.to)) { DEPTH.set(p.to, DEPTH.get(t)! + 1); next.push(p.to); }
   }
   q = next;
@@ -155,7 +164,7 @@ export function cleanPlace(v: unknown): Place | null {
 export const areaOf = (p: Place): string => (isTown(p) ? townArea(p.town) : pathById(p.path)?.name ?? 'Harbor');
 
 /** What players call a place: "Whispering Woods 3", or the town's name. */
-export const placeName = (p: Place): string => (isTown(p) ? townById(p.town).name : `${areaOf(p)} ${p.floor}`);
+export const placeName = (p: Place): string => (isTown(p) ? townById(p.town).name : areaOf(p));
 
 /** The last floor of a path, right before its end town: the boss floor. */
 export const isPathEnd = (p: Place): boolean => !isTown(p) && p.floor === pathById(p.path)?.floors;

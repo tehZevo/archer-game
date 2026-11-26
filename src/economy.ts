@@ -29,6 +29,9 @@ import type { Floor, Mob, Npc, SkillKey } from './types';
 export const START_POTIONS = 3;
 export const wallet = { coins: 0, hp: START_POTIONS, mp: START_POTIONS };
 
+/** Back to the starting kit: a fresh start clears your gold and potions too. */
+export function resetWallet(): void { wallet.coins = 0; wallet.hp = START_POTIONS; wallet.mp = START_POTIONS; }
+
 /** A pile of coins on the floor. */
 export interface Coin { x: number; y: number; vy: number; v: number; t: number; landed: boolean }
 export const drops: Coin[] = [];
@@ -152,7 +155,7 @@ export function shopStock(): ShopRow[] {
   const bow = gearFor('weapon', lvl), plate = gearFor('armor', lvl);
   return [
     { kind: 'hp', name: 'HP POTION', key: 'A', desc: 'RESTORES 40% HP', price: PRICES.hp },
-    { kind: 'mp', name: 'MP POTION', key: 'S', desc: 'RESTORES 40% MP', price: PRICES.mp },
+    { kind: 'mp', name: 'MP POTION', key: 's', desc: 'RESTORES 40% MP', price: PRICES.mp },
     { kind: 'weapon', name: bow.name, key: '', price: gearPrice(bow.lvl), item: bow,
       desc: `+${Math.round(weaponBonus(bow) * 100)}% DAMAGE - LV.${bow.lvl}` },
     { kind: 'armor', name: plate.name, key: '', price: gearPrice(plate.lvl), item: plate,
@@ -176,7 +179,7 @@ export const RESPEC_PRICES = { swap: 100, reset: 500 };
 
 /** The slots the trainer can respec, and the label the menu gives each. */
 export const TRAINER_SLOTS: { slot: SkillKey; label: string }[] = [
-  { slot: 'Z', label: 'MAIN' }, { slot: 'Q', label: 'LAUNCH' }, { slot: 'W', label: 'LINK' },
+  { slot: 'z', label: 'MAIN' }, { slot: 'ground-q', label: 'LAUNCH' }, { slot: 'ground-w', label: 'LINK' },
 ];
 
 /** Every skill the slot can be: its base first, then each competing branch. */
@@ -188,8 +191,8 @@ export function swapBranch(slot: SkillKey): boolean {
   if (wallet.coins < RESPEC_PRICES.swap) return false;
   const list = slotBranches(slot), cur = activeSkill(slot).key;
   const next = list[(list.indexOf(cur) + 1) % list.length];
-  const keep = Math.min(player.ranks[cur] || 1, SKILLS[next].maxLevel);
-  list.forEach((k) => { player.ranks[k] = k === next ? keep : 0; });
+  const keep = player.ranks[cur];
+  list.forEach((k) => { player.ranks[k] = k === next ? keep : false; });
   wallet.coins -= RESPEC_PRICES.swap;
   sfx.coin();
   return true;
@@ -203,8 +206,8 @@ export function resetPoints(): boolean {
   if (wallet.coins < RESPEC_PRICES.reset) return false;
   player.ap += STAT_KEYS.reduce((n, k) => n + player.stats[k], 0);
   STAT_KEYS.forEach((k) => { player.stats[k] = 0; });
-  player.sp += (Object.keys(player.ranks) as SkillKey[]).reduce((n, k) => n + (player.ranks[k] || 0), 0) - FREE_RANKS;
-  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = startsLearned(k) ? 1 : 0; });
+  player.sp += (Object.keys(player.ranks) as SkillKey[]).reduce((n, k) => n + (player.ranks[k] ? 1 : 0), 0) - FREE_RANKS;
+  (Object.keys(player.ranks) as SkillKey[]).forEach((k) => { player.ranks[k] = startsLearned(k); });
   recalcStats();
   wallet.coins -= RESPEC_PRICES.reset;
   sfx.coin();

@@ -87,6 +87,16 @@ export const DEATHS: Record<string, DeathRecipe> = {
   'Star Sprite': R('pop', 'star', ['#ffd166', '#fff6c0'], 12),
   'Meteor Golem': R('crumble', 'ember', ['#ff8040', '#ffd060', '#5a4a40'], 12),
   'Void Blossom': R('wilt', 'petal', ['#b060e0', '#e0a0ff'], 10),
+  'Cinder Hound': R('topple', 'ember', ['#ff6a2a', '#ffc060', '#3a2a24'], 10),
+  'Ash Wisp': R('rise', 'ember', ['#ff9040', '#8a8080', '#ffe0a0'], 12),
+  'Armor Knight': R('crumble', 'gear', ['#9aa0b0', '#d8dce8', '#5a2a3a'], 9),
+  'Keep Rat': R('flip', 'spark', ['#ffe080', '#ffffff'], 6),
+  Gargoyle: R('plummet', 'rock', ['#6a6a78', '#a8a8b8'], 10),
+  'Choir Spirit': R('spiral', 'star', ['#fff0c0', '#ffd870', '#c8e0ff'], 12),
+  'Reef Ray': R('spiral', 'drop', ['#5ac8e8', '#c8f4ff'], 10),
+  'Coral Crawler': R('retract', 'rock', ['#f07a8a', '#ffc0c8', '#8a5a5a'], 8),
+  Yeti: R('topple', 'shard', ['#e8f4ff', '#a8d0f0', '#ffffff'], 12),
+  'Frost Wolf': R('flip', 'shard', ['#c8e8ff', '#ffffff'], 8),
   'Null Wraith': R('retract', 'smoke', ['#101018', '#5a5a7a'], 12),
 };
 
