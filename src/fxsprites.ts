@@ -492,6 +492,42 @@ function climbRiseAnim(): FxAnim {
   }, 0.35);
 }
 
+/** Air Dive windup: three yellow arrows streak along curved paths diagonally
+ *  down and forward, leading the dive. Faces right; origin at the player's middle. */
+function diveWindupAnim(): FxAnim {
+  const W = 56, H = 48, ox = 12, oy = 10, n = 6;
+  // each arrow bows up, then sweeps down-right: a quadratic curve start -> end
+  const paths = [
+    { x0: -10, y0: -8, cx: 14, cy: -10, x1: 34, y1: 30 },
+    { x0: -6, y0: 2, cx: 16, cy: 0, x1: 40, y1: 34 },
+    { x0: -12, y0: 10, cx: 8, cy: 10, x1: 28, y1: 37 },
+  ];
+  const at = (p: typeof paths[number], t: number): [number, number] => {
+    const u = 1 - t;
+    return [ox + u * u * p.x0 + 2 * u * t * p.cx + t * t * p.x1, oy + u * u * p.y0 + 2 * u * t * p.cy + t * t * p.y1];
+  };
+  return anim(W, H, ox, oy, n, (L, f) => {
+    const fade = 1 - f / n;
+    paths.forEach((p, i) => {
+      const head = Math.min(1, 0.3 + f * 0.16 + i * 0.05), tail = Math.max(0, head - 0.4);
+      // the shaft: short tapered segments along the curve, brightest at the head
+      const steps = 6;
+      for (let k = 0; k < steps; k++) {
+        const t0 = tail + (head - tail) * (k / steps), t1 = tail + (head - tail) * ((k + 1) / steps);
+        const [ax, ay] = at(p, t0), [bx, by] = at(p, t1);
+        L.line('yellow', ax, ay, bx, by, 0.4 + 0.15 * k, 0.55 + 0.15 * k, (0.55 + 0.08 * k) * fade);
+      }
+      // the arrowhead: two barbs swept back from the tip along the flight line
+      const [hx, hy] = at(p, head), [px, py] = at(p, Math.max(0, head - 0.06));
+      const dx = hx - px, dy = hy - py, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+      for (const side of [-1, 1]) {
+        L.line('yellow', hx, hy, hx - ux * 4 - uy * 3 * side, hy - uy * 4 + ux * 3 * side, 1.1, 0.5, 1.05 * fade);
+      }
+      L.spark('yellow', hx, hy, 0.9 * fade, f < 2);
+    });
+  }, 0.4);
+}
+
 let cache: Record<string, FxAnim> | null = null;
 /** Lazily build every effect (needs a canvas, so not at import time). */
 export function FX(): Record<string, FxAnim> {
@@ -518,6 +554,7 @@ export function FX(): Record<string, FxAnim> {
       volleyFlare: volleyFlareAnim(),
       tornado: tornadoAnim(20), // a flat sweeping blast under her, not a tall column
       climbRise: climbRiseAnim(),
+      diveWindup: diveWindupAnim(),
       rain: rainAnim(),
       rainHit: hitAnim(false, 'gold'),
       bolt: boltAnim(),
