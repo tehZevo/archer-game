@@ -136,7 +136,7 @@ check('spending SP raises the skill rank', rank('Z').dmg > r0);
 // --- 10. skill bar exposes the 4 buttons; unlock cadence every 5 levels ---
 check('attack keys are Z Q W E R, all bound', SKILL_BAR.map((s) => s.label).join('') === 'ZQWER' && SKILL_BAR.every((s) => s.skill));
 reset();
-check('Jump known from the start', isLearned('C'));
+check('Jump is movement, not a skill', !('C' in SKILLS));
 check('Rush Toss learned at Lv.5', !isLearned('Q'));
 player.ranks.W = 0;
 check('Rising Arrows not known until picked', !isLearned('W'));

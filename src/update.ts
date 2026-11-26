@@ -5,7 +5,7 @@ import { netEmote } from './net';
 import { bump } from './achievements';
 import { CAM, P, SKILL_ORDER } from './config';
 import { cameraTarget, gainExp, game, gotoPlace, logMsg, player, READY_FLASH, spawnWave } from './state';
-import { held, pressed } from './input';
+import { pressed } from './input';
 import { revive } from './combat';
 import { setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
@@ -87,8 +87,6 @@ function keyInput(): boolean {
   const linkZ = pressed('z') && comboOpen() && isLearned('W');
   if (linkZ) cast('W');
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
-  // holding Jump keeps jumping: re-jump on every landing
-  if (!pressed('c') && held('c') && player.onGround && !player.climb) cast('C');
   // dev keys (?dev only): [ levels up, ] warps to the next floor, \ maxes out
   if (!dev.on) return false;
   if (pressed('[')) gainExp(player.expNext - player.exp);

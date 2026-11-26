@@ -2,17 +2,14 @@ import { FX_DUR, P } from './config';
 import { game, later, player } from './state';
 import { held } from './input';
 import { damage, hitbox, NUM_GAP, spawnArrow } from './combat';
-import { surfaceAt } from './physics';
 import { sfx } from './audio';
 import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover, openLink } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
 import { linkWindow, useTime } from './castrules';
-import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
+import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
 
-/** s of the jump's takeoff pose (Jump is movement, with no use time). */
-const JUMP_POSE = 0.16;
 import type { SkillKey, SkillRank } from './types';
 
 /**
@@ -48,25 +45,6 @@ function twinShot(r: SkillRank): void {
     hit(shots > 1);
     eachShot(shots - 1, NUM_GAP, (more) => hit(more));
   });
-}
-
-/** Jump. Down + Jump drops through the platform underfoot (not the ground
- *  slab): a small hop, then fall; that whole block is ignored until the
- *  player lands on something else. */
-function jump(): void {
-  setPose('jump', JUMP_POSE);
-  sfx.jump();
-  const under = player.onGround && held('down') ? surfaceAt(player.x, player.y + player.h, player.w) : null;
-  player.onGround = false;
-  if (under && !under.ground && under.block !== undefined) {
-    player.dropBlock = under.block;
-    player.dropY = player.y + player.h;
-    player.vy = -P.DROP_HOP_V;
-    return;
-  }
-  player.vy = -P.JUMP_V;
-  if (held('left'))  { player.vx = -P.JUMP_H; player.face = -1; }
-  if (held('right')) { player.vx =  P.JUMP_H; player.face =  1; }
 }
 
 /** Glide: acrobatic forward tumble; usable repeatedly in the air. Off a Sky
@@ -291,7 +269,7 @@ function shellBarrage(r: SkillRank): void {
 }
 
 export const CASTS: Partial<Record<SkillKey, Cast>> = {
-  Z: twinShot, C: jump, D: glide,
+  Z: twinShot, D: glide,
   Q: skyToss, EB: electricBlitz, AD: airDive,
   W: skyfallVolley, AB: skyAssault, MS: midairSpin,
   E: spikeLift, PV: plungingVolley,
