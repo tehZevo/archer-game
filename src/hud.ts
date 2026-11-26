@@ -15,7 +15,7 @@ import { drawMinimap } from './minimapdraw';
 import { boost, waveRate } from './boost';
 import { skillIcon } from './icons';
 import { activeSkill, expBar, isLearned, rank, skillRows, PAUSE_ROWS, pauseScroll, spendSp, STAT_INFO, STAT_KEYS } from './progress';
-import { pauseSpend } from './update';
+import { pauseSpend } from './windows';
 import { armorSoak, bag, gear, weaponBonus } from './gear';
 import type { GearItem } from './gear';
 import { dev, DEV_ROWS, devStops } from './dev';
