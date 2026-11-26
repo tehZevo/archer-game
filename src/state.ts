@@ -5,6 +5,7 @@ import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsFor
 import { runtime } from './runtime';
 import { spawnBoss } from './boss';
 import { visitArea } from './achievements';
+import { sfx } from './audio';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
 } from './types';
@@ -254,6 +255,7 @@ function levelUp(): void {
   const pick = player.level % SKILL_PICK_EVERY === 0;
   if (pick) player.sp += 1;
   game.fx.push({ type: 'levelUp', x: player.x, y: player.y + player.h, t: 0.9, follow: true });
+  sfx.levelUp();
   bannerMsg(`LEVEL ${player.level}`, `+1 AP${pick ? ' +1 SP' : ''} - ESC TO SPEND`);
   logMsg(`Reached <b>Level ${player.level}</b>`);
 }

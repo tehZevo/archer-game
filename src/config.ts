@@ -62,7 +62,7 @@ export const P = {
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
-  SPIKE_R: 56,         // px radius of the burst around you
+  SPIKE_REACH: 72,     // px: the spikes rain down from just ahead of you out to this far in front
   SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed (slower than a jump's pop)...
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
@@ -234,6 +234,21 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Star Sprite',    lvl: 36, hp: 180, ...mobSize('Star Sprite'),    spd: 120, dmg: 4, col: '#fff0a0', fly: true, areas: ['Starfall Observatory'] },
   { n: 'Meteor Golem',   lvl: 36, hp: 360, ...mobSize('Meteor Golem'),   spd: 45,  dmg: 6, col: '#6a4a3a', areas: ['Starfall Observatory'] },
   { n: 'Void Blossom',   lvl: 40, hp: 300, ...mobSize('Void Blossom'),   spd: 30,  dmg: 6, col: '#8a4ad8', areas: ['Void Garden'] },
+  // Ember Wastes
+  { n: 'Cinder Hound',   lvl: 18, hp: 270, ...mobSize('Cinder Hound'),   spd: 100, dmg: 5, col: '#3a2a26', areas: ['Ember Wastes'] },
+  { n: 'Ash Wisp',       lvl: 18, hp: 180, ...mobSize('Ash Wisp'),       spd: 95,  dmg: 4, col: '#ff9a40', fly: true, areas: ['Ember Wastes'] },
+  // Old Keep
+  { n: 'Armor Knight',   lvl: 18, hp: 330, ...mobSize('Armor Knight'),   spd: 45,  dmg: 5, col: '#8a8e9c', areas: ['Old Keep'] },
+  { n: 'Keep Rat',       lvl: 17, hp: 190, ...mobSize('Keep Rat'),       spd: 110, dmg: 4, col: '#6a5a4a', areas: ['Old Keep'] },
+  // Chapel Spire
+  { n: 'Gargoyle',       lvl: 25, hp: 260, ...mobSize('Gargoyle'),       spd: 100, dmg: 5, col: '#7a7a84', fly: true, areas: ['Chapel Spire'] },
+  { n: 'Choir Spirit',   lvl: 25, hp: 220, ...mobSize('Choir Spirit'),   spd: 70,  dmg: 5, col: '#fff0c8', fly: true, areas: ['Chapel Spire'] },
+  // Sky Reef
+  { n: 'Reef Ray',       lvl: 33, hp: 240, ...mobSize('Reef Ray'),       spd: 115, dmg: 5, col: '#5ad8c8', fly: true, areas: ['Sky Reef'] },
+  { n: 'Coral Crawler',  lvl: 33, hp: 330, ...mobSize('Coral Crawler'),  spd: 50,  dmg: 6, col: '#ff9ab8', areas: ['Sky Reef'] },
+  // Frozen Summit
+  { n: 'Yeti',           lvl: 34, hp: 380, ...mobSize('Yeti'),           spd: 55,  dmg: 7, col: '#f0f6ff', areas: ['Frozen Summit'] },
+  { n: 'Frost Wolf',     lvl: 33, hp: 280, ...mobSize('Frost Wolf'),     spd: 115, dmg: 6, col: '#c8dcf0', areas: ['Frozen Summit'] },
   { n: 'Null Wraith',    lvl: 40, hp: 220, ...mobSize('Null Wraith'),    spd: 100, dmg: 5, col: '#2a1a3a', fly: true, areas: ['Void Garden'] },
 
   // variants: cousins of an area's enemies at about the same level, with their own
@@ -258,6 +273,11 @@ export const MOB_TYPES: MobType[] = [
   { n: 'Dark Reflection', of: 'Reflection',     lvl: 31, hp: 280, ...mobSize('Dark Reflection'), spd: 95,  dmg: 6, col: '#2a3a5a' },
   { n: 'Comet Golem',     of: 'Meteor Golem',   lvl: 37, hp: 330, ...mobSize('Comet Golem'),     spd: 58,  dmg: 6, col: '#4a5a7a' },
   { n: 'Thorn Blossom',   of: 'Void Blossom',   lvl: 41, hp: 340, ...mobSize('Thorn Blossom'),   spd: 30,  dmg: 7, col: '#d83a5a' },
+  { n: 'Magma Hound',     of: 'Cinder Hound',   lvl: 19, hp: 300, ...mobSize('Magma Hound'),     spd: 105, dmg: 6, col: '#a8401a' },
+  { n: 'Black Knight',    of: 'Armor Knight',   lvl: 19, hp: 380, ...mobSize('Black Knight'),    spd: 42,  dmg: 6, col: '#2a2c34' },
+  { n: 'Bronze Gargoyle', of: 'Gargoyle',       lvl: 26, hp: 300, ...mobSize('Bronze Gargoyle'), spd: 95,  dmg: 6, col: '#a8803a', fly: true },
+  { n: 'Storm Ray',       of: 'Reef Ray',       lvl: 34, hp: 270, ...mobSize('Storm Ray'),       spd: 125, dmg: 6, col: '#3a4a7a', fly: true },
+  { n: 'Ice Yeti',        of: 'Yeti',           lvl: 35, hp: 420, ...mobSize('Ice Yeti'),        spd: 50,  dmg: 8, col: '#7ab0e0' },
 ];
 // a variant without its own areas lives wherever its base does
 for (const m of MOB_TYPES) if (m.of && !m.areas) m.areas = MOB_TYPES.find((b) => b.n === m.of)?.areas;
@@ -273,7 +293,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.5, spin: SKILLS['air-w'].use ?? P.USE_TIME,
+  spikes: 0.55, tempest: 0.5, spin: SKILLS['air-w'].use ?? P.USE_TIME,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,

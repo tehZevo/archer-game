@@ -135,6 +135,26 @@ export const PROPS: Record<string, Prop[]> = {
     },
     (p) => { p(7, B - 10, '#3a3a5a', 10, 10); p(8, B - 9, '#d8c890', 8, 6); p(9, B - 8, '#3a3a7a', 1, 1); p(12, B - 6, '#3a3a7a', 1, 1); p(14, B - 8, '#3a3a7a', 1, 1); }, // a star chart on an easel
   ],
+  'Ember Wastes': [
+    (p) => { for (const [x, h] of [[9, 14], [13, 18], [16, 9]]) { p(x, B - h, '#3a2420', 2, h); p(x, B - h, '#ff7a30', 1, 2); } p(7, B - 2, '#2a1a18', 12, 2); }, // charred stumps
+    (p) => { disc(p, 12, B - 5, 6, '#4a2e26'); p(8, B - 6, '#ff8a3a', 2, 1); p(12, B - 8, '#ffc060', 1, 1); p(14, B - 4, '#ff6a2a', 3, 1); }, // a glowing cinder rock
+  ],
+  'Old Keep': [
+    (p) => { p(8, B - 18, '#6a6670', 8, 18); p(8, B - 18, '#8a8690', 2, 18); for (const x of [8, 11, 14]) p(x, B - 20, '#6a6670', 2, 2); p(11, B - 12, '#2a2630', 2, 4); }, // a crenellated pillar
+    (p) => { p(11, B - 24, '#4a3a2a', 1, 24); p(12, B - 23, '#a83a3a', 8, 9); p(12, B - 19, '#e8c060', 8, 1); p(12, B - 14, '#7a2a2a', 4, 1); }, // a tattered banner
+  ],
+  'Chapel Spire': [
+    (p) => lanternPost(p, '#5a4a3a', '#fff0b0', '#ffffff'), // a candle stand
+    (p) => { p(11, B - 20, '#d8d0c0', 3, 20); p(7, B - 16, '#d8d0c0', 11, 3); p(11, B - 20, '#f4ecdc', 1, 20); p(9, B - 2, '#a89880', 7, 2); }, // a stone cross
+  ],
+  'Sky Reef': [
+    (p) => { for (const [x, h] of [[8, 12], [11, 18], [15, 14]]) { p(x, B - h, '#ff8a9a', 2, h); p(x - 1, B - h, '#ffc8d0', 1, 3); p(x + 2, B - h + 4, '#ff8a9a', 2, 1); } }, // pink coral
+    (p) => { disc(p, 12, B - 6, 6, '#ffffff'); disc(p, 12, B - 7, 3, '#7ad8f0'); p(9, B - 1, '#c8e8f8', 7, 1); }, // a cloud anemone
+  ],
+  'Frozen Summit': [
+    (p) => pine(p, '#2a4a50', '#1a3a40', '#ffffff'),
+    (p) => { shard(p, 12, 16, 4, '#e8f8ff', '#9ac8e8'); shard(p, 7, 8, 2, '#d8f0ff', '#8ab8d8'); disc(p, 12, B - 1, 7, '#ffffff'); }, // an ice spike in a drift
+  ],
   'Void Garden': [
     (p) => { p(11, B - 12, '#3a1a5a', 2, 12); for (let a = 0; a < 6; a++) disc(p, 12 + Math.round(Math.cos(a) * 4), B - 15 + Math.round(Math.sin(a) * 4), 2, '#8a4ad8'); disc(p, 12, B - 15, 2, '#f0d8ff'); }, // a void blossom
     (p) => { shard(p, 12, 14, 3, '#5a2a8a', '#2a0e4a'); p(11, B - 16, '#d8a0ff'); }, // an obelisk shard

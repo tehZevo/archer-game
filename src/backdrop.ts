@@ -94,6 +94,37 @@ function crystalCol(p: BgPaint, cx: number, base: number, h: number, w: number, 
 const stars = (p: BgPaint, n: number, seed: number, cols: string[]): void =>
   scatter(n, seed, (x, y, r) => p(x, y, cols[Math.floor(r * cols.length)]));
 
+/** A mountain peak (or a volcano's cone): a triangle up from `base`, with a cap
+ *  of `cap` over its top `capH` rows. */
+function peak(p: BgPaint, cx: number, base: number, h: number, col: string, cap: string, capH = 0): void {
+  for (let y = 0; y < h; y++) { const half = Math.round((y / h) * h * 0.9); p(cx - half, base - h + y, y < capH ? cap : col, half * 2 + 1, 1); }
+}
+/** A castle tower the full height of the tile: crenels every so often and a few lit windows. */
+function tower(p: BgPaint, x: number, w: number, col: string, lit: string, seed: number): void {
+  p(x, 0, col, w, LAYER);
+  for (let y = 0; y < LAYER; y += 64) for (let i = 0; i < w + 2; i += 3) p(x - 1 + i, y, col, 2, 3);
+  for (let i = 0; i < 4; i++) { const y = hash(i, seed, 7) * LAYER; p(x + Math.floor(w / 2) - 1, y, lit, 2, 4); p(x + Math.floor(w / 2) - 1, y - 1, lit, 2, 1); }
+}
+/** A spire: a tower with a tall pointed roof, the point at `top`. */
+function spire(p: BgPaint, x: number, top: number, w: number, col: string, roof: string): void {
+  peak(p, x + w / 2, top + w * 2, w * 2, roof, roof);
+  p(x, top + w * 2, col, w, LAYER - w * 2);
+}
+/** A round stained-glass window: segments of colour round a lead hub. */
+function roseWindow(p: BgPaint, cx: number, cy: number, r: number, cols: string[], lead: string): void {
+  for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+    const d = Math.hypot(x, y);
+    if (d > r) continue;
+    const seg = Math.floor(((Math.atan2(y, x) + Math.PI) / (Math.PI * 2)) * 8);
+    p(cx + x, cy + y, d > r - 1 || d < 1.5 ? lead : cols[seg % cols.length]);
+  }
+}
+/** A falling ribbon (a waterfall, a lava fall) the full height of the tile. */
+function fall(p: BgPaint, x: number, w: number, col: string, streak: string): void {
+  p(x, 0, col, w, LAYER);
+  for (let y = 0; y < LAYER; y += 7) p(x + (y * 3) % Math.max(1, w - 2), y, streak, 1, 4);
+}
+
 /* ---------------- per area ---------------- */
 const CLOUDS = (col: string, n: number, s: number, seed: number) => (p: BgPaint): void =>
   scatter(n, seed, (x, y, r) => cloud(p, x, y, Math.round(s * (0.7 + r * 0.6)), col));
@@ -215,6 +246,42 @@ export const BACKDROPS: Record<string, Backdrop> = {
     far: (p) => stars(p, 100, 38, ['#ffffff60', '#a890e060']),
     mid: (p) => scatter(4, 39, (x, y, r) => island(p, x, y, 20 + Math.round(r * 24), '#8a4ad870', '#1a0e2ad0')),
     particles: { kind: 'spores', cols: ['#d8a0ff', '#8a4ad8'], n: 12 },
+  },
+  'Ember Wastes': {
+    // far: smouldering volcano cones; near: lava falls and drifting smoke
+    far: (p) => scatter(4, 60, (x, y, r) => { const h = 40 + Math.round(r * 40); peak(p, x, y, h, '#3a141070', '#ff7a1a90', 3); p(x - 2, y - h - 6, '#4a3a3440', 5, 6); }),
+    mid: (p) => { scatter(2, 61, (x) => fall(p, x, 6, '#a8401a70', '#ffb04090')); CLOUDS('#2a1a1650', 3, 10, 62)(p); },
+    particles: { kind: 'spores', cols: ['#ff9a40', '#ffd070', '#ff5a1a'], n: 18 },
+  },
+  'Old Keep': {
+    // far: a curtain of towers with lit windows; near: hanging banners
+    far: (p) => scatter(5, 63, (x, _y, r, i) => tower(p, x, 12 + Math.round(r * 10), '#1a1e2880', '#f0c06090', i + 64)),
+    mid: (p) => scatter(4, 65, (x, y) => { p(x, y, '#2a2c34a0', 1, 30); p(x + 1, y + 2, '#a83a3a90', 9, 20); for (let k = 0; k < 4; k++) p(x + 1 + k, y + 22 + k, '#a83a3a90', 9 - k * 2, 1); p(x + 4, y + 8, '#f0d06090', 3, 3); }),
+    particles: { kind: 'spores', cols: ['#c8c0b0', '#8a8478'], n: 8 },
+  },
+  'Chapel Spire': {
+    // far: pale spires rising into the dusk; near: glowing rose windows and shafts of light
+    far: (p) => scatter(5, 66, (x, y, r) => spire(p, x, y, 8 + Math.round(r * 6), '#d8d0c240', '#8a7ab050')),
+    mid: (p) => {
+      scatter(3, 67, (x) => { for (let y = 0; y < LAYER; y++) p(x + y / 5, y, '#fff0c014', 16, 1); });
+      scatter(3, 68, (x, y, r) => roseWindow(p, x, y, 9 + Math.round(r * 5), ['#d83a5a90', '#3a7ad890', '#f0c04090', '#3ab87a90'], '#4a403890'));
+    },
+    particles: { kind: 'glints', cols: ['#fff0a0', '#ffffff'], n: 8 },
+  },
+  'Sky Reef': {
+    // far: puffy clouds; near: floating islets crowned with coral
+    far: CLOUDS('#ffffff38', 7, 7, 69),
+    mid: (p) => scatter(4, 70, (x, y, r) => {
+      island(p, x, y, 24 + Math.round(r * 18), '#ff9ab890', '#bcd4f090');
+      for (let k = 0; k < 3; k++) p(x - 8 + k * 7, y - 4 - k % 2 * 2, k % 2 ? '#5ad8c890' : '#ff9ab890', 2, 4 + k % 2 * 2);
+    }),
+    particles: { kind: 'bubbles', cols: ['#ffffff', '#b8fff0'], n: 10 },
+  },
+  'Frozen Summit': {
+    // far: snow-capped peaks; near: drifting mist and ice spires
+    far: (p) => scatter(4, 71, (x, y, r) => { const h = 50 + Math.round(r * 50); peak(p, x, y, h, '#3a5a8a60', '#e8f4ff90', Math.round(h * 0.3)); }),
+    mid: (p) => { CLOUDS('#ffffff24', 3, 12, 72)(p); scatter(4, 73, (x, y, r) => crystalCol(p, x, y, 20 + r * 24, 4 + r * 3, '#c8e8ff50', '#7ab0e050')); },
+    particles: { kind: 'snow', cols: ['#ffffff', '#e4eef8', '#c8dcf0'], n: 30 },
   },
 };
 
