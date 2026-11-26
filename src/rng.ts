@@ -21,3 +21,15 @@ export function seeded(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** A 0..1 random stream (a `seeded` one, or Math.random). */
+export type Rng = () => number;
+
+/** A float in [a, b). */
+export const range = (r: Rng, a: number, b: number): number => a + r() * (b - a);
+/** An integer in [a, b], both ends included. */
+export const intIn = (r: Rng, a: number, b: number): number => Math.floor(range(r, a, b + 1));
+/** One element of a non-empty list. */
+export const pick = <T>(r: Rng, list: readonly T[]): T => list[intIn(r, 0, list.length - 1)];
+/** True with probability p. */
+export const chance = (r: Rng, p: number): boolean => range(r, 0, 1) < p;

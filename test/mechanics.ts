@@ -1,3 +1,4 @@
+import { seeded } from '../src/rng';
 import { cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES, emoteFor, setEmote } from '../src/emotes';
 import { buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, shopStock, START_POTIONS, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
 import { areaOf, isPathEnd, isTown, lastTown, MAP_AREAS, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, samePlace, START, TOWNS, townDepth, type Place } from '../src/world';
@@ -155,7 +156,7 @@ function dummy(x: number, hp = 1e6): Mob {
   let bad = 0;
   for (const kind of SHAPES) for (const dir of ['right', 'left']) {
     release(); gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
-    const shape = makeShape(kind, 64, 400, 10);
+    const shape = makeShape(kind, 64, 400, 10, false, seeded(1));
     game.floor.platforms = [...shape.tiles];
     const startX = dir === 'right' ? 70 : 64 + shape.w - 6;
     const first = shape.tiles.filter((t) => t.x <= startX && startX < t.x + 16).reduce((a, b) => (b.y < a.y ? b : a));

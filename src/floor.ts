@@ -1,17 +1,12 @@
 import { MOB_TYPES, VARIANT_CHANCE, WORLD, TILE } from './config';
 import { net, roomId } from './net';
 import { areaOf, isPathEnd, isTown, lastTown, nextPlace, pathById, pathsFrom, pathsInto, placeKey, placeName, townDepth, townIndex, type LayoutMix, type Place } from './world';
-import { hashStr, seeded } from './rng';
+import { chance, hashStr, intIn, pick, range, seeded, type Rng } from './rng';
 import { surfaceYAt } from './surface';
 import { NB } from './nb';
 import { rollMods } from './floormods';
 import type { Climbable, Decor, DecorKind, Floor, MobType, Npc, Platform, Portal, Spawn } from './types';
 
-// One stream per floor generation, seeded from the room name (minus its hour) so every player
-// in a channel gets the same layout (reseeded at the top of generateFloor).
-let rng = seeded(hashStr('eurekaland'));
-const rand = (a: number, b: number): number => a + rng() * (b - a);
-const randInt = (a: number, b: number): number => Math.floor(rand(a, b + 1));
 /** Snap a coordinate to the tile grid. */
 const snap = (v: number): number => Math.round(v / TILE) * TILE;
 
@@ -32,13 +27,20 @@ function tileFor(top: Top, x: number, y: number): Platform {
  *  per-column profile. Each column is `level` solid tiles tall, plus one slope
  *  tile on top when the column is part of a slope. */
 export interface Shape { tiles: Platform[]; w: number; baseY: number; baseX: number; }
+/** One column of a shape: `level` solid tiles, topped by `top`. */
 interface Col { level: number; top: Top; }
 
-/** Profiles (spec: specs/platforms). Digits are flat columns at that height in
- *  tiles (2-4); `U` / `D` are 2:1 slopes up / down (two side-by-side columns,
- *  lower + upper half, rising one tile). Every slope rises from and falls into
- *  a flat column, never at an edge. */
-const PROFILES: Record<string, string> = {
+/**
+ * A shape's profile, read left to right, one character per step:
+ *   '2'-'4'  a flat column that many tiles tall
+ *   'U'      a 2:1 slope up: two columns (lower + upper half), rising one tile
+ *   'D'      a 2:1 slope down: two columns, falling one tile
+ * Every slope rises from and falls into a flat column, never at an edge
+ * (spec: specs/platforms). '2U3U4D3' is: 2 tall, up, 3, up, 4, down, 3.
+ */
+type Profile = string;
+
+const PROFILES: Record<string, Profile> = {
   flat:   '333333',
   low:    '222222',
   tall:   '444444',
@@ -55,7 +57,8 @@ const PROFILES: Record<string, string> = {
 };
 export const SHAPES = Object.keys(PROFILES);
 
-function parseProfile(p: string): Col[] {
+/** Expand a profile into its columns. */
+function parseProfile(p: Profile): Col[] {
   const cols: Col[] = [];
   let level = Number(p[0]);
   for (const ch of p) {
@@ -66,21 +69,22 @@ function parseProfile(p: string): Col[] {
   return cols;
 }
 
-/** Build a solid block from a named profile, anchored at (x, baseY) = the top
- *  of its bottom row. Flat columns are duplicated at random until the block is
- *  `width` tiles wide (6-10), so slopes always keep their flat landings. */
-export function makeShape(kind: string, x: number, baseY: number, width = 6, mirror = false): Shape {
-  const T = TILE;
-  let prof = PROFILES[kind] ?? PROFILES.flat;
-  // mirrored: reverse the profile, so rises become falls and vice versa
-  if (mirror) prof = [...prof].reverse().map((c) => (c === 'U' ? 'D' : c === 'D' ? 'U' : c)).join('');
-  const cols = parseProfile(prof);
+/** The same profile read right to left: rises become falls and vice versa. */
+const mirrorProfile = (p: Profile): Profile =>
+  [...p].reverse().map((c) => (c === 'U' ? 'D' : c === 'D' ? 'U' : c)).join('');
+
+/** Duplicate random flat columns until there are `width`, so slopes keep their flat landings. */
+function widen(cols: Col[], width: number, rng: Rng): void {
   while (cols.length < width) {
     const flats = cols.map((c, i) => (c.top === 'flat' ? i : -1)).filter((i) => i >= 0);
-    const i = flats[randInt(0, flats.length - 1)];
+    const i = pick(rng, flats);
     cols.splice(i, 0, { ...cols[i] });
   }
-  const tiles: Platform[] = [];
+}
+
+/** Lay the columns out as tiles from (x, baseY), the top of the bottom row. */
+function columnTiles(cols: Col[], x: number, baseY: number): Platform[] {
+  const T = TILE, tiles: Platform[] = [];
   cols.forEach((c, i) => {
     const cx = x + i * T;
     // Only the column's top tile gets a grass cap; the tiles under it are dirt.
@@ -95,24 +99,36 @@ export function makeShape(kind: string, x: number, baseY: number, width = 6, mir
       if (c.top === 'u2lo' || c.top === 'd2lo') tiles[tiles.length - 2].foot = c.top === 'u2lo' ? 1 : -1;
     }
   });
-  // Autotile: record which of each tile's 8 neighbours are solid (slope tiles
-  // count), so it draws borders only on exposed sides with rounded corners.
+  return tiles;
+}
+
+/** Each NB bit and the neighbour (in tiles) it stands for. */
+const NEIGHBOURS: [bit: number, dx: number, dy: number][] = [
+  [NB.N, 0, -1], [NB.E, 1, 0], [NB.S, 0, 1], [NB.W, -1, 0],
+  [NB.NE, 1, -1], [NB.SE, 1, 1], [NB.SW, -1, 1], [NB.NW, -1, -1],
+];
+
+/** Autotile: set each flat tile's `nb` to the NB bits of its solid neighbours
+ *  (slope tiles count), so tileset.ts draws borders only on exposed sides,
+ *  with rounded corners. */
+function autotile(tiles: Platform[]): void {
   const at = new Set(tiles.map((t) => `${t.x},${t.y}`));
-  const has = (tx: number, ty: number) => at.has(`${tx},${ty}`);
   for (const t of tiles) {
     if (t.slope) continue;
-    let nb = 0;
-    if (has(t.x, t.y - T)) nb |= NB.N;
-    if (has(t.x + T, t.y)) nb |= NB.E;
-    if (has(t.x, t.y + T)) nb |= NB.S;
-    if (has(t.x - T, t.y)) nb |= NB.W;
-    if (has(t.x + T, t.y - T)) nb |= NB.NE;
-    if (has(t.x + T, t.y + T)) nb |= NB.SE;
-    if (has(t.x - T, t.y + T)) nb |= NB.SW;
-    if (has(t.x - T, t.y - T)) nb |= NB.NW;
-    t.nb = nb;
+    t.nb = NEIGHBOURS.reduce((nb, [bit, dx, dy]) => (at.has(`${t.x + dx * TILE},${t.y + dy * TILE}`) ? nb | bit : nb), 0);
   }
-  return { tiles, w: cols.length * T, baseY, baseX: x };
+}
+
+/** Build a solid block from a named profile, anchored at (x, baseY) = the top
+ *  of its bottom row, `width` tiles wide (6-10; see widen), optionally
+ *  mirrored. `rng` picks which flat columns widen it. */
+export function makeShape(kind: string, x: number, baseY: number, width: number, mirror: boolean, rng: Rng): Shape {
+  const prof = PROFILES[kind] ?? PROFILES.flat;
+  const cols = parseProfile(mirror ? mirrorProfile(prof) : prof);
+  widen(cols, width, rng);
+  const tiles = columnTiles(cols, x, baseY);
+  autotile(tiles);
+  return { tiles, w: cols.length * TILE, baseY, baseX: x };
 }
 
 /** The enemies an area can field: its own set, or the general pool for areas without one yet. */
@@ -189,8 +205,11 @@ export function pickLayout(seed: () => number, mix?: LayoutMix): Layout {
 export function generateFloor(place: Place): Floor {
   // layouts don't change with the hour: seeded from the room id without it
   const seedId = roomId(placeKey(place), net.channel, net.code, '');
-  rng = seeded(hashStr(seedId));
-  if (isTown(place)) return trim(townFloor(place.town));
+  // One stream per floor, seeded from the room name (minus its hour) so every
+  // player in a channel gets the same layout. Everything below draws from it
+  // in a fixed order: that order is part of the layout.
+  const rng = seeded(hashStr(seedId));
+  if (isTown(place)) return trim(townFloor(place.town, rng));
   const ground = groundSlab();
   const groundY = ground.y;
 
@@ -236,9 +255,9 @@ export function generateFloor(place: Place): Floor {
     const hangs = (t: Platform, dx: number) => reachable(t, dx) && !stacked(t.x + dx + TILE / 2, t.y);
     let shape: Shape, minY: number, x: number;
     for (;;) {
-      const kind = L.shapes[randInt(0, L.shapes.length - 1)];
-      const width = randInt(L.minW, L.maxW); // stack: 12-24 tiles wide (the map is 20)
-      shape = makeShape(kind, 0, y, width, rand(0, 1) < 0.5);
+      const kind = pick(rng, L.shapes);
+      const width = intIn(rng, L.minW, L.maxW); // stack: 12-24 tiles wide (the map is 20)
+      shape = makeShape(kind, 0, y, width, chance(rng, 0.5), rng);
       // The walkable summit: flat tiles on the block's highest row (slope
       // tiles share that row's y but their surface is lower).
       const top = shape.tiles.reduce((m, t) => Math.min(m, t.y), Infinity);
@@ -252,8 +271,8 @@ export function generateFloor(place: Place): Floor {
       const EDGE = width >= 12 ? 4 * TILE : 0;
       // zigzag: hug alternate sides of the map; otherwise near the last block
       const target = layout === 'zigzag'
-        ? (i % 2 ? WORLD.w - shape.w - rand(0, 2) * TILE : rand(0, 2) * TILE)
-        : prev.x + rand(-160, 160);
+        ? (i % 2 ? WORLD.w - shape.w - range(rng, 0, 2) * TILE : range(rng, 0, 2) * TILE)
+        : prev.x + range(rng, -160, 160);
       let best: number | null = null;
       for (let cx = -EDGE; cx <= WORLD.w - shape.w + EDGE; cx += TILE) {
         const visible = Math.min(cx + shape.w, WORLD.w) - Math.max(cx, 0);
@@ -271,11 +290,11 @@ export function generateFloor(place: Place): Floor {
     const landing = (t: Platform) => landingAt(t.x + TILE / 2, t.y);
     const flatLanding = tops.filter((t) => !landing(t).p.slope);
     const pool = flatLanding.length ? flatLanding : tops;
-    const top = pool[randInt(0, pool.length - 1)];
+    const top = pick(rng, pool);
     const climb: Climbable = { x: top.x + TILE / 2, y1: top.y, y2: landing(top).y };
-    if (rand(0, 1) < 0.5) ropes.push(climb); else ladders.push(climb);
+    if (chance(rng, 0.5)) ropes.push(climb); else ladders.push(climb);
 
-    if (rand(0, 1) < 0.85) {
+    if (chance(rng, 0.85)) {
       // most platforms hold a group: 4 enemies on the shortest tops, up to 8
       // on the longest, spread over the on-screen flat top tiles
       const spots = shape.tiles
@@ -294,7 +313,7 @@ export function generateFloor(place: Place): Floor {
     // the next block sits a fixed gap above this one's summit (not its base), so
     // a tall block doesn't squeeze the gap above it and every gap matches the
     // ground-to-first one
-    y = minY - step - TILE * randInt(0, 1); // stays on the 16px grid
+    y = minY - step - TILE * intIn(rng, 0, 1); // stays on the 16px grid
   }
 
   // The ground slab is one zone holding up to 4 enemies (6 on open floors).
@@ -342,7 +361,7 @@ export const townPlanFor = (index: number): TownPlan => TOWN_PLANS[index % TOWN_
  * Every level has two tiles (32px) of headroom under the next one up. Houses,
  * lamps, benches and the like (decor) are drawn behind; they never collide.
  */
-export function townFloor(town: string): Floor {
+export function townFloor(town: string, rng: Rng): Floor {
   const ground = groundSlab(), G = ground.y, T = TILE;
   const plan = townPlanFor(townIndex(town));
   const P = (x: number, y: number, to: Place, label: string): Portal => ({ x, y, w: 40, h: 56, to, label });
@@ -359,7 +378,7 @@ export function townFloor(town: string): Floor {
   /** A level: a 3-tile block `w` tiles wide from column `col`, on storey 1 (over the
    *  ground) or 2 (over storey 1), each with two tiles of headroom under it. */
   const level = (col: number, w: number, storey: 1 | 2): { x: number; top: number; w: number } => {
-    const sh = makeShape('flat', col * T, G - (3 + (storey - 1) * 5) * T, w), id = ++blockId;
+    const sh = makeShape('flat', col * T, G - (3 + (storey - 1) * 5) * T, w, false, rng), id = ++blockId;
     sh.tiles.forEach((t) => { t.block = id; });
     platforms.push(...sh.tiles);
     return { x: col * T, top: Math.min(...sh.tiles.map((t) => t.y)), w: w * T };
