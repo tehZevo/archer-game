@@ -91,7 +91,7 @@ check('Glide has a 0.2s use time and no cooldown', player.cd.d === 0 && Math.abs
 check('Glide launches forward > up', Math.abs(player.vx) > Math.abs(player.vy));
 check('Glide consumes MP', player.mp < player.mpMax);
 setKey('d', false);
-step(13); // the 0.4s recovery clears, freeing the next cast
+step(20); // the use time (0.2s) then the 0.4s recovery clears, freeing the next cast
 setKey('d', true);
 step(1);
 check('Glide can be used again mid-air', player.casting.useT > 0 && player.onGround === false,

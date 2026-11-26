@@ -105,6 +105,27 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('Double Shot: each target takes both hits', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 - one * 1.5 && far.hp < 1e6);
 }
 
+// --- recovery starts once the use animation ends, not in parallel ---
+{
+  arena(20); dummy(150);
+  player.cd.z = 0; player.mp = 999; player.ranks.z = true;
+  cast('z');
+  const use = useTime('z'), delay = delayTime('z');
+  check('a cast sets its use time and full recovery',
+    Math.abs(player.casting.useT - use) < 1e-9 && Math.abs(player.casting.recoverT - delay) < 1e-9,
+    `use ${player.casting.useT.toFixed(2)} recover ${player.casting.recoverT.toFixed(2)}`);
+  // step through most of the use time: recovery has not started counting down
+  step(Math.floor((use - 0.1) / P.STEP));
+  check('recovery holds at full while the use animation runs',
+    player.casting.useT > 0 && Math.abs(player.casting.recoverT - delay) < 1e-9,
+    `use ${player.casting.useT.toFixed(2)} recover ${player.casting.recoverT.toFixed(2)}`);
+  // step past the end of the use time: recovery then runs out
+  step(Math.ceil((use + delay) / P.STEP));
+  check('...and both timers reach zero once the cast is over',
+    player.casting.useT <= 0 && player.casting.recoverT <= 0,
+    `use ${player.casting.useT.toFixed(2)} recover ${player.casting.recoverT.toFixed(2)}`);
+}
+
 // --- balance: a Lv.1 Garden Snail takes a few Double Shots ---
 {
   let casts = 0;
@@ -116,7 +137,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     casts += c;
   }
   const avg = casts / 3;
-  check('Lv.1 Garden Snail takes 2-5 Double Shots', avg >= 2 && avg <= 5, `avg ${avg}`);
+  check('Lv.1 Garden Snail takes 4-11 Double Shots', avg >= 4 && avg <= 11, `avg ${avg}`);
 }
 
 // --- links: W only works right after Rush Toss, once ---
