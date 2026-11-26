@@ -277,6 +277,8 @@ setKey('up', false);
   const row = (g: typeof still, y: number): string => Array.from(g.px.subarray(y * TOP_W * 4, (y + 1) * TOP_W * 4)).join();
   const roots = [...Array(SWAY_ROWS + 1).keys()].map((i) => TOP_Y - SWAY_ROWS + i);
   check('a sway frame leans the plants but keeps the roots', roots.every((y) => row(still, y) === row(lean, y)) && still.px.join() !== lean.px.join());
+  const cc = Object.values(TILESETS).find((t) => t.name === 'Crystal Caverns')!, c0 = topDeco(cc, 1, true, true)!.g.px, c2 = topDeco(cc, 1, true, true, 2)!.g.px;
+  check('a crystal\u2019s glow frame is brighter, same shape', c0.some((v, i) => i % 4 < 3 && c2[i] > v) && c0.every((v, i) => i % 4 < 3 ? c2[i] >= v : c2[i] === v));
   check('stones, posts and stumps hold still', topDeco(ts, 3, false, false, 1) === topDeco(ts, 3, false, false));
 }
 

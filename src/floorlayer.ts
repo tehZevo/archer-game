@@ -64,7 +64,7 @@ function drawPlatforms(g: Ctx, ts: Tileset): void {
 function drawDecorations(g: Ctx, ts: Tileset): void {
   eachTile((x, y, nb) => {
     const tx = x / TS, ty = y / TS;
-    if (!(nb & NB.N) && !TB.sways(ts, variantAt(tx, ty, 1))) {
+    if (!(nb & NB.N) && !TB.livesTop(ts, variantAt(tx, ty, 1))) {
       const s = TB.topDeco(ts, variantAt(tx, ty, 1), !(nb & NB.W), !(nb & NB.E));
       if (s) g.drawImage(s.c, x - 2, y - TOP_Y);
     }
@@ -135,15 +135,16 @@ export function drawDecorLive(ctx: Ctx, t: number): void {
   }
 }
 
-/** The swaying plants on exposed tops, each frame over the static layer
+/** The swaying plants and glowing crystals on exposed tops, each frame over the static layer
  *  (only those in view: x0..x1, y0..y1), a gust rolling along the floor. */
 export function drawTopsLive(ctx: Ctx, ts: Tileset, t: number, x0: number, y0: number, x1: number, y1: number): void {
-  if (!ts.sway) return;
+  if (!ts.sway && !ts.glow) return;
   eachTile((x, y, nb) => {
     if (nb & NB.N || x < x0 - TS || x > x1 + TS || y < y0 - TS || y > y1 + TS) return;
     const tx = x / TS, ty = y / TS, v = variantAt(tx, ty, 1);
-    if (!TB.sways(ts, v)) return;
-    const f = Math.floor(t * TB.SWAY_FPS - tx * 0.25) & 3;
+    if (!TB.livesTop(ts, v)) return;
+    // a gust rolling along the floor; a glow pulsing slower, each in its own phase
+    const f = TB.sways(ts, v) ? Math.floor(t * TB.SWAY_FPS - tx * 0.25) & 3 : Math.floor(t * 1.5 + tx * 0.7 + ty * 0.3) & 3;
     const s = TB.topDeco(ts, v, !(nb & NB.W), !(nb & NB.E), f);
     if (s) ctx.drawImage(s.c, x - 2, y - TOP_Y);
   });
