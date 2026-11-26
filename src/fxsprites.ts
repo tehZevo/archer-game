@@ -319,15 +319,16 @@ function levelUpAnim(): FxAnim {
   });
 }
 
-/** Rush Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base. */
-function rushAnim(): FxAnim {
+/** Rush Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base.
+ *  `hue`/`rim` colour the horn and its wings (the Meteor Dive's landing is yellow). */
+function rushAnim(hue: RampName = 'cyan', rim: RampName = 'teal'): FxAnim {
   const W = 30, H = 52, bx = W / 2, by = H - 4;
   return anim(W, H, bx, by, 8, (L, f) => {
     const R = rng(11 + f);
     if (f === 0) {
       // a pillar of light shoots up first
-      L.line('cyan', bx, by, bx, 6, 3.5, 1, 0.9);
-      L.ring('cyan', bx, by, 9, 2.5, 1.5, 0.6);
+      L.line(hue, bx, by, bx, 6, 3.5, 1, 0.9);
+      L.ring(hue, bx, by, 9, 2.5, 1.5, 0.6);
       return;
     }
     const fade = f < 5 ? 1 : 1 - (f - 4) / 4;
@@ -340,13 +341,13 @@ function rushAnim(): FxAnim {
         const edge = 1 - Math.abs(xx) / (half + 0.5);
         if (edge <= 0) continue;
         const band = 0.55 + 0.45 * Math.sin(yy * 0.9 + xx * 0.7 - f * 1.2); // spiral stripes
-        L.disc('cyan', bx + xx + 0.5, yy + 0.5, 0.9, fade * (0.45 + edge * 0.75 * band));
+        L.disc(hue, bx + xx + 0.5, yy + 0.5, 0.9, fade * (0.45 + edge * 0.75 * band));
       }
     }
-    L.line('cyan', bx, top, bx, base, 0.2, 1.1, 1.1 * fade);      // bright spine
+    L.line(hue, bx, top, bx, base, 0.2, 1.1, 1.1 * fade);      // bright spine
     // swept-back "wings" at the hilt
-    L.ring('teal', bx - 5, base - 1, 5, 4, 1.2, 0.9 * fade, -0.4, 1.6);
-    L.ring('teal', bx + 5, base - 1, 5, 4, 1.2, 0.9 * fade, 1.5, 3.14);
+    L.ring(rim, bx - 5, base - 1, 5, 4, 1.2, 0.9 * fade, -0.4, 1.6);
+    L.ring(rim, bx + 5, base - 1, 5, 4, 1.2, 0.9 * fade, 1.5, 3.14);
     // dust puffs spreading at the base
     const spread = 4 + f * 2.2, dfade = Math.max(0, 1 - f / 7);
     for (let i = 0; i < 7; i++) {
@@ -556,6 +557,7 @@ export function FX(): Record<string, FxAnim> {
       spin: spinAnim(),
       levelUp: levelUpAnim(),
       rush: rushAnim(),
+      diveLand: rushAnim('yellow', 'gold'),
       swoosh: swooshAnim(),
       skySwoosh: swooshAnim('sky'),
       // per-skill hit sparks, in each attack's colour

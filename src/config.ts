@@ -53,7 +53,10 @@ export const P = {
   DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
-  DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
+  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll
+  DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's)...
+  DIVE_ROLL_DIST: 64,  // ...px it travels at most...
+  DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
   PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_HOP: 112.5,   // px/s (was 150) added to your current momentum (stacks: a falling cast lifts less)
@@ -264,5 +267,5 @@ export const FX_DUR: Record<Fx['type'], number> = {
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
-  volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3, diveWindup: 0.2,
+  volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
 };

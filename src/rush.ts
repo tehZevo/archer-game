@@ -1,4 +1,5 @@
-import { P } from './config';
+import { FX_DUR, P } from './config';
+import type { FxKind } from './types';
 import { game, mobBounds, player } from './state';
 import { damage, hitbox } from './combat';
 import { surfaceBetween, surfaceYAt } from './physics';
@@ -6,7 +7,7 @@ import { sfx } from './audio';
 import { rank, shotCount } from './progress';
 import { openLink } from './links';
 import { linkWindow } from './castrules';
-import { alive, eachShot, fxUnder, pose } from './skillfx';
+import { alive, eachShot, fxUnder, pose, setPose } from './skillfx';
 
 /** The pending Rush Toss strike, fired when the slide ends. */
 let rushStrike: (() => void) | null = null;
@@ -75,7 +76,7 @@ export function endRush(): void {
 }
 
 /**
- * The ground rush (Q on the ground, and the Meteor Dive's landing): slide
+ * The ground rush (Q on the ground): slide
  * forward, scooping up the enemies in the way and pushing them along; the
  * strike lands when the slide ends: out of time, slowed, or at a platform
  * edge (see updateRush). In place (Down + Q) it strikes at once. Electric
@@ -83,24 +84,36 @@ export function endRush(): void {
  * charge (`blitz`). Opens the link window.
  */
 export function groundRush(inPlace: boolean, blitz: boolean): void {
-  pose('rush', blitz ? 'EB' : 'Q'); // the Meteor Dive's landing borrows Rush Toss's
-  sfx.shoot();
-  const face = player.face;
-  rushStrike = (): void => {
-    rushStrike = null;
-    strike(inPlace, face);
-  };
-  if (inPlace) rushStrike();
+  pose('rush', blitz ? 'EB' : 'Q');
+  if (inPlace) armStrike(true)();
   else {
-    player.vx = face * (blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V);
-    startSlide(P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST);
+    slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST);
     if (blitz) player.blitz.charges--;
   }
   openLink('combo', linkWindow(blitz ? 'EB' : 'Q'));
 }
 
-/** The rush's strike: the carried enemies, then the nearest ones ahead. */
-function strike(inPlace: boolean, face: number): void {
+/** Set up the strike that lands when the slide ends (see endRush), and return it. */
+function armStrike(inPlace: boolean, fx: FxKind = 'rush'): () => void {
+  sfx.shoot();
+  const face = player.face;
+  rushStrike = (): void => {
+    rushStrike = null;
+    strike(inPlace, face, fx);
+  };
+  return rushStrike;
+}
+
+/** Slide forward at `v` px/s, for at most `t` s or `dist` px, striking (with burst `fx`) at the end. */
+function slide(v: number, t: number, dist: number, fx: FxKind = 'rush'): void {
+  armStrike(false, fx);
+  player.vx = player.face * v;
+  startSlide(t, dist);
+}
+
+/** The rush's strike: the carried enemies, then the nearest ones ahead. `fx`
+ *  is the burst under each target (the dive's landing has its own). */
+function strike(inPlace: boolean, face: number, fx: FxKind): void {
   const r = rank('Q');
   const carried = player.rush.carry.map((c) => c.m);
   player.rush.carry = [];
@@ -108,7 +121,7 @@ function strike(inPlace: boolean, face: number): void {
   const near = hitbox(cx, player.y + player.h / 2, 96, 64).filter((m) => !carried.includes(m));
   const tg = alive([...carried, ...near]).slice(0, r.targets);
   // a horn of light erupts under each target (or ahead, if none)
-  fxUnder('rush', tg, cx, player.y + player.h, 0.4);
+  fxUnder(fx, tg, cx, player.y + player.h, FX_DUR[fx]);
   // the rush carries and hits (a Blitz strikes twice); the launch is the W's job
   eachShot(shotCount(r), 0, (more, h) => {
     alive(tg).forEach((m) => {
@@ -118,10 +131,14 @@ function strike(inPlace: boolean, face: number): void {
   });
 }
 
-/** The Meteor Dive touched down: roll straight into the real ground rush (its
- *  slide, strike and link window), with no pause. */
+/** The Meteor Dive touched down: roll out of it with no pause, a slide of its
+ *  own (DIVE_ROLL_*, tuned apart from Rush Toss's) that scoops up and strikes
+ *  like the rush. Its follow-up window opens here, off the landing, not off
+ *  the coil. */
 export function landDive(): void {
   if (!player.diving || !player.onGround) return;
   player.diving = false;
-  groundRush(false, false);
+  setPose('dive', P.DIVE_ROLL_MAX); // the roll is the tail of the dive's own animation
+  slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'diveLand');
+  openLink('dive', linkWindow('AD'));
 }

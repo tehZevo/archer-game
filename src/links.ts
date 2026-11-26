@@ -19,11 +19,11 @@ import type { LinkKind, SkillKey } from './types';
      spin     Skyward Assault                     -> Cyclone Sweep (W in the air)
    ============================================================ */
 
-export const LINK_KINDS: readonly LinkKind[] = ['combo', 'assault', 'blitz', 'glide', 'volley', 'spin', 'tempest'];
+export const LINK_KINDS: readonly LinkKind[] = ['combo', 'dive', 'assault', 'blitz', 'glide', 'volley', 'spin', 'tempest'];
 
 /** A fresh set of windows, all shut. */
 export const noLinks = (): Record<LinkKind, number> =>
-  ({ combo: 0, assault: 0, blitz: 0, glide: 0, volley: 0, spin: 0, tempest: 0 });
+  ({ combo: 0, dive: 0, assault: 0, blitz: 0, glide: 0, volley: 0, spin: 0, tempest: 0 });
 
 /** The window each skill links out of (besides the link skills and the
  *  Q slot, which ride the combo window: see linksIn). */
@@ -38,8 +38,8 @@ export const linksIn = (kind: SkillKey, key: SkillKey, isLinkSkill: boolean): bo
   const own = LINKS_INTO[kind];
   // The Q slot rides the combo window (the launchers' follow-up) and Tempest's
   // own window; W's air form rides the combo window too.
-  const ridesQ = key === 'Q' && (linkOpen('combo') || linkOpen('tempest'));
-  const ridesW = key === 'W' && kind === 'MS' && linkOpen('combo');
+  const ridesQ = key === 'Q' && (comboOpen() || linkOpen('tempest'));
+  const ridesW = key === 'W' && kind === 'MS' && comboOpen();
   return isLinkSkill || ridesQ || ridesW || (own !== undefined && linkOpen(own));
 };
 
@@ -57,7 +57,15 @@ export function tickLinks(dt: number): void {
 }
 
 /** The windows that let a buffered skill fire past the current one's recovery. */
-export const bufferWindowOpen = (): boolean => linkOpen('combo') || linkOpen('blitz') || linkOpen('spin');
+export const bufferWindowOpen = (): boolean => comboOpen() || linkOpen('blitz') || linkOpen('spin');
+
+/** The launchers' follow-up window: Rush Toss's (and the other launchers')
+ *  `combo`, or the Meteor Dive's own `dive` window, opened off its landing.
+ *  The two take the same follow-ups but are timed apart, so tuning the dive's
+ *  doesn't move Rush Toss's. */
+export const comboOpen = (): boolean => linkOpen('combo') || linkOpen('dive');
+/** Spend the follow-up window, whichever one is open. */
+export function closeCombo(): void { closeLink('combo'); closeLink('dive'); }
 
 /** Whether skill `kind` (resolved to its air form when airborne) has its own
  *  link window open, so a press of it buffered during the last cast can fire
