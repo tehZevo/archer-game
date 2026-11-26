@@ -77,7 +77,6 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   // Attack skills need both hands on the bow: on a ladder only Glide works.
   if (player.climb && kind !== 'D') return null;
   if (kind === 'D' && !airborne) return null;
-  if (kind === 'RA' && !player.onGround) return null;
   return { linked, chained };
 }
 

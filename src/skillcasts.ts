@@ -100,27 +100,6 @@ function electricBlitz(): void {
   groundRush(held('down'), true);
 }
 
-/** Rising Arrow (retired): launch the enemies ahead and leap up with them,
- *  linking into an airborne W. */
-function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
-  pose('rush', kind);
-  sfx.jump();
-  const face = player.face;
-  const cx = player.x + face * reach;
-  const tg = hitbox(cx, player.y + player.h / 2, w, 64).slice(0, r.targets);
-  fxUnder('rush', tg, cx, player.y + player.h, 0.4);
-  tg.forEach((m) => damage(m, r.dmg, { launch: true }));
-  player.onGround = false;
-  const dir = back ? -face : face;
-  player.vx = dir * vx;
-  player.vy = -vy;
-  game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: dir });
-}
-
-/** Rising Arrow: jump up with the enemies it launches (the same launch speed,
- *  so you climb together). */
-const risingArrow: Cast = (r) => launchLeap('RA', r, 30, 80, false, P.RISE_VX, P.RISE_VY);
-
 /** Piercing Leap (E's ground form): spikes erupt in a burst around you and throw
  *  you into the air. */
 function spikeLift(r: SkillRank): void {
@@ -260,5 +239,4 @@ export const CASTS: Partial<Record<SkillKey, Cast>> = {
   W: skyfallVolley, AB: skyAssault, MS: midairSpin,
   E: spikeLift, PV: plungingVolley,
   R: tempest, S: shellBarrage,
-  RA: risingArrow,
 };

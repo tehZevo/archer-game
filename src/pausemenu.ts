@@ -76,8 +76,8 @@ export function drawPause(): void {
     const i = top + vi, y = TOP + vi * ROW, x = COLS[1].x, can = player.sp > 0 && !!r.action;
     if (m.col === 1 && m.row === i) { ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(COLS[1].x + 0.5, y - 1.5, COLS[1].w - 1, ROW); }
     text(ctx, r.slot || '-', x + 2, y, 1, r.slot ? gold : dim, 'left');
-    text(ctx, r.name, x + 11, y, 1, r.rank ? hi : dim, 'left');
-    const tag = r.rank === 0 ? 'NEW' : r.max > 1 ? `${r.rank}/${r.max}` : '';
+    text(ctx, r.name, x + 11, y, 1, r.learned ? hi : dim, 'left');
+    const tag = r.learned ? '' : 'NEW';
     text(ctx, can ? `${tag}+` : tag, x + COLS[1].w - 3, y, 1, can ? gold : dim, 'right');
   });
   const ax = COLS[1].x + COLS[1].w / 2;

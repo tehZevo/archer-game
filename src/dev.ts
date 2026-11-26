@@ -38,8 +38,7 @@ export const DEV_ROWS = 12;
 export const devTag = (): string => (dev.on ? '-dev' : '');
 
 /** Max the player out for testing: level 100 (with its job and a stack of
- *  ability points) and every skill at max rank, except Haste and the retired
- *  branch (Rising Arrow). Bound to the `\` key. */
+ *  ability points) and every skill learned, except Haste. Bound to the `\` key. */
 export const maxOut = (): void => {
   player.level = MAX_LEVEL;
   player.exp = 0;
@@ -50,7 +49,7 @@ export const maxOut = (): void => {
   player.hp = player.hpMax;
   player.mp = player.mpMax;
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
-    if (k !== 'HA' && !SKILLS[k].retired) player.ranks[k] = SKILLS[k].maxLevel;
+    if (k !== 'HA') player.ranks[k] = true;
   }
   bannerMsg('MAXED', 'LEVEL 100 - SKILL BAR MAXED');
 };

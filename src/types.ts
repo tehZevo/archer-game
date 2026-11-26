@@ -1,6 +1,6 @@
 import type { Place } from './world';
 import type { BossState } from './boss';
-export type SkillKey = 'Z' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'RA' | 'EB' | 'AD' | 'PV' | 'MS' | 'ES' | 'SA' | 'PP' | 'IR' | 'HA' | 'NI';
+export type SkillKey = 'Z' | 'D' | 'AC' | 'Q' | 'W' | 'E' | 'R' | 'AB' | 'S' | 'EB' | 'AD' | 'PV' | 'MS' | 'ES' | 'SA' | 'PP' | 'IR' | 'HA' | 'NI';
 
 /** A status effect (see status.ts). */
 export type StatusKind = 'poison' | 'burn' | 'chill';
@@ -31,8 +31,6 @@ export interface SkillDef {
   job: number;
   /** Level at which the skill becomes learnable (every 5 levels). */
   minLevel: number;
-  /** Master level in the real class. */
-  maxLevel: number;
   cd: number;
   /** Use time, s: how long a cast locks other skills and movement (attack
    *  skills default to P.USE_TIME). Haste shortens it. */
@@ -41,14 +39,11 @@ export interface SkillDef {
   delay?: number;
   /** The skills a press during this one's cast links into (see links.ts). */
   linksInto?: SkillKey[];
-  /** Stats scale linearly from the Lv.1 value to the master value. */
+  /** A skill is single-rank: these are its stats once acquired. */
   mp1: number;
-  mpMax: number;
   dmg1: number;
-  dmgMax: number;
   hits1?: number;
-  hitsMax?: number;
-  /** Passive skills have no key; their effect is `bonus`, stepping from rank 1 to max. */
+  /** Passive skills have no key; their effect is `bonus` once acquired. */
   passive?: boolean;
   /** Bought with SP even though it is open from Lv.1 (otherwise Lv.1 skills come free). */
   learn?: boolean;
@@ -59,25 +54,20 @@ export interface SkillDef {
   /** The base slot this skill upgrades in place: it replaces that skill on
    *  its key once learned, and a slot holds one upgrade branch at a time. */
   upgrades?: SkillKey;
-  /** Off the skill list: kept for its stats, never offered or maxed out. */
-  retired?: boolean;
-  /** A prerequisite skill that must be mastered (at its max rank) before this
-   *  one can be learned. The skill list shows it as locked until then. */
+  /** A prerequisite skill that must be acquired before this one can be
+   *  learned. The skill list shows it as locked until then. */
   requires?: SkillKey;
   bonus1?: number;
-  bonusMax?: number;
   targets1?: number;
-  targetsMax?: number;
 }
 
+/** A skill's live stats: a single rank, so just its authored values. */
 export interface SkillRank {
-  level: number;
   mp: number;
   /** Fractional multiplier, e.g. 1.25 for 125%. */
   dmg: number;
   hits: number;
   targets: number;
-  maxLevel: number;
 }
 
 
@@ -343,7 +333,8 @@ export interface Player extends Body {
   /** Weapon attack power; the base of every damage calculation. */
   war: number;
   job: JobDef;
-  ranks: Record<SkillKey, number>;
+  /** Which skills are acquired (a skill is learned or not; no rank levels). */
+  ranks: Record<SkillKey, boolean>;
   /** Status effects on you (see status.ts). */
   effects: Status[];
 }
