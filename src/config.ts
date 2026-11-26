@@ -112,7 +112,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 1, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
-        desc: 'Up + Jump rushes up ropes and ladders; climb faster' },
+        desc: 'Up + Jump rushes up ropes and ladders' },
   D: { key: 'D', linksInto: ['AD'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
        cd: 0, use: 0.4, mp1: 2, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },

@@ -1607,6 +1607,21 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...trailing green rising streaks', game.fx.some((f) => f.type === 'climbRise'));
   release();
 }
+{
+  // Acrobatics' flat climb-speed bonus is gone: a plain Up climb rises at the
+  // base speed with or without it (the passive now only gives the climb-rush).
+  const climbOneStep = (ac: number): number => {
+    arena(10); player.ranks.AC = ac;
+    const c = [...game.floor.ropes, ...game.floor.ladders][0];
+    player.climb = c; player.x = c.x; player.y = c.y2 - player.h - 1; player.onGround = false; player.vx = player.vy = 0;
+    const y0 = player.y; setKey('up', true); step(1); setKey('up', false);
+    return y0 - player.y; // px risen this step
+  };
+  const withAC = climbOneStep(1), withoutAC = climbOneStep(0);
+  check('Acrobatics no longer speeds up the plain climb', Math.abs(withAC - withoutAC) < 0.01,
+    `with ${withAC.toFixed(2)} vs ${withoutAC.toFixed(2)}px`);
+  release();
+}
 // --- stats: attack scales with level and DEX (%), VIT is +5% HP a point ---
 {
   arena(1); player.stats.dex = 0; player.stats.vit = 0; recalcStats();
