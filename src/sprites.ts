@@ -245,9 +245,8 @@ const artMob = (name: string, fps: number): MobAnim => {
   return anim(bake, 2, fps, () => bake(HURT));
 };
 
-export const SPR = {
-  portal: portalSprite(),
-};
+/** The warp pad's pixels (baked with the scenery, see artsheets.ts). */
+export const portalGrid = (): Grid => portalSprite().g;
 
 /* ---------------- enemy sheets ----------------
    Enemies ship as PNG sheets (assets/mobs/<name>.png): the walk/flap
