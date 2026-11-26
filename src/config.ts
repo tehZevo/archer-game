@@ -11,17 +11,17 @@ export const P = {
   HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
   HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
-  GRAVITY: 772.2,      // px/s^2 (lowered from 2000, then 1040, 780, then 858)
+  GRAVITY: 694.98,     // px/s^2 (10% under 772.2)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
-  JUMP_V: 210,         // 10% over 193.92 (rounded): a ~26px jump at 858 gravity
+  JUMP_V: 189,         // 10% under 210
   JUMP_H: 81.25,       // halved from 162.5
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
   CLIMB: 90,           // rope/ladder climb speed, px/s (was 140)
   DROP_HOP_V: 110,     // Down+Jump hop before falling through (v²/2g ≈ 6px)
   GLIDE_VX: 190,       // Glide forward launch speed, px/s (was 160; ×1-1.3 with rank)
-  GLIDE_VY_MAX: 180,   // max upward speed after Glide (v²/2g ≈ 10px of extra rise)
+  GLIDE_VY_MAX: 162,   // max upward speed after Glide (10% under 180)
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
@@ -57,7 +57,8 @@ export const P = {
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
   PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
-  PLUNGE_HOP: 112.5,   // px/s (was 150) added to your current momentum (stacks: a falling cast lifts less)
+  PLUNGE_HOP: 121.5,   // px/s bump added to your upward velocity (10% under 135)
+  PLUNGE_MAX: 160,     // ...capped so vy never exceeds -160 (upward); faster speeds are left untouched
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
