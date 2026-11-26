@@ -2,9 +2,7 @@ import { keepAliveWhileHidden } from './background';
 import { bannerMsg, game, gainExp, gotoPlace, logMsg } from './state';
 import { START } from './world';
 import { rank, spendSp } from './progress';
-import { clearPressed } from './input';
-import { P } from './config';
-import { update } from './update';
+import { advance, MAX_DT } from './loop';
 import { render, resize } from './render';
 import { bindMenuClicks } from './hud';
 import { cv } from './canvas';
@@ -28,20 +26,15 @@ declare global {
 window.game = game;
 window.archer = { gainExp, spendSp, rank, gotoPlace, net, boost, netStatus: net.netStatus };
 
+/** One display frame: advance the world on the fixed step (see loop.ts for
+ *  the stepping and input contract), then draw. */
 function frame(now: number): void {
-  const dt = Math.min(0.1, (now - game.last) / 1000);
+  const dt = Math.min(MAX_DT, (now - game.last) / 1000);
   game.last = now;
-  game.acc += dt;
-  let steps = 0;
-  // fixed 30 Hz physics; rAF renders as fast as the display allows.
-  // The world stays frozen behind the main menu.
-  if (menu.open) game.acc = 0;
-  while (game.acc >= P.STEP) { update(P.STEP); game.acc -= P.STEP; steps++; }
+  // the world stays frozen behind the main menu
+  const steps = advance(game, dt, menu.open);
   if (!menu.open) tickSave(dt); // autosave every few seconds while playing
   sync(); // publish our position to the current channel (once started)
-  // only consume the input latch once a physics step has acted on it, otherwise
-  // key taps arriving between two 30Hz steps vanish
-  if (steps) clearPressed();
   // in play the picture only changes on a game step, so a frame without one
   // would redraw the same picture (the title menu, frozen, still draws every frame)
   if (steps || menu.open) render();

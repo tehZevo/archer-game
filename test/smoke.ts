@@ -4,8 +4,8 @@
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
 import { game, player, gainExp, gotoPlace } from '../src/state';
 import { nextPlace, placeKey, START } from '../src/world';
-import { setKey, clearPressed } from '../src/input';
-import { update } from '../src/update';
+import { setKey } from '../src/input';
+import { tick } from '../src/loop';
 import { GLYPH, ICON_GLYPHS } from '../src/icons';
 import { SKILLS } from '../src/config';
 import { rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
@@ -18,7 +18,7 @@ function check(name: string, cond: boolean): void {
 }
 
 function step(n = 1): void {
-  for (let i = 0; i < n; i++) { update(P.STEP); clearPressed(); }
+  for (let i = 0; i < n; i++) tick();
 }
 
 function reset(): void {
