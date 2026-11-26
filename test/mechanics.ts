@@ -786,7 +786,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   // Q and Air Dive: both paced by the use time alone, no cooldowns
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   tap('q');
-  check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.5 && player.cdMax.Q === 0 && player.casting.useT > 0);
+  check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.6 && player.cdMax.Q === 0 && player.casting.useT > 0);
   step(40); player.cd.Q = 0;
   tap('c'); step(6); tap('q');
   check('the Air Dive has no cooldown, only a use time', SKILLS.AD.cd === 0 && player.cd['Q.air'] === 0 && player.casting.useT > 0 && player.casting.recoverT > 0,
@@ -2422,7 +2422,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the Midair Spin whirls blades round you and spins the archer', fxOf('spin') && localPose() === 'spin');
   arena(30); player.ranks.R = 1; ready(); game.fx.length = 0; tap('r');
   check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
-  step(15);
+  step(43);
   check('...and she is back once it ends', localPose() !== 'vanish');
   arena(30); player.ranks.AD = 1; ready(); air(); tap('q'); step(4); // past the windup
   check('the Air Dive draws its dive pose', player.diving && localPose() === 'dive');
@@ -2558,9 +2558,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('Tempest locks you in place', player.cast === 'shoot' && player.casting.useT > 0, `useT ${player.casting.useT.toFixed(2)}`);
   check('...and you are invulnerable for the cast', player.invuln > 0 && player.invuln >= player.castT - 1e-9,
     `invuln ${player.invuln.toFixed(2)} castT ${player.castT.toFixed(2)}`);
-  step(11); // the 0.36s storm plays out
+  step(43); // the 1.4s storm plays out
   check('the invulnerability ends with the storm', player.invuln <= 0, `invuln ${player.invuln.toFixed(2)}`);
-  check('Tempest is a 10s cooldown', SKILLS.R.cd === 10 && player.cd.R > 9, `cd ${player.cd.R.toFixed(2)}`);
+  check('Tempest is a 10s cooldown', SKILLS.R.cd === 10 && player.cd.R > 8, `cd ${player.cd.R.toFixed(2)}`);
 }
 {
   // Midair, the storm pins you completely: no falling, no drift, for its
@@ -2570,9 +2570,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('r');
   check('Tempest freezes you midair', player.casting.freeze && player.vy === 0, `vy ${player.vy.toFixed(0)}`);
   const y0 = player.y;
-  step(5); // half the storm
+  step(21); // half the storm
   check('...and you stay put as it plays out', player.y === y0 && player.vy === 0, `dy ${(player.y - y0).toFixed(2)} vy ${player.vy.toFixed(0)}`);
-  step(6); // the rest of the 0.36s cast
+  step(22); // the rest of the 1.4s cast
   check('you fall once the storm is over', !player.casting.freeze && player.y > y0, `dy ${(player.y - y0).toFixed(2)}`);
 }
 {
@@ -3007,8 +3007,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(20); player.ranks.R = 1;
   tap('r');
   const t0 = player.links.tempest;
-  check('the storm opens its window for its own cast', t0 > 0 && t0 < 2, `t ${t0.toFixed(2)}`);
-  step(60); // 2s: well past the window
+  check('the storm opens its window for its own cast', t0 > 0 && t0 < 3, `t ${t0.toFixed(2)}`);
+  step(80); // ~2.7s: well past the window
   check('...and it runs down, not forever', player.links.tempest === 0, `t ${player.links.tempest.toFixed(2)}`);
   tap('r'); step(1); closeLinks();
   check('...and closeLinks shuts it too', player.links.tempest === 0, `t ${player.links.tempest.toFixed(2)}`);
