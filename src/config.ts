@@ -14,7 +14,7 @@ export const P = {
   GRAVITY: 772.2,      // px/s^2 (lowered from 2000, then 1040, 780, then 858)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
-  JUMP_V: 242.4,       // 10% under the old 269.3: a ~34px jump at 858 gravity
+  JUMP_V: 210,         // 10% over 193.92 (rounded): a ~26px jump at 858 gravity
   JUMP_H: 81.25,       // halved from 162.5
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
