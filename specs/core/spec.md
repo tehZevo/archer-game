@@ -44,3 +44,7 @@ Your toolkit **starts small and grows**. At level 1 you have just a few skills; 
 ## Pace of a floor
 
 A typical floor is **quick** — about a minute, a few monsters to fight, then you're climbing to the next one.
+
+## Surviving
+
+Combat is **moderately forgiving**: you have a health bar and can take a middling number of hits before you go down — not tanky, not glass-cannon.
