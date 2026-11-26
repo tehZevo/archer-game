@@ -79,6 +79,21 @@ export const MOB_SOUNDS: Record<string, MobVoice> = {
   'Poison Frog': { f: 250, d: 0.08, t: 'sine', s: 430, m: 'soft' },
   'Ram': { f: 410, d: 0.08, t: 'sawtooth', s: 270, m: 'soft' },
   'Bog Slime': { f: 210, d: 0.1, t: 'sine', s: 130, m: 'goo' },
+  'Cinder Hound': { f: 300, d: 0.08, t: 'sawtooth', s: 150, m: 'soft' },
+  'Ash Wisp': { f: 820, d: 0.08, t: 'sine', s: 1240, m: 'spirit' },
+  'Armor Knight': { f: 160, d: 0.1, t: 'square', s: 90, m: 'metal' },
+  'Keep Rat': { f: 900, d: 0.04, t: 'sawtooth', s: 1200, m: 'soft' },
+  'Gargoyle': { f: 150, d: 0.11, t: 'sawtooth', s: 80, m: 'stone' },
+  'Choir Spirit': { f: 620, d: 0.16, t: 'triangle', s: 520, m: 'spirit' },
+  'Reef Ray': { f: 560, d: 0.07, t: 'sine', s: 380, m: 'wing' },
+  'Coral Crawler': { f: 460, d: 0.06, t: 'triangle', s: 320, m: 'crystal' },
+  'Yeti': { f: 90, d: 0.14, t: 'sawtooth', s: 50, m: 'soft' },
+  'Frost Wolf': { f: 420, d: 0.09, t: 'sawtooth', s: 240, m: 'soft' },
+  'Magma Hound': { f: 280, d: 0.09, t: 'sawtooth', s: 120, m: 'stone' },
+  'Black Knight': { f: 130, d: 0.11, t: 'square', s: 70, m: 'metal' },
+  'Bronze Gargoyle': { f: 175, d: 0.1, t: 'square', s: 95, m: 'metal' },
+  'Storm Ray': { f: 600, d: 0.07, t: 'sawtooth', s: 900, m: 'wing' },
+  'Ice Yeti': { f: 100, d: 0.14, t: 'triangle', s: 55, m: 'crystal' },
 };
 
 /** A small seeded random per enemy, so its clatter and shards fall the same
