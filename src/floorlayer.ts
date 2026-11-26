@@ -1,7 +1,7 @@
 import { WORLD } from './config';
 import { game } from './state';
 import * as TB from './tilebake';
-import { TOP_Y, variantAt, type Tileset } from './tileset';
+import { BLOCK_VARIANTS, TOP_Y, variantAt, type Tileset } from './tileset';
 import { lastTown, townIndex } from './world';
 import { PROP_H, PROP_W, PROPS, propAt, propsFor } from './props';
 import { art } from './artsheets';
@@ -52,7 +52,7 @@ function eachTile(f: (x: number, y: number, nb: number) => void): void {
 }
 
 function drawPlatforms(g: Ctx, ts: Tileset): void {
-  eachTile((x, y, nb) => g.drawImage(TB.block(ts, nb, variantAt(x / TS, y / TS)).c, x, y));
+  eachTile((x, y, nb) => g.drawImage(TB.block(ts, nb, variantAt(x / TS, y / TS, 0, BLOCK_VARIANTS)).c, x, y));
   for (const p of game.floor.platforms) {
     if (p.slope) g.drawImage(TB.slope(ts, p.dir ?? 1, p.part ?? 0).c, p.x, p.y);
     else if (p.foot) g.drawImage(TB.slopeFoot(ts, p.foot).c, p.x, p.y);

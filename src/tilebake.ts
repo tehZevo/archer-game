@@ -1,6 +1,6 @@
 import { NB } from './nb';
 import { make, px, Sprite } from './sprites';
-import { BOT_H, TOP_H, TOP_W, painter, type Tileset } from './tileset';
+import { BLOCK_VARIANTS, BOT_H, TOP_H, TOP_W, painter, type Tileset } from './tileset';
 import { canvasGrid, newGrid, type Grid } from './grid';
 import { BAKED_TILES } from './tilebaked';
 
@@ -46,7 +46,7 @@ function cut(sheet: Grid, c: { w: number; h: number }, i: number): Sprite {
  *  atlas index both walk this list. */
 export function pieces(ts: Tileset): [string, () => Sprite | null][] {
   const out: [string, () => Sprite | null][] = [];
-  for (let nb = 0; nb < 256; nb++) for (let v = 0; v < 4; v++) out.push([K.block(ts, nb, v), () => block(ts, nb, v)]);
+  for (let nb = 0; nb < 256; nb++) for (let v = 0; v < BLOCK_VARIANTS; v++) out.push([K.block(ts, nb, v), () => block(ts, nb, v)]);
   for (const dir of [1, -1] as const) {
     for (const part of [0, 1] as const) out.push([K.slope(ts, dir, part), () => slope(ts, dir, part)]);
     out.push([K.foot(ts, dir), () => slopeFoot(ts, dir)]);
@@ -126,15 +126,15 @@ export function block(ts: Tileset, nb: number, v: number): Sprite {
         }
       }
       if (cut) continue;
-      const surf = n ? ts.surface(x, Math.max(0, topD), v) : null;
+      const surf = n ? ts.surface(x, Math.max(0, topD), v & 3) : null;
       let col: string;
       if (surf) {
         col = d === 0 ? edge.surfOuter ?? edge.outer : d === 1 ? edge.surfInner ?? surf : surf;
-        if (topD === 0 && d > 0) col = ts.surface(x, 0, v) ?? col;
+        if (topD === 0 && d > 0) col = ts.surface(x, 0, v & 3) ?? col;
       } else if (n && topD === 0) col = edge.outer;
       else if (d === 0) col = edge.outer;
       else if (d === 1) col = edge.style === 'bevel' && dside === 3 && edge.light ? edge.light : edge.inner;
-      else col = ts.fill(x, y, v);
+      else col = v < 4 ? ts.fill(x, y, v) : ts.fill(15 - x, y, v - 4); // 4-7: 0-3's fill mirrored
       // inner corners: both neighbours solid but the diagonal open
       if ((!n && !w && !solid(NB.NW) && x === 0 && y === 0) || (!n && !e && !solid(NB.NE) && x === 15 && y === 0) ||
           (!so && !w && !solid(NB.SW) && x === 0 && y === 15) || (!so && !e && !solid(NB.SE) && x === 15 && y === 15)) col = edge.outer;

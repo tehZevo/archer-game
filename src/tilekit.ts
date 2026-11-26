@@ -42,8 +42,10 @@ export function hash(a: number, b: number, c = 0): number {
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
-/** Which of the 4 variants a tile at grid cell (tx, ty) uses; `salt` separates fill from decorations. */
-export const variantAt = (tx: number, ty: number, salt = 0): number => Math.floor(hash(tx, ty, salt + 11) * 4);
+/** Fill variants per block piece (more than the decorations, so long floors don't repeat). */
+export const BLOCK_VARIANTS = 8;
+/** Which of `n` variants a tile at grid cell (tx, ty) uses; `salt` separates fill from decorations. */
+export const variantAt = (tx: number, ty: number, salt = 0, n = 4): number => Math.floor(hash(tx, ty, salt + 11) * n);
 
 /** Paint a sprite through a tileset painter. */
 export const painter = (s: Sprite, put: (s: Sprite, x: number, y: number, c: string, w?: number, h?: number) => void): Paint =>
