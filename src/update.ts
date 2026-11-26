@@ -11,7 +11,7 @@ import { setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
 import { updateRush } from './rush';
 import { AIR_FORM, assaultLeaping, rushHolding } from './castrules';
-import { activeSkill, isLearned } from './progress';
+import { activeSkill } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { talk, updateEconomy } from './economy';
@@ -82,12 +82,9 @@ function tickPlayer(dt: number): void {
 function keyInput(): boolean {
   // F1-F7: emotes
   EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });
-  // Basic attack during a cast that links into the link skill casts it
-  // (Rising Arrows, or Skyward Assault once upgraded).
-  const w = skillFor('W');
-  const linkZ = pressed('z') && isLearned(w) && linkable(w);
-  if (linkZ) cast('W');
-  for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
+  // Each key fires its own skill (an upgrade fires from its base's key, an air
+  // form from its ground form's: see castrules.AIR_FORM).
+  for (const k of SKILL_ORDER) if (pressed(k)) cast(k);
   // dev keys (?dev only): [ levels up, ] warps to the next floor, \ maxes out
   if (!dev.on) return false;
   if (pressed('[')) gainExp(player.expNext - player.exp);
