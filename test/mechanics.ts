@@ -2579,14 +2579,24 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(20); player.ranks.R = 1; player.ranks.Q = 1; player.ranks.AD = 1;
   tap('c'); step(7); // airborne, where Q is the Air Dive
   tap('r');
-  check('Tempest opens the Dive link window', player.links.combo > 0 && player.cast === 'shoot',
-    `combo ${player.links.combo.toFixed(2)} cast ${player.cast}`);
+  check('Tempest opens its own Dive link window', player.links.tempest > 0 && player.cast === 'shoot',
+    `tempest ${player.links.tempest.toFixed(2)} cast ${player.cast}`);
   const mp0 = player.mp;
   tap('q');
   check('Dive fires out of the storm, mid-cast', player.cast === 'rush' && player.mp < mp0,
     `cast ${player.cast} mp ${player.mp} of ${mp0}`);
-}
   step(12); // let the dive land, so the next block starts on the floor
+  // The storm's window is its own: it unlocks Dive, not the whole aerial kit.
+  arena(20); player.ranks.R = 1;
+  tap('r'); player.cd.R = 10;
+  check('the storm opens only its own window', player.links.tempest > 0 && player.links.combo === 0,
+    `tempest ${player.links.tempest.toFixed(2)} combo ${player.links.combo.toFixed(2)}`);
+  tap('w'); step(1);
+  // A Skyfall Volley needs the combo window; the storm's window doesn't
+  // grant it, so the cast pays its own cooldown rather than a shone Tempest's.
+  check('a Skyfall Volley off the storm pays its own cooldown', player.cast === 'shoot' && player.cd.R > 9,
+    `cast ${player.cast} cd ${player.cd.R.toFixed(2)}`);
+}
 {
   // A buffered skill fires in the direction held when it releases, not when
   // it was pressed: Q left, Q right zips you back and forth

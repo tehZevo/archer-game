@@ -215,7 +215,7 @@ export interface Body {
 }
 
 /** The link windows a skill can open (see links.ts). */
-export type LinkKind = 'combo' | 'assault' | 'blitz' | 'glide' | 'volley' | 'spin';
+export type LinkKind = 'combo' | 'assault' | 'blitz' | 'glide' | 'volley' | 'spin' | 'tempest';
 
 export interface Casting {
   /** s left of the current skill's use time: no other skills or movement. */

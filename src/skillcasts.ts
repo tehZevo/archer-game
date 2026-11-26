@@ -206,8 +206,9 @@ function tempest(r: SkillRank): void {
   pose('shoot', useTime('R'));
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
-  // the storm links straight into Dive (Q in the air, Sky Toss on the ground)
-  openLink('combo', linkWindow('R'));
+  // the storm links straight into Dive (Q in the air); its own window, so it
+  // doesn't also hand you the Sky Toss follow-ups
+  openLink('tempest', linkWindow('R'));
   sfx.shoot();
   const mx = player.x + player.face * 8, my = player.y + 13;
   const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
