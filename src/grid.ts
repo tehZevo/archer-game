@@ -44,16 +44,21 @@ export function canvasGrid(src: CanvasImageSource, w: number, h: number, sx = 0,
 }
 
 const RGB = new Map<string, [number, number, number]>();
-/** '#rrggbb' as numbers (cached). */
+/** '#rrggbb' (or '#rgb') as numbers (cached). */
 export function hexRgb(col: string): [number, number, number] {
   let c = RGB.get(col);
-  if (!c) RGB.set(col, (c = [1, 3, 5].map((i) => parseInt(col.slice(i, i + 2), 16)) as [number, number, number]));
+  if (!c) {
+    const full = col.length === 4 ? '#' + [...col.slice(1)].map((d) => d + d).join('') : col;
+    RGB.set(col, (c = [1, 3, 5].map((i) => parseInt(full.slice(i, i + 2), 16)) as [number, number, number]));
+  }
   return c;
 }
 
-/** Fill a rectangle with an opaque '#rrggbb' colour, clipped to the grid. */
+/** Fill a rectangle with an opaque '#rrggbb' colour, snapped to whole pixels
+ *  and clipped to the grid. */
 export function fillRect(g: Grid, x: number, y: number, w: number, h: number, col: string): void {
   const [r, gg, b] = hexRgb(col);
+  x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
   for (let yy = Math.max(0, y); yy < Math.min(g.h, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(g.w, x + w); xx++) {
     const i = (yy * g.w + xx) * 4;
     g.px[i] = r; g.px[i + 1] = gg; g.px[i + 2] = b; g.px[i + 3] = 255;

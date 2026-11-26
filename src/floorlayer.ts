@@ -3,8 +3,9 @@ import { game } from './state';
 import * as TB from './tilebake';
 import { TOP_Y, variantAt, type Tileset } from './tileset';
 import { lastTown, townIndex } from './world';
-import { PROP_H, PROP_W, propAt, propsFor } from './props';
-import { BACK_DECOR, DECOR_SIZE, paintDecor, townPal } from './towndecor';
+import { PROP_H, PROP_W, PROPS, propAt, propsFor } from './props';
+import { art } from './artsheets';
+import { BACK_DECOR, DECOR_SIZE, TOWN_PALS } from './towndecor';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import type { Climbable, Floor } from './types';
@@ -74,21 +75,10 @@ function drawDecorations(g: Ctx, ts: Tileset): void {
   });
 }
 
-/** Props baked per area: one canvas per prop (see props.ts). */
-const propCanvases = new Map<string, HTMLCanvasElement[]>();
+/** An area's props, one canvas each (see props.ts; baked, see artsheets.ts). */
 function bakedProps(area: string): HTMLCanvasElement[] {
-  let cs = propCanvases.get(area);
-  if (!cs) {
-    cs = propsFor(area).map((paint) => {
-      const c = document.createElement('canvas');
-      c.width = PROP_W; c.height = PROP_H;
-      const pc = c.getContext('2d')!;
-      paint((x, y, col, w = 1, h = 1) => { pc.fillStyle = col; pc.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); });
-      return c;
-    });
-    propCanvases.set(area, cs);
-  }
-  return cs;
+  const key = PROPS[area] ? area : 'Classic';
+  return propsFor(area).map((_, i) => art(`prop/${key}/${i}`));
 }
 
 /** Props on exposed tops with ground either side, kept clear of portals,
@@ -108,21 +98,13 @@ function drawProps(g: Ctx, ts: Tileset): void {
   });
 }
 
-/** Town decor, baked per kind, palette and facing (see towndecor.ts). */
-const decorCanvases = new Map<string, HTMLCanvasElement>();
+/** Town decor, in the town's palette and facing (see towndecor.ts; baked, see artsheets.ts). */
 function drawDecor(g: Ctx, back: boolean): void {
-  const ti = townIndex(lastTown(game.floor.place)), pal = townPal(ti);
+  const pal = townIndex(lastTown(game.floor.place)) % TOWN_PALS.length;
   for (const d of game.floor.decor ?? []) {
     if (BACK_DECOR.has(d.kind) !== back) continue;
-    const key = `${d.kind}.${ti}.${d.flip ? 1 : 0}`, { w, h } = DECOR_SIZE[d.kind];
-    let c = decorCanvases.get(key);
-    if (!c) {
-      c = document.createElement('canvas'); c.width = w; c.height = h;
-      const dc = c.getContext('2d')!;
-      paintDecor(d.kind, pal, (x, y, col, pw = 1, ph = 1) => { dc.fillStyle = col; dc.fillRect(x, y, pw, ph); }, d.flip);
-      decorCanvases.set(key, c);
-    }
-    g.drawImage(c, Math.round(d.x - w / 2), Math.round(d.y - h));
+    const { w, h } = DECOR_SIZE[d.kind];
+    g.drawImage(art(`decor/${d.kind}/${pal}`, d.flip), Math.round(d.x - w / 2), Math.round(d.y - h));
   }
 }
 

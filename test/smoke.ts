@@ -5,6 +5,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { BAKED_TILES } from '../src/tilebaked';
 import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
 import { TILESETS } from '../src/tileset';
+import { ART_GEN } from '../src/artsheets';
+import { BAKED_ART } from '../src/artbaked';
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
 import { BAKED } from '../src/fxbaked';
 import { FX_GEN } from '../src/fxsprites';
@@ -224,6 +226,12 @@ setKey('up', false);
     });
   }).map(([n]) => n);
   check(`every tileset atlas matches its painters${staleTiles.length ? ' (stale: ' + staleTiles.join(', ') + ')' : ''}`, staleTiles.length === 0);
+  const staleArt = Object.keys(ART_GEN).filter((key) => {
+    if (!BAKED_ART[key]) return true;
+    const png = decodePng(readFileSync(`assets/art/${slug(key)}.png`)), g = ART_GEN[key]();
+    return png.w !== g.w || png.h !== g.h || Buffer.compare(Buffer.from(png.px), Buffer.from(g.px)) !== 0;
+  });
+  check(`every scenery PNG matches its painter${staleArt.length ? ' (stale: ' + staleArt.slice(0, 5).join(', ') + ')' : ''}`, staleArt.length === 0);
   check('every base enemy is baked', Object.keys(MOB_GEN).every((n) => BAKED_MOBS[n]));
   check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }

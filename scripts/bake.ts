@@ -3,6 +3,7 @@ import { FX_GEN } from '../src/fxsprites';
 import { MOB_GEN } from '../src/sprites';
 import { newGrid, packStrip, type Grid } from '../src/grid';
 import { TILESETS } from '../src/tileset';
+import { ART_GEN } from '../src/artsheets';
 import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
 import { encodePng } from './png';
 import { slug } from './slug';
@@ -90,6 +91,23 @@ ${lines.join('\n')}
 `);
 }
 
+/* ---- scenery: props, town decor, backdrop layers, the portal (one PNG each) ---- */
+{
+  mkdirSync('assets/art', { recursive: true });
+  const imports: string[] = [], lines: string[] = [];
+  Object.keys(ART_GEN).forEach((key, i) => {
+    writeFileSync(`assets/art/${slug(key)}.png`, encodePng(ART_GEN[key]()));
+    imports.push(`import a${i} from '../assets/art/${slug(key)}.png';`);
+    lines.push(`  ${JSON.stringify(key)}: a${i},`);
+  });
+  writeFileSync('src/artbaked.ts', `${header}${imports.join('\n')}
+
+export const BAKED_ART: Record<string, string> = {
+${lines.join('\n')}
+};
+`);
+}
+
 /** Cells laid out ATLAS_COLS to a row. */
 function packAtlas(cells: Grid[], w: number, h: number): Grid {
   const cols = Math.min(ATLAS_COLS, cells.length), o = newGrid(cols * w, Math.ceil(cells.length / ATLAS_COLS) * h);
@@ -100,4 +118,4 @@ function packAtlas(cells: Grid[], w: number, h: number): Grid {
   return o;
 }
 
-console.log(`baked ${Object.keys(FX_GEN).length} effect, ${Object.keys(MOB_GEN).length} enemy and ${Object.keys(TILESETS).length} tileset sheet(s)`);
+console.log(`baked ${Object.keys(FX_GEN).length} effect, ${Object.keys(MOB_GEN).length} enemy ${Object.keys(TILESETS).length} tileset and ${Object.keys(ART_GEN).length} scenery sheet(s)`);

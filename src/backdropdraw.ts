@@ -1,4 +1,5 @@
-import { backdropFor, LAYER, PARALLAX, particlesAt, wrapPaint } from './backdrop';
+import { BACKDROPS, backdropFor, LAYER, PARALLAX, particlesAt } from './backdrop';
+import { art } from './artsheets';
 
 /* ============================================================
    BACKDROP DRAWING
@@ -10,15 +11,10 @@ import { backdropFor, LAYER, PARALLAX, particlesAt, wrapPaint } from './backdrop
 
 const baked = new Map<string, HTMLCanvasElement[]>();
 
+/** An area's two layers (baked, see artsheets.ts). */
 function bake(area: string): HTMLCanvasElement[] {
-  const bd = backdropFor(area);
-  return [bd.far, bd.mid].map((paint) => {
-    const c = document.createElement('canvas');
-    c.width = c.height = LAYER;
-    const g = c.getContext('2d')!;
-    paint(wrapPaint((x, y, col, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); }));
-    return c;
-  });
+  const key = BACKDROPS[area] ? area : 'Classic';
+  return [art(`backdrop/${key}/far`), art(`backdrop/${key}/mid`)];
 }
 
 /** Draw an area's backdrop layers and particles over the sky, for a camera at (cx, cy). */
