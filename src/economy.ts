@@ -29,6 +29,9 @@ import type { Floor, Mob, Npc, SkillKey } from './types';
 export const START_POTIONS = 3;
 export const wallet = { coins: 0, hp: START_POTIONS, mp: START_POTIONS };
 
+/** Back to the starting kit: a fresh start clears your gold and potions too. */
+export function resetWallet(): void { wallet.coins = 0; wallet.hp = START_POTIONS; wallet.mp = START_POTIONS; }
+
 /** A pile of coins on the floor. */
 export interface Coin { x: number; y: number; vy: number; v: number; t: number; landed: boolean }
 export const drops: Coin[] = [];
