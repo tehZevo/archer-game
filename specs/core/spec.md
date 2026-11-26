@@ -20,3 +20,7 @@ The combo feels **weighted**: each skill plays out fully before the next one sta
 ## What you fight
 
 You fight a **mix**: groups of small monsters you clear out, plus occasional big bosses that take a longer combo to bring down.
+
+## The world
+
+You move through the game by **climbing floors** — single-screen floors, one after another, getting higher as you go.
