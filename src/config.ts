@@ -308,5 +308,5 @@ export const FX_DUR: Record<Fx['type'], number> = {
   volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
   tossTrail: 0.3, blitzTrail: 0.35,
   galeMuzzle: 0.15, galeShot: 0.12, galeHit: 0.24,
-  assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.35,
+  assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.4, assaultHit: 0.24,
 };

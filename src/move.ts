@@ -12,6 +12,7 @@ import { barrageTargets } from './skills';
 import { landDive } from './rush';
 import { setPose } from './skillfx';
 import { streaming } from './rapid';
+import { DROP_BACK } from './fxsprites';
 
 /** Countdown to Acrobatics's next rising-streak effect. */
 let climbFxT = 0;
@@ -105,10 +106,11 @@ function hover(dt: number): void {
     for (const [x, y] of at) game.fx.push({ type: 'assaultBang', x, y, t: FX_DUR.assaultBang });
     if (more) sfx.assaultBang();
     else {
-      game.fx.push({ type: 'assaultDrop', x: player.x, y: player.y + player.h / 2, t: FX_DUR.assaultDrop, face: player.face });
+      // the lances land on the ground ahead, where she rose from
+      game.fx.push({ type: 'assaultDrop', x: player.x + player.face * DROP_BACK, y: player.y + player.h + P.BARRAGE_UP, t: FX_DUR.assaultDrop, face: player.face });
       sfx.assaultSlam();
     }
-    tg.forEach((m) => damage(m, player.hang.dmg, { airborne: true, fx: 'skyHit', more }));
+    tg.forEach((m) => damage(m, player.hang.dmg, { airborne: true, fx: 'assaultHit', more }));
   }
   player.animState = 'jump';
 }
