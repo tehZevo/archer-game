@@ -8,8 +8,9 @@ import { encodePng } from './png';
    layout for the game to load. Re-run after changing an effect; the tests
    fail on a sheet that no longer matches its generator. */
 
-/** The effects that ship as baked sheets (the rest still run their generator). */
-export const BAKE: string[] = ['flurry'];
+/** The effects that ship as baked sheets: all of them. (An effect left out
+ *  of this list would run its generator at runtime instead.) */
+export const BAKE: string[] = Object.keys(FX_GEN);
 
 const lines: string[] = [];
 const imports: string[] = [];
