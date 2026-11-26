@@ -214,7 +214,7 @@ export const MOB_ART: Record<string, { look: Look; plan: Plan }> = {
   Beetle: { look: L(16, 11, '#3a7a4a', '#24402c', '#8ad89a', '#e8f0a0', '#5a9a6a'), plan: bug({}) },
   // Meadow
   Rabbit: { look: L(15, 16, '#f4eee4', '#c8bcac', '#ffffff', '#1a1010', '#f0a0b0'), plan: hopper({ ears: true }) },
-  Bee: { look: L(18, 16, '#f0c030', '#2a2010', '#fff0a0', '#1a1010', '#d8ecff'), plan: flier({ stripes: true, gear: true }) },
+  Bee: { look: L(18, 16, '#f0c030', '#2a2010', '#fff0a0', '#1a1010', '#d8ecff'), plan: flier({ stripes: true, antennae: true }) },
   // Riverbank
   Frog: { look: L(16, 11, '#5aa84a', '#3a7a2a', '#e8e0a0', '#101010', '#8ad07a'), plan: hopper({ mouth: true }) },
   Otter: { look: L(22, 14, '#8a5a34', '#6a4024', '#e8d0b0', '#101010', '#6a4024'), plan: quad({ tail: true, snout: true }) },
