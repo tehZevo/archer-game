@@ -98,19 +98,35 @@ const stars = (p: BgPaint, n: number, seed: number, cols: string[]): void =>
 const CLOUDS = (col: string, n: number, s: number, seed: number) => (p: BgPaint): void =>
   scatter(n, seed, (x, y, r) => cloud(p, x, y, Math.round(s * (0.7 + r * 0.6)), col));
 
+/** A calm sea's far layer: long swell lines and far sails. */
+const harborFar = (p: BgPaint): void => {
+  CLOUDS('#ffffff26', 5, 6, 50)(p);
+  for (let i = 0; i < 6; i++) scatter(5, 51 + i, (x, y, r) => p(x, y, '#ffffff22', 10 + r * 24, 1)); // swell glints
+  scatter(3, 52, (x, y) => { p(x, y - 8, '#f4f7fc40', 1, 8); for (let k = 0; k < 6; k++) p(x + 1, y - 8 + k, '#f4f7fc40', Math.ceil(k / 1.5), 1); p(x - 3, y, '#2e5a7a40', 9, 2); }); // far sails
+};
+/** A calm sea's mid layer: moored boats (hull, mast, furled sail). */
+const harborMid = (p: BgPaint): void => scatter(4, 53, (x, y, r) => {
+  const w = 16 + Math.round(r * 10);
+  p(x, y, '#3a5a7a50', w, 3); p(x + 2, y + 3, '#3a5a7a50', w - 4, 2);
+  p(x + w / 2, y - 20, '#3a5a7a50', 1, 20); p(x + w / 2 - 4, y - 16, '#3a5a7a50', 8, 2);
+});
+/** A riverbank's mid layer: a couple of waterfalls. */
+const riverbankMid = (p: BgPaint): void => scatter(2, 23, (x) => {
+  p(x, 0, '#7ac0e070', 12, LAYER);
+  for (let y = 0; y < LAYER; y += 7) p(x + (y * 3) % 10, y, '#ffffff70', 1, 4);
+});
+/** The observatory's mid layer: a moon, a ringed planet, and a scatter of stars. */
+const starfallMid = (p: BgPaint): void => {
+  blob(p, 60, 70, 18, '#3a3a7a90'); blob(p, 54, 64, 10, '#4a4a8a90'); // a moon
+  p(170, 190, '#d8b05080', 40, 1); blob(p, 190, 190, 9, '#8a5a3a90'); // a ringed planet
+  stars(p, 30, 37, ['#ffffffc0']);
+};
+
 export const BACKDROPS: Record<string, Backdrop> = {
   Classic: { far: CLOUDS('#ffffff14', 5, 6, 1), mid: CLOUDS('#ffffff20', 3, 10, 2) },
   Harbor: { // a calm sea: long swell lines, far sails, and moored boats' masts
-    far: (p) => {
-      CLOUDS('#ffffff26', 5, 6, 50)(p);
-      for (let i = 0; i < 6; i++) scatter(5, 51 + i, (x, y, r) => p(x, y, '#ffffff22', 10 + r * 24, 1)); // swell glints
-      scatter(3, 52, (x, y) => { p(x, y - 8, '#f4f7fc40', 1, 8); for (let k = 0; k < 6; k++) p(x + 1, y - 8 + k, '#f4f7fc40', Math.ceil(k / 1.5), 1); p(x - 3, y, '#2e5a7a40', 9, 2); }); // far sails
-    },
-    mid: (p) => scatter(4, 53, (x, y, r) => { // moored boats: hull, mast, furled sail
-      const w = 16 + Math.round(r * 10);
-      p(x, y, '#3a5a7a50', w, 3); p(x + 2, y + 3, '#3a5a7a50', w - 4, 2);
-      p(x + w / 2, y - 20, '#3a5a7a50', 1, 20); p(x + w / 2 - 4, y - 16, '#3a5a7a50', 8, 2);
-    }),
+    far: harborFar,
+    mid: harborMid,
     particles: { kind: 'glints', cols: ['#ffffff', '#bfefff'], n: 5 },
   },
   'Tide Pools': {
@@ -158,10 +174,7 @@ export const BACKDROPS: Record<string, Backdrop> = {
   },
   'Misty Riverbank': {
     far: NONE,
-    mid: (p) => scatter(2, 23, (x) => { // waterfalls
-      p(x, 0, '#7ac0e070', 12, LAYER);
-      for (let y = 0; y < LAYER; y += 7) p(x + (y * 3) % 10, y, '#ffffff70', 1, 4);
-    }),
+    mid: riverbankMid,
     particles: { kind: 'fireflies', cols: ['#6ad8f0'], n: 4 },
   },
   'Rolling Hills': {
@@ -195,11 +208,7 @@ export const BACKDROPS: Record<string, Backdrop> = {
   },
   'Starfall Observatory': {
     far: (p) => stars(p, 120, 36, ['#ffffff80', '#a8c8ff80', '#fff0b080']),
-    mid: (p) => {
-      blob(p, 60, 70, 18, '#3a3a7a90'); blob(p, 54, 64, 10, '#4a4a8a90'); // a moon
-      p(170, 190, '#d8b05080', 40, 1); blob(p, 190, 190, 9, '#8a5a3a90'); // a ringed planet
-      stars(p, 30, 37, ['#ffffffc0']);
-    },
+    mid: starfallMid,
     particles: { kind: 'meteors', cols: ['#fff0b0', '#ffffff'], n: 3 },
   },
   'Void Garden': {

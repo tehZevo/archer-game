@@ -101,44 +101,37 @@ export function generateFloor(place: Place): Floor {
   const step = 3 * TILE;     // summit to the next block's base (+0-1 tile): 2-3 tiles of headroom
   const startY = groundY - step;
 
-  let prev: Platform = ground;
-  let y = startY;
-  let summitTop: Platform = ground;
-  // the highest block's full walkable top row (not just the tile the climb
-  // ends on) — the exit portal picks a spot along it so the climb's finish varies
-  let summitTops: Platform[] = [ground];
-  for (let i = 0; i < COUNT; i++) {
-    // A rope must hang where the player can reach it: the player's centre is
-    // clamped a body half-width from the map edges and a grab reaches
-    // 6.5px, so the outermost tile column on each side is out of reach.
-    const reachable = (t: Platform, dx: number) => t.x + dx >= TILE && t.x + dx + 2 * TILE <= WORLD.w;
-    // The surface a climb hanging at cx from height y lands on: the first
-    // walkable top below it (an earlier, lower block or the ground).
-    const below = platforms.filter((p) => !p.inner);
-    const landingAt = (cx: number, y: number) => {
-      let best: Platform = ground, bestY = ground.y;
-      for (const p of below) {
-        if (cx < p.x || cx >= p.x + p.w) continue;
-        const sy = surfaceYAt(p, cx);
-        if (sy > y && sy < bestY) { best = p; bestY = sy; }
-      }
-      return { p: best, y: bestY };
-    };
-    // Never stack climbs: a column where this one's foot would meet (or
-    // overlap) the top of a climb further down reads as one long rope.
-    const stacked = (cx: number, y: number) => [...ropes, ...ladders].some((c) =>
-      Math.abs(c.x - cx) < TILE && landingAt(cx, y).y >= c.y1 - 1);
-    const hangs = (t: Platform, dx: number) => reachable(t, dx) && !stacked(t.x + dx + TILE / 2, t.y);
-    let shape: Shape, minY: number, x: number;
+  // A rope must hang where the player can reach it: the player's centre is
+  // clamped a body half-width from the map edges and a grab reaches
+  // 6.5px, so the outermost tile column on each side is out of reach.
+  const reachable = (t: Platform, dx: number) => t.x + dx >= TILE && t.x + dx + 2 * TILE <= WORLD.w;
+  // The surface a climb hanging at cx from height y lands on: the first
+  // walkable top below it (an earlier, lower block or the ground).
+  const landingAt = (cx: number, y: number) => {
+    let best: Platform = ground, bestY = ground.y;
+    for (const p of platforms) {
+      if (p.inner || cx < p.x || cx >= p.x + p.w) continue;
+      const sy = surfaceYAt(p, cx);
+      if (sy > y && sy < bestY) { best = p; bestY = sy; }
+    }
+    return { p: best, y: bestY };
+  };
+  // Never stack climbs: a column where this one's foot would meet (or
+  // overlap) the top of a climb further down reads as one long rope.
+  const stacked = (cx: number, y: number) => [...ropes, ...ladders].some((c) =>
+    Math.abs(c.x - cx) < TILE && landingAt(cx, y).y >= c.y1 - 1);
+  const hangs = (t: Platform, dx: number) => reachable(t, dx) && !stacked(t.x + dx + TILE / 2, t.y);
+
+  /** Pick a shape and place it at a reachable x near `prev`, at height `y`. */
+  const placeShape = (i: number, y: number, prev: Platform): { shape: Shape; x: number; minY: number } => {
     for (;;) {
       const kind = pick(rng, L.shapes);
       const width = intIn(rng, L.minW, L.maxW); // stack: 12-24 tiles wide (the map is 20)
-      shape = makeShape(kind, 0, y, width, chance(rng, 0.5), rng);
+      const shape = makeShape(kind, 0, y, width, chance(rng, 0.5), rng);
       // The walkable summit: flat tiles on the block's highest row (slope
       // tiles share that row's y but their surface is lower).
-      const top = shape.tiles.reduce((m, t) => Math.min(m, t.y), Infinity);
-      minY = top;
-      const summit = shape.tiles.filter((t) => t.y === top && !t.slope);
+      const minY = shape.tiles.reduce((m, t) => Math.min(m, t.y), Infinity);
+      const summit = shape.tiles.filter((t) => t.y === minY && !t.slope);
       // Place x near the previous platform. Blocks 12+ tiles wide may run off
       // either side of the map (by up to EDGE tiles) as long as 6+ columns
       // stay on screen; narrower blocks stay fully on screen. Either way a
@@ -155,35 +148,50 @@ export function generateFloor(place: Place): Floor {
         if (visible < 6 * TILE || !summit.some((t) => hangs(t, cx))) continue;
         if (best === null || Math.abs(cx - target) < Math.abs(best - target)) best = cx;
       }
-      if (best !== null) { x = best; break; }
+      if (best !== null) return { shape, x: best, minY };
     }
-    shape.tiles.forEach((t) => { t.x += x; t.block = i + 1; platforms.push(t); });
-    const tops = shape.tiles.filter((t) => t.y === minY && !t.slope && hangs(t, 0));
+  };
 
-    // Rope/ladder hangs from a summit tile, centred on it, down through its
-    // own block to the first walkable surface below. Prefer summit columns
-    // that land on a flat tile so the bottom of the rope is easy to catch.
+  /** Hang a rope/ladder from a summit tile of this block, down to the surface
+   *  below. Prefer columns that land on a flat tile so the bottom is easy to
+   *  catch. Returns the chosen summit tile (the block's "top"). */
+  const hangClimb = (tops: Platform[]): { top: Platform; pool: Platform[] } => {
     const landing = (t: Platform) => landingAt(t.x + TILE / 2, t.y);
     const flatLanding = tops.filter((t) => !landing(t).p.slope);
     const pool = flatLanding.length ? flatLanding : tops;
     const top = pick(rng, pool);
     const climb: Climbable = { x: top.x + TILE / 2, y1: top.y, y2: landing(top).y };
     if (chance(rng, 0.5)) ropes.push(climb); else ladders.push(climb);
+    return { top, pool };
+  };
 
-    if (chance(rng, 0.85)) {
-      // most platforms hold a group: 4 enemies on the shortest tops, up to 8
-      // on the longest, spread over the on-screen flat top tiles
-      const spots = shape.tiles
-        .filter((t) => !t.inner && !t.slope && t.x >= 0 && t.x + TILE <= WORLD.w)
-        .map((t) => ({ x: t.x + TILE / 2, y: t.y }));
-      if (spots.length) {
-        const xs = spots.map((s) => s.x);
-        spawns.push({
-          x: Math.round(top.x + top.w / 2), y: top.y, types: zoneTypes(), spots,
-          cap: groupSize(spots.length), minX: Math.min(...xs), maxX: Math.max(...xs), block: i + 1,
-        });
-      }
-    }
+  /** Most platforms hold a group: 4 enemies on the shortest tops, up to 8 on
+   *  the longest, spread over the on-screen flat top tiles. */
+  const spawnGroup = (shape: Shape, top: Platform, i: number): void => {
+    if (!chance(rng, 0.85)) return;
+    const spots = shape.tiles
+      .filter((t) => !t.inner && !t.slope && t.x >= 0 && t.x + TILE <= WORLD.w)
+      .map((t) => ({ x: t.x + TILE / 2, y: t.y }));
+    if (!spots.length) return;
+    const xs = spots.map((s) => s.x);
+    spawns.push({
+      x: Math.round(top.x + top.w / 2), y: top.y, types: zoneTypes(), spots,
+      cap: groupSize(spots.length), minX: Math.min(...xs), maxX: Math.max(...xs), block: i + 1,
+    });
+  };
+
+  let prev: Platform = ground;
+  let y = startY;
+  let summitTop: Platform = ground;
+  // the highest block's full walkable top row (not just the tile the climb
+  // ends on) — the exit portal picks a spot along it so the climb's finish varies
+  let summitTops: Platform[] = [ground];
+  for (let i = 0; i < COUNT; i++) {
+    const { shape, x, minY } = placeShape(i, y, prev);
+    shape.tiles.forEach((t) => { t.x += x; t.block = i + 1; platforms.push(t); });
+    const tops = shape.tiles.filter((t) => t.y === minY && !t.slope && hangs(t, 0));
+    const { top, pool } = hangClimb(tops);
+    spawnGroup(shape, top, i);
     prev = top;
     summitTop = top;
     summitTops = pool; // this block's walkable summit tiles (the last block's win)
