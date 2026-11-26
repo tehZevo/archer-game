@@ -12,6 +12,7 @@ import { confirmInput, confirmUi } from './confirm';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import { closeLinkHelp, linkHelp, linkHelpKey, openLinkHelp } from './linkhelp';
 import { openSkillEditor, skillEditor, skillEditorInput } from './skilleditor';
+import { closeSkillScreen, openSkillScreen, skillScreen, skillScreenKey } from './skillscreen';
 import type { PauseMenu } from './types';
 
 /**
@@ -33,6 +34,9 @@ export function windowInput(dt: number): boolean {
   // the skill-links help screen (H): shows each skill and what it links into
   if (linkHelp.open) { linkHelpInput(); return true; }
   if (pressed('h')) { openLinkHelp(); return true; }
+  // the skills screen (K, also from the Esc menu): a tab per job tier
+  if (skillScreen.open) { skillScreenInput(); return true; }
+  if (pressed('k')) { openSkillScreen(); return true; }
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return true; }
@@ -48,7 +52,7 @@ export function windowInput(dt: number): boolean {
 /** True while any of those windows is open (so Enter belongs to it, not the chat line). */
 export function windowOpen(): boolean {
   return shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open
-    || settingsUi.open || achUi.open || linkHelp.open || dev.open || skillEditor.open || !!game.pause;
+    || settingsUi.open || achUi.open || linkHelp.open || skillScreen.open || dev.open || skillEditor.open || !!game.pause;
 }
 
 /** Z, Enter or Space: confirm in any window. */
@@ -78,6 +82,13 @@ function achInput(): void {
 function linkHelpInput(): void {
   for (const k of ['up', 'down', 'escape'] as const) if (pressed(k)) linkHelpKey(k);
   if (pressed('h') || pressed('x')) closeLinkHelp();
+}
+
+/** The skills screen: arrows move, Z learns, Esc / K / X close. */
+function skillScreenInput(): void {
+  for (const k of ['up', 'down', 'left', 'right', 'escape'] as const) if (pressed(k)) skillScreenKey(k);
+  if (confirmed()) skillScreenKey('enter');
+  if (pressed('k') || pressed('x')) closeSkillScreen();
 }
 
 /** Dev menu: Up/Down picks a stop, Z/Enter warps there, Esc or ` closes. */
