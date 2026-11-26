@@ -55,11 +55,13 @@ const pile = (dx: number, v: number) => {
   const lying = () => ({ item: gearFor('weapon', 1), x: player.x + 50, y: ground().y, t: COIN_LIFE });
   choosePet('goldfinch'); gearDrops.push(lying()); step(Math.ceil(1 / P.STEP));
   check('a plain pet leaves gear alone', gearDrops.length === 1);
-  choosePet('sprite'); step(Math.ceil(1 / P.STEP));
+  choosePet('sprite'); toggleCustom('sprite', 'items'); step(Math.ceil(1 / P.STEP));
   check('the Leaf Sprite fetches gear', gearDrops.length === 0);
-  choosePet('puff'); step(2);
+  toggleCustom('sprite', 'items');
+  choosePet('puff'); toggleCustom('puff', 'potions'); step(2);
   wallet.hp = 2; player.hp = Math.floor(player.hpMax * 0.2); step(2);
   check('the Star Puff drinks an HP potion when you are low', wallet.hp === 1 && player.hp > player.hpMax * 0.2);
+  toggleCustom('puff', 'potions');
   choosePet('goldfinch'); player.hp = Math.floor(player.hpMax * 0.2); wallet.hp = 2; step(30);
   check('other pets do not', wallet.hp === 2);
   player.hp = player.hpMax;
