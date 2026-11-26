@@ -60,7 +60,7 @@ function tickPlayer(dt: number): void {
     player.mp = Math.min(player.mpMax, player.mp + player.mpMax * P.REGEN_FRAC);
     if (player.combatT <= 0) player.hp = Math.min(player.hpMax, player.hp + player.hpMax * P.REGEN_FRAC);
   }
-  // Electric Blitz banks its charges: one refills every 10s, and a linked
+  // Electric Blitz banks its charges: one refills every 4s, and a linked
   // skill (see skills.ts) shaves time off the charge currently filling.
   if (player.blitz.charges < P.BLITZ_MAX && (player.blitz.t += dt) >= P.BLITZ_CHARGE_T) {
     player.blitz.charges++;

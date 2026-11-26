@@ -249,7 +249,7 @@ function skyAssault(r: SkillRank): void {
 }
 
 /** Bolt Flurry: a volley of 4 green bolts, flown as one animated sprite;
- *  each hit stuns. Twin Echoes doubles the volley (a second one follows
+ *  every target takes all 4 hits, and each hit stuns. Twin Echoes doubles the volley (a second one follows
  *  the first), so the burst reads heavier while every hit still lands. */
 function shellBarrage(r: SkillRank): void {
   pose('shoot', 'S');
@@ -259,18 +259,17 @@ function shellBarrage(r: SkillRank): void {
   const shots = shotCount(r), perVolley = r.hits, volleys = Math.ceil(shots / perVolley);
   const aim = tg.length ? tg[0].x : x0 + player.face * 200;
   for (let v = 0; v < volleys; v++) {
-    // the volley's hits land one after another, spread over the targets
+    // the volley's hits land one after another, every target taking each one
     const onHit = tg.length ? (): void => {
       for (let h = v * perVolley; h < Math.min(shots, (v + 1) * perVolley); h++) {
-        const t = tg[h % tg.length];
         later((h - v * perVolley) * NUM_GAP, () => {
-          if (game.mobs.includes(t)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h + tg.length < shots });
+          for (const t of alive(tg)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h < shots - 1 });
         });
       }
     } : undefined;
-    // the echo trails the first volley, a little lower so both show
+    // the echo trails the first volley (half a volley behind), a little lower so both show
     spawnArrow(x0, y0 + v * 4, aim, tg.length > 0, onHit,
-      { speed: P.BOLT_V, sprite: 'flurry', dir: player.face, delay: v * perVolley * NUM_GAP });
+      { speed: P.BOLT_V, sprite: 'flurry', dir: player.face, delay: (v * perVolley * NUM_GAP) / 2 });
   }
 }
 

@@ -43,7 +43,7 @@ export const P = {
   RUSH_GRAB_BACK: 10, // ...and px behind, so an enemy you just passed still counts
   RUSH_HIT: 0.4,      // the slide hits each enemy once as it scoops them up, at this share of Rush Toss's damage
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
-  BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
+  BLITZ_CHARGE_T: 4,   // s to recharge one charge, its only cooldown: one charge refills at a time (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
   RUSH_HOLD: 0.34,    // s a rush holds back the links pressed during it (the slide and its strike); its animation runs on to the use time
   LINK_BUFFER: 0.5,   // s of free time a link window stays open past the animation (see linkWindow)
@@ -138,7 +138,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 10.0, use: 0.7, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   EB: { key: 'EB', upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
-       cd: 3, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,
+       cd: 0, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 4, hitsMax: 4, targets1: 6, targetsMax: 6, requires: 'W',
