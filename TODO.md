@@ -1,5 +1,4 @@
 # TODOs
-- Add an in-game (dev mode) skill timing and link editor: lets me change which skills link into which (the `linksInto` lists) and tune each skill's use/recovery times up/down in 0.1s increments, with a copy button that copies the full tweaked list to the clipboard as JSON.
 - Add a Bubble passive that reduces incoming damage by a flat 30%. (art)
 - (art) Remove sprite stretching for effects: all effects should be drawn at their natural resolution.
 - (art) Remove death animation rotation: all death animations should be unique and drawn, not transforms.

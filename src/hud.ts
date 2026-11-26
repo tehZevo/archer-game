@@ -26,6 +26,7 @@ import { drawSettings } from './settingsdraw';
 import { achUi } from './achievements';
 import { drawAchievements } from './achdraw';
 import { drawLinkHelp, linkHelp } from './linkhelp';
+import { drawSkillEditor, skillEditor } from './skilleditor';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { STATUS } from './status';
 import { modLine } from './floormods';
@@ -233,6 +234,7 @@ function drawStatusEffects(pad: number, y: number): number {
 /** The full-screen panel open over the HUD (if any), else the transient banner. */
 function drawOverlays(w: number, h: number): void {
   if (dev.open) { drawDev(); return; }
+  if (skillEditor.open) { drawSkillEditor(); return; }
   if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); if (achUi.open) drawAchievements(w, h); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }

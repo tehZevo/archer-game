@@ -109,7 +109,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
  *  staggered NUM_GAP apart, and the stack closes when the cast's last hit (the
  *  one with no `more`) lands — so the number of lines is the cast's hit count,
  *  not a time window. */
-export const NUM_GAP = 0.125, NUM_LINE = 9, NUM_MAX = 8;
+export const NUM_GAP = 0.125, NUM_LINE = 11, NUM_MAX = 8;
 export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string, more = false): DmgNum {
   const now = game.time;
   const k = m.numK ?? 0;
