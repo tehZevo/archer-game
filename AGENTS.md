@@ -37,6 +37,7 @@ Keep the suite minimal and high-value; aim to shrink it as the game stabilizes.
 - Tuning constants live in `src/config.ts` (`P`, `WORLD`, `SKILLS`, `MOB_TYPES`), not inline.
 - Debug keys: `[` levels up, `]` warps to the next floor. Esc pauses.
 - Types are declared in `src/types.ts` and imported with `import type`.
+- **TODOs** live in `TODO.md` (tracked in git). When a PR implements a todo, remove it from `TODO.md` in that same PR.
 
 ## Code style
 
