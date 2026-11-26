@@ -9,6 +9,11 @@ A vanilla-TypeScript, canvas-based vertical platformer (classic MMO-flavoured ar
 - `npm test` — bundles and runs `test/smoke.ts` then `test/mechanics.ts` under Node (headless; `src/runtime.ts` supplies canvas/audio shims). Mechanics checks are seeded and short; keep the whole run to about a second, no long fuzzing.
 - `npm run watch` — esbuild watch mode
 - `npm start` — static server on :8000
+- `npm run worktree -- <branch> [base]` — make a branch worktree in `../archer-game-wt/<branch>` with `node_modules` linked correctly
+
+## Worktrees and node_modules
+
+Do branch work in a worktree made by `npm run worktree`, not by hand. It links the worktree's `node_modules` to the main checkout's real install by absolute path. Hand-made relative links (`ln -s ../archer-game/node_modules`) get the depth wrong and end up broken or pointing at themselves. Never commit `node_modules` in any form, link or directory. If the main checkout's `node_modules` is ever a symlink, delete it and run `npm ci` there.
 
 ## Conventions
 
