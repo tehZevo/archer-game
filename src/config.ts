@@ -134,7 +134,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: P.SPIN_CD, use: 0.8, mp1: 3, mpMax: 5, dmg1: 200, dmgMax: 200, hits1: 4, hitsMax: 4, targets1: 8, targetsMax: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
   PV: { key: 'PV', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
-       cd: 0, use: 0.4, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
+       cd: 0, use: 0.2, delay: 0.4, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   R: { key: 'R', linksInto: ['Q', 'EB', 'AD'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 10.0, use: 0.7, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
