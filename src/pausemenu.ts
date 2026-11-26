@@ -8,7 +8,7 @@ import type { GearItem } from './gear';
 import { settingsTap, settingsUi } from './settings';
 import { achUi } from './achievements';
 import { text } from './font';
-import { skillIcon } from './icons';
+import { ICON, skillIcon } from './icons';
 import { fmtNum } from './util';
 
 /* ---------------- pause menu ----------------
@@ -76,9 +76,9 @@ export function drawPause(): void {
   rows.slice(top, top + PAUSE_ROWS).forEach((r, vi) => {
     const i = top + vi, y = TOP + vi * ROW, x = COLS[1].x, can = player.sp > 0 && !!r.action;
     if (m.col === 1 && m.row === i) { ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(COLS[1].x + 0.5, y - 1.5, COLS[1].w - 1, ROW); }
-    // the skill's icon stands in for the old yellow key-name label
-    if (r.slot) ctx.drawImage(skillIcon(r.key), x + 2, y - 4, 8, 8);
-    text(ctx, r.name, x + 12, y, 1, r.learned ? hi : dim, 'left');
+    // the skill's icon (full-size, matching the HUD's) stands in for the old yellow key-name label
+    if (r.slot) ctx.drawImage(skillIcon(r.key), x + 2, y - 6, ICON, ICON);
+    text(ctx, r.name, x + 16, y, 1, r.learned ? hi : dim, 'left');
     const tag = r.learned ? '' : 'NEW';
     text(ctx, can ? `${tag}+` : tag, x + COLS[1].w - 3, y, 1, can ? gold : dim, 'right');
   });
