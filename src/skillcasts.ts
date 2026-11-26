@@ -118,29 +118,8 @@ function electricBlitz(): void {
   openLink('blitz', linkWindow('EB'));
 }
 
-/** Backstep Shot (retired): hop backward (still facing forward) while the
- *  closest enemies ahead take every hit, like Twin Shot. */
-function backstepShot(r: SkillRank): void {
-  pose('shoot', 0.24);
-  sfx.shoot();
-  const face = player.face;
-  const tg = nearest(player.x + face * 64, player.y + player.h / 2, 128, 56, r.targets);
-  if (player.onGround) {
-    player.onGround = false;
-    player.vx = -face * P.BACKSTEP_VX;
-    player.vy = -P.BACKSTEP_VY;
-  }
-  game.fx.push({ type: 'muzzle', x: player.x + face * 8, y: player.y + 13, t: 0.18, face });
-  game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: -face });
-  eachShot(shotCount(r), 0, (more) => {
-    const live = alive(tg);
-    tracers(live, player.x + face * 8, player.y + 13, face);
-    live.forEach((m) => damage(m, r.dmg, { more }));
-  });
-}
-
-/** Vault Shot and Rising Arrow (retired): launch the enemies ahead and leap
- *  (backward if `back`), opening the link window for an airborne W. */
+/** Rising Arrow (retired): launch the enemies ahead and leap up with them,
+ *  opening the link window for an airborne W. */
 function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
   pose('rush', 0.34);
   sfx.jump();
@@ -156,9 +135,6 @@ function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back
   game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: dir });
   openLink('combo', linkWindow(kind));
 }
-
-/** Vault Shot: leap backward, away from the enemies it launches. */
-const vaultShot: Cast = (r) => launchLeap('VS', r, 40, 96, true, P.VAULT_VX, P.VAULT_VY);
 
 /** Rising Arrow: jump up with the enemies it launches (the same launch speed,
  *  so you climb together). */
@@ -311,5 +287,5 @@ export const CASTS: Partial<Record<SkillKey, Cast>> = {
   W: skyfallVolley, AB: skyAssault, MS: midairSpin,
   E: spikeLift, PV: plungingVolley,
   R: tempest, S: shellBarrage,
-  BS: backstepShot, VS: vaultShot, RA: risingArrow,
+  RA: risingArrow,
 };
