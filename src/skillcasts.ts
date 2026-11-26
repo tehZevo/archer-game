@@ -88,6 +88,8 @@ function airDive(r: SkillRank): void {
   endHover(); // the dive's own momentum takes over at once, no stuck dive pose
   pose('rush', P.DIVE_TIME);
   sfx.jump();
+  // yellow arrows streak down and forward ahead of her, leading the plunge
+  game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });
   player.vx = player.face * P.DIVE_VX; // the diagonal plunge starts on the press
   player.vy = P.DIVE_VY;
   startSlide(P.DIVE_TIME);
