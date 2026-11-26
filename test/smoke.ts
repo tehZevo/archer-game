@@ -81,12 +81,12 @@ check('Glide can be used again mid-air', player.casting.useT > 0 && player.onGro
   `use ${player.casting.useT.toFixed(2)}`);
 setKey('d', false);
 
-// --- 6. Twin Shot: fires and spends MP, sets cd ---
+// --- 6. Double Shot: fires and spends MP, sets cd ---
 reset();
 setKey('z', true);
 step(1 + Math.ceil(P.Z_WINDUP / P.STEP)); // the arrows fly after the bow-draw windup
-check('Twin Shot fires (muzzle flash, no projectile)', game.fx.some((f) => f.type === 'muzzle') && game.shots.length === 0);
-check('Twin Shot sets its use time', player.casting.useT > 0);
+check('Double Shot fires (muzzle flash, no projectile)', game.fx.some((f) => f.type === 'muzzle') && game.shots.length === 0);
+check('Double Shot sets its use time', player.casting.useT > 0);
 setKey('z', false);
 
 // --- 7. combat: a hitbox kills a low-hp mob and awards exp ---
@@ -122,7 +122,7 @@ tap('right'); // skills column
 const wRow = skillRows().findIndex((r) => r.key === 'W');
 for (let i = 0; i < wRow; i++) tap('down');
 tap('z');
-check('pause menu spends SP to learn Skyfall Volley', isLearned('W') && player.sp === 1);
+check('pause menu spends SP to learn Rising Arrows', isLearned('W') && player.sp === 1);
 tap('escape');
 check('esc resumes', !game.pause);
 
@@ -137,9 +137,9 @@ check('spending SP raises the skill rank', rank('Z').dmg > r0);
 check('attack keys are Z Q W E R, all bound', SKILL_BAR.map((s) => s.label).join('') === 'ZQWER' && SKILL_BAR.every((s) => s.skill));
 reset();
 check('Jump known from the start', isLearned('C'));
-check('Sky Toss learned at Lv.5', !isLearned('Q'));
+check('Rush Toss learned at Lv.5', !isLearned('Q'));
 player.ranks.W = 0;
-check('Skyfall Volley not known until picked', !isLearned('W'));
+check('Rising Arrows not known until picked', !isLearned('W'));
 
 // --- 11. portal ascends to the next floor ---
 reset();

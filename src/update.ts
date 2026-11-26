@@ -82,8 +82,8 @@ function tickPlayer(dt: number): void {
 function keyInput(): boolean {
   // F1-F7: emotes
   EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });
-  // Basic attack during Sky Toss's link window casts the link skill
-  // (Skyfall Volley, or Sky Assault once upgraded).
+  // Basic attack during Rush Toss's link window casts the link skill
+  // (Rising Arrows, or Skyward Assault once upgraded).
   const linkZ = pressed('z') && linkOpen('combo') && isLearned('W');
   if (linkZ) cast('W');
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
@@ -124,7 +124,7 @@ function tickCasting(dt: number): void {
 /** Whether the buffered skill has to keep waiting. */
 function bufferHeld(): boolean {
   const queued = player.casting.queued;
-  // a chained link waits for Sky Toss to finish (a chained Twin Shot also
+  // a chained link waits for Rush Toss to finish (a chained Double Shot also
   // waits out the slide itself), and the spin waits out the Assault's leap
   if (player.cast === 'rush' && player.castT > 0) return true;
   if (queued === 'Z' && player.rush.t > 0) return true;

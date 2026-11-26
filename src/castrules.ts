@@ -30,22 +30,22 @@ export const GRAB_THROUGH = new Set<SkillKey>(['C', 'D']);
 export const grabCancels = (): boolean =>
   player.casting.useT <= 0 || (player.casting.key !== null && GRAB_THROUGH.has(player.casting.key));
 
-/** The aerial kit you can pull out of a Sky Assault hover: each of these
+/** The aerial kit you can pull out of a Skyward Assault hover: each of these
  *  calls links.endHover, so the move starts on the press, not at the hover's
  *  end (see skills.gate). */
 export const AIR_KIT = new Set<SkillKey>(['D', 'PV', 'MS', 'AD']);
 
-/** Whether a press right now cuts a Sky Assault hover short. */
+/** Whether a press right now cuts a Skyward Assault hover short. */
 export const offHover = (kind: SkillKey): boolean =>
   player.hang.t > 0 && AIR_KIT.has(kind);
 
 /** Keys with an air form that is its own skill (its own row, rank and
- *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
+ *  cooldown): Q (Meteor Dive), W (Cyclone Sweep), E (Downpour). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };
 
 /** The cooldown slot a key uses right now: its air form's ("E.air") in the
- *  air, else its own. (Sky Assault is W's ground-only upgrade: W in the air
- *  is always Midair Spin, on the W.air slot.) */
+ *  air, else its own. (Skyward Assault is W's ground-only upgrade: W in the air
+ *  is always Cyclone Sweep, on the W.air slot.) */
 export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.climb): string {
   return airborne && AIR_FORM[key] ? `${key}.air` : key;
 }
@@ -55,7 +55,7 @@ export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.cli
  *  aerial combo. */
 export const AIR_MIN_H = (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
 
-/** Sky Assault's opening leap is still playing (a Midair Spin pressed now is
+/** Skyward Assault's opening leap is still playing (a Cyclone Sweep pressed now is
  *  buffered; once it's done the sweep fires straight out of the hover). */
 export const assaultLeaping = (): boolean =>
   player.cast === 'barrage' && player.hang.t > 0 && player.castTotal - player.castT < P.ASSAULT_LEAP;

@@ -88,7 +88,7 @@ export function collideGround(
   }
   // A grounded body also follows the surface up/down by STICK px. On a slope
   // the reach grows with horizontal speed (a 2:1 slope moves the surface half
-  // as far as x), so a fast slide or dash (Sky Toss, ~10px/frame) stays on the
+  // as far as x), so a fast slide or dash (Rush Toss, ~10px/frame) stays on the
   // ramp instead of sinking into it.
   if (!surf && o.onGround && o.vy >= 0) {
     let bestY = Infinity;

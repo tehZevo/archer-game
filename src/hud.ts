@@ -191,7 +191,7 @@ function drawHUDItems(): void {
   drawBossBar(w, h);
 
   // skill bar (top-right): a column per key (Z, Q, W, E, R), the air form
-  // (Air Dive, Midair Spin, Plunging Volley) stacked over the ground form
+  // (Meteor Dive, Cyclone Sweep, Downpour) stacked over the ground form
   const colGap = 3, rowGap = 1;
   const bx = w - SKILL_BAR.length * (ICON + colGap) + colGap - pad, by = pad;
   ctx.save();

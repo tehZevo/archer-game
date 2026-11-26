@@ -20,7 +20,7 @@ import type { SkillKey, SkillRank } from './types';
  */
 type Cast = (r: SkillRank) => void;
 
-/** Twin Shot: draw the bow (a short windup), release a volley that whips
+/** Double Shot: draw the bow (a short windup), release a volley that whips
  *  out to the closest enemies (no projectile), then follow through. */
 function twinShot(r: SkillRank): void {
   pose('shoot', P.Z_CAST);
@@ -81,7 +81,7 @@ function glide(): void {
   game.fx.push({ type: 'spirit', x: player.x + dir * 10, y: player.y + player.h / 2, t: 0.3, face: -dir });
 }
 
-/** Air Dive (Q's air form): plunge diagonally down, carrying the enemies
+/** Meteor Dive (Q's air form): plunge diagonally down, carrying the enemies
  *  under and in front of you, and roll into the ground rush on landing
  *  (see landDive). */
 function airDive(r: SkillRank): void {
@@ -106,7 +106,7 @@ function airDive(r: SkillRank): void {
   });
 }
 
-/** Sky Toss (Q on the ground): the ground rush (see rush.ts). */
+/** Rush Toss (Q on the ground): the ground rush (see rush.ts). */
 function skyToss(): void {
   groundRush(held('down'), false);
 }
@@ -140,7 +140,7 @@ function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back
  *  so you climb together). */
 const risingArrow: Cast = (r) => launchLeap('RA', r, 30, 80, false, P.RISE_VX, P.RISE_VY);
 
-/** Spike Lift (E's ground form): spikes erupt in a burst around you and throw
+/** Piercing Leap (E's ground form): spikes erupt in a burst around you and throw
  *  you into the air. */
 function spikeLift(r: SkillRank): void {
   pose('barrage', P.PLUNGE_POSE);
@@ -156,11 +156,11 @@ function spikeLift(r: SkillRank): void {
   player.vy = -Math.max(0, P.SPIKE_RISE_V - gained * 4);
   player.liftT = P.SPIKE_RISE_T * (1 - Math.min(1, gained / P.SPIKE_LIFT_H));
   player.onGround = false;
-  // the launch opens the link window, so Air Dive (Q in the air) can start on the way up
+  // the launch opens the link window, so Meteor Dive (Q in the air) can start on the way up
   openLink('combo', linkWindow('E'));
 }
 
-/** Plunging Volley (E's air form): a small upward bump (no freeze: you keep
+/** Downpour (E's air form): a small upward bump (no freeze: you keep
  *  your drift and fall right after) as arrows rain straight down into a
  *  column beneath you, hitting every enemy in it. */
 function plungingVolley(r: SkillRank): void {
@@ -180,7 +180,7 @@ function plungingVolley(r: SkillRank): void {
   eachShot(shotCount(r), 0.08, (more) => {
     alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more }));
   });
-  // a hit opens the link window, so Midair Spin follows the rain at once
+  // a hit opens the link window, so Cyclone Sweep follows the rain at once
   if (tg.length) openLink('combo', linkWindow('PV'));
   openLink('glide', linkWindow('PV')); // and into a Glide
 }
@@ -192,7 +192,7 @@ function tempest(r: SkillRank): void {
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
   // the storm links straight into Dive (Q in the air); its own window, so it
-  // doesn't also hand you the Sky Toss follow-ups
+  // doesn't also hand you the Rush Toss follow-ups
   openLink('tempest', linkWindow('R'));
   sfx.shoot();
   const mx = player.x + player.face * 8, my = player.y + 13;
@@ -204,13 +204,13 @@ function tempest(r: SkillRank): void {
   }));
 }
 
-/** Midair Spin (W's air form): a 360° sweep around you, cutting every enemy
+/** Cyclone Sweep (W's air form): a 360° sweep around you, cutting every enemy
  *  in reach several times. */
 function midairSpin(r: SkillRank): void {
   pose('shoot', P.SPIN_ANIM);
   player.vx = player.vy = 0; // the sweep holds its spot: no drifting on the jump's momentum
   player.skillPose = 'spin';
-  endHover(); // swept out of a Sky Assault hover: the spin takes over
+  endHover(); // swept out of a Skyward Assault hover: the spin takes over
   sfx.shoot();
   game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
   const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
@@ -222,11 +222,11 @@ function midairSpin(r: SkillRank): void {
   // spin-then-hit rather than both at once. (SPIN_LINK_DELAY.)
   later(P.SPIN_LINK_DELAY, () => {
     openLink('glide', linkWindow('MS')); // the spin links into a Glide...
-    openLink('volley', linkWindow('MS')); // ...and into a Plunging Volley
+    openLink('volley', linkWindow('MS')); // ...and into a Downpour
   });
 }
 
-/** Skyfall Volley (W's ground form): knock the enemies ahead into the air and
+/** Rising Arrows (W's ground form): knock the enemies ahead into the air and
  *  shoot them before they land. Q's rush gathers them up first, and its link
  *  window is what makes this available. */
 function skyfallVolley(r: SkillRank): void {
@@ -239,7 +239,7 @@ function skyfallVolley(r: SkillRank): void {
   tg.forEach((m) => damage(m, r.dmg, { launch: true, fx: 'rainHit' }));
 }
 
-/** Sky Assault: knock the enemies ahead into the air and warp straight up
+/** Skyward Assault: knock the enemies ahead into the air and warp straight up
  *  with them (no horizontal movement), hovering to strike every airborne
  *  enemy in reach for a moment before dropping with normal gravity. The
  *  strikes run on the fixed step in update (see the hang block). */
@@ -256,12 +256,12 @@ function skyAssault(r: SkillRank): void {
   game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
   player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
-  // the leap links into Midair Spin: the window stays open through the
+  // the leap links into Cyclone Sweep: the window stays open through the
   // hover, so the sweep fires out of it with no extra lag
   openLink('spin', P.BARRAGE_HANG + P.ASSAULT_SPIN_LINK);
 }
 
-/** Shell Barrage: a stream of slower green bolts; each stuns on arrival. */
+/** Bolt Flurry: a stream of slower green bolts; each stuns on arrival. */
 function shellBarrage(r: SkillRank): void {
   pose('shoot', 0.36);
   sfx.shoot();

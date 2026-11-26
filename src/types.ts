@@ -175,7 +175,7 @@ export interface Mob {
   exp: number;
   stun: number;
   atkCd: number;
-  /** >0 while launched by Sky Toss; grants the airborne damage bonus. */
+  /** >0 while launched by Rush Toss; grants the airborne damage bonus. */
   airTime: number;
   /** Set once the player attacks it; only then does it chase the player. */
   aggro: boolean;
@@ -235,7 +235,7 @@ export interface Casting {
 export interface RushState {
   /** s left of the slide (0 = not rushing); the strike lands when it ends. */
   t: number;
-  /** px of the slide covered, and the px it travels (Sky Toss vs Electric Blitz). */
+  /** px of the slide covered, and the px it travels (Rush Toss vs Electric Blitz). */
   dist: number;
   goal: number;
   /** Enemies being pushed along, at their distance ahead of the player. */
@@ -267,14 +267,14 @@ export interface Player extends Body {
   climbRush: boolean;
   /** The current skill's use time, recovery and buffered follow-up. */
   casting: Casting;
-  /** Sky Toss / Electric Blitz slide (see the rush in skills.ts). */
+  /** Rush Toss / Electric Blitz slide (see the rush in skills.ts). */
   rush: RushState;
-  /** Spike Lift: seconds left of the steady push up. */
+  /** Piercing Leap: seconds left of the steady push up. */
   liftT: number;
   /** How the current cast draws you, over its usual pose: whirling
-   *  round (Midair Spin) or gone (Tempest). Cleared by the next cast. */
+   *  round (Cyclone Sweep) or gone (Tempest). Cleared by the next cast. */
   skillPose?: 'spin' | 'vanish' | null;
-  /** Sky Assault's hover: time left, strikes left and their pacing / damage / reach. */
+  /** Skyward Assault's hover: time left, strikes left and their pacing / damage / reach. */
   hang: Hover;
   /** Seconds until the next regen tick. */
   regenT: number;
@@ -294,7 +294,7 @@ export interface Player extends Body {
   readyT: Record<string, number>;
   /** Per-slot countdown of the flash that confirms a cast (see hud.skillSlot). */
   usedT: Record<string, number>;
-  /** True while an Air Dive is in flight; the landing rolls into the rush. */
+  /** True while a Meteor Dive is in flight; the landing rolls into the rush. */
   diving: boolean;
   /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
   blitz: { charges: number; t: number };

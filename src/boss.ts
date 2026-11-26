@@ -85,7 +85,7 @@ export function spawnBoss(): void {
 
 /** Hurt the player (unless they're still flashing from the last hit). True if it landed.
  *  Hit by something at `fromX`, they're bumped a little up off the ground and back, away from it
- *  (not while climbing or hovering in Sky Assault). The attacker's level sets
+ *  (not while climbing or hovering in Skyward Assault). The attacker's level sets
  *  how often it misses (see missChance). */
 export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolean {
   if (player.invuln > 0) return false;

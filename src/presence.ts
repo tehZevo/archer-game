@@ -60,7 +60,7 @@ const runs = new WeakMap<GhostTrack, Run>();
 
 /**
  * Effects to spawn for a ghost this frame, from its pose. Each pose run fires
- * once: Sky Toss's horn of light and Sky Assault's swoosh as they begin. A
+ * once: Rush Toss's horn of light and Skyward Assault's swoosh as they begin. A
  * run is new when the pose changes or its age drops back (the same pose
  * started again). Shots don't come from the pose (back-to-back shots merge
  * into one long pose): each one arrives as its own message (see queueShot).
