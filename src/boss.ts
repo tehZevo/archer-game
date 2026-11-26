@@ -2,6 +2,7 @@ import { P, WORLD } from './config';
 import { clamp } from './util';
 import { game, logMsg, player } from './state';
 import { areaMobs } from './floor';
+import { CHASE_TURN } from './mobai';
 import { areaOf, isPathEnd, mobLevel } from './world';
 import { mobExp } from './progress';
 import { gearSoak } from './gear';
@@ -111,8 +112,15 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
   const d = player.x - m.x;
   b.t -= dt;
   switch (b.act) {
-    case 'walk':
-      m.dir = Math.sign(d) || m.dir;
+    case 'walk': {
+      // Turn at the same pace as the regular enemies (see CHASE_TURN): a beat
+      // stopped on the spot, not a snap-rotate to face the player.
+      const want = Math.sign(d) || m.dir;
+      if (want !== m.dir) {
+        m.vx = 0;
+        if ((m.turn ?? 0) < CHASE_TURN) { m.turn = (m.turn ?? 0) + dt; break; }
+        m.turn = 0; m.dir = want;
+      } else m.turn = 0;
       m.vx += (m.dir * m.spd - m.vx) * Math.min(1, 8 * dt);
       if ((b.cd -= dt) <= 0) {
         // far away: rush at you; close in: jump and slam
@@ -120,6 +128,7 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
         b.t = BOSS.WIND;
       }
       break;
+    }
     case 'windCharge':
     case 'windSlam':
       m.vx *= 0.7;
