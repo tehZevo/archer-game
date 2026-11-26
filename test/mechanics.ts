@@ -926,7 +926,7 @@ check('every archer frame is 16x24 (lying flat is 24x24)', Object.entries(GRIDS)
     `${headRows(GRIDS.prone[0])} vs ${headRows(GRIDS.idle[0].slice(0, 10))}`);
 }
 check('every networked pose has frames and a cycle rate', POSES.every((p) => GRIDS[p]?.length && POSE_FPS[p] > 0));
-check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('vanish') === POSES.length - 1 && POSES.indexOf('prone') === 7 && POSES[0] === 'idle');
+check('new poses go on the end of the networked list (older clients read them as idle)', POSES.indexOf('vanish') === 10 && POSES.indexOf('fall') === POSES.length - 1 && POSES.indexOf('prone') === 7 && POSES[0] === 'idle');
 {
   // holding Down on the ground lies you flat; Left/Right overrides it with a normal walk
   arena(1); player.x = 300; player.vx = 0; player.face = 1;
@@ -3250,7 +3250,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const mine = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t));
   check('a ghost\u2019s idle frame does not cycle with time', ghost(0) === ghost(0.4) && ghost(0) === ghost(1.2),
     `${ghost(0)} ${ghost(0.4)} ${ghost(1.2)}`);
-  check('...while your own archer keeps breathing', mine(0) !== mine(1.2));
+  check('...while your own archer keeps breathing', mine(0) !== mine(0.5));
   check('...and a climb still steps with the height climbed', poseCycle('climb', 100, 0) === poseCycle('climb', 100, 0.5)
     && poseCycle('climb', 100, 0) !== poseCycle('climb', 108, 0));
 }

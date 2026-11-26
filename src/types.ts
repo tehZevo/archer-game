@@ -322,7 +322,7 @@ export interface Player extends Body {
    *  without the flashing-sprite visual. */
   invulnQuiet: boolean;
   anim: number;
-  animState: 'idle' | 'walk' | 'jump' | 'climb' | 'prone';
+  animState: 'idle' | 'walk' | 'jump' | 'fall' | 'climb' | 'prone';
   /** Fervor stacks from linked skills. */
   fervor: number;
   fervorT: number;
