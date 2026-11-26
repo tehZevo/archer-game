@@ -52,7 +52,7 @@ import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
-import { hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
+import { BLOCK_VARIANTS, hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
 import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
 import { BACKDROPS, particlesAt } from '../src/backdrop';
 import { expToNext, killsToLevel, mobExp } from '../src/progress';
@@ -1728,6 +1728,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const vs = new Set<number>();
   for (let i = 0; i < 64; i++) vs.add(variantAt(i, 3));
   check('tile variants are 0-3, all used, and fixed per position', [...vs].every((v) => v >= 0 && v < 4) && vs.size === 4 && variantAt(5, 7) === variantAt(5, 7));
+  const bv = new Set(Array.from({ length: 128 }, (_, i) => variantAt(i, 3, 0, BLOCK_VARIANTS)));
+  check('block fills pick from all 8 variants', bv.size === BLOCK_VARIANTS && [...bv].every((v) => v < BLOCK_VARIANTS));
   check('decorations pick variants apart from the fill', [...Array(32).keys()].some((i) => variantAt(i, 0) !== variantAt(i, 0, 1)) && hash(1, 2) !== hash(2, 1));
 }
 
