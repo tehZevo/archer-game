@@ -1,67 +1,76 @@
-// A 5x7 bitmap font. Each glyph is 7 rows of 5 chars ('1' = lit pixel).
-// Drawn with fillRect so every glyph pixel is a crisp, un-antialiased block.
+import fontPng from '../assets/font.png';
 
-const G: Record<string, string[]> = {
-  ' ': ['00000','00000','00000','00000','00000','00000','00000'],
-  '%': ['11001','11010','00010','00100','01000','01011','10011'],
-  'A': ['01110','10001','10001','11111','10001','10001','10001'],
-  'B': ['11110','10001','10001','11110','10001','10001','11110'],
-  'C': ['01110','10001','10000','10000','10000','10001','01110'],
-  'D': ['11100','10010','10001','10001','10001','10010','11100'],
-  'E': ['11111','10000','10000','11110','10000','10000','11111'],
-  'F': ['11111','10000','10000','11110','10000','10000','10000'],
-  'G': ['01110','10001','10000','10111','10001','10001','01111'],
-  'H': ['10001','10001','10001','11111','10001','10001','10001'],
-  'I': ['11111','00100','00100','00100','00100','00100','11111'],
-  'J': ['00111','00010','00010','00010','00010','10010','01100'],
-  'K': ['10001','10010','10100','11000','10100','10010','10001'],
-  'L': ['10000','10000','10000','10000','10000','10000','11111'],
-  'M': ['10001','11011','10101','10101','10001','10001','10001'],
-  'N': ['10001','11001','10101','10011','10001','10001','10001'],
-  'O': ['01110','10001','10001','10001','10001','10001','01110'],
-  'P': ['11110','10001','10001','11110','10000','10000','10000'],
-  'Q': ['01110','10001','10001','10001','10101','10010','01101'],
-  'R': ['11110','10001','10001','11110','10100','10010','10001'],
-  'S': ['01111','10000','10000','01110','00001','00001','11110'],
-  'T': ['11111','00100','00100','00100','00100','00100','00100'],
-  'U': ['10001','10001','10001','10001','10001','10001','01110'],
-  'V': ['10001','10001','10001','10001','10001','01010','00100'],
-  'W': ['10001','10001','10001','10101','10101','11011','10001'],
-  'X': ['10001','10001','01010','00100','01010','10001','10001'],
-  'Y': ['10001','10001','01010','00100','00100','00100','00100'],
-  'Z': ['11111','00001','00010','00100','01000','10000','11111'],
-  '0': ['01110','10001','10011','10101','11001','10001','01110'],
-  '1': ['00100','01100','00100','00100','00100','00100','01110'],
-  '2': ['01110','10001','00001','00010','00100','01000','11111'],
-  '3': ['11111','00010','00100','00010','00001','10001','01110'],
-  '4': ['00010','00110','01010','10010','11111','00010','00010'],
-  '5': ['11111','10000','11110','00001','00001','10001','01110'],
-  '6': ['00110','01000','10000','11110','10001','10001','01110'],
-  '7': ['11111','00001','00010','00100','01000','01000','01000'],
-  '8': ['01110','10001','10001','01110','10001','10001','01110'],
-  '9': ['01110','10001','10001','01111','00001','00010','01100'],
-  '.': ['00000','00000','00000','00000','00000','01100','01100'],
-  '/': ['00001','00010','00010','00100','01000','01000','10000'],
-  ':': ['01100','01100','00000','01100','01100','00000','00000'],
-  '+': ['00000','00100','00100','11111','00100','00100','00000'],
-  '-': ['00000','00000','00000','11111','00000','00000','00000'],
-  '<': ['00010','00100','01000','10000','01000','00100','00010'],
-  '>': ['01000','00100','00010','00001','00010','00100','01000'],
-  '_': ['00000','00000','00000','00000','00000','00000','11111'],
-  '!': ['00100','00100','00100','00100','00100','00000','00100'],
-  ',': ['00000','00000','00000','00000','01100','00100','01000'],
-  "'": ['00100','00100','01000','00000','00000','00000','00000'],
-  '(': ['00010','00100','01000','01000','01000','00100','00010'],
-  ')': ['01000','00100','00010','00010','00010','00100','01000'],
-  '=': ['00000','00000','11111','00000','11111','00000','00000'],
-  '?': ['01110','10001','00001','00010','00100','00000','00100'],
-  '·': ['00000','00000','00000','01100','01100','00000','00000'],
-  '★': ['00100','00100','11111','01110','01010','10001','00000'],
-};
+/** The characters in assets/font.png, left to right: one 5x7 cell each,
+ *  white pixels on transparent. Add a glyph by widening the PNG by one cell
+ *  and appending its character here. */
+export const FONT_CHARS = "0123456789 %ABCDEFGHIJKLMNOPQRSTUVWXYZ./:+-<>_!,'()=?·★";
 
 const W = 5, H = 7, GAP = 1;
 
 export type Align = 'left' | 'center' | 'right';
+
+/** The 8 neighbours an outline is stamped at, 1px out. */
+const OUTLINE = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+
+/** Every glyph's column on the sheet. */
+const COL = new Map([...FONT_CHARS].map((ch, i) => [ch, i]));
+
+/** The font PNG, once decoded (never, headless: text just isn't drawn). */
+let png: HTMLImageElement | null = null;
+if (typeof Image !== 'undefined') {
+  const img = new Image();
+  img.onload = () => { png = img; };
+  img.src = fontPng;
+}
+
+/** The font in one colour and scale (optionally with a 1px black outline),
+ *  tinted from the PNG once, so drawing a character is a single drawImage. */
+interface Sheet { c: HTMLCanvasElement; cw: number; ch: number; pad: number }
+const sheets = new Map<string, Sheet>();
+
+function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d') as CanvasRenderingContext2D;
+  x.imageSmoothingEnabled = false;
+  return [c, x];
+}
+
+/** The PNG scaled up by `scale` and recoloured to `color`. */
+function tinted(img: HTMLImageElement, color: string, scale: number): HTMLCanvasElement {
+  const [c, x] = canvas(img.width * scale, img.height * scale);
+  x.drawImage(img, 0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = color;
+  x.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+
+function sheet(img: HTMLImageElement, color: string, scale: number, outlined: boolean): Sheet {
+  const key = `${color}|${scale}|${outlined ? 'o' : ''}`;
+  const cached = sheets.get(key);
+  if (cached) return cached;
+  const pad = outlined ? 1 : 0, gw = W * scale, gh = H * scale;
+  const [c, x] = canvas((gw + 2 * pad) * FONT_CHARS.length, gh + 2 * pad);
+  const s: Sheet = { c, cw: gw + 2 * pad, ch: gh + 2 * pad, pad };
+  const fill = tinted(img, color, scale);
+  const black = outlined ? tinted(img, '#000', scale) : null;
+  for (let i = 0; i < FONT_CHARS.length; i++) {
+    const stamp = (src: HTMLCanvasElement, dx: number, dy: number): void =>
+      x.drawImage(src, i * gw, 0, gw, gh, i * s.cw + pad + dx, pad + dy, gw, gh);
+    if (black) for (const [dx, dy] of OUTLINE) stamp(black, dx, dy);
+    stamp(fill, 0, 0);
+  }
+  sheets.set(key, s);
+  return s;
+}
+
+/** Draw one character from a sheet with its glyph's top-left at (x, y). */
+function drawGlyph(ctx: CanvasRenderingContext2D, s: Sheet, ch: string, x: number, y: number): void {
+  const i = COL.get(ch);
+  if (i === undefined || ch === ' ') return; // (an unknown character draws as a space)
+  ctx.drawImage(s.c, i * s.cw, 0, s.cw, s.ch, x - s.pad, y - s.pad, s.cw, s.ch);
+}
 
 /** Draw pixel-perfect text. scale multiplies each glyph pixel. */
 export function text(
@@ -75,19 +84,15 @@ export function text(
   gap = GAP,
 ): void {
   const s = String(str).toUpperCase();
-  const total = s.length * (W * scale + gap * scale) - gap * scale;
+  const total = textWidth(s, scale, gap);
   // round the start so glyphs land on whole pixels (odd widths centre on a half pixel)
   let ox = Math.round(align === 'center' ? x - total / 2 : align === 'right' ? x - total : x);
   y = Math.round(y);
-  ctx.fillStyle = color;
+  ctx.fillStyle = color; // (callers may draw on in the text's colour)
+  if (!png) return;
+  const sh = sheet(png, color, scale, false);
   for (const ch of s) {
-    const g = G[ch] || G[' '];
-    for (let r = 0; r < H; r++) {
-      const row = g[r];
-      for (let c = 0; c < W; c++) {
-        if (row[c] === '1') ctx.fillRect(ox + c * scale, y + r * scale, scale, scale);
-      }
-    }
+    drawGlyph(ctx, sh, ch, ox, y);
     ox += (W + gap) * scale;
   }
 }
@@ -105,9 +110,9 @@ export function textWidth(str: string, scale = 1, gap = GAP): number {
   return String(str).length * (W * scale + gap * scale) - gap * scale;
 }
 
-/** Outline text drawn glyph by glyph: each character's 1px outline is painted
- *  with its own fill, so overlapping (tight-gap) digits keep their outlines —
- *  each one sits on top of the previous, left to right. */
+/** Outline text: each character carries its own 1px black outline, drawn
+ *  right to left so overlapping (tight-gap) digits keep their outlines, each
+ *  one sitting on top of the one to its right. */
 export function outlinedText(
   ctx: CanvasRenderingContext2D,
   str: string,
@@ -118,31 +123,15 @@ export function outlinedText(
   gap = GAP,
 ): void {
   const s = String(str).toUpperCase();
-  const total = textWidth(s, scale, gap);
+  const step = (W + gap) * scale;
+  const left = Math.round(x - textWidth(s, scale, gap) / 2);
   y = Math.round(y);
-  // draw right-to-left so the leftmost glyph sits on top of its neighbors
-  let ox = Math.round(x - total / 2) + (s.length - 1) * (W + gap) * scale;
-  for (const ch of [...s].reverse()) {
-    const g = G[ch] || G[' '];
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-      ctx.fillStyle = '#000';
-      for (let r = 0; r < H; r++) {
-        const row = g[r];
-        for (let c = 0; c < W; c++) {
-          if (row[c] === '1') ctx.fillRect(ox + dx + c * scale, y + dy + r * scale, scale, scale);
-        }
-      }
-    }
-    ctx.fillStyle = color;
-    for (let r = 0; r < H; r++) {
-      const row = g[r];
-      for (let c = 0; c < W; c++) {
-        if (row[c] === '1') ctx.fillRect(ox + c * scale, y + r * scale, scale, scale);
-      }
-    }
-    ox -= (W + gap) * scale;
-  }
+  ctx.fillStyle = color;
+  if (!png) return;
+  const sh = sheet(png, color, scale, true);
+  const chars = [...s];
+  for (let i = chars.length - 1; i >= 0; i--) drawGlyph(ctx, sh, chars[i], left + i * step, y);
 }
 
 /** Whether the font can draw a character (lower case counts: text() upper-cases). */
-export const hasGlyph = (ch: string): boolean => ch.toUpperCase() in G;
+export const hasGlyph = (ch: string): boolean => COL.has(ch.toUpperCase());

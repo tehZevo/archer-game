@@ -16,7 +16,8 @@ const climb = (n: number): Place => { let p: Place = START; for (let i = 1; i < 
 import { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/config';
 import { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
-import { textWidth } from '../src/font';
+import { FONT_CHARS, textWidth } from '../src/font';
+import fontPng from '../assets/font.png';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
 import { CHASE_TURN } from '../src/mobai';
@@ -2905,6 +2906,13 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   const missing = (Object.keys(SKILLS) as SkillKey[]).filter((k) => !SKILLS[k].passive && !CASTS[k]);
   check('every active skill has a cast', missing.length === 0, missing.join(','));
+}
+
+// --- the font PNG has one 5x7 cell per character in FONT_CHARS
+{
+  const png = Uint8Array.from(atob(fontPng.split(',')[1]), (c) => c.charCodeAt(0));
+  const u32 = (o: number): number => ((png[o] << 24) | (png[o + 1] << 16) | (png[o + 2] << 8) | png[o + 3]) >>> 0;
+  check('font.png is one 5x7 cell per character', u32(16) === [...FONT_CHARS].length * 5 && u32(20) === 7, `${u32(16)}x${u32(20)}`);
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
