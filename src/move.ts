@@ -1,7 +1,7 @@
 import { FX_DUR, P, WORLD } from './config';
 import { game, player } from './state';
 import { held, pressed } from './input';
-import { catchClimbable, collideGround, integrate, surfaceBetween } from './physics';
+import { catchClimbable, collideGround, integrate, surfaceAt, surfaceBetween } from './physics';
 import { damage } from './combat';
 import { passiveBonus } from './progress';
 import { sfx } from './audio';
@@ -11,6 +11,7 @@ import { clamp } from './util';
 import { barrageTargets } from './skills';
 import { landDive } from './rush';
 import { openLink } from './links';
+import { setPose } from './skillfx';
 
 /** Countdown to Acrobatics's next rising-streak effect. */
 let climbFxT = 0;
@@ -107,6 +108,10 @@ function hover(dt: number): void {
 /** Walking, jumping and falling: steer, apply the skills' pushes, integrate
  *  and collide, then catch a climbable or pick the animation. */
 function walk(dt: number, locked: boolean): void {
+  // Jump is movement, like walking: it reads the key directly, fires on the
+  // ground whenever a skill's use time isn't locking movement, and is never
+  // buffered. Holding it re-jumps on every landing.
+  if (!locked && player.onGround && held('c')) jump();
   // holding Down on the ground lies you flat, but Left/Right wins: you
   // stand straight up and walk, and lie back down when you let go
   const walking = !locked && held('left') !== held('right');
@@ -148,6 +153,29 @@ function steer(dt: number, locked: boolean): void {
     const a = (target !== 0 ? P.ACCEL : P.FRICTION) * grip() * dt;
     player.vx += clamp(target - player.vx, -a, a);
   }
+}
+
+/** s of the jump's takeoff pose. */
+const JUMP_POSE = 0.16;
+
+/** Jump. Down + Jump drops through the platform underfoot (not the ground
+ *  slab): a small hop, then fall; that whole block is ignored until the
+ *  player lands on something else. */
+function jump(): void {
+  setPose('jump', JUMP_POSE);
+  sfx.jump();
+  player.skillPose = null; // a jump ends the last cast's spin / vanish pose
+  const under = held('down') ? surfaceAt(player.x, player.y + player.h, player.w) : null;
+  player.onGround = false;
+  if (under && !under.ground && under.block !== undefined) {
+    player.dropBlock = under.block;
+    player.dropY = player.y + player.h;
+    player.vy = -P.DROP_HOP_V;
+    return;
+  }
+  player.vy = -P.JUMP_V;
+  if (held('left'))  { player.vx = -P.JUMP_H; player.face = -1; }
+  if (held('right')) { player.vx =  P.JUMP_H; player.face =  1; }
 }
 
 /** Skills that push the player around while they play. */

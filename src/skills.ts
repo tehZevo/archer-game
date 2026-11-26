@@ -81,9 +81,8 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   const busy = player.casting.useT > 0 || player.casting.recoverT > 0;
   if (busy && !linked && !chained && !offHover(kind)) return buffer(key);
 
-  // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
-  if (player.climb && kind !== 'C' && kind !== 'D') return null;
-  if (kind === 'C' && (airborne || player.climb)) return null;
+  // Attack skills need both hands on the bow: on a ladder only Glide works.
+  if (player.climb && kind !== 'D') return null;
   if (kind === 'D' && !airborne) return null;
   if (kind === 'RA' && !player.onGround) return null;
   return { linked, chained };
@@ -95,14 +94,11 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.usedT[slot] = USE_FLASH; // the bar flashes the key you just pressed
   player.mp -= r.mp;
   player.cd[slot] = player.cdMax[slot] = SKILLS[kind].cd;
-  // Jump has no animation of its own; Glide commits you for its use time.
-  if (kind !== 'C') {
-    player.casting.key = kind; // the use time belongs to this skill (see castrules)
-    player.casting.useT = useTime(kind);
-    player.casting.recoverT = delayTime(kind);
-    player.casting.freeze = FREEZE_CAST.has(kind);
-    player.combatT = P.COMBAT_TIME;
-  }
+  player.casting.key = kind; // the use time belongs to this skill (see castrules)
+  player.casting.useT = useTime(kind);
+  player.casting.recoverT = delayTime(kind);
+  player.casting.freeze = FREEZE_CAST.has(kind);
+  player.combatT = P.COMBAT_TIME;
   player.liftT = 0; // any other skill ends a Piercing Leap's push (Piercing Leap starts a new one)
   player.skillPose = null; // the spin / vanish of the last cast is over
   if (!linked) return;

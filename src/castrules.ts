@@ -35,7 +35,7 @@ export const linkWindow = (kind: SkillKey): number => useTime(kind) + delayTime(
 /** Movement skills a rope/ladder grab cuts short: grabbing the climb is the
  *  next move, so it doesn't wait out the Glide's use time the way an attack's
  *  animation would. (Jump already frees you — see move.climb.) */
-export const GRAB_THROUGH = new Set<SkillKey>(['C', 'D']);
+export const GRAB_THROUGH = new Set<SkillKey>(['D']);
 
 /** Whether a climbable can be grabbed right now: out of any use time, or in
  *  one belonging to a movement skill. */

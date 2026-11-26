@@ -59,19 +59,6 @@ const GLYPHS: Record<SkillKey, string[]> = {
     '..eeE.....',
     'eeeeeE....',
   ],
-  // Jump: a boot springing up
-  C: [
-    '....a.....',
-    '...aaa....',
-    '..a.a.a...',
-    '....a.....',
-    '..........',
-    '...sss....',
-    '...bbb....',
-    '...bbbbb..',
-    '..bbbbbbb.',
-    '.aa.aa.aa.',
-  ],
   // Glide: a feather with a swoosh
   D: [
     '.......xx.',

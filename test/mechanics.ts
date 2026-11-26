@@ -97,7 +97,7 @@ function arena(level = 1, x = 100): void {
   release();
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
   player.level = level; player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats();
-  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'C', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
+  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.casting.useT = 0; player.casting.recoverT = 0; player.casting.freeze = 0; player.cast = null; player.castT = 0; player.casting.queued = null; player.hang.t = 0;
@@ -396,7 +396,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   player.ranks.Z = 3; player.sp = 1;
   spendSkill('S');
   check('upgrading Double Shot to Bolt Flurry starts at rank 1', activeSkill('Z').key === 'S' && rank('Z').level === 1, `rank ${rank('Z').level}`);
-  check('movement skills are never offered for ranks', !skillRows().some((r) => (r.key === 'C' || r.key === 'D') && r.action));
+  check('movement skills are never offered for ranks', !skillRows().some((r) => r.key === 'D' && r.action));
 }
 
 // --- an upgrade needs its base skill maxed ---
@@ -1565,7 +1565,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 
 {
   // Glide and the climb rush are bought with SP, not given
-  check('a new archer has Double Shot and Jump free, Glide not yet', DEFS.D.learn === true && startsLearned('Z') && startsLearned('C') && !startsLearned('D'));
+  check('a new archer has Double Shot free, Glide not yet', DEFS.D.learn === true && startsLearned('Z') && !startsLearned('D'));
   arena(1); player.ranks.D = 0; player.sp = 1;
   check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'D' && r.rank === 0 && !!r.action) && spendSkill('D') && player.ranks.D === 1);
   check('Acrobatics opens at Lv.10', DEFS.AC.minLevel === 10 && !skillRows().some((r) => r.key === 'AC'));
@@ -2541,7 +2541,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // Aerial skills link into Glide: pressed while the cast is still going,
   // D fires on the spot (no use-time wait)
-  arena(20); player.ranks.C = 1; player.ranks.D = 1; player.ranks.E = 1; player.ranks.PV = 1;
+  arena(20); player.ranks.D = 1; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(100);
   tap('c'); step(8);
   tap('e');
@@ -2551,7 +2551,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 {
   // ...and so does the Cyclone Sweep
-  arena(20); player.ranks.C = 1; player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
   dummy(150);
   tap('c'); step(8);
   tap('w'); step(13); // the sweep plays, then its window opens
@@ -3071,7 +3071,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 {
   // The sweep lands before the linked skill starts: the spin's window opens a
   // beat after the cast, and a press inside that beat is buffered, not lost.
-  arena(20); player.ranks.C = 1; player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
   dummy(150);
   tap('c'); step(8);
   tap('w');
@@ -3215,6 +3215,22 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...while your own archer keeps breathing', mine(0) !== mine(1.2));
   check('...and a climb still steps with the height climbed', poseCycle('climb', 100, 0) === poseCycle('climb', 100, 0.5)
     && poseCycle('climb', 100, 0) !== poseCycle('climb', 108, 0));
+}
+{
+  // Jump is movement, not a skill: a press during a skill's use time is
+  // dropped (never buffered), and the first free frame jumps at once.
+  arena(20);
+  dummy(150);
+  tap('z');
+  check('Double Shot locks movement for its use time', player.casting.useT > 0);
+  tap('c');
+  check('a jump pressed during the use time does nothing', player.onGround && player.casting.queued === null,
+    `onGround ${player.onGround} queued ${player.casting.queued}`);
+  while (player.casting.useT > 0) step(1);
+  step(2);
+  check('...and is not buffered to fire once it ends', player.onGround);
+  tap('c');
+  check('once movement is free, Jump fires on the press', !player.onGround && player.vy < 0, `vy ${player.vy.toFixed(0)}`);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
