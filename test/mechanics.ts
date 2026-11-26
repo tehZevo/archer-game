@@ -31,7 +31,7 @@ import { CAM, TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { cdSlot, delayTime, linkWindow } from '../src/castrules';
+import { cdSlot, delayTime, linkWindow, rushHolding, useTime } from '../src/castrules';
 import { CASTS } from '../src/skillcasts';
 import { MOB_SOUNDS } from '../src/audio';
 import { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
@@ -212,7 +212,8 @@ function dummy(x: number, hp = 1e6): Mob {
   step(5);
   check('Double Shot: nothing lands during the bow-draw windup', duringDraw);
   check('Double Shot: first hit lands on release', firstHit);
-  check('Double Shot: the whole animation is longer than before (0.24s)', P.Z_CAST > 0.35);
+  check('Double Shot: the animation lasts its use time', Math.abs(player.castTotal - useTime('Z')) < 1e-9,
+    `pose ${player.castTotal.toFixed(2)} use ${useTime('Z').toFixed(2)}`);
   check('Double Shot: closest two take both hits, the third none', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 && far.hp === 1e6);
 }
 
@@ -558,7 +559,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'shoot') fired = i; }
   check('...and fires as soon as the slide ends, with no use-time wait', fired >= 0 && player.rush.t <= 0, `after ${fired} frames`);
   arena(20); player.ranks.Q = 1; player.ranks.W = 0;
-  tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || player.cast === 'rush'); i++) step(1);
+  tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || rushHolding()); i++) step(1);
   check('right after the rush, Z fires at once too', player.casting.useT > 0 && (tap('z'), player.cast === 'shoot'));
   // the chain skips the ending lag once: a second Z right after is a fresh
   // shot (its own use time), not a free extra use while the window is open
@@ -3038,11 +3039,14 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the sweep hits on the cast', player.cast === 'shoot' && game.mobs[0].hp < 1e6, `hp ${game.mobs[0].hp}`);
   check('...and its link windows start shut', player.links.glide === 0 && player.links.volley === 0,
     `glide ${player.links.glide.toFixed(2)} volley ${player.links.volley.toFixed(2)}`);
-  check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > P.SPIN_ANIM - 0.1,
-    `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${P.SPIN_ANIM}`);
+  check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > useTime('MS') - 0.4,
+    `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${useTime('MS')}`);
   tap('d');
   check('a Glide pressed in the gap is buffered, not lost', player.casting.queued === 'D', `queued ${player.casting.queued}`);
-  step(18); // past SPIN_LINK_DELAY
+  let wait = 0;
+  while (player.casting.queued === 'D' && wait < 30) { step(1); wait++; }
+  check('...and it fires as soon as the window opens, mid-sweep', Math.abs(wait * P.STEP - P.SPIN_LINK_DELAY) < 0.1,
+    `fired after ${(wait * P.STEP).toFixed(2)}s, window at ${P.SPIN_LINK_DELAY}s`);
   check('...and it fires once the window opens', player.cast === 'jump' && player.casting.useT > 0,
     `cast ${player.cast} useT ${player.casting.useT.toFixed(2)}`);
 }

@@ -59,5 +59,13 @@ export function tickLinks(dt: number): void {
 /** The windows that let a buffered skill fire past the current one's recovery. */
 export const bufferWindowOpen = (): boolean => linkOpen('combo') || linkOpen('blitz') || linkOpen('spin');
 
+/** Whether skill `kind` (resolved to its air form when airborne) has its own
+ *  link window open, so a press of it buffered during the last cast can fire
+ *  now rather than wait for that cast to finish. */
+export const ownWindowOpen = (kind: SkillKey): boolean => {
+  const own = LINKS_INTO[kind];
+  return own !== undefined && linkOpen(own);
+};
+
 /** End a Skyward Assault hover (a dive, glide, spin or volley cutting it short). */
 export function endHover(): void { player.hang.t = 0; player.hang.hits = 0; }

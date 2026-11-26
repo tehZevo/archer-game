@@ -247,15 +247,13 @@ function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pos
   if (pose === 'spin' || pose === 'dive') {
     // turned about the middle of the body: a whole turn through the spin,
     // or pitched head-first down the dive
-    const turn = pose === 'dive' ? DIVE_PITCH : Math.min(1, (since ?? 0) / SPIN_TURN_T) * Math.PI * 2;
+    const turn = pose === 'dive' ? DIVE_PITCH : Math.min(1, (since ?? 0) / FX_DUR.spin) * Math.PI * 2;
     ctx.translate(0, -ARCHER_H / 2); ctx.rotate(turn); ctx.translate(0, ARCHER_H / 2);
   }
   ctx.drawImage(img, -img.width / 2, -ARCHER_H);
   ctx.restore();
 }
 
-/** The Cyclone Sweep's whole turn takes this long, s (its cast time). */
-const SPIN_TURN_T = P.SPIN_ANIM;
 /** How far the Meteor Dive pitches you head-down, radians. */
 const DIVE_PITCH = 0.8;
 /** Tempest: you blink out, stay gone while the sweep goes round, and

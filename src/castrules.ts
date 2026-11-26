@@ -15,6 +15,13 @@ export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DE
  *  rather than only locking out movement input. */
 export const FREEZE_CAST = new Set<SkillKey>(['R']);
 
+/** Whether a rush (or the Meteor Dive that borrows its pose) is still in its
+ *  slide-and-strike phase, holding back links pressed during it. This is a
+ *  gameplay window, not the animation: the rush pose plays on for the whole
+ *  use time, but a link fires once the strike has landed. */
+export const rushHolding = (): boolean =>
+  player.cast === 'rush' && player.castT > 0 && (player.diving || player.castTotal - player.castT < P.RUSH_HOLD);
+
 /** The link window a skill opens: its whole animation, plus a beat of free
  *  time (LINK_BUFFER) before the linked skill's animation starts. Scales with
  *  Haste, since use/delay do. */

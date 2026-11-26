@@ -83,7 +83,7 @@ export function endRush(): void {
  * charge (`blitz`). Opens the link window.
  */
 export function groundRush(inPlace: boolean, blitz: boolean): void {
-  pose('rush', 0.34);
+  pose('rush', blitz ? 'EB' : 'Q'); // the Meteor Dive's landing borrows Rush Toss's
   sfx.shoot();
   const face = player.face;
   rushStrike = (): void => {
