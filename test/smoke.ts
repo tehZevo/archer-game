@@ -6,7 +6,7 @@ import { game, player, gainExp, gotoPlace } from '../src/state';
 import { nextPlace, placeKey, START } from '../src/world';
 import { setKey, clearPressed } from '../src/input';
 import { update } from '../src/update';
-import { ICON_GLYPHS } from '../src/icons';
+import { GLYPH, ICON_GLYPHS } from '../src/icons';
 import { SKILLS } from '../src/config';
 import { rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
 
@@ -161,11 +161,11 @@ step(1);
 check('town portal leads on to the next area', placeKey(game.floor.place) === 'shore-1');
 setKey('up', false);
 
-// every skill (bases, upgrades, passives) has its own 14x14 icon glyph
+// every skill (bases, upgrades, passives) has its own icon glyph
 {
   const keys = Object.keys(SKILLS) as (keyof typeof ICON_GLYPHS)[];
   check('every skill has an icon', keys.every((k) => ICON_GLYPHS[k]));
-  check('icon glyphs are 14x14', Object.values(ICON_GLYPHS).every((g) => g.length === 14 && g.every((r) => r.length === 14)));
+  check(`icon glyphs are ${GLYPH}x${GLYPH}`, Object.values(ICON_GLYPHS).every((g) => g.length === GLYPH && g.every((r) => r.length === GLYPH)));
   const flat = Object.values(ICON_GLYPHS).map((g) => g.join(''));
   check('icons are all distinct', new Set(flat).size === flat.length);
 }

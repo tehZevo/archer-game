@@ -3,7 +3,7 @@ import { confirmUi, drawConfirm } from './confirm';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
 import { P, SKILL_BAR } from './config';
-import { cdSlot } from './castrules';
+import { AIR_FORM } from './castrules';
 import { READY_FLASH } from './state';
 import { placeName } from './world';
 import { critChance, critMult, critOverflowPoints } from './combat';
@@ -14,7 +14,7 @@ import { menu } from './menu';
 import { drawMenu } from './menudraw';
 import { drawMinimap } from './minimapdraw';
 import { boost, waveRate } from './boost';
-import { skillIcon } from './icons';
+import { ICON, skillIcon } from './icons';
 import { activeSkill, expBar, isLearned, skillRows, PAUSE_ROWS, pauseScroll, STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './windows';
 import { armorSoak, bag, gear, weaponBonus } from './gear';
@@ -28,7 +28,6 @@ import { drawSettings } from './settingsdraw';
 import { achUi } from './achievements';
 import { drawAchievements } from './achdraw';
 import { chat, logLines, wrap as wrapChat } from './chat';
-import { keyName } from './input';
 import { STATUS } from './status';
 import { modLine } from './floormods';
 import { text, textWidth } from './font';
@@ -71,14 +70,45 @@ function readyGlow(x: number, y: number, t: number): void {
   ctx.globalAlpha = k;
   ctx.strokeStyle = '#ffd166';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x - 1.5, y - 1.5, 19, 19);
+  ctx.strokeRect(x - 1.5, y - 1.5, ICON + 3, ICON + 3);
   // a four-point spark at the top-right corner
-  const sx = x + 16, sy = y - 1, r = 2 + 3 * k;
+  const sx = x + ICON, sy = y - 1, r = 2 + 3 * k;
   ctx.fillStyle = '#ffe9a8';
   ctx.fillRect(sx - 1, sy - r, 2, r * 2 + 1);
   ctx.fillRect(sx - r, sy - 1, r * 2 + 1, 2);
   ctx.restore();
 }
+/** One skill-bar icon: dim until learned, a dark overlay over the part
+ *  still cooling down, and the flash as it comes off cooldown. `cs` is its
+ *  cooldown slot (an air form cools down on "<key>.air"). */
+function skillSlot(k: SkillKey, cs: string, x: number, y: number): void {
+  const s = activeSkill(k);
+  const learned = isLearned(k);
+  let frac = Math.min(1, (player.cd[cs] || 0) / (player.cdMax[cs] || 1));
+  // Electric Blitz banks charges rather than cooling down: with none left,
+  // the recharge shows like a cooldown
+  if (s.key === 'EB' && player.blitz.charges <= 0) frac = 1 - player.blitz.t / P.BLITZ_CHARGE_T;
+  ctx.globalAlpha = learned ? 1 : 0.4;
+  ctx.drawImage(skillIcon(s.key), x, y);
+  ctx.globalAlpha = 1;
+  if (!learned) return;
+  if (frac > 0) { ctx.fillStyle = '#000a'; ctx.fillRect(x, y, ICON, Math.ceil(ICON * frac)); }
+  // ...and how many are in the bank (a lit pip each), with the next one
+  // filling in as a thin line under them
+  if (s.key === 'EB') {
+    for (let c = 0; c < P.BLITZ_MAX; c++) {
+      ctx.fillStyle = c < player.blitz.charges ? '#6fd3ff' : '#0007';
+      ctx.fillRect(x + 1 + c * 3, y + ICON - 3, 2, 2);
+    }
+    if (player.blitz.charges < P.BLITZ_MAX) {
+      ctx.fillStyle = '#6fd3ff';
+      ctx.fillRect(x + 1, y + ICON - 1, Math.round((ICON - 2) * player.blitz.t / P.BLITZ_CHARGE_T), 1);
+    }
+  }
+  // the flash that plays as the cooldown runs out, so you know you can press it
+  if ((player.readyT[cs] ?? 0) > 0) readyGlow(x, y, player.readyT[cs]);
+}
+
 function drawHUD(): void {
   hudShadow(true);
   try { drawHUDItems(); } finally { hudShadow(false); }
@@ -143,55 +173,17 @@ function drawHUDItems(): void {
   }
   drawBossBar(w, h);
 
-  // skill bar (top-right): Z, Q, W, E, R as 16x16 icons, no panel background
-  const n = SKILL_BAR.length, sw = 16, gap = 5;
-  const total = n * sw + (n - 1) * gap;
-  const bx = w - total - pad, by = pad;
+  // skill bar (top-right): a column per key (Z, Q, W, E, R), the air form
+  // (Air Dive, Midair Spin, Plunging Volley) stacked over the ground form
+  const colGap = 3, rowGap = 1;
+  const bx = w - SKILL_BAR.length * (ICON + colGap) + colGap - pad, by = pad;
   ctx.save();
   SKILL_BAR.forEach((slot, i) => {
-    const x = bx + i * (sw + gap);
-    if (!slot.skill) {
-      // empty slot: a dim frame with its key
-      ctx.fillStyle = '#0006'; ctx.fillRect(x, by, sw, 16);
-      ctx.strokeStyle = '#4a5c7a'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, by + 0.5, sw - 1, 15);
-      text(ctx, keyName(slot.label), x + 1, by + 1, 1, '#4a5c7a', 'left');
-      return;
-    }
-    const k: SkillKey = slot.skill;
-    const s = activeSkill(k);
-    const learned = isLearned(k);
-    // the bar shows the form the key would fire right now (its air form in the air)
-    const cs = cdSlot(k);
-    let cd = player.cd[cs] || 0, frac = Math.min(1, cd / (player.cdMax[cs] || cd || 1));
-    // Electric Blitz banks charges rather than cooling down: with none left,
-    // the recharge shows like a cooldown
-    if (s.key === 'EB' && cs === 'Q' && player.blitz.charges <= 0) {
-      cd = P.BLITZ_CHARGE_T - player.blitz.t; frac = cd / P.BLITZ_CHARGE_T;
-    }
-    ctx.globalAlpha = learned ? 1 : 0.4;
-    ctx.drawImage(skillIcon(s.key), x, by, 16, 16);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#0009'; ctx.fillRect(x, by, 7, 7);
-    text(ctx, keyName(slot.label), x + 1, by + 1, 1, learned ? '#ffd166' : '#4a5c7a', 'left');
-    if (learned && frac > 0) {
-      ctx.fillStyle = '#000a';
-      ctx.fillRect(x, by, sw, 16 * frac);
-      text(ctx, cd.toFixed(1), x + sw / 2, by + 5, 1, '#fff', 'center');
-    }
-    // ...and how many are in the bank (a lit pip each), with the next one
-    // filling in as a thin line under them
-    if (learned && s.key === 'EB') {
-      for (let c = 0; c < P.BLITZ_MAX; c++) {
-        ctx.fillStyle = c < player.blitz.charges ? '#6fd3ff' : '#0007';
-        ctx.fillRect(x + 1 + c * 4, by + 12, 3, 3);
-      }
-      if (player.blitz.charges < P.BLITZ_MAX) {
-        ctx.fillStyle = '#6fd3ff';
-        ctx.fillRect(x + 1, by + 15, Math.round(14 * player.blitz.t / P.BLITZ_CHARGE_T), 1);
-      }
-    }
-    // the flash that plays as the cooldown runs out, so you know you can press it
-    if (learned && (player.readyT[cs] ?? 0) > 0) readyGlow(x, by, player.readyT[cs]);
+    if (!slot.skill) return;
+    const x = bx + i * (ICON + colGap);
+    const air = AIR_FORM[slot.skill];
+    if (air) skillSlot(air, `${slot.skill}.air`, x, by);
+    skillSlot(slot.skill, slot.skill, x, by + ICON + rowGap);
   });
   ctx.restore();
   drawMinimap(); // under the skill bar
