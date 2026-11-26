@@ -1,5 +1,6 @@
 // A 5x7 bitmap font. Each glyph is 7 rows of 5 chars ('1' = lit pixel).
-// Drawn with fillRect so every glyph pixel is a crisp, un-antialiased block.
+// Each colour/scale gets a baked sheet of every glyph (see sheet), so a
+// character is one drawImage of crisp, un-antialiased blocks.
 
 const G: Record<string, string[]> = {
   ' ': ['00000','00000','00000','00000','00000','00000','00000'],
@@ -63,6 +64,55 @@ const W = 5, H = 7, GAP = 1;
 
 export type Align = 'left' | 'center' | 'right';
 
+/** The 8 neighbours an outline is stamped at, 1px out. */
+const OUTLINE = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+
+/** Every glyph's column on a sheet. */
+const CHARS = Object.keys(G);
+const COL = new Map(CHARS.map((ch, i) => [ch, i]));
+
+/** A tileset of every glyph in one colour and scale (optionally outlined),
+ *  painted once, so drawing a character is a single drawImage. */
+interface Sheet { c: HTMLCanvasElement; cw: number; ch: number; pad: number }
+const sheets = new Map<string, Sheet>();
+
+/** Paint one glyph's lit pixels as `scale`-sized blocks. */
+function paintGlyph(ctx: CanvasRenderingContext2D, g: string[], x: number, y: number, scale: number): void {
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      if (g[r][c] === '1') ctx.fillRect(x + c * scale, y + r * scale, scale, scale);
+    }
+  }
+}
+
+function sheet(color: string, scale: number, outlined: boolean): Sheet {
+  const key = `${color}|${scale}|${outlined ? 'o' : ''}`;
+  const cached = sheets.get(key);
+  if (cached) return cached;
+  const pad = outlined ? 1 : 0;
+  const s: Sheet = { c: document.createElement('canvas'), cw: W * scale + 2 * pad, ch: H * scale + 2 * pad, pad };
+  s.c.width = s.cw * CHARS.length; s.c.height = s.ch;
+  const x = s.c.getContext('2d') as CanvasRenderingContext2D;
+  CHARS.forEach((k, i) => {
+    const ox = i * s.cw + pad;
+    if (outlined) {
+      x.fillStyle = '#000';
+      for (const [dx, dy] of OUTLINE) paintGlyph(x, G[k], ox + dx, pad + dy, scale);
+    }
+    x.fillStyle = color;
+    paintGlyph(x, G[k], ox, pad, scale);
+  });
+  sheets.set(key, s);
+  return s;
+}
+
+/** Draw one character from a sheet with its glyph's top-left at (x, y). */
+function drawGlyph(ctx: CanvasRenderingContext2D, s: Sheet, ch: string, x: number, y: number): void {
+  const i = COL.get(ch);
+  if (i === undefined || ch === ' ') return; // (an unknown character draws as a space)
+  ctx.drawImage(s.c, i * s.cw, 0, s.cw, s.ch, x - s.pad, y - s.pad, s.cw, s.ch);
+}
+
 /** Draw pixel-perfect text. scale multiplies each glyph pixel. */
 export function text(
   ctx: CanvasRenderingContext2D,
@@ -75,19 +125,14 @@ export function text(
   gap = GAP,
 ): void {
   const s = String(str).toUpperCase();
-  const total = s.length * (W * scale + gap * scale) - gap * scale;
+  const total = textWidth(s, scale, gap);
   // round the start so glyphs land on whole pixels (odd widths centre on a half pixel)
   let ox = Math.round(align === 'center' ? x - total / 2 : align === 'right' ? x - total : x);
   y = Math.round(y);
-  ctx.fillStyle = color;
+  ctx.fillStyle = color; // (callers may draw on in the text's colour)
+  const sh = sheet(color, scale, false);
   for (const ch of s) {
-    const g = G[ch] || G[' '];
-    for (let r = 0; r < H; r++) {
-      const row = g[r];
-      for (let c = 0; c < W; c++) {
-        if (row[c] === '1') ctx.fillRect(ox + c * scale, y + r * scale, scale, scale);
-      }
-    }
+    drawGlyph(ctx, sh, ch, ox, y);
     ox += (W + gap) * scale;
   }
 }
@@ -105,9 +150,9 @@ export function textWidth(str: string, scale = 1, gap = GAP): number {
   return String(str).length * (W * scale + gap * scale) - gap * scale;
 }
 
-/** Outline text drawn glyph by glyph: each character's 1px outline is painted
- *  with its own fill, so overlapping (tight-gap) digits keep their outlines —
- *  each one sits on top of the previous, left to right. */
+/** Outline text: each character carries its own 1px black outline, drawn
+ *  right to left so overlapping (tight-gap) digits keep their outlines, each
+ *  one sitting on top of the one to its right. */
 export function outlinedText(
   ctx: CanvasRenderingContext2D,
   str: string,
@@ -118,30 +163,13 @@ export function outlinedText(
   gap = GAP,
 ): void {
   const s = String(str).toUpperCase();
-  const total = textWidth(s, scale, gap);
+  const step = (W + gap) * scale;
+  const left = Math.round(x - textWidth(s, scale, gap) / 2);
   y = Math.round(y);
-  // draw right-to-left so the leftmost glyph sits on top of its neighbors
-  let ox = Math.round(x - total / 2) + (s.length - 1) * (W + gap) * scale;
-  for (const ch of [...s].reverse()) {
-    const g = G[ch] || G[' '];
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-      ctx.fillStyle = '#000';
-      for (let r = 0; r < H; r++) {
-        const row = g[r];
-        for (let c = 0; c < W; c++) {
-          if (row[c] === '1') ctx.fillRect(ox + dx + c * scale, y + dy + r * scale, scale, scale);
-        }
-      }
-    }
-    ctx.fillStyle = color;
-    for (let r = 0; r < H; r++) {
-      const row = g[r];
-      for (let c = 0; c < W; c++) {
-        if (row[c] === '1') ctx.fillRect(ox + c * scale, y + r * scale, scale, scale);
-      }
-    }
-    ox -= (W + gap) * scale;
-  }
+  ctx.fillStyle = color;
+  const sh = sheet(color, scale, true);
+  const chars = [...s];
+  for (let i = chars.length - 1; i >= 0; i--) drawGlyph(ctx, sh, chars[i], left + i * step, y);
 }
 
 /** Whether the font can draw a character (lower case counts: text() upper-cases). */
