@@ -98,11 +98,13 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   armRapid(kind); // a Z shot with Z still held streams on (see rapid.ts)
   if (!linked) return;
   // Fervor: each link stacks final damage. And it shaves the long cooldowns,
-  // refills a Blitz, and the Cyclone Sweep's cooldown.
+  // refills a Blitz, and the Cyclone Sweep's cooldown. A link also cuts into
+  // Rush Toss's own cooldown, so working the combo brings the launcher back.
   player.fervor = Math.min(5, player.fervor + 1);
   player.fervorT = 9;
   player.cd.r = Math.max(0, player.cd.r - 1);
   player.cd['ground-e'] = Math.max(0, player.cd['ground-e'] - 1);
   player.cd['ground-w.air'] = Math.max(0, player.cd['ground-w.air'] - 1);
+  player.cd['ground-q'] = Math.max(0, player.cd['ground-q'] - 1);
   if (player.blitz.charges < P.BLITZ_MAX) player.blitz.t += 1;
 }

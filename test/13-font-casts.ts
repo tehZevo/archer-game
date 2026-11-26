@@ -148,6 +148,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...and casting the Volley leaves nothing to cool down', player.cd['ground-w'] === 0 && player.cast === 'barrage',
     `cast ${player.cast} cd ${player.cd['ground-w'].toFixed(2)}`);
   while (!player.onGround) step(); // back on the ground: the next press is a Rush Toss, not the air form
+  step(60); // let Rush Toss's 3s cooldown run out before casting it again
   tap('q'); step(12); tap('w');
   check('...so the next Rush Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd['ground-w'] === 0,
     `cast ${player.cast} cd ${player.cd['ground-w'].toFixed(2)}`);
