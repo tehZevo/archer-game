@@ -1,4 +1,4 @@
-import { CARRY_MAX, START_POTIONS, wallet } from './economy';
+import { CARRY_MAX, resetWallet, START_POTIONS, wallet } from './economy';
 import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
@@ -154,6 +154,7 @@ export function hasSave(): boolean {
 /** Forget saved progress (a fresh start on the next reload). */
 export function clearSave(): void {
   try { store()?.removeItem(KEY); } catch { /* ignore */ }
+  resetWallet(); // gold and potions start over with the character
 }
 
 let since = 0;
