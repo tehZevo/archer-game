@@ -257,11 +257,19 @@ function rainAnim(): FxAnim {
   }, 0.4);
 }
 
-/** Bolt Flurry bolt: a green streak with a brighter, wider head. Faces right; origin at the tip. */
-function boltAnim(): FxAnim {
-  return anim(30, 9, 28, 4.5, 1, (L) => {
-    L.line('green', 1, 4.5, 28, 4.5, 0.3, 1.6, 1.2);
-    L.line('lime', 14, 4.5, 27, 4.5, 0.3, 2.6, 0.6);
+/** Bolt Flurry volley: 4 green bolts in a loose diamond, each a streak with a
+ *  brighter head, jostling forward and back so the volley flickers as it
+ *  flies. Loops (see drawShot). Faces right; origin at the lead bolt's tip. */
+export const FLURRY_FRAMES = 4;
+function flurryAnim(): FxAnim {
+  const W = 48, H = 17, tip = W - 2, y = H / 2;
+  const bolts = [[0, 0], [-9, -5], [-9, 5], [-17, 0]]; // lead, upper, lower, tail
+  return anim(W, H, tip, y, FLURRY_FRAMES, (L, f) => {
+    bolts.forEach(([dx, dy], i) => {
+      const x = tip + dx - (((f + i) % FLURRY_FRAMES) - 1.5) * 1.5;
+      L.line('green', x - 24, y + dy, x, y + dy, 0.3, 1.5, 1.15);
+      L.line('lime', x - 11, y + dy, x - 1, y + dy, 0.3, 2.4, 0.6);
+    });
   }, 0.35);
 }
 
@@ -430,7 +438,7 @@ export function FX(): Record<string, FxAnim> {
       diveWindup: diveWindupAnim(),
       rain: rainAnim(),
       rainHit: hitAnim(false, 'gold'),
-      bolt: boltAnim(),
+      flurry: flurryAnim(),
       stunHit: stunHitAnim(),
       spirit: spiritAnim(),
     };

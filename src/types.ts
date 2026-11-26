@@ -356,7 +356,7 @@ export interface Shot {
   /** Runs when the arrow reaches its target (applies the hit). */
   onHit?: () => void;
   /** Which baked sprite to draw (default: the arrow streak). */
-  sprite?: 'arrow' | 'bolt';
+  sprite?: 'arrow' | 'flurry';
   /** Seconds before it launches (hidden and still until then). */
   delay?: number;
 }

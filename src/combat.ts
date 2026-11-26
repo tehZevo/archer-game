@@ -142,7 +142,7 @@ export function airborneInBox(cx: number, cy: number, w: number, h: number): Mob
  *  target's x (the hit effect plays there); with no target they fly ~1/4s. */
 export function spawnArrow(
   x: number, y: number, tx: number, hasTarget = true, onHit?: () => void,
-  opts: { speed?: number; sprite?: 'arrow' | 'bolt'; dir?: number; delay?: number } = {},
+  opts: { speed?: number; sprite?: 'arrow' | 'flurry'; dir?: number; delay?: number } = {},
 ): void {
   const dx = tx - x, V = opts.speed ?? P.ARROW_V, dir = opts.dir ?? Math.sign(dx || 1);
   game.shots.push({

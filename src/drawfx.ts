@@ -23,8 +23,10 @@ export function drawShot(s: Shot): void {
   const A = FX()[s.sprite ?? 'arrow'];
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  // never rotated: arrows fly horizontally, mirrored when going left
-  const left = s.vx < 0, img = left ? A.flipped[0] : A.frames[0];
+  // never rotated: arrows fly horizontally, mirrored when going left;
+  // a looping sheet (the flurry's volley) steps a frame every 1/20s of flight
+  const f = Math.floor(Math.max(0, s.t) * 20) % A.frames.length;
+  const left = s.vx < 0, img = left ? A.flipped[f] : A.frames[f];
   const ox = left ? img.width - A.ox : A.ox;
   ctx.drawImage(img, Math.round(s.x - ox), Math.round(s.y - Math.floor(A.oy)));
   ctx.restore();
