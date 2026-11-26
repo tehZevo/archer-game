@@ -137,6 +137,22 @@ function recolor(src: Sprite, map: Record<string, string>): Sprite {
 export interface MobAnim { frames: Sprite[]; fps: number; hurt: Sprite }
 const anim = (draw: (f: number) => Sprite, n: number, fps: number, hurt: () => Sprite): MobAnim =>
   ({ frames: Array.from({ length: n }, (_, f) => draw(f)), fps, hurt: hurt() });
+/** A standing enemy's out-breath: frame 0 with its upper half sunk a pixel
+ *  onto the lower (made once per animation, so recolours and baked sheets get it too). */
+const breaths = new WeakMap<MobAnim, Sprite>();
+export function breath(a: MobAnim): Sprite {
+  let s = breaths.get(a);
+  if (s) return s;
+  const g = a.frames[0].g, w = g.w, out = newGrid(w, g.h);
+  out.px.set(g.px);
+  let top = 0;
+  while (top < g.h && !Array.from({ length: w }, (_, x) => g.px[(top * w + x) * 4 + 3]).some(Boolean)) top++;
+  const mid = top + Math.floor((g.h - top) / 2);
+  for (let y = mid; y > top; y--) out.px.copyWithin(y * w * 4, (y - 1) * w * 4, y * w * 4);
+  out.px.fill(0, top * w * 4, (top + 1) * w * 4);
+  breaths.set(a, (s = new Sprite(w, g.h, out)));
+  return s;
+}
 const recolorAnim = (a: MobAnim, map: Record<string, string>): MobAnim =>
   ({ frames: a.frames.map((f) => recolor(f, map)), fps: a.fps, hurt: recolor(a.hurt, map) });
 

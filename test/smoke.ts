@@ -17,7 +17,7 @@ import { FX_GEN } from '../src/fxsprites';
 import { packStrip } from '../src/grid';
 import { decodePng } from '../scripts/png';
 import { BAKED_MOBS } from '../src/mobbaked';
-import { mobAnim, MOB_GEN } from '../src/sprites';
+import { breath, mobAnim, MOB_GEN } from '../src/sprites';
 import { slug } from '../scripts/slug';
 import { game, player, gainExp, gotoPlace } from '../src/state';
 import { nextPlace, placeKey, START } from '../src/world';
@@ -269,6 +269,10 @@ setKey('up', false);
   });
   check(`every look recolours the default sheets exactly${wrong.length ? ' (' + wrong.length + ' wrong)' : ''}`, wrong.length === 0);
   check('every base enemy is baked', Object.keys(MOB_GEN).every((n) => BAKED_MOBS[n]));
+  check('every enemy breathes: a standing frame sunk a pixel, same size', Object.keys(MOB_GEN).every((n) => {
+    const a = mobAnim(n)!, b = breath(a);
+    return b.w === a.frames[0].w && b.h === a.frames[0].h && b.g.px.join() !== a.frames[0].g.px.join();
+  }));
   check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }
 
