@@ -25,7 +25,7 @@ export const P = {
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
-  BARRAGE_HANG: 0.3,   // s Sky Assault hovers (striking) before falling
+  BARRAGE_HANG: 0.75,  // s Sky Assault hovers (striking) before falling
   ASSAULT_LEAP: 0.12,  // s the assault's opening leap: a W pressed in it is buffered, after it the sweep fires out of the hover
   ASSAULT_SPIN_LINK: 0.35, // s of extra link window Sky Assault keeps open for Midair Spin after the hover
   BARRAGE_UP: 43,      // px Sky Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)

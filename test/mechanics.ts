@@ -3093,7 +3093,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('q'); step(20); tap('w');
   check('...and casting the Volley leaves nothing to cool down', player.cd.W === 0 && player.cast === 'barrage',
     `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
-  step(30);
+  while (!player.onGround) step(); // back on the ground: the next press is a Sky Toss, not the air form
   tap('q'); step(20); tap('w');
   check('...so the next Sky Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd.W === 0,
     `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
