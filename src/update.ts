@@ -11,7 +11,7 @@ import { setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
 import { updateRush } from './rush';
 import { AIR_FORM, assaultLeaping, rushHolding } from './castrules';
-import { isLearned } from './progress';
+import { activeSkill, isLearned } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
 import { talk, updateEconomy } from './economy';
@@ -20,7 +20,7 @@ import { dev, maxOut } from './dev';
 import { bossAlive, portalOpen, updateQuakes } from './boss';
 import { updatePet } from './pets';
 import { updateStatus } from './status';
-import { bufferWindowOpen, comboOpen, ownWindowOpen, tickLinks } from './links';
+import { linkable, linkHeld, tickLinks } from './links';
 import { windowInput } from './windows';
 import { openConfirm } from './confirm';
 import { updateMobs } from './mobai';
@@ -82,9 +82,10 @@ function tickPlayer(dt: number): void {
 function keyInput(): boolean {
   // F1-F7: emotes
   EMOTES.forEach((e, i) => { if (pressed(`f${i + 1}`)) netEmote(e); });
-  // Basic attack during Rush Toss's link window casts the link skill
+  // Basic attack during a cast that links into the link skill casts it
   // (Rising Arrows, or Skyward Assault once upgraded).
-  const linkZ = pressed('z') && comboOpen() && isLearned('W');
+  const w = skillFor('W');
+  const linkZ = pressed('z') && isLearned(w) && linkable(w);
   if (linkZ) cast('W');
   for (const k of SKILL_ORDER) if (pressed(k) && !(linkZ && k === 'Z')) cast(k);
   // dev keys (?dev only): [ levels up, ] warps to the next floor, \ maxes out
@@ -103,10 +104,11 @@ function tickWaves(dt: number): void {
   if (game.waveT >= P.WAVE_EVERY) { game.waveT = 0; spawnWave(); }
 }
 
-/** The cast animation and timers, the input buffer, link windows and fervor. */
+/** The cast animation and timers, the input buffer, links and fervor. */
 function tickCasting(dt: number): void {
   if (player.castT > 0) player.castT -= dt; else player.cast = null;
   fireBuffered();
+  tickLinks(); // after the buffer, so a link waiting on the cast's last moment lands
   if (player.superStance > 0) player.superStance -= dt;
   if (player.invuln > 0) player.invuln -= dt;
   if (player.casting.useT > 0) {
@@ -114,27 +116,25 @@ function tickCasting(dt: number): void {
     if (player.casting.useT <= 0) player.casting.freeze = false; // the freeze ends with the cast
   }
   if (player.casting.recoverT > 0) player.casting.recoverT -= dt;
-  tickLinks(dt);
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 }
 
 /** The skill a key fires right now: its air form when airborne. */
-const skillFor = (key: SkillKey): SkillKey => (!player.onGround && !player.climb && AIR_FORM[key]) || key;
+const skillFor = (key: SkillKey): SkillKey => (!player.onGround && !player.climb && AIR_FORM[key]) || activeSkill(key).key;
 
 /** Whether the buffered skill has to keep waiting. */
 function bufferHeld(): boolean {
   const queued = player.casting.queued;
-  // a chained link waits for Rush Toss to finish (a chained Double Shot also
-  // waits out the slide itself), and the spin waits out the Assault's leap
-  if (rushHolding()) return true;
+  if (!queued) return false;
+  // a chained Double Shot waits out the slide itself
   if (queued === 'Z' && player.rush.t > 0) return true;
-  if (assaultLeaping()) return true;
-  // the current skill's animation or its recovery holds it, unless a
-  // buffering link window (Q's, a blitz's self-link, the Assault's spin)
-  // cuts it short
-  const busy = player.castT > 0 || player.casting.recoverT > 0;
-  return busy && !bufferWindowOpen() && !(queued && ownWindowOpen(skillFor(queued)));
+  // a link waits for the cast it links off to reach its recovery
+  const kind = skillFor(queued);
+  if (linkable(kind)) return linkHeld(kind);
+  // anything else waits out the whole cast (and Rush Toss's strike, the Assault's leap)
+  if (rushHolding() || assaultLeaping()) return true;
+  return player.castT > 0 || player.casting.recoverT > 0;
 }
 
 /** Fire the buffered skill on the first free frame. It aims where you're

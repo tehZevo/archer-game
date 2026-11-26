@@ -27,7 +27,6 @@ export const P = {
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
   BARRAGE_HANG: 0.75,  // s Skyward Assault hovers (striking) before falling
   ASSAULT_LEAP: 0.12,  // s the assault's opening leap: a W pressed in it is buffered, after it the sweep fires out of the hover
-  ASSAULT_SPIN_LINK: 0.35, // s of extra link window Skyward Assault keeps open for Cyclone Sweep after the hover
   BARRAGE_UP: 43,      // px Skyward Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Bolt Flurry bolt speed (px/s)
@@ -46,7 +45,6 @@ export const P = {
   BLITZ_CHARGE_T: 4,   // s to recharge one charge, its only cooldown: one charge refills at a time (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
   RUSH_HOLD: 0.34,    // s a rush holds back the links pressed during it (the slide and its strike); its animation runs on to the use time
-  LINK_BUFFER: 0.5,   // s of free time a link window stays open past the animation (see linkWindow)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Rush Toss)
   BLITZ_DIST: 96,      // px the blitz travels
   // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
@@ -68,7 +66,6 @@ export const P = {
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
   SPIN_RISE_V: 22.5,   // px/s: the midair sweep lifts you at this steady speed (was a slow fall)
-  SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Downpour link opens (the tail of the longer sweep pose)
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
@@ -101,6 +98,11 @@ export const TILE = 16;
 /* ---------------- skills ----------------
    Five active buttons. The main attack (Z) is available from Lv.1 and a new
    skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
+/** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Downpour, the
+ *  Meteor Dive's landing) links into: the link skills, the Q slot (Meteor
+ *  Dive in the air) and W's air form, the Cyclone Sweep. */
+const LAUNCHER_LINKS: SkillKey[] = ['W', 'AB', 'Q', 'EB', 'AD', 'MS'];
+
 export const SKILLS: Record<SkillKey, SkillDef> = {
   // Actives: 3 ranks; stats step from rank 1 to rank 3 so every rank is a big jump.
   // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
@@ -114,40 +116,40 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   D: { key: 'D', keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, maxLevel: 1, learn: true,
        cd: 0, use: 0.4, mp1: 2, mpMax: 2, dmg1: 0, dmgMax: 0,
        desc: 'Mid-air acrobatic tumble' },
-  Q: { key: 'Q', keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
+  Q: { key: 'Q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.6, delay: 0.35, mp1: 4, mpMax: 6, dmg1: 250, dmgMax: 400, targets1: 6, targetsMax: 6,
-       desc: 'Launch enemies airborne, opens the link window' },
+       desc: 'Launch enemies airborne, linking into the aerial kit' },
   W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 3, mpMax: 5, dmg1: 85, dmgMax: 110, hits1: 4, hitsMax: 4, targets1: 4, targetsMax: 4,
        desc: 'Airborne-only volley after Rush Toss' },
-  E: { key: 'E', keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+  E: { key: 'E', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIKE_CD, use: 0.7, mp1: 5, mpMax: 7, dmg1: 200, dmgMax: 400, hits1: 2, hitsMax: 2, targets1: 4, targetsMax: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows, ranks and unlock levels,
   // each with no cooldown (use time only) and chaining into its ground form.
-  AD: { key: 'AD', name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
+  AD: { key: 'AD', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 1.1, mp1: 3, mpMax: 4, dmg1: 250, dmgMax: 400, hits1: 1, hitsMax: 1, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
-  MS: { key: 'MS', name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
+  MS: { key: 'MS', linksInto: ['D', 'PV'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60, maxLevel: 3,
        cd: P.SPIN_CD, use: 0.8, mp1: 3, mpMax: 5, dmg1: 200, dmgMax: 200, hits1: 4, hitsMax: 4, targets1: 8, targetsMax: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
-  PV: { key: 'PV', name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
+  PV: { key: 'PV', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.4, mp1: 5, mpMax: 7, dmg1: 160, dmgMax: 240, hits1: 2, hitsMax: 2, targets1: 6, targetsMax: 10, requires: 'E',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
+  R: { key: 'R', linksInto: ['Q', 'EB', 'AD'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 10.0, use: 0.7, mp1: 10, mpMax: 14, dmg1: 140, dmgMax: 200, hits1: 4, hitsMax: 8, targets1: 8, targetsMax: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
-  EB: { key: 'EB', upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+  EB: { key: 'EB', linksInto: LAUNCHER_LINKS, upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, mpMax: 0, dmg1: 300, dmgMax: 460, hits1: 2, hitsMax: 2, targets1: 8, targetsMax: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
+  AB: { key: 'AB', linksInto: ['MS', 'R'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.9, mp1: 4, mpMax: 6, dmg1: 105, dmgMax: 140, hits1: 4, hitsMax: 4, targets1: 6, targetsMax: 6, requires: 'W',
        desc: 'After Rush Toss: leap up to launched enemies' },
   S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 3,
        cd: 0, use: 0.6, mp1: 4, mpMax: 6, dmg1: 165, dmgMax: 220, hits1: 4, hitsMax: 4, targets1: 5, targetsMax: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Branch upgrades: each competes with the other upgrade on the same slot.
-  RA: { key: 'RA', upgrades: 'Q', retired: true, name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
+  RA: { key: 'RA', linksInto: LAUNCHER_LINKS, upgrades: 'Q', retired: true, name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 3,
        cd: 0.80, mp1: 5, mpMax: 7, dmg1: 240, dmgMax: 380, targets1: 8, targetsMax: 8,
        desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; `bonus` steps from rank 1 to rank 3 (0 until learned).
@@ -181,7 +183,7 @@ export const SKILL_BAR: { label: string; skill: SkillKey }[] = SKILL_ORDER
   .filter((k) => SKILLS[k].bar)
   .map((k) => ({ label: k, skill: k }));
 
-/** Skills that consume the Rush Toss link window and stack Fervor. */
+/** Skills that only work as a link (off Rush Toss and the other launchers). */
 export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
 
 /* ---------------- mobs ---------------- */

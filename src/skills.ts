@@ -4,8 +4,8 @@ import { held } from './input';
 import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
-import { closeCombo, closeLinks, comboOpen, linkOpen, linksIn } from './links';
-import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, offHover, rushHolding, useTime } from './castrules';
+import { chainsZ, linkable, linkHeld, startLinks } from './links';
+import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, cdSlot, delayTime, offHover, rushHolding, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
 /** Airborne enemies Skyward Assault can reach: around and below the player. */
@@ -13,8 +13,8 @@ export function barrageTargets() {
   return airborneInBox(player.x, player.y + player.h, 120, 140);
 }
 
-/** How a cast that got through fires: as a link (skips use time and
- *  cooldown, spends the open windows) and/or chained off a Q rush. */
+/** How a cast that got through fires: as a link (skips the last cast's
+ *  recovery) and/or chained off a Q rush. */
 interface Fire { linked: boolean; chained: boolean }
 
 /**
@@ -50,27 +50,21 @@ function buffer(key: SkillKey): null {
  * buffered to fire once the skill it links off finishes.
  */
 function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean, r: SkillRank): Fire | null {
-  const linkSkill = LINKED_SKILLS.includes(kind);
-  // Which presses count as links: see linksIn. (Rush Toss off the Meteor Dive's
-  // window, a blitz off its own, the aerial kit off each other's windows.)
-  const linked = linksIn(kind, key, linkSkill);
-  // Link skills only work right after Rush Toss, once per Rush Toss.
-  if (linkSkill && !comboOpen()) return null;
-  const rushPlaying = rushHolding();
-  // A link pressed while Rush Toss is still playing waits for it to finish.
-  if (linked && rushPlaying) return buffer(key);
-  // Skyward Assault's leap buffers the sweep it links into, so pressing W on the
-  // way up lands as the leap peaks.
-  if (kind === 'MS' && linkOpen('spin') && assaultLeaping()) return buffer(key);
+  // Whether this press links off the cast you're in (see links.ts).
+  const linked = linkable(kind);
+  // Link skills only work as a link (right after Rush Toss, once per Rush Toss).
+  if (LINKED_SKILLS.includes(kind) && !linked) return null;
+  // A link waits for the cast it links off to reach its recovery, then fires
+  // at once (Rush Toss's strike, the Assault's peak, the end of an animation).
+  if (linked && linkHeld(kind)) return buffer(key);
   // Q rushes chain into Double Shot: Z pressed during the rush fires the moment
-  // it ends, and right after it (while its link window is open) at once. The
-  // chain skips the rush's ending lag once: one quick shot, not repeated uses.
-  if (kind === 'Z' && !chained && (player.rush.t > 0 || rushPlaying)) return buffer('Z');
-  if (kind === 'Z' && comboOpen()) { chained = true; closeCombo(); }
+  // it ends, and right after it at once. The chain skips the rush's ending lag
+  // once: one quick shot, not repeated uses.
+  if (kind === 'Z' && !chained && (player.rush.t > 0 || rushHolding())) return buffer('Z');
+  if (kind === 'Z' && chainsZ()) chained = true;
 
-  // The Cyclone Sweep and Tempest keep their own cooldown even as a link, so one
-  // jump can't chain sweeps all the way up and a Storm isn't ready next Assault.
-  if (player.cd[cdSlot(key, airborne)] > 0 && (!linked || kind === 'MS' || kind === 'R')) return null;
+  // A link doesn't skip the skill's cooldown.
+  if (player.cd[cdSlot(key, airborne)] > 0) return null;
   // Electric Blitz spends a banked charge (Down + Q, the strike in place, needs none).
   if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
@@ -101,11 +95,10 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.combatT = P.COMBAT_TIME;
   player.liftT = 0; // any other skill ends a Piercing Leap's push (Piercing Leap starts a new one)
   player.skillPose = null; // the spin / vanish of the last cast is over
+  startLinks(kind); // presses now link off this cast (so one link ends the last one's combo)
   if (!linked) return;
-  // Fervor: each link stacks final damage, and spends every open window, so
-  // one link ends the whole combo. And it shaves the long cooldowns,
+  // Fervor: each link stacks final damage. And it shaves the long cooldowns,
   // refills a Blitz, and the Cyclone Sweep's cooldown.
-  closeLinks();
   player.fervor = Math.min(5, player.fervor + 1);
   player.fervorT = 9;
   player.cd.R = Math.max(0, player.cd.R - 1);

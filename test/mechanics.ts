@@ -35,7 +35,7 @@ import { CAM, TILE, WORLD } from '../src/config';
 import { ANIM_RATE, BREATH, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
-import { cdSlot, delayTime, linkWindow, rushHolding, useTime } from '../src/castrules';
+import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
 import { CASTS } from '../src/skillcasts';
 import { MOB_SOUNDS } from '../src/audio';
 import { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
@@ -80,7 +80,7 @@ import { STAT_KEYS } from '../src/progress';
 import { generateFloor } from '../src/floor';
 import { TOWN_PLANS } from '../src/townfloor';
 import { corpses, DEATH_T, DEATHS, deathOf, deathPose } from '../src/deaths';
-import { closeLinks, LINK_KINDS, linkOpen, openLink, tickLinks } from '../src/links';
+import { closeLinks, linkable, linkHeld } from '../src/links';
 import { bakeDeathSheet, DEATH_FRAMES, deathFrame } from '../src/deathsheet';
 import { localPose } from '../src/net';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
@@ -262,7 +262,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const hp0 = m.hp; tap('z'); step(20);
-  check('Z during the link window casts the link skill', m.hp < hp0 && player.links.combo === 0);
+  check('Z during the Rush Toss casts the link skill', m.hp < hp0 && player.linkFrom === 'W', `from ${player.linkFrom}`);
 }
 {
   arena(12); player.ranks.W = 1;
@@ -292,10 +292,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(20); player.ranks.W = 3; player.ranks.AB = 3; // Skyward Assault is the W upgrade: maxing W masters it
   dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
-  check('the Rush Toss opens the link window', player.links.combo > 0);
+  check('the Rush Toss links into Skyward Assault', linkable('AB'));
   tap('w');
   check('the first Skyward Assault fires', player.cast === 'barrage' && player.hang.t > 0);
-  check('...and it consumes the window', player.links.combo === 0);
+  check('...and links now read off the Assault, not the Rush Toss', player.linkFrom === 'AB' && !linkable('AB'));
   player.hang.t = 0; player.cast = null; player.castT = 0; player.casting.useT = 0;
   tap('w');
   check('a second Skyward Assault waits for a fresh Rush Toss', player.cast !== 'barrage');
@@ -515,8 +515,8 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   }
   check('the rush starts the moment the dive lands', landed >= 0 && rushing === landed, `landed ${landed} rush ${rushing}`);
   step(20);
-  check('...and its strike lands, opening the dive\'s own link window', m.hp < 1e6 && player.links.dive > 0 && player.links.combo === 0,
-    `dive ${player.links.dive.toFixed(2)} combo ${player.links.combo.toFixed(2)}`);
+  check('...and its strike lands, releasing the dive\'s links', m.hp < 1e6 && player.linkFrom === 'AD' && linkable('W') && !linkHeld('W'),
+    `from ${player.linkFrom}`);
 }
 {
   // Cyclone Sweep: W's air form sweeps the enemies around you
@@ -547,18 +547,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('E fires straight out of the hover', player.hang.t === 0 && player.cast === 'barrage' && player.casting.useT > 0);
 }
 {
-  // Skyward Assault -> R: the hover's end opens the link window for Tempest
+  // Skyward Assault -> R: a Tempest pressed during the hover fires as it ends
   arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
   dummy(130);
-  tap('q'); step(14); tap('w');
-  step(40); // the 0.8s hover plays out and you drop back to the ground
-  check('the Skyward Assault hover ends on the ground', player.onGround && player.hang.t <= 0,
-    `onGround ${player.onGround} hangT ${player.hang.t.toFixed(2)}`);
-  check('landing the assault opens the link window', player.links.assault > 0, `t ${player.links.assault.toFixed(2)}`);
+  tap('q'); step(14); tap('w'); step(4);
   tap('r');
-  check('Tempest links out of the landed Skyward Assault', player.cast === 'shoot' && player.castT > 0,
-    `cast ${player.cast} castT ${player.castT.toFixed(2)}`);
-  check('the linked Tempest consumes the window', player.links.assault <= 0, `t ${player.links.assault.toFixed(2)}`);
+  check('Tempest pressed during the hover waits for it', player.casting.queued === 'R' && player.hang.t > 0,
+    `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
+  let fired = -1;
+  for (let i = 0; i < 40 && fired < 0; i++) { step(1); if (player.cast === 'shoot') fired = i; }
+  check('Tempest links out of the Skyward Assault as the hover ends', fired >= 0 && player.hang.t <= 0 && player.fervor > 1,
+    `fired ${fired} hangT ${player.hang.t.toFixed(2)} fervor ${player.fervor}`);
 }
 {
   // Q rushes chain into Z: pressed mid-slide, Double Shot fires as the slide ends
@@ -578,7 +577,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   dummy(200);
   tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || player.cast === 'rush'); i++) step(1);
   tap('z'); step(1);
-  check('the chained Z consumes the link window', player.links.combo === 0);
+  check('the chained Z ends the rush\'s links', player.linkFrom === 'Z');
   const cast1 = player.cast;
   tap('z');
   check('a second Z right after is a fresh shot, not a free extra', player.cast === 'shoot' && cast1 === 'shoot');
@@ -669,7 +668,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   for (let i = 0; i < P.BLITZ_CHARGE_T * 30 + 2 && player.blitz.charges === 0; i++) step(1);
   check('a charge recharges after 4s', player.blitz.charges === 1, `charges ${player.blitz.charges}`);
   check('the recharged charge flashes the icon', player.readyT.Q > 0);
-  player.blitz.charges = 1; player.blitz.t = 3; player.links.combo = 1; player.ranks.W = 1; player.casting.useT = 0;
+  player.blitz.charges = 1; player.blitz.t = 3; player.linkFrom = 'Q'; player.ranks.W = 1; player.casting.useT = 0;
   cast('W');
   check('a linked skill speeds up the charge filling (it never sets it back)', player.blitz.t === 4, `blitzT ${player.blitz.t}`);
 }
@@ -788,8 +787,8 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('q'); step(14); // the rush ends, the link window is live
   const cd1 = player.cd.E, cdR1 = player.cd.R, cdW1 = player.cd['W.air'];
   tap('w'); step(4); // the queued volley fires as the rush clears
-  check('the linked Rising Arrows fires', player.cast === 'shoot' && player.links.combo <= 0,
-    `cast ${player.cast} combo ${player.links.combo.toFixed(2)}`);
+  check('the linked Rising Arrows fires', player.cast === 'shoot' && player.linkFrom === 'W',
+    `cast ${player.cast} from ${player.linkFrom}`);
   check('the link refunds 1s off Piercing Leap', Math.abs(player.cd.E - (cd1 - 1 - 4 / 30)) < 0.05,
     `cd ${player.cd.E.toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
   check('...and 1s off Cyclone Sweep', player.cd['W.air'] < cdW1 - 0.9 && player.cd['W.air'] > cdW1 - 1.3, `cd ${player.cd['W.air'].toFixed(2)} of ${cdW1.toFixed(2)}`);
@@ -822,14 +821,13 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(40);
 }
 {
-  // The Meteor Dive's follow-up window opens off its landing, not its coil,
-  // and a Double Shot pressed mid-plunge waits out the landing roll.
+  // The Meteor Dive's follow-ups fire off its landing, not its coil, and a
+  // Double Shot pressed mid-plunge waits out the landing roll.
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
   dummy(150);
   tap('c'); step(8);
   tap('q');
-  check('the dive opens no follow-up window at the coil', player.links.dive === 0 && player.links.combo === 0,
-    `dive ${player.links.dive.toFixed(2)} combo ${player.links.combo.toFixed(2)}`);
+  check('a follow-up pressed at the coil waits for the landing', linkable('W') && linkHeld('W'));
   step(4); tap('z');
   check('a Double Shot pressed mid-plunge is buffered', player.casting.queued === 'Z', `queued ${player.casting.queued}`);
   let rolled = false, firedRolling = false;
@@ -842,16 +840,16 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
     `rolled ${rolled} firedRolling ${firedRolling} cast ${player.cast}`);
 }
 {
-  // The Meteor Dive's link window carries into the grounded kit: pressed as the
-  // dive lands (window open), the next skill fires without the use-time wait
+  // The Meteor Dive links into the grounded kit: pressed as the dive lands,
+  // the next skill fires without the use-time wait
   arena(20); player.ranks.Q = 1; player.ranks.AD = 1; player.ranks.W = 1;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive has landed with its window open', player.links.dive > 0, `dive ${player.links.dive.toFixed(2)}`);
+  check('the dive has landed, its links released', linkable('W') && !linkHeld('W'), `from ${player.linkFrom}`);
   const mp0 = player.mp;
   tap('w');
-  check('Rising Arrows links out of the dive', player.mp < mp0 && player.links.combo <= 0, `mp ${player.mp} combo ${player.links.combo.toFixed(2)}`);
+  check('Rising Arrows links out of the dive', player.mp < mp0 && player.linkFrom === 'W', `mp ${player.mp} from ${player.linkFrom}`);
 }
 {
   arena(25); player.ranks.R = 1;
@@ -2556,41 +2554,45 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   dummy(150);
   check('blitzes start banked', player.blitz.charges === P.BLITZ_MAX, `charges ${player.blitz.charges}`);
   tap('q');
-  check('the blitz opens its self-link window', player.links.blitz > 0, `t ${player.links.blitz.toFixed(2)}`);
+  check('the blitz links into itself', linkable('EB'), `from ${player.linkFrom}`);
   tap('q'); // pressed mid-animation: buffered, not dropped
   check('the second blitz is buffered', player.casting.queued === 'Q', `queued ${player.casting.queued}`);
   step(12); // the first blitz's slide (0.34s) ends
   check('the buffered blitz fires', player.blitz.charges === P.BLITZ_MAX - 2 && player.cast === 'rush',
     `charges ${player.blitz.charges} cast ${player.cast}`);
-  check('the chained blitz opens a fresh window of its own', player.links.blitz > 0.5, `t ${player.links.blitz.toFixed(2)}`);
+  check('links now read off the chained blitz', player.linkFrom === 'EB' && player.castT > 0.3, `castT ${player.castT.toFixed(2)}`);
 }
 
 {
   // Aerial skills link into Glide: pressed while the cast is still going,
-  // D fires on the spot (no use-time wait)
+  // D fires the moment its animation ends (skipping the recovery)
   arena(20); player.ranks.D = 1; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(100);
   tap('c'); step(8);
   tap('e');
-  check('the volley opens the glide window', player.links.glide > 0 && player.casting.useT > 0, `t ${player.links.glide.toFixed(2)} use ${player.casting.useT.toFixed(2)}`);
+  check('the volley links into Glide', linkable('D') && player.casting.useT > 0, `use ${player.casting.useT.toFixed(2)}`);
   tap('d');
-  check('the volley links into Glide', player.cast === 'jump' && player.links.glide <= 0, `cast ${player.cast} t ${player.links.glide.toFixed(2)}`);
+  check('...pressed mid-volley, D waits for the animation', player.casting.queued === 'D', `queued ${player.casting.queued}`);
+  let wait = 0;
+  while (player.casting.queued && wait < 30) { step(1); wait++; }
+  check('...then fires as it ends', player.cast === 'jump' && Math.abs(wait * P.STEP - useTime('PV')) < 0.07,
+    `cast ${player.cast} after ${(wait * P.STEP).toFixed(2)}s`);
 }
 {
-  // Downpour opens its link window on a miss too: linking needs no hit
+  // Downpour links on a miss too: linking needs no hit
   arena(20); player.ranks.E = 1; player.ranks.PV = 1;
   tap('c'); step(8);
   tap('e');
-  check('a whiffed Downpour still opens its link window', game.mobs.length === 0 && player.links.combo > 0, `t ${player.links.combo.toFixed(2)}`);
+  check('a whiffed Downpour still links', game.mobs.length === 0 && linkable('MS'));
 }
 {
   // ...and so does the Cyclone Sweep
   arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
   dummy(150);
   tap('c'); step(8);
-  tap('w'); step(13); // the sweep plays, then its window opens
-  check('Cyclone Sweep opens its link window', player.links.sweep > 0, `t ${player.links.sweep.toFixed(2)}`);
-  tap('d');
+  tap('w'); step(13);
+  check('Cyclone Sweep links into Glide', linkable('D'));
+  tap('d'); for (let i = 0; i < 30 && player.casting.queued; i++) step(1); // fires as the sweep ends
   check('the spin links into Glide', player.cast === 'jump' && player.casting.useT > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
 }
 
@@ -2638,21 +2640,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(20); player.ranks.R = 1; player.ranks.Q = 1; player.ranks.AD = 1;
   tap('c'); step(7); // airborne, where Q is the Meteor Dive
   tap('r');
-  check('Tempest opens its own Dive link window', player.links.tempest > 0 && player.cast === 'shoot',
-    `tempest ${player.links.tempest.toFixed(2)} cast ${player.cast}`);
+  check('Tempest links into the Dive', linkable('AD') && player.cast === 'shoot', `cast ${player.cast}`);
   const mp0 = player.mp;
   tap('q');
-  check('Dive fires out of the storm, mid-cast', player.cast === 'dive' && player.mp < mp0,
+  for (let i = 0; i < 30 && player.casting.queued; i++) step(1);
+  check('Dive fires out of the storm as it ends', player.cast === 'dive' && player.mp < mp0,
     `cast ${player.cast} mp ${player.mp} of ${mp0}`);
   step(12); // let the dive land, so the next block starts on the floor
-  // The storm's window is its own: it unlocks Dive, not the whole aerial kit.
+  // The storm links into Dive, not the whole aerial kit.
   arena(20); player.ranks.R = 1;
   tap('r'); player.cd.R = 10;
-  check('the storm opens only its own window', player.links.tempest > 0 && player.links.combo === 0,
-    `tempest ${player.links.tempest.toFixed(2)} combo ${player.links.combo.toFixed(2)}`);
+  check('the storm links into the Q slot only', linkable('AD') && !linkable('W'));
   tap('w'); step(1);
-  // A Rising Arrows needs the combo window; the storm's window doesn't
-  // grant it, so the cast pays its own cooldown rather than a shone Tempest's.
+  // A Rising Arrows needs a launcher to link off; the storm isn't one, so the cast pays its own cooldown rather than a shone Tempest's.
   check('a Rising Arrows off the storm pays its own cooldown', player.cast === 'shoot' && player.cd.R > 9,
     `cast ${player.cast} cd ${player.cd.R.toFixed(2)}`);
 }
@@ -2680,25 +2680,25 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
-  // Cyclone Sweep links into Downpour: E fires out of the sweep
+  // Cyclone Sweep links into Downpour: E pressed during the sweep fires as it ends
   arena(20); player.ranks.W = 1; player.ranks.MS = 1; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(100);
   tap('c'); step(8);
-  tap('w'); step(13); // the sweep plays, then its window opens
-  check('the spin opens its link window', player.links.sweep > 0 && player.casting.useT > 0, `t ${player.links.sweep.toFixed(2)}`);
-  tap('e');
-  check('the spin links into Downpour', player.cast === 'barrage' && player.links.sweep <= 0,
-    `cast ${player.cast} t ${player.links.sweep.toFixed(2)}`);
+  tap('w'); step(13);
+  check('the spin links into Downpour', linkable('PV') && player.casting.useT > 0);
+  tap('e'); for (let i = 0; i < 30 && player.casting.queued; i++) step(1); // fires as the sweep ends
+  check('...and Downpour fires as the sweep ends', player.cast === 'barrage' && player.linkFrom === 'PV',
+    `cast ${player.cast} from ${player.linkFrom}`);
 }
 {
-  // Meteor Dive links into the equipped ground rush, Skyfall-style: the dive's
-  // window counts for Electric Blitz, not just the base Rush Toss
+  // Meteor Dive links into the equipped ground rush, Skyfall-style: Electric
+  // Blitz, not just the base Rush Toss
   arena(20); player.ranks.Q = 1; player.ranks.EB = 1; player.ranks.AD = 1;
   player.blitz.charges = P.BLITZ_MAX;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive opens the Q-slot window with a Blitz equipped', player.links.dive > 0, `dive ${player.links.dive.toFixed(2)}`);
+  check('the dive links into the Blitz', linkable('EB') && !linkHeld('EB'), `from ${player.linkFrom}`);
   const charges0 = player.blitz.charges;
   tap('q'); step(1); // the landing rush's tail is buffered, not dropped
   check('the blitz fires off the dive, no use-time wait', player.blitz.charges === charges0 - 1 && player.cast === 'rush',
@@ -2739,7 +2739,6 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.AD = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
-  openLink('combo', linkWindow('AD')); // the hover's own follow-up window
   tap('q'); step(4); // past the windup
   check('Meteor Dive off the hover snaps out of the assault', player.hang.t === 0 && player.cast === 'dive' && player.diving,
     `hangT ${player.hang.t.toFixed(2)} cast ${player.cast}`);
@@ -2863,18 +2862,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
-  // Skyward Assault links into Cyclone Sweep: the leap opens the window, so W in
-  // the air sweeps out of the hover with no extra lag (the AB -> MS follow-up)
+  // Skyward Assault links into Cyclone Sweep: W in the air sweeps out of the
+  // hover with no extra lag (the AB -> MS follow-up)
   arena(30); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1; player.ranks.MS = 1;
   const m = dummy(130);
-  tap('q'); step(14); // Skyward Assault is a link: the rush opens its window
+  tap('q'); step(14); // Skyward Assault is a link off the rush
   tap('w'); step(4); // mid-leap: the hover is live
   check('the assault is hovering', player.hang.t > 0 && player.cast === 'barrage', `hangT ${player.hang.t.toFixed(2)}`);
-  check('...and its window for the sweep is open', player.links.spin > 0, `spinLinkT ${player.links.spin.toFixed(2)}`);
+  check('...and it links into the sweep', linkable('MS') && !linkHeld('MS'));
   const fervor0 = player.fervor;
   tap('w');
-  check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.links.spin <= 0,
-    `cast ${player.cast} spinLinkT ${player.links.spin.toFixed(2)}`);
+  check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.linkFrom === 'MS',
+    `cast ${player.cast} from ${player.linkFrom}`);
   step(12); // the sweep's four hits stagger out
   check('...and it hits', m.hp < 1e6, `hp ${m.hp}`);
   check('the linked sweep ends the hover', player.hang.t <= 0, `hangT ${player.hang.t.toFixed(2)}`);
@@ -2900,7 +2899,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   // Cyclone Sweep on its own (no assault) still works as a standalone sweep
   arena(20); player.ranks.W = 1; player.ranks.MS = 1;
   tap('c'); step(10);
-  check("a plain jump's sweep is unaffected", player.cast === null && player.links.spin <= 0, `cast ${player.cast} spinLinkT ${player.links.spin.toFixed(2)}`);
+  check("a plain jump's sweep is unaffected", player.cast === null && player.linkFrom === null, `cast ${player.cast} from ${player.linkFrom}`);
   tap('w'); step(2);
   check('...and fires as usual', player.cast === 'shoot', `cast ${player.cast}`);
 }
@@ -3014,17 +3013,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
-  // Link windows live in one typed record, only touched through links.ts
-  arena(20);
-  check('every window starts shut', LINK_KINDS.every((k) => player.links[k] === 0 && !linkOpen(k)));
-  openLink('glide', 0.1); openLink('combo', 1);
-  check('opening a window opens just that one', linkOpen('glide') && linkOpen('combo') && !linkOpen('spin'));
-  tickLinks(0.25);
-  check('windows run down and stop at exactly 0', player.links.glide === 0 && Math.abs(player.links.combo - 0.75) < 1e-9, `${player.links.glide} ${player.links.combo}`);
-  closeLinks();
-  check('closeLinks shuts them all', LINK_KINDS.every((k) => player.links[k] === 0));
-  openLink('assault', 1); player.hp = 0; step(1);
-  check('a respawn starts with every window shut', LINK_KINDS.every((k) => player.links[k] === 0), JSON.stringify(player.links));
+  // Links read off the cast you're in, and nothing else: no timers
+  arena(20); player.ranks.R = 1;
+  check('no cast, no links', player.linkFrom === null && !linkable('AD'));
+  tap('r');
+  check('a cast is what links read off', player.linkFrom === 'R' && linkable('AD'));
+  step(40); // the storm and its recovery are over
+  check('...and once it ends, a press is a normal cast', player.linkFrom === null, `from ${player.linkFrom}`);
+  tap('r'); step(1); closeLinks();
+  check('closeLinks forgets it', player.linkFrom === null);
+  player.cd.R = 0; tap('r'); player.hp = 0; step(1);
+  check('a respawn starts with no links', player.linkFrom === null, `from ${player.linkFrom}`);
 }
 
 // --- every active skill has a cast body
@@ -3105,52 +3104,34 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     placeKey(game.floor.place));
 }
 {
-  // Tempest's own window (a) runs down like the others and (b) is what a
-  // Skyward Assault's Tempest link rides, so the storm is ready on its cooldown.
-  arena(20); player.ranks.R = 1;
-  tap('r');
-  const t0 = player.links.tempest;
-  check('the storm opens its window for its own cast', t0 > 0 && t0 < 3, `t ${t0.toFixed(2)}`);
-  step(80); // ~2.7s: well past the window
-  check('...and it runs down, not forever', player.links.tempest === 0, `t ${player.links.tempest.toFixed(2)}`);
-  tap('r'); step(1); closeLinks();
-  check('...and closeLinks shuts it too', player.links.tempest === 0, `t ${player.links.tempest.toFixed(2)}`);
-}
-{
-  // A Tempest linked off a landed Skyward Assault still pays its 10s cooldown.
+  // A Tempest linked off a Skyward Assault still pays its 10s cooldown.
   arena(30); player.ranks.Q = 1; player.ranks.AB = 3; player.ranks.R = 1;
   dummy(130);
-  tap('q'); step(14); tap('w'); step(40);
-  check('the assault has landed with its window open', player.onGround && player.links.assault > 0,
-    `assault ${player.links.assault.toFixed(2)}`);
-  tap('r');
+  tap('q'); step(14); tap('w'); step(4);
+  tap('r'); for (let i = 0; i < 40 && player.casting.queued; i++) step(1); // fires as the hover ends
   // The 10s cooldown, less the 1s every link shaves off it (see pay).
-  check('the linked Tempest fires off the landing and pays its cooldown',
+  check('the linked Tempest fires off the hover and pays its cooldown',
     player.cast === 'shoot' && player.cd.R > 8 && player.cd.R < 10, `cast ${player.cast} cd ${player.cd.R.toFixed(2)}`);
   tap('r');
   check('...so a second cast right away is spent', player.cd.R > 8 && player.cast === 'shoot' && player.castT > 0,
     `cd ${player.cd.R.toFixed(2)} cast ${player.cast}`);
 }
 {
-  // The sweep lands before the linked skill starts: the spin's window opens a
-  // beat after the cast, and a press inside that beat is buffered, not lost.
+  // The sweep lands before the linked skill starts: a press during the sweep
+  // is buffered, not lost, and fires as its animation ends.
   arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
   dummy(150);
   tap('c'); step(8);
   tap('w');
   check('the sweep hits on the cast', player.cast === 'shoot' && game.mobs[0].hp < 1e6, `hp ${game.mobs[0].hp}`);
-  check('...and its link windows start shut', player.links.glide === 0 && player.links.sweep === 0,
-    `glide ${player.links.glide.toFixed(2)} sweep ${player.links.sweep.toFixed(2)}`);
   check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > useTime('MS') - 0.4,
     `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${useTime('MS')}`);
   tap('d');
-  check('a Glide pressed in the gap is buffered, not lost', player.casting.queued === 'D', `queued ${player.casting.queued}`);
+  check('a Glide pressed mid-sweep is buffered, not lost', player.casting.queued === 'D', `queued ${player.casting.queued}`);
   let wait = 0;
-  while (player.casting.queued === 'D' && wait < 30) { step(1); wait++; }
-  check('...and it fires as soon as the window opens, mid-sweep', Math.abs(wait * P.STEP - P.SPIN_LINK_DELAY) < 0.1,
-    `fired after ${(wait * P.STEP).toFixed(2)}s, window at ${P.SPIN_LINK_DELAY}s`);
-  check('...and it fires once the window opens', player.cast === 'jump' && player.casting.useT > 0,
-    `cast ${player.cast} useT ${player.casting.useT.toFixed(2)}`);
+  while (player.casting.queued === 'D' && wait < 40) { step(1); wait++; }
+  check('...and it fires as the sweep ends', Math.abs(wait * P.STEP - useTime('MS')) < 0.1 && player.cast === 'jump',
+    `fired after ${(wait * P.STEP).toFixed(2)}s, sweep ${useTime('MS')}s, cast ${player.cast}`);
 }
 {
   // The aerial kit plants you: each skill zeroes your velocity so the move
@@ -3191,16 +3172,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...and the climb stays on the spot it started', Math.abs(player.x - x0) < 1, `dx ${(player.x - x0).toFixed(1)}`);
 }
 {
-  // The W-slot skills are paced by the Rush Toss link window alone: a fresh Q
+  // The W-slot skills are paced by the Rush Toss link alone: a fresh Q
   // lets the follow-up fire again immediately, with nothing cooling down.
   arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.AB = 1;
   check('Rising Arrows and Skyward Assault carry no cooldown', SKILLS.W.cd === 0 && SKILLS.AB.cd === 0,
     `W ${SKILLS.W.cd} AB ${SKILLS.AB.cd}`);
-  tap('q'); step(20); tap('w');
+  tap('q'); step(12); tap('w');
   check('...and casting the Volley leaves nothing to cool down', player.cd.W === 0 && player.cast === 'barrage',
     `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
   while (!player.onGround) step(); // back on the ground: the next press is a Rush Toss, not the air form
-  tap('q'); step(20); tap('w');
+  tap('q'); step(12); tap('w');
   check('...so the next Rush Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd.W === 0,
     `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
 }
@@ -3253,10 +3234,12 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a floor loads with the camera centred on the player',
     Math.abs(game.cam.x - want.x) < 1 && Math.abs(game.cam.y - want.y) < 1,
     `cam ${game.cam.x.toFixed(0)},${game.cam.y.toFixed(0)} want ${want.x.toFixed(0)},${want.y.toFixed(0)}`);
+  // (unless she spawned by a wall and the camera is pinned to the world's edge)
+  const pinnedX = (): boolean => game.cam.x <= 0 || game.cam.x >= WORLD.w - game.view.w;
   check('...so she sits in the middle of the deadzone',
-    player.x > game.cam.x + game.view.w * CAM.left && player.x < game.cam.x + game.view.w * CAM.right
+    (pinnedX() || (player.x > game.cam.x + game.view.w * CAM.left && player.x < game.cam.x + game.view.w * CAM.right))
     && player.y + player.h > game.cam.y + game.view.h * CAM.top && player.y + player.h < game.cam.y + game.view.h * CAM.bottom,
-    `x ${player.x.toFixed(0)} in ${game.cam.x.toFixed(0)}..${(game.cam.x + game.view.w).toFixed(0)}`);
+    `x ${player.x.toFixed(0)} in ${game.cam.x.toFixed(0)}..${(game.cam.x + game.view.w).toFixed(0)} feet ${(player.y + player.h).toFixed(0)} in ${game.cam.y.toFixed(0)}..${(game.cam.y + game.view.h).toFixed(0)}`);
   step(1);
   check('...and it stays there on the first frame', Math.abs(game.cam.x - want.x) < 1 && Math.abs(game.cam.y - want.y) < 1,
     `cam ${game.cam.x.toFixed(0)},${game.cam.y.toFixed(0)}`);

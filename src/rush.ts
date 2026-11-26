@@ -5,8 +5,6 @@ import { damage, hitbox } from './combat';
 import { surfaceBetween, surfaceYAt } from './physics';
 import { sfx } from './audio';
 import { rank, shotCount } from './progress';
-import { openLink } from './links';
-import { linkWindow } from './castrules';
 import { alive, eachShot, fxUnder, pose, setPose } from './skillfx';
 
 /** The pending Rush Toss strike, fired when the slide ends. */
@@ -98,7 +96,7 @@ export function endRush(): void {
  * strike lands when the slide ends: out of time, slowed, or at a platform
  * edge (see updateRush). In place (Down + Q) it strikes at once. Electric
  * Blitz is the charged version: a faster, longer slide that spends a banked
- * charge (`blitz`). Opens the link window.
+ * charge (`blitz`).
  */
 export function groundRush(inPlace: boolean, blitz: boolean): void {
   pose('rush', blitz ? 'EB' : 'Q');
@@ -107,7 +105,6 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
     slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST, 'rush', blitz ? 'blitzRush' : 'tossRush');
     if (blitz) player.blitz.charges--;
   }
-  openLink('combo', linkWindow(blitz ? 'EB' : 'Q'));
 }
 
 /** Set up the strike that lands when the slide ends (see endRush), and return it. */
@@ -151,12 +148,11 @@ function strike(inPlace: boolean, face: number, fx: FxKind): void {
 
 /** The Meteor Dive touched down: roll out of it with no pause, a slide of its
  *  own (DIVE_ROLL_*, tuned apart from Rush Toss's) that scoops up and strikes
- *  like the rush. Its follow-up window opens here, off the landing, not off
+ *  like the rush. Its links fire off the landing roll's strike, not off
  *  the coil. */
 export function landDive(): void {
   if (!player.diving || !player.onGround) return;
   player.diving = false;
   setPose('dive', P.DIVE_ROLL_MAX); // the roll is the tail of the dive's own animation
   slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'diveLand');
-  openLink('dive', linkWindow('AD'));
 }

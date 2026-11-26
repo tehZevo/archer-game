@@ -27,10 +27,6 @@ export const rushHolding = (): boolean => {
   return player.cast === 'rush' && player.castTotal - player.castT < P.RUSH_HOLD;
 };
 
-/** The link window a skill opens: its whole animation, plus a beat of free
- *  time (LINK_BUFFER) before the linked skill's animation starts. Scales with
- *  Haste, since use/delay do. */
-export const linkWindow = (kind: SkillKey): number => useTime(kind) + delayTime(kind) + P.LINK_BUFFER;
 
 /** Movement skills a rope/ladder grab cuts short: grabbing the climb is the
  *  next move, so it doesn't wait out the Glide's use time the way an attack's

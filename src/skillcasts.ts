@@ -5,9 +5,9 @@ import { damage, hitbox, NUM_GAP, spawnArrow } from './combat';
 import { sfx } from './audio';
 import { netShot } from './net';
 import { shotCount } from './progress';
-import { endHover, openLink } from './links';
+import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
-import { linkWindow, useTime } from './castrules';
+import { useTime } from './castrules';
 import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
 
 import type { SkillKey, SkillRank } from './types';
@@ -74,9 +74,6 @@ function airDive(r: SkillRank): void {
   player.vx = player.vy = 0;
   game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
-  // The follow-up window opens off the landing (see rush.landDive); a Glide,
-  // the dive's only airborne way out, links off the coil and plunge.
-  openLink('glide', linkWindow('AD'));
   // The plunge starts at the end of the coil, and lands on the enemies below.
   later(P.DIVE_WINDUP, () => {
     player.vx = player.face * P.DIVE_VX; // the diagonal plunge
@@ -93,15 +90,14 @@ function skyToss(): void {
   groundRush(held('down'), false);
 }
 
-/** Electric Blitz: the charged rush. Its self-link window lets the next blitz
- *  (with a charge banked) fire at once, skipping this one's ending lag. */
+/** Electric Blitz: the charged rush. It links into the next blitz (with a
+ *  charge banked), skipping this one's ending lag. */
 function electricBlitz(): void {
   groundRush(held('down'), true);
-  openLink('blitz', linkWindow('EB'));
 }
 
 /** Rising Arrow (retired): launch the enemies ahead and leap up with them,
- *  opening the link window for an airborne W. */
+ *  linking into an airborne W. */
 function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
   pose('rush', kind);
   sfx.jump();
@@ -115,7 +111,6 @@ function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back
   player.vx = dir * vx;
   player.vy = -vy;
   game.fx.push({ type: 'swoosh', x: player.x, y: player.y + player.h, t: 0.2, face: dir });
-  openLink('combo', linkWindow(kind));
 }
 
 /** Rising Arrow: jump up with the enemies it launches (the same launch speed,
@@ -143,8 +138,6 @@ function spikeLift(r: SkillRank): void {
   player.liftT = useTime('E');
   player.vy = 0;
   player.onGround = false;
-  // the launch opens the link window, so Meteor Dive (Q in the air) can start on the way up
-  openLink('combo', linkWindow('E'));
 }
 
 /** Downpour (E's air form): a small upward bump (no freeze: you keep
@@ -167,9 +160,6 @@ function plungingVolley(r: SkillRank): void {
   eachShot(shotCount(r), 0.08, (more) => {
     alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more }));
   });
-  // the rain opens the link window, hit or miss, so Cyclone Sweep follows it at once
-  openLink('combo', linkWindow('PV'));
-  openLink('glide', linkWindow('PV')); // and into a Glide
 }
 
 /** Tempest: you vanish as an oval of energy sweeps up and around you,
@@ -178,9 +168,6 @@ function tempest(r: SkillRank): void {
   pose('shoot', 'R');
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
-  // the storm links straight into Dive (Q in the air); its own window, so it
-  // doesn't also hand you the Rush Toss follow-ups
-  openLink('tempest', linkWindow('R'));
   sfx.shoot();
   const mx = player.x + player.face * 8, my = player.y + 13;
   const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
@@ -204,17 +191,11 @@ function midairSpin(r: SkillRank): void {
   eachShot(shotCount(r), 0, (more) => {
     alive(tg).forEach((m) => damage(m, r.dmg, { fx: 'spinHit', more }));
   });
-  // The sweep lands, and only then does it link out: a press inside this gap
-  // is buffered and fires as the window opens, so the chain reads as
-  // spin-then-hit rather than both at once. (SPIN_LINK_DELAY.)
-  later(P.SPIN_LINK_DELAY, () => {
-    openLink('sweep', linkWindow('MS')); // the spin links into a Glide or a Downpour, off one clock
-  });
 }
 
 /** Rising Arrows (W's ground form): knock the enemies ahead into the air and
- *  shoot them before they land. Q's rush gathers them up first, and its link
- *  window is what makes this available. */
+ *  shoot them before they land. Q's rush gathers them up first, and only a
+ *  link off it makes this available. */
 function skyfallVolley(r: SkillRank): void {
   pose('shoot', 'W');
   sfx.shoot();
@@ -242,9 +223,6 @@ function skyAssault(r: SkillRank): void {
   game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
   player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
-  // the leap links into Cyclone Sweep: the window stays open through the
-  // hover, so the sweep fires out of it with no extra lag
-  openLink('spin', P.BARRAGE_HANG + P.ASSAULT_SPIN_LINK);
 }
 
 /** Bolt Flurry: a volley of 4 green bolts, flown as one animated sprite;
