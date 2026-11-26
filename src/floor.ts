@@ -104,6 +104,9 @@ export function generateFloor(place: Place): Floor {
   let prev: Platform = ground;
   let y = startY;
   let summitTop: Platform = ground;
+  // the highest block's full walkable top row (not just the tile the climb
+  // ends on) — the exit portal picks a spot along it so the climb's finish varies
+  let summitTops: Platform[] = [ground];
   for (let i = 0; i < COUNT; i++) {
     // A rope must hang where the player can reach it: the player's centre is
     // clamped a body half-width from the map edges and a grab reaches
@@ -183,6 +186,7 @@ export function generateFloor(place: Place): Floor {
     }
     prev = top;
     summitTop = top;
+    summitTops = pool; // this block's walkable summit tiles (the last block's win)
     // the next block sits a fixed gap above this one's summit (not its base), so
     // a tall block doesn't squeeze the gap above it and every gap matches the
     // ground-to-first one
@@ -196,8 +200,11 @@ export function generateFloor(place: Place): Floor {
     spawns.push({ x: WORLD.w / 2, y: ground.y, types: [...pair], spots, cap: L.groundCap, minX: 24, maxX: WORLD.w - 24 });
   }
 
-  // The exit portal sits centred on the highest platform's walkable top tile.
-  const portal: Portal = { x: summitTop.x + summitTop.w / 2, y: summitTop.y, w: 40, h: 56, to: nextPlace(place) };
+  // The exit portal sits on the highest platform's walkable top, at a random
+  // spot along it (not always the middle), so the top of the climb varies.
+  const pad = summitTops.find((t) => !t.slope) ?? summitTop;
+  const landing = summitTops.length ? summitTops[Math.floor(rng() * summitTops.length)] : pad;
+  const portal: Portal = { x: landing.x + landing.w / 2, y: landing.y, w: 40, h: 56, to: nextPlace(place) };
   if (isPathEnd(place)) portal.label = placeName(portal.to); // the way into the town names it
   // And a way back down on the ground, at the far end from where you arrive:
   // it takes you to the town below and asks before it sends you.
