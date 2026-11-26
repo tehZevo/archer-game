@@ -197,7 +197,7 @@ export function gotoPlace(place: Place): void {
   player.casting.queued = null;
   player.casting.key = null;
   player.hang.t = 0; player.liftT = 0; player.hang.hits = 0;
-  player.rush.t = 0; player.rush.dist = 0; player.rush.carry = [];
+  player.rush.t = 0; player.rush.dist = 0; player.rush.carry = []; player.rush.look = null;
   player.effects.length = 0; // effects don't follow you to another floor
   if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');
 }

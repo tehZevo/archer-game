@@ -5,7 +5,7 @@
  * boot from simple light primitives (rays, rings, discs, sparkles), then
  * quantized to a few palette steps so it stays crisp pixel art.
  */
-import { anim, arc, rng, type FxAnim, type RampName } from './fxlight';
+import { anim, arc, rng, type FxAnim, type Light, type RampName } from './fxlight';
 
 /** Hit: a spiky starburst that collapses into an expanding oval shockwave and sparkle dust. */
 function hitAnim(big: boolean, rp: RampName): FxAnim {
@@ -257,6 +257,82 @@ function rainAnim(): FxAnim {
   }, 0.4);
 }
 
+/* Ground rush looks: a looping aura on the archer while she slides, and the
+   scuffs it leaves behind. Rush Toss is wind and dust; Electric Blitz is
+   the same family, heavier, with lightning crackling round her. Auras face
+   right with the origin at her feet, the streaks trailing behind. */
+const AURA_W = 60, AURA_H = 36, AURA_X = 40, AURA_Y = AURA_H - 3;
+export const RUSH_AURA_FRAMES = 4;
+
+/** Speed lines streaming back from the body, and a bow wave at her feet. */
+function rushStreaks(L: Light, f: number, hue: RampName, rim: RampName, heavy: boolean): void {
+  const rows = heavy ? [3, 7, 11, 15, 19, 23] : [4, 9, 14, 19];
+  rows.forEach((up, i) => {
+    const y = AURA_Y - up, len = 14 + ((i * 7 + f * 5) % 4) * 5 + (heavy ? 6 : 0);
+    const x0 = AURA_X - 6 - ((i + f) % 2) * 2;
+    L.line(hue, x0 - len, y, x0, y, 0.2, heavy ? 1.4 : 1.1, 0.95);
+  });
+  // the bow wave: a low arc of air pushed ahead of her feet
+  L.ring(rim, AURA_X + 6, AURA_Y - 1, 5 + (f % 2), 3, 1.1, 0.9, -1.4, 0.2);
+}
+
+function tossRushAnim(): FxAnim {
+  return anim(AURA_W, AURA_H, AURA_X, AURA_Y, RUSH_AURA_FRAMES, (L, f) => {
+    const R = rng(61 + f);
+    rushStreaks(L, f, 'cyan', 'teal', false);
+    // dust kicked up behind her heels
+    for (let i = 0; i < 4; i++) L.disc('dust', AURA_X - 6 - R() * 16, AURA_Y - R() * 4, 1.5, 0.7);
+  }, 0.35);
+}
+
+/** A jagged bolt from (x0,y0) to (x1,y1) in `n` kinks, the kinks from `R`. */
+function zap(L: Light, R: () => number, hue: RampName, x0: number, y0: number, x1: number, y1: number, n: number, I: number): void {
+  let px = x0, py = y0;
+  for (let k = 1; k <= n; k++) {
+    const t = k / n, j = k < n ? (R() * 2 - 1) * 3 : 0;
+    const nx = x0 + (x1 - x0) * t + j, ny = y0 + (y1 - y0) * t + (k < n ? (R() * 2 - 1) * 2 : 0);
+    L.line(hue, px, py, nx, ny, 0.8, 0.8, I);
+    px = nx; py = ny;
+  }
+}
+
+function blitzRushAnim(): FxAnim {
+  return anim(AURA_W, AURA_H, AURA_X, AURA_Y, RUSH_AURA_FRAMES, (L, f) => {
+    const R = rng(71 + f * 13);
+    rushStreaks(L, f, 'yellow', 'gold', true);
+    // a crackling field round her body, flickering arc by arc
+    L.ring('yellow', AURA_X, AURA_Y - 12, 10, 14, 1, 0.55, -Math.PI + f * 0.7, -Math.PI + f * 0.7 + 2.2);
+    // lightning: two bolts jumping off her back, one forking to the ground ahead
+    for (let k = 0; k < 2; k++) {
+      const y0 = AURA_Y - 6 - R() * 16;
+      zap(L, R, 'gold', AURA_X - 2, y0, AURA_X - 14 - R() * 10, y0 + (R() * 2 - 1) * 6, 3, 1.15);
+    }
+    zap(L, R, 'yellow', AURA_X + 4, AURA_Y - 10 - R() * 6, AURA_X + 10 + R() * 6, AURA_Y, 3, 1.2);
+    for (let i = 0; i < 3; i++) L.spark('yellow', AURA_X - 4 + R() * 16 - 8, AURA_Y - R() * 24, 1.1, i === 0);
+  }, 0.3);
+}
+
+/** A scuff left on the ground: Rush Toss dust and a skid line. Origin at the ground. */
+function tossTrailAnim(): FxAnim {
+  const W = 22, H = 10, bx = 11, by = H - 2;
+  return anim(W, H, bx, by, 5, (L, f) => {
+    const R = rng(81 + f), fade = 1 - f / 5;
+    L.line('teal', bx - 9, by, bx + 3, by, 0.2, 0.9, 0.8 * fade);
+    for (let i = 0; i < 3; i++) L.disc('dust', bx - 4 - R() * 6, by - f - R() * 2, 1.6, 0.7 * fade);
+  });
+}
+
+/** Electric Blitz's scuff: a scorch line that sparks, and a little arc jumping off it. */
+function blitzTrailAnim(): FxAnim {
+  const W = 22, H = 14, bx = 11, by = H - 2;
+  return anim(W, H, bx, by, 5, (L, f) => {
+    const R = rng(91 + f * 7), fade = 1 - f / 5;
+    L.line('gold', bx - 9, by, bx + 3, by, 0.3, 1.1, 0.9 * fade);
+    if (f < 3) zap(L, R, 'yellow', bx - 6 + R() * 6, by, bx - 4 + R() * 6, by - 6 - R() * 4, 2, 1.1 * fade);
+    L.spark('yellow', bx - R() * 10, by - 1 - R() * 3, fade);
+  });
+}
+
 /** Bolt Flurry volley: 4 green bolts in a loose diamond, each a streak with a
  *  brighter head, jostling forward and back so the volley flickers as it
  *  flies. Loops (see drawShot). Faces right; origin at the lead bolt's tip. */
@@ -439,6 +515,10 @@ export function FX(): Record<string, FxAnim> {
       rain: rainAnim(),
       rainHit: hitAnim(false, 'gold'),
       flurry: flurryAnim(),
+      tossRush: tossRushAnim(),
+      blitzRush: blitzRushAnim(),
+      tossTrail: tossTrailAnim(),
+      blitzTrail: blitzTrailAnim(),
       stunHit: stunHitAnim(),
       spirit: spiritAnim(),
     };
