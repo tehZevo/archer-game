@@ -179,6 +179,25 @@ export function breath(a: MobAnim): Sprite {
   breaths.set(a, (s = new Sprite(w, g.h, out)));
   return s;
 }
+/** The flinch's second beat: the hurt pose with its upper half thrown back a
+ *  pixel (away from the facing), alternating with the hurt pose in hitstun. */
+const recoils = new WeakMap<MobAnim, Sprite>();
+export function recoil(a: MobAnim): Sprite {
+  let s = recoils.get(a);
+  if (s) return s;
+  const g = a.hurt.g, w = g.w, out = newGrid(w, g.h);
+  out.px.set(g.px);
+  let top = 0;
+  while (top < g.h && !Array.from({ length: w }, (_, x) => g.px[(top * w + x) * 4 + 3]).some(Boolean)) top++;
+  const mid = top + Math.floor((g.h - top) / 2);
+  for (let y = top; y < mid; y++) {
+    const row = y * w * 4;
+    out.px.copyWithin(row, row + 4, row + w * 4);
+    out.px.fill(0, row + (w - 1) * 4, row + w * 4);
+  }
+  recoils.set(a, (s = new Sprite(w, g.h, out)));
+  return s;
+}
 const recolorAnim = (a: MobAnim, map: Record<string, string>): MobAnim =>
   ({ frames: a.frames.map((f) => recolor(f, map)), fps: a.fps, hurt: recolor(a.hurt, map) });
 
