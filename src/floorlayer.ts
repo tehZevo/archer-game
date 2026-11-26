@@ -64,7 +64,7 @@ function drawPlatforms(g: Ctx, ts: Tileset): void {
 function drawDecorations(g: Ctx, ts: Tileset): void {
   eachTile((x, y, nb) => {
     const tx = x / TS, ty = y / TS;
-    if (!(nb & NB.N)) {
+    if (!(nb & NB.N) && !TB.sways(ts, variantAt(tx, ty, 1))) {
       const s = TB.topDeco(ts, variantAt(tx, ty, 1), !(nb & NB.W), !(nb & NB.E));
       if (s) g.drawImage(s.c, x - 2, y - TOP_Y);
     }
@@ -133,6 +133,20 @@ export function drawDecorLive(ctx: Ctx, t: number): void {
     const n = DECOR_FRAMES[d.kind];
     if (n > 1) ctx.drawImage(art(`decor/${d.kind}/${pal}/${(Math.floor(t * DECOR_FPS) + phase) % n}`, d.flip), x0, y0);
   }
+}
+
+/** The swaying plants on exposed tops, each frame over the static layer
+ *  (only those in view: x0..x1, y0..y1), a gust rolling along the floor. */
+export function drawTopsLive(ctx: Ctx, ts: Tileset, t: number, x0: number, y0: number, x1: number, y1: number): void {
+  if (!ts.sway) return;
+  eachTile((x, y, nb) => {
+    if (nb & NB.N || x < x0 - TS || x > x1 + TS || y < y0 - TS || y > y1 + TS) return;
+    const tx = x / TS, ty = y / TS, v = variantAt(tx, ty, 1);
+    if (!TB.sways(ts, v)) return;
+    const f = Math.floor(t * TB.SWAY_FPS - tx * 0.25) & 3;
+    const s = TB.topDeco(ts, v, !(nb & NB.W), !(nb & NB.E), f);
+    if (s) ctx.drawImage(s.c, x - 2, y - TOP_Y);
+  });
 }
 
 /** Tile a 16x16 sprite vertically between y1 and y2 at an integer x. */

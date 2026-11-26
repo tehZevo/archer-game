@@ -2,7 +2,7 @@ import { WORLD } from './config';
 import { corpses } from './deaths';
 import { ctx } from './canvas';
 import { game } from './state';
-import { drawDecorLive, floorLayer } from './floorlayer';
+import { drawDecorLive, drawTopsLive, floorLayer } from './floorlayer';
 import { quakes } from './boss';
 import { drawHUD } from './hud';
 import { drawCoins, drawGearDrops, drawNpcs, drawPet } from './economydraw';
@@ -39,6 +39,7 @@ export function render(): void {
   ctx.translate(-Math.round(game.cam.x), -Math.round(game.cam.y));
   ctx.drawImage(floorLayer(ts), 0, 0); // everything static, baked once per floor
   drawDecorLive(ctx, performance.now() / 1000); // ...and the town decor that moves
+  drawTopsLive(ctx, ts, performance.now() / 1000, game.cam.x, game.cam.y, game.cam.x + game.view.w, game.cam.y + game.view.h); // ...and swaying plants
   game.floor.portals.forEach(drawPortal);
   drawNpcs();
   corpses.forEach(drawCorpse);

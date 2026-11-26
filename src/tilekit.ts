@@ -30,6 +30,9 @@ export interface Tileset {
   surface(x: number, d: number, v: number): string | null;
   edge: Edge;
   top?(p: Paint, v: number, w: boolean, e: boolean): void;
+  /** Top decoration variants that are all plants, swaying in the breeze
+   *  (drawn live, see SWAY); the others (stones, posts, stumps) hold still. */
+  sway?: number[];
   bottom?(p: Paint, v: number): void;
   rope(p: Paint): void;
   ladder(p: Paint): void;

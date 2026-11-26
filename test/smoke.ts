@@ -3,8 +3,8 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { BAKED_TILES } from '../src/tilebaked';
-import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
-import { TILESETS } from '../src/tileset';
+import { ATLAS_COLS, CELLS, pieces, SWAY_ROWS, topDeco } from '../src/tilebake';
+import { TILESETS, TOP_W, TOP_Y } from '../src/tileset';
 import { ART_GEN } from '../src/artsheets';
 import { archerShape, DIVE_PITCH, GRIDS, lookColours, PAL, pitch, recolourFrame, sheetRows, styled, type ArcherPose } from '../src/archer';
 import { BAKED_ARCHER } from '../src/archerbaked';
@@ -272,6 +272,13 @@ setKey('up', false);
   check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }
 
+{ // swaying plants lean their tops and keep their roots
+  const ts = Object.values(TILESETS).find((t) => t.name === 'Sunny Meadows')!, still = topDeco(ts, 0, false, false)!.g, lean = topDeco(ts, 0, false, false, 1)!.g;
+  const row = (g: typeof still, y: number): string => Array.from(g.px.subarray(y * TOP_W * 4, (y + 1) * TOP_W * 4)).join();
+  const roots = [...Array(SWAY_ROWS + 1).keys()].map((i) => TOP_Y - SWAY_ROWS + i);
+  check('a sway frame leans the plants but keeps the roots', roots.every((y) => row(still, y) === row(lean, y)) && still.px.join() !== lean.px.join());
+  check('stones, posts and stumps hold still', topDeco(ts, 3, false, false, 1) === topDeco(ts, 3, false, false));
+}
+
 console.log(failures === 0 ? '\nAll tests passed.' : `\n${failures} test(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
-
