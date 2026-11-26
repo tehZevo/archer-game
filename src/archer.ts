@@ -1,5 +1,7 @@
 import { P } from './config';
-import { DEFAULT_LOOK, lookKey, lookPalette, type Look } from './look';
+import { DEFAULT_LOOK, LOOK_COUNTS, lookKey, lookPalette, type Look } from './look';
+import { canvasGrid, flipGrid, gridCanvas, hexRgb, newGrid, type Grid } from './grid';
+import { BAKED_ARCHER } from './archerbaked';
 /* ============================================================
    ARCHER SPRITE SHEET
    16x24 frames authored as character grids (facing right) and
@@ -8,7 +10,7 @@ import { DEFAULT_LOOK, lookKey, lookPalette, type Look } from './look';
    ============================================================ */
 
 /** Palette: one character per colour; '.' is transparent. */
-const PAL: Record<string, string> = {
+export const PAL: Record<string, string> = {
   o: '#1b2235', // outline
   h: '#f6dc8a', H: '#d4a94e', // hair, hair shadow
   s: '#f2d0a9', S: '#d9a47c', // skin, skin shadow
@@ -324,31 +326,102 @@ export function styled(grid: string[], pose: ArcherPose, style: number, body = 0
   return g;
 }
 
-/** Bake a grid; frames are ARCHER_W x ARCHER_H except wider ones (prone)
- *  and the pitched dive's square ones. */
-function bake(grid: string[], flip: boolean, pal: Record<string, string>): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  const W = grid[0].length;
-  c.width = W; c.height = grid.length;
-  const x = c.getContext('2d') as CanvasRenderingContext2D;
-  grid.forEach((row, y) => {
-    for (let i = 0; i < W; i++) {
-      const col = pal[row[flip ? W - 1 - i : i]];
-      if (col) { x.fillStyle = col; x.fillRect(i, y, 1, 1); }
-    }
-  });
-  return c;
+/* ---------------- sheets ----------------
+   The archer ships as PNG sheets (assets/archer/<style>-<body>.png), one
+   per hair style and body type, in the default look's colours: a row per
+   pose (ARCHER_ROWS gives each row's place and frame size), its frames left
+   to right. They're baked from the grids above by `npm run bake`. A look
+   is applied by swapping each default colour for the look's (lookColours),
+   so hair, skin and outfit colours never need sheets of their own. */
+
+/** Every pose's frames as pixels for a hair style and body type, in the
+ *  default look's colours (the dive pitched after the hair and face are on). */
+export function archerShape(style: number, body: number): Record<ArcherPose, Grid[]> {
+  const pal = { ...PAL, ...lookPalette(DEFAULT_LOOK) };
+  const out = {} as Record<ArcherPose, Grid[]>;
+  for (const p of Object.keys(GRIDS) as ArcherPose[]) {
+    out[p] = GRIDS[p].map((g) => styled(g, p, style, body)).map((g) => (p === 'dive' ? pitch(g, DIVE_PITCH) : g)).map((rows) => {
+      const g = newGrid(rows[0].length, rows.length);
+      rows.forEach((r, y) => [...r].forEach((ch, x) => {
+        const col = pal[ch];
+        if (!col) return;
+        const i = (y * g.w + x) * 4;
+        [g.px[i], g.px[i + 1], g.px[i + 2]] = hexRgb(col); g.px[i + 3] = 255;
+      }));
+      return g;
+    });
+  }
+  return out;
 }
 
-/** Baked frames for a look, facing right; climb's second step is its mirror. */
+/** Where each pose sits on a sheet: its row's top, frame size and count. */
+export interface SheetRow { y: number; w: number; h: number; n: number }
+export const sheetRows = (shape: Record<ArcherPose, Grid[]>): Record<ArcherPose, SheetRow> => {
+  let y = 0;
+  const out = {} as Record<ArcherPose, SheetRow>;
+  for (const p of Object.keys(GRIDS) as ArcherPose[]) {
+    const f = shape[p][0];
+    out[p] = { y, w: f.w, h: f.h, n: shape[p].length };
+    y += f.h;
+  }
+  return out;
+};
+
+/** A look's colours: each default colour (as 0xRRGGBB) mapped to the look's. */
+export function lookColours(look: Look): Map<number, [number, number, number]> {
+  const from = { ...PAL, ...lookPalette(DEFAULT_LOOK) }, to = { ...PAL, ...lookPalette(look) }, m = new Map<number, [number, number, number]>();
+  for (const k of Object.keys(from)) {
+    const [r, g, b] = hexRgb(from[k]);
+    m.set((r << 16) | (g << 8) | b, hexRgb(to[k]));
+  }
+  return m;
+}
+
+/** A frame in a look's colours. */
+export function recolourFrame(g: Grid, cols: Map<number, [number, number, number]>): Grid {
+  const o = newGrid(g.w, g.h);
+  o.px.set(g.px);
+  for (let i = 0; i < o.px.length; i += 4) {
+    if (!o.px[i + 3]) continue;
+    const to = cols.get((o.px[i] << 16) | (o.px[i + 1] << 8) | o.px[i + 2]);
+    if (to) [o.px[i], o.px[i + 1], o.px[i + 2]] = to;
+  }
+  return o;
+}
+
+/** Loaded sheets, by "style-body", cut into frames. */
+const loaded = new Map<string, Record<ArcherPose, Grid[]>>();
+
+/** Start decoding the archer's sheets (no-op headless). */
+export function loadArcherSheets(): void {
+  if (typeof Image === 'undefined') return;
+  for (const [key, src] of Object.entries(BAKED_ARCHER.sheets)) {
+    const img = new Image();
+    img.onload = () => {
+      const all = canvasGrid(img, img.width, img.height), out = {} as Record<ArcherPose, Grid[]>;
+      for (const [p, r] of Object.entries(BAKED_ARCHER.rows) as [ArcherPose, SheetRow][]) {
+        out[p] = Array.from({ length: r.n }, (_, f) => {
+          const g = newGrid(r.w, r.h);
+          for (let y = 0; y < r.h; y++) g.px.set(all.px.subarray(((r.y + y) * all.w + f * r.w) * 4, ((r.y + y) * all.w + (f + 1) * r.w) * 4), y * r.w * 4);
+          return g;
+        });
+      }
+      loaded.set(key, out);
+      baked.clear(); // re-bake looks from the sheets
+    };
+    img.src = src;
+  }
+}
+
+/** Frames for a look, facing right; climb's second step is its mirror. */
 export function bakeArcher(look: Look = DEFAULT_LOOK): Record<ArcherPose, HTMLCanvasElement[]> {
-  const pal = { ...PAL, ...lookPalette(look) };
+  const style = look.style % LOOK_COUNTS.style, body = look.body % LOOK_COUNTS.body;
+  const shape = loaded.get(`${style}-${body}`) ?? archerShape(style, body), cols = lookColours(look);
   const out = {} as Record<ArcherPose, HTMLCanvasElement[]>;
   for (const p of Object.keys(GRIDS) as ArcherPose[]) {
-    // the dive is pitched after the hair and face are on it, so they turn too
-    const grids = GRIDS[p].map((g) => styled(g, p, look.style, look.body)).map((g) => (p === 'dive' ? pitch(g, DIVE_PITCH) : g));
-    out[p] = grids.map((g) => bake(g, false, pal));
-    if (p === 'climb') out[p].push(bake(grids[0], true, pal));
+    const frames = shape[p].map((g) => recolourFrame(g, cols));
+    out[p] = frames.map(gridCanvas);
+    if (p === 'climb') out[p].push(gridCanvas(flipGrid(frames[0])));
   }
   return out;
 }

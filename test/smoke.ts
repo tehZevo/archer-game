@@ -6,6 +6,10 @@ import { BAKED_TILES } from '../src/tilebaked';
 import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
 import { TILESETS } from '../src/tileset';
 import { ART_GEN } from '../src/artsheets';
+import { archerShape, DIVE_PITCH, GRIDS, lookColours, PAL, pitch, recolourFrame, sheetRows, styled, type ArcherPose } from '../src/archer';
+import { BAKED_ARCHER } from '../src/archerbaked';
+import { DEFAULT_LOOK, LOOK_COUNTS, lookPalette, type Look } from '../src/look';
+import { hexRgb } from '../src/grid';
 import { BAKED_ART } from '../src/artbaked';
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
 import { BAKED } from '../src/fxbaked';
@@ -232,6 +236,38 @@ setKey('up', false);
     return png.w !== g.w || png.h !== g.h || Buffer.compare(Buffer.from(png.px), Buffer.from(g.px)) !== 0;
   });
   check(`every scenery PNG matches its painter${staleArt.length ? ' (stale: ' + staleArt.slice(0, 5).join(', ') + ')' : ''}`, staleArt.length === 0);
+  // the archer: sheets match the grids, and a look applied by swapping the
+  // default colours matches painting the grids in that look's palette
+  const staleArcher: string[] = [];
+  for (let style = 0; style < LOOK_COUNTS.style; style++) for (let body = 0; body < LOOK_COUNTS.body; body++) {
+    const shape = archerShape(style, body), png = decodePng(readFileSync(`assets/archer/${style}-${body}.png`));
+    const bad = Object.entries(sheetRows(shape)).some(([p, r]) => shape[p as ArcherPose].some((g, f) => {
+      for (let y = 0; y < r.h; y++) {
+        const row = png.px.subarray(((r.y + y) * png.w + f * r.w) * 4, ((r.y + y) * png.w + (f + 1) * r.w) * 4);
+        if (Buffer.compare(Buffer.from(row), Buffer.from(g.px.subarray(y * g.w * 4, (y + 1) * g.w * 4))) !== 0) return true;
+      }
+      return false;
+    }));
+    if (bad || !BAKED_ARCHER.sheets[`${style}-${body}`]) staleArcher.push(`${style}-${body}`);
+  }
+  check(`every archer sheet matches its grids${staleArcher.length ? ' (stale: ' + staleArcher.join(', ') + ')' : ''}`, staleArcher.length === 0);
+  const looks: Look[] = [];
+  for (const k of ['hair', 'skin', 'outfit'] as const) for (let i = 0; i < LOOK_COUNTS[k]; i++) looks.push({ ...DEFAULT_LOOK, style: i % LOOK_COUNTS.style, [k]: i });
+  const wrong = looks.filter((look) => {
+    const shape = archerShape(look.style, look.body), pal = { ...PAL, ...lookPalette(look) }, cols = lookColours(look);
+    return (Object.keys(GRIDS) as ArcherPose[]).some((p) => GRIDS[p].some((rows0, f) => {
+      let rows = styled(rows0, p, look.style, look.body);
+      if (p === 'dive') rows = pitch(rows, DIVE_PITCH);
+      const got = recolourFrame(shape[p][f], cols);
+      return rows.some((r, y) => [...r].some((ch, x) => {
+        const i = (y * got.w + x) * 4, want = pal[ch];
+        if (!want) return got.px[i + 3] !== 0;
+        const [R, G, B] = hexRgb(want);
+        return got.px[i] !== R || got.px[i + 1] !== G || got.px[i + 2] !== B;
+      }));
+    }));
+  });
+  check(`every look recolours the default sheets exactly${wrong.length ? ' (' + wrong.length + ' wrong)' : ''}`, wrong.length === 0);
   check('every base enemy is baked', Object.keys(MOB_GEN).every((n) => BAKED_MOBS[n]));
   check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }

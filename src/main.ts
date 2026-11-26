@@ -16,6 +16,7 @@ import { loadFxSheets } from './fxsheets';
 import { loadMobSheets } from './sprites';
 import { loadTileSheets } from './tilebake';
 import { loadArtSheets } from './artsheets';
+import { loadArcherSheets } from './archer';
 import { TILESETS } from './tileset';
 import { loadLayout } from './input';
 import { hasSave, load, save, startRun, tickSave } from './save';
@@ -77,6 +78,7 @@ loadFxSheets(); // skill effects, baked to PNG (see fxsheets.ts)
 loadMobSheets(); // enemies, likewise (see sprites.ts)
 loadTileSheets(Object.values(TILESETS)); // and tilesets (see tilebake.ts)
 loadArtSheets(); // and the scenery: props, town decor, backdrops (see artsheets.ts)
+loadArcherSheets(); // and the archer (see archer.ts)
 // a background tab has no frames: keep publishing our (still) position anyway
 keepAliveWhileHidden(sync);
 requestAnimationFrame(frame);
