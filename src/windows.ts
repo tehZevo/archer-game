@@ -35,6 +35,12 @@ export function windowInput(dt: number): boolean {
   return false;
 }
 
+/** True while any of those windows is open (so Enter belongs to it, not the chat line). */
+export function windowOpen(): boolean {
+  return shop.open || trainer.open || stylist.open || board.open || confirmUi.open
+    || settingsUi.open || achUi.open || dev.open || !!game.pause;
+}
+
 /** Z, Enter or Space: confirm in any window. */
 const confirmed = (): boolean => pressed('z') || pressed('enter') || pressed(' ');
 

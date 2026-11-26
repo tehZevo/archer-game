@@ -1,7 +1,5 @@
-import { game } from './state';
 import { menu } from './menu';
-import { shop } from './economy';
-import { dev } from './dev';
+import { windowOpen } from './windows';
 import { say } from './net';
 import { chat, CHAT_MAX } from './chat';
 
@@ -14,7 +12,7 @@ import { chat, CHAT_MAX } from './chat';
 let opener: (() => void) | null = null;
 /** Open the chat line (the touch chat button; call inside the tap's own handler so phones show a keyboard). */
 export function openChat(): void {
-  if (!menu.open && !game.pause && !shop.open && !dev.open && !chat.typing) opener?.();
+  if (!menu.open && !windowOpen() && !chat.typing) opener?.();
 }
 
 export function bindChat(canvas: HTMLCanvasElement): void {
@@ -38,7 +36,7 @@ export function bindChat(canvas: HTMLCanvasElement): void {
     // (a key the menu already handled, e.g. the Enter that starts the game, isn't ours)
     if (menu.open || e.defaultPrevented) return;
     if (!chat.typing) {
-      if (e.key === 'Enter' && !game.pause && !shop.open && !dev.open) {
+      if (e.key === 'Enter' && !windowOpen()) {
         e.preventDefault(); e.stopPropagation();
         open();
       }
