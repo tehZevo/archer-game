@@ -124,7 +124,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, delay: 0.35, mp1: 20, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
   'ground-w': { key: 'ground-w', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
-       cd: 0, use: 0.2, delay: 0.6, mp1: 25, dmg1: 110, hits1: 4, targets1: 4,
+       cd: 0, use: 0.4, delay: 0.2, mp1: 25, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
   'ground-e': { key: 'ground-e', linksInto: [...LAUNCHER_LINKS, 'air-e'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
        cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 120, dmg1: 400, hits1: 2, targets1: 4,
