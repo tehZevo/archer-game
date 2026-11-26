@@ -68,6 +68,7 @@ function tickPlayer(dt: number): void {
     player.readyT.Q = READY_FLASH; // a charge is back: the Q icon flashes
   }
   for (const k of Object.keys(player.cd)) {
+    player.usedT[k] = Math.max(0, (player.usedT[k] ?? 0) - dt); // the cast flash fades
     const was = player.cd[k];
     player.cd[k] = Math.max(0, was - dt);
     // a skill that just finished cooling off flashes on the bar

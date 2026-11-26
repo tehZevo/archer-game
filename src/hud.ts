@@ -4,7 +4,7 @@ import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './econ
 import { board } from './quests';
 import { P, SKILL_BAR } from './config';
 import { AIR_FORM } from './castrules';
-import { READY_FLASH } from './state';
+import { READY_FLASH, USE_FLASH } from './state';
 import { placeName } from './world';
 import { critChance, critMult, critOverflowPoints } from './combat';
 import { ctx } from './canvas';
@@ -81,6 +81,21 @@ function readyGlow(x: number, y: number, t: number): void {
 /** One skill-bar icon: dim until learned, a dark overlay over the part
  *  still cooling down, and the flash as it comes off cooldown. `cs` is its
  *  cooldown slot (an air form cools down on "<key>.air"). */
+/** The flash that fires the instant a skill is cast, so a key press is
+ *  confirmed on the bar. The air and ground forms are stacked in one column,
+ *  so which one you just hit isn't always obvious. */
+function usedFlash(x: number, y: number, t: number): void {
+  const k = Math.min(1, t / USE_FLASH);
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.strokeStyle = '#eaf2ff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - 1.5, y - 1.5, ICON + 3, ICON + 3);
+  ctx.fillStyle = '#eaf2ff';
+  ctx.fillRect(x, y, ICON, 1); // a lit top edge, brightest on the cast
+  ctx.restore();
+}
+
 function skillSlot(k: SkillKey, cs: string, x: number, y: number): void {
   const s = activeSkill(k);
   const learned = isLearned(k);
@@ -107,6 +122,8 @@ function skillSlot(k: SkillKey, cs: string, x: number, y: number): void {
   }
   // the flash that plays as the cooldown runs out, so you know you can press it
   if ((player.readyT[cs] ?? 0) > 0) readyGlow(x, y, player.readyT[cs]);
+  // ...and the flash that confirms the cast you just made
+  if ((player.usedT[cs] ?? 0) > 0) usedFlash(x, y, player.usedT[cs]);
 }
 
 function drawHUD(): void {
