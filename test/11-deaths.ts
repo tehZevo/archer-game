@@ -2,9 +2,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 // --- every enemy dies its own way ---
 {
   const bases = MOB_TYPES.filter((m) => !m.of);
-  check('every enemy has its own death', bases.every((m) => DEATHS[m.n]), bases.filter((m) => !DEATHS[m.n]).map((m) => m.n).join(', '));
   const looks = bases.map((m) => `${DEATHS[m.n]?.move}/${DEATHS[m.n]?.bits}`);
-  check('no two enemies die the same way', new Set(looks).size === looks.length, looks.filter((l, i) => looks.indexOf(l) !== i).join(', '));
+  check('every enemy has its own death', bases.every((m) => DEATHS[m.n]) && new Set(looks).size === looks.length,
+    [...bases.filter((m) => !DEATHS[m.n]).map((m) => m.n), ...looks.filter((l, i) => looks.indexOf(l) !== i)].join(', '));
   check('a variant dies like the enemy it is a cousin of', MOB_TYPES.filter((m) => m.of).every((m) => deathOf(m) === DEATHS[m.of!]));
   arena(1); corpses.length = 0;
   const m = dummy(140);
@@ -136,9 +136,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   arena(20); player.ranks.r = true;
   dummy(140);
   tap('r');
-  check('Tempest locks you in place', player.cast === 'shoot' && player.casting.useT > 0, `useT ${player.casting.useT.toFixed(2)}`);
-  check('...and you are invulnerable for the cast', player.invuln > 0 && player.invuln >= player.castT - 1e-9,
-    `invuln ${player.invuln.toFixed(2)} castT ${player.castT.toFixed(2)}`);
+  check('Tempest locks you in place, invulnerable for the cast', player.cast === 'shoot' && player.casting.useT > 0 && player.invuln > 0 && player.invuln >= player.castT - 1e-9,
+    `useT ${player.casting.useT.toFixed(2)} invuln ${player.invuln.toFixed(2)}`);
   step(43); // the 1.4s storm plays out
   check('the invulnerability ends with the storm', player.invuln <= 0, `invuln ${player.invuln.toFixed(2)}`);
   check('Tempest is a 10s cooldown', SKILLS.r.cd === 10 && player.cd.r > 8, `cd ${player.cd.r.toFixed(2)}`);
@@ -267,14 +266,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Single-rank skills: each carries its (former) max-level hit/damage numbers
-  check('Double Shot hits up to 4 targets at 120% per hit',
-    SKILLS.z.targets1 === 4 && SKILLS.z.dmg1 === 120);
-  check('Rising Arrows fires 4', SKILLS['ground-w'].hits1 === 4);
-  check('Skyward Assault strikes 4', SKILLS.ab.hits1 === 4);
-  check('Cyclone Sweep sweeps 4 hits at 200%', SKILLS['air-w'].hits1 === 4 && SKILLS['air-w'].dmg1 === 200);
-  check('Electric Blitz strikes twice', SKILLS.eb.hits1 === 2);
-  check('Tempest storms up to 8 hits at 200% each', SKILLS.r.hits1 === 8 && SKILLS.r.dmg1 === 200);
-  check('Meteor Dive lands one Rush Toss-strength hit', SKILLS['air-q'].hits1 === 1 && SKILLS['air-q'].dmg1 === 400);
+  check('the kit carries its authored hits and damage (Double Shot 4x120%, Rising Arrows 4, Assault 4, Sweep 4x200%, Blitz 2, Tempest 8x200%, Dive 1x400%)',
+    SKILLS.z.targets1 === 4 && SKILLS.z.dmg1 === 120 && SKILLS['ground-w'].hits1 === 4 && SKILLS.ab.hits1 === 4 &&
+    SKILLS['air-w'].hits1 === 4 && SKILLS['air-w'].dmg1 === 200 && SKILLS.eb.hits1 === 2 &&
+    SKILLS.r.hits1 === 8 && SKILLS.r.dmg1 === 200 && SKILLS['air-q'].hits1 === 1 && SKILLS['air-q'].dmg1 === 400);
   // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
   arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true;
   player.blitz.charges = P.BLITZ_MAX;
@@ -307,13 +302,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('LUK starts at the 15% base crit', Math.abs(critChance() - 0.15) < 1e-9, `${critChance()}`);
   player.stats.luk = 10;
   check('each LUK point is worth 2% crit chance', Math.abs(critChance() - 0.35) < 1e-9, `${critChance()}`);
-  player.stats.luk = 42;
-  check('the base 15% counts toward the cap, so 43 points fills it', Math.abs(critChance() - 0.99) < 1e-9, `${critChance()}`);
   player.stats.luk = 43;
-  check('...and 43 points caps it at 100%', critChance() === 1, `${critChance()}`);
+  check('the base 15% counts toward the cap, so 43 points fills it at 100%', critChance() === 1, `${critChance()}`);
   player.stats.luk = 48;
-  check('points past the cap convert at 2% crit damage each', Math.abs(critMult() - (1.5 + 5 * 0.02)) < 1e-9, `${critMult()}`);
-  check('...counting only the overflow, not the whole stat', critOverflowPoints() === 5, `${critOverflowPoints()}`);
+  check('points past the cap convert at 2% crit damage each, counting only the overflow',
+    Math.abs(critMult() - (1.5 + 5 * 0.02)) < 1e-9 && critOverflowPoints() === 5, `${critMult()} (${critOverflowPoints()} over)`);
   player.stats.luk = 0;
   check('below the cap a crit still hits for 1.5x', Math.abs(critMult() - 1.5) < 1e-9);
   // and the multiplier is the one damage() applies
@@ -451,21 +444,20 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   Math.random = saved;
   check('the archer is down', player.hp === 0, `${player.hp}`);
   step(1); // the frame's end starts the death animation, then the respawn
-  check('the death animation starts on the spot she fell on', getPlayerDeath() !== null, `${getPlayerDeath()?.x}`);
-  check('...at her position, not the respawn point', Math.abs(getPlayerDeath()!.x - fell) < 1,
-    `${getPlayerDeath()?.x} vs ${fell}`);
+  check('the death animation starts on the spot she fell on, not the respawn point',
+    getPlayerDeath() !== null && Math.abs(getPlayerDeath()!.x - fell) < 1, `${getPlayerDeath()?.x} vs ${fell}`);
   check('...and the archer is back on her feet', player.hp === player.hpMax && player.onGround);
   step(6); // the animation runs on its own clock while she plays on
-  check('the tombstone drops in from above', tombDrop(getPlayerDeath()!) > 0 && tombDrop(getPlayerDeath()!) < 1,
+  check('the tombstone drops in from above, the ghost not risen yet',
+    tombDrop(getPlayerDeath()!) > 0 && tombDrop(getPlayerDeath()!) < 1 && ghostRise(getPlayerDeath()!) === 0,
     `${tombDrop(getPlayerDeath()!).toFixed(2)}`);
-  check('...and the ghost has not risen yet', ghostRise(getPlayerDeath()!) === 0);
   step(Math.ceil((TOMB_DROP_T * 2) / P.STEP));
   check('the stone lands', tombDrop(getPlayerDeath()!) === 1, `${tombDrop(getPlayerDeath()!).toFixed(2)}`);
   step(6);
   check('the ghost starts rising out of it', ghostRise(getPlayerDeath()!) > 0, `${ghostRise(getPlayerDeath()!).toFixed(2)}`);
-  check('the whole animation is about a second and a half', PLAYER_DEATH_T > 1 && PLAYER_DEATH_T < 2, `${PLAYER_DEATH_T}`);
   step(Math.ceil(PLAYER_DEATH_T / P.STEP));
-  check('...and it clears', getPlayerDeath() === null, `${getPlayerDeath()?.age}`);
+  check('the whole animation is about a second and a half, and it clears',
+    PLAYER_DEATH_T > 1 && PLAYER_DEATH_T < 2 && getPlayerDeath() === null, `${PLAYER_DEATH_T} ${getPlayerDeath()?.age}`);
 }
 
 {
@@ -477,10 +469,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const solid = (g: { px: Uint8ClampedArray }): number => { let n = 0; for (let i = 3; i < g.px.length; i += 4) if (g.px[i]) n++; return n; };
   const names = Object.keys(DEATHS);
   const sheets = names.map((n) => bakeDeathSheet(n, DEATHS[n], src));
-  check('every enemy bakes a full strip of death frames', sheets.every((d) => d.frames.length === DEATH_FRAMES));
-  check('...that starts with its body on screen', sheets.every((d) => solid(d.frames[0]) > W * H * 0.3),
-    names.filter((_, i) => solid(sheets[i].frames[0]) <= W * H * 0.3).join(', '));
-  check('...and has mostly faded by the last frame', sheets.every((d) => solid(d.frames[DEATH_FRAMES - 1]) < solid(d.frames[0])));
+  check('every enemy bakes a full strip of death frames that starts solid and fades out',
+    sheets.every((d) => d.frames.length === DEATH_FRAMES && solid(d.frames[0]) > W * H * 0.3 && solid(d.frames[DEATH_FRAMES - 1]) < solid(d.frames[0])),
+    names.filter((_, i) => !sheets[i].frames.every((f, j) => f.px.length > 0 && (j > 0 || solid(sheets[i].frames[0]) > W * H * 0.3))).join(', '));
   const sig = sheets.map((d) => d.frames.map((g) => Array.from(g.px).join(',')).join('|'));
   check('each enemy\'s death animation is its own', new Set(sig).size === names.length, `${new Set(sig).size}/${names.length}`);
   check('the same enemy always bakes the same sheet', bakeDeathSheet(names[0], DEATHS[names[0]], src).frames[4].px.join() === sheets[0].frames[4].px.join());
@@ -513,13 +504,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const m = dummy(160);
   game.shots.length = 0; game.dmgNums.length = 0;
   tap('z');
-  check('an echoed Bolt Flurry flies two volleys', game.shots.length === 2 && game.shots.every((s) => s.sprite === 'flurry'), `${game.shots.length} shots`);
-  check('...a little apart, so both show', new Set(game.shots.map((s) => Math.round(s.y))).size === 2);
+  check('an echoed Bolt Flurry flies two volleys, a little apart so both show',
+    game.shots.length === 2 && game.shots.every((s) => s.sprite === 'flurry') && new Set(game.shots.map((s) => Math.round(s.y))).size === 2,
+    `${game.shots.length} shots`);
   const seen = new Set<object>();
   for (let i = 0; i < 60; i++) { step(1); game.dmgNums.forEach((d) => seen.add(d)); }
-  check('...and still lands 8 hits', seen.size === shotCount(rank('z')) && shotCount(rank('z')) === 8,
+  check('...and still lands all 8 hits on the enemy', seen.size === shotCount(rank('z')) && shotCount(rank('z')) === 8 && m.hp < 1e6,
     `${seen.size} numbers, ${shotCount(rank('z'))} shots`);
-  check('...on the enemy', m.hp < 1e6);
 }
 
 {
@@ -547,4 +538,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('closeLinks forgets it', player.linkFrom === null);
   player.cd.r = 0; tap('r'); player.hp = 0; step(1);
   check('a respawn starts with no links', player.linkFrom === null, `from ${player.linkFrom}`);
+}
+{
+  const missing = (Object.keys(SKILLS) as SkillKey[]).filter((k) => !SKILLS[k].passive && !CASTS[k]);
+  check('every active skill has a cast', missing.length === 0, missing.join(','));
 }
