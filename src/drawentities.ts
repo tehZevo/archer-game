@@ -1,4 +1,4 @@
-import { drawLoop } from './drawfx';
+import { drawFxFrame, drawLoop } from './drawfx';
 import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { ELITE, FX_DUR, P } from './config';
 import { deathPose, DEATH_T, ghostRise, getPlayerDeath, tombDrop, type Corpse } from './deaths';
@@ -157,20 +157,21 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
   ctx.globalAlpha = alpha * (pose === 'vanish' ? vanishAlpha(since ?? 0) : 1);
+  if (pose === 'spin') {
+    // Cyclone Sweep: the archer becomes the whirl itself, the turn drawn
+    // into the sheet's frames (a ghost's, with no cast clock, just loops)
+    const k = since !== undefined ? Math.min(0.999, since / FX_DUR.spin) : (t * 2) % 1;
+    drawFxFrame('cyclone', x, feet - ARCHER_H / 2, k, face);
+    ctx.restore();
+    return;
+  }
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
-  if (pose === 'spin' || pose === 'dive') {
-    // turned about the middle of the body: a whole turn through the spin,
-    // or pitched head-first down the dive
-    const turn = pose === 'dive' ? DIVE_PITCH : Math.min(1, (since ?? 0) / FX_DUR.spin) * Math.PI * 2;
-    ctx.translate(0, -ARCHER_H / 2); ctx.rotate(turn); ctx.translate(0, ARCHER_H / 2);
-  }
-  ctx.drawImage(img, -img.width / 2, -ARCHER_H);
+  // every frame is centred on the middle of the body (a 24px frame sits on
+  // the feet; the dive's bigger, pitched frame turns about the middle)
+  ctx.drawImage(img, -img.width / 2, -ARCHER_H / 2 - img.height / 2);
   ctx.restore();
 }
-
-/** How far the Meteor Dive pitches you head-down, radians. */
-const DIVE_PITCH = 0.8;
 /** Tempest: you blink out, stay gone while the sweep goes round, and
  *  flicker back as it ends (s since the cast). */
 function vanishAlpha(s: number): number {

@@ -33,6 +33,8 @@ export function drawShot(s: Shot): void {
 }
 
 /** Draw the frame of a baked effect animation for progress k (0..1), additively. */
+export const drawFxFrame = (name: string, x: number, y: number, k: number, face = 1): void => drawAnim(name, x, y, k, face);
+
 function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 1): void {
   const A = fx(name);
   // clamped both ways: an effect living longer than its animation holds the first frame
