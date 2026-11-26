@@ -16,20 +16,20 @@ import { closeLinks } from './links';
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
 /** Fervor's per-stack bonus grows with the passive's rank. */
-export const fervorMult = (): number => 1 + (0.08 + passiveBonus('IR')) * game.player.fervor;
+export const fervorMult = (): number => 1 + (0.08 + passiveBonus('ir')) * game.player.fervor;
 /** Base 15% crit, raised 2% a point by LUK and the Precision passive. */
 export const CRIT_PER_POINT = 0.02;
 export const critChance = (): number =>
-  Math.min(1, 0.15 + game.player.stats.luk * CRIT_PER_POINT + passiveBonus('SA'));
+  Math.min(1, 0.15 + game.player.stats.luk * CRIT_PER_POINT + passiveBonus('sa'));
 /** LUK points spent past the 100% crit chance cap (the base 15% counts
  *  toward it, so the cap is reached well before 50 points). */
 export const critOverflowPoints = (): number =>
-  Math.max(0, game.player.stats.luk - Math.ceil((1 - 0.15 - passiveBonus('SA')) / CRIT_PER_POINT));
+  Math.max(0, game.player.stats.luk - Math.ceil((1 - 0.15 - passiveBonus('sa')) / CRIT_PER_POINT));
 /** Crits hit for 1.5x, plus 2% for every LUK point past the cap. */
 export const CRIT_BASE = 1.5;
 export const critMult = (): number => CRIT_BASE + critOverflowPoints() * 0.02;
 /** Built-in damage bonus, raised by the Power Surge passive. */
-export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
+export const passiveDmg = (): number => 1.20 + passiveBonus('pp');
 
 /** Level-based miss rate: each level the target stands above the attacker
  *  adds 5% to the chance of missing it (capped), and the same in reverse.

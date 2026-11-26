@@ -24,59 +24,59 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // The air forms show the key they're used on (Q, W, E), not AD/MS/PV.
   arena(60);
-  player.ranks.Q = true; player.ranks.W = true; player.ranks.E = true;
+  player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks['ground-e'] = true;
   const rows = skillRows();
-  const ad = rows.find((r) => r.key === 'AD'), ms = rows.find((r) => r.key === 'MS'), pv = rows.find((r) => r.key === 'PV');
-  check('Meteor Dive shows on the Q key', !!ad && ad.slot === 'Q', ad?.slot);
-  check('Cyclone Sweep shows on the W key', !!ms && ms.slot === 'W', ms?.slot);
-  check('Downpour shows on the E key', !!pv && pv.slot === 'E', pv?.slot);
+  const ad = rows.find((r) => r.key === 'air-q'), ms = rows.find((r) => r.key === 'air-w'), pv = rows.find((r) => r.key === 'air-e');
+  check('Meteor Dive shows on the Q key', !!ad && ad.slot === 'ground-q', ad?.slot);
+  check('Cyclone Sweep shows on the W key', !!ms && ms.slot === 'ground-w', ms?.slot);
+  check('Downpour shows on the E key', !!pv && pv.slot === 'ground-e', pv?.slot);
 }
 // --- a skill's prerequisite must be mastered before it unlocks ---
 {
   arena(60);
-  player.ranks.Q = false; player.ranks.W = true;
-  const ad = skillRows().find((r) => r.key === 'AD');
+  player.ranks['ground-q'] = false; player.ranks['ground-w'] = true;
+  const ad = skillRows().find((r) => r.key === 'air-q');
   check('Meteor Dive is locked until Rush Toss is mastered', !!ad && ad.action === '' && !!ad.need?.includes('Rush Toss'), ad?.need);
-  player.ranks.Q = true;
-  const ad2 = skillRows().find((r) => r.key === 'AD');
+  player.ranks['ground-q'] = true;
+  const ad2 = skillRows().find((r) => r.key === 'air-q');
   check('...and unlocks once Rush Toss is at max rank', !!ad2 && ad2.action.startsWith('Learn'));
-  const ms = skillRows().find((r) => r.key === 'MS');
+  const ms = skillRows().find((r) => r.key === 'air-w');
   check('Cyclone Sweep is locked until Skyward Assault is mastered', !!ms && ms.action === '' && !!ms.need?.includes('Skyward Assault'), ms?.need);
-  player.ranks.AB = true;
-  const ms2 = skillRows().find((r) => r.key === 'MS');
+  player.ranks.ab = true;
+  const ms2 = skillRows().find((r) => r.key === 'air-w');
   check('...and unlocks once Skyward Assault is at max rank', !!ms2 && ms2.action.startsWith('Learn'));
 }
 // --- branching upgrades: the slots that still branch (Z, W) ---
 {
   arena(30);
-  player.ranks.Z = true; player.sp = 2;
+  player.ranks.z = true; player.sp = 2;
   const offered = skillRows().map((r) => r.key);
-  check('Z offers Bolt Flurry', offered.includes('S'));
+  check('Z offers Bolt Flurry', offered.includes('s'));
   check('the retired branches are not offered', !offered.includes('RA'));
-  spendSkill('S');
-  check('taking Bolt Flurry binds it to Z at rank 1', activeSkill('Z').key === 'S' && true);
-  check('Bolt Flurry is the only offer on Z', skillRows().filter((r) => r.slot === 'Z' && r.key !== 'Z').length === 1);
+  spendSkill('s');
+  check('taking Bolt Flurry binds it to Z at rank 1', activeSkill('z').key === 's' && true);
+  check('Bolt Flurry is the only offer on Z', skillRows().filter((r) => r.slot === 'z' && r.key !== 'z').length === 1);
 }
 {
-  arena(30); player.ranks.S = true;
+  arena(30); player.ranks.s = true;
   const m = dummy(140);
   tap('z'); step(10);
   check('Bolt Flurry fires a burst that stuns ahead', m.hp < 1e6 && player.face === 1);
 }
 {
   // Rush Toss stays the launcher on Q; Skyward Assault is W's upgrade
-  arena(20); player.ranks.Q = true; player.ranks.W = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true;
   const m = dummy(140);
   tap('q'); step(14);
   check('Rush Toss hits the enemy ahead and leaves it on the ground', m.hp < 1e6 && m.airTime === 0);
   const hp0 = m.hp; tap('w'); step(15);
   check('the rush opens the link window, and W launches and shoots it', m.hp < hp0 && m.airTime > 0);
-  arena(15); player.ranks.W = true; player.ranks.AB = true; // Skyward Assault is the W upgrade: maxing W masters it
-  check('W offers Skyward Assault as its upgrade', activeSkill('W').key === 'AB');
+  arena(15); player.ranks['ground-w'] = true; player.ranks.ab = true; // Skyward Assault is the W upgrade: maxing W masters it
+  check('W offers Skyward Assault as its upgrade', activeSkill('ground-w').key === 'ab');
 }
 {
   // Meteor Dive: Q's air form plunges down and rolls into the ground rush
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('c'); step(6);
   const y0 = player.y;
   tap('q'); step(5); // past the windup, into the plunge
@@ -84,7 +84,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
   // from higher up: the landing frame itself starts the rush, a real one (it strikes)
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   const m = dummy(180);
   player.y -= 60; player.onGround = false; player.vy = 0;
   tap('q');
@@ -96,12 +96,12 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   }
   check('the rush starts the moment the dive lands', landed >= 0 && rushing === landed, `landed ${landed} rush ${rushing}`);
   step(20);
-  check('...and its strike lands, releasing the dive\'s links', m.hp < 1e6 && player.linkFrom === 'AD' && linkable('W') && !linkHeld('W'),
+  check('...and its strike lands, releasing the dive\'s links', m.hp < 1e6 && player.linkFrom === 'air-q' && linkable('ground-w') && !linkHeld('ground-w'),
     `from ${player.linkFrom}`);
 }
 {
   // Cyclone Sweep: W's air form sweeps the enemies around you
-  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.MS = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   const m = dummy(140);
   tap('c'); step(8);
   const hp0 = m.hp; tap('w'); step(4);
@@ -110,7 +110,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Piercing Leap lifts you steadily (no snappy pop) to about a jump's height
-  arena(10); player.ranks.E = true;
+  arena(10); player.ranks['ground-e'] = true;
   tap('e');
   const ys: number[] = [];
   for (let i = 0; i < 30 && !(i > 2 && player.onGround); i++) { ys.push(player.y); step(1); }
@@ -121,7 +121,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Skyward Assault -> E: Downpour isn't a link off the assault, so a press
   // during the hover is dropped (only MS, R, Z and Q are buffered).
-  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.E = true; player.ranks.PV = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Skyward Assault hovers', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
@@ -131,11 +131,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Skyward Assault -> R: a Tempest pressed during the hover fires as it ends
-  arena(30); player.ranks.Q = true; player.ranks.AB = true; player.ranks.R = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks.ab = true; player.ranks.r = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(4);
   tap('r');
-  check('Tempest pressed during the hover waits for it', player.casting.queued === 'R' && player.hang.t > 0,
+  check('Tempest pressed during the hover waits for it', player.casting.queued === 'r' && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
   let fired = -1;
   for (let i = 0; i < 40 && fired < 0; i++) { step(1); if (player.cast === 'shoot') fired = i; }
@@ -144,23 +144,23 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Q rushes chain into Z: pressed mid-slide, Double Shot fires as the slide ends
-  arena(20); player.ranks.Q = true; player.ranks.W = false;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = false;
   dummy(200);
   tap('q'); step(2); tap('z');
-  check('Z pressed during the rush waits for it', player.casting.queued === 'Z' && player.cast === 'rush');
+  check('Z pressed during the rush waits for it', player.casting.queued === 'z' && player.cast === 'rush');
   let fired = -1;
   for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'shoot') fired = i; }
   check('...and fires as soon as the slide ends, with no use-time wait', fired >= 0 && player.rush.t <= 0, `after ${fired} frames`);
-  arena(20); player.ranks.Q = true; player.ranks.W = false;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = false;
   tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || rushHolding()); i++) step(1);
   check('right after the rush, Z fires at once too', player.casting.useT > 0 && (tap('z'), player.cast === 'shoot'));
   // the chain skips the ending lag once: a second Z right after is a fresh
   // shot (its own use time), not a free extra use while the window is open
-  arena(20); player.ranks.Q = true; player.ranks.W = false;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = false;
   dummy(200);
   tap('q'); for (let i = 0; i < 30 && (player.rush.t > 0 || player.cast === 'rush'); i++) step(1);
   tap('z'); step(1);
-  check('the chained Z ends the rush\'s links', player.linkFrom === 'Z');
+  check('the chained Z ends the rush\'s links', player.linkFrom === 'z');
   const cast1 = player.cast;
   tap('z');
   check('a second Z right after is a fresh shot, not a free extra', player.cast === 'shoot' && cast1 === 'shoot');
@@ -199,42 +199,42 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('a mob two levels above lands on any roll', hurtPlayer(10, 0, 22) && player.hp === player.hpMax - 10);
   // Twin Echoes (passive): the shadow archer fires alongside you, doubling the
   // arrows every attack fires, permanently, once bought with SP. No timer.
-  arena(20); player.ranks.Z = true;
-  check('Double Shot fires two arrows with no Twin Echoes', shotCount(rank('Z')) === 2, `${shotCount(rank('Z'))}`);
-  player.ranks.ES = true;
-  check('Twin Echoes doubles Double Shot\'s arrows', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  player.ranks.Z = true;
-  check('...and it scales with the skill\'s own rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  player.ranks.ES = true;
-  check('Twin Echoes stays doubled at max rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true);
-  player.ranks.ES = false;
-  check("a passive's bonus is one lot of arrows until learned", shotCount(rank('Z')) === 2);
-  arena(20); player.ranks.Z = true; player.ranks.ES = true;
-  check('the shadow doubles a mid-air Downpour too', shotCount(rank('PV')) === 4, `${shotCount(rank('PV'))}`);
+  arena(20); player.ranks.z = true;
+  check('Double Shot fires two arrows with no Twin Echoes', shotCount(rank('z')) === 2, `${shotCount(rank('z'))}`);
+  player.ranks.es = true;
+  check('Twin Echoes doubles Double Shot\'s arrows', shotCount(rank('z')) === 4, `${shotCount(rank('z'))}`);
+  player.ranks.z = true;
+  check('...and it scales with the skill\'s own rank', shotCount(rank('z')) === 4, `${shotCount(rank('z'))}`);
+  player.ranks.es = true;
+  check('Twin Echoes stays doubled at max rank', shotCount(rank('z')) === 4, `${shotCount(rank('z'))}`);
+  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.es.minLevel === 60 && SKILLS.es.passive === true);
+  player.ranks.es = false;
+  check("a passive's bonus is one lot of arrows until learned", shotCount(rank('z')) === 2);
+  arena(20); player.ranks.z = true; player.ranks.es = true;
+  check('the shadow doubles a mid-air Downpour too', shotCount(rank('air-e')) === 4, `${shotCount(rank('air-e'))}`);
 }
 {
   // each ground rush wears its own aura and scuffs the floor it slides over
-  arena(20); player.ranks.Q = true;
+  arena(20); player.ranks['ground-q'] = true;
   game.fx.length = 0;
   tap('q'); step(4);
   check('Rush Toss slides in its own aura', player.rush.t > 0 && player.rush.look === 'tossRush');
   check('...scuffing the ground behind it', game.fx.some((f) => f.type === 'tossTrail'));
-  arena(20); player.ranks.Q = true; player.ranks.EB = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true;
   game.fx.length = 0;
   tap('q'); step(4);
   check('Electric Blitz has its own, distinct aura and scuffs', player.rush.look === 'blitzRush' && game.fx.some((f) => f.type === 'blitzTrail') && !game.fx.some((f) => f.type === 'tossTrail'));
-  arena(20); player.ranks.Q = true;
+  arena(20); player.ranks['ground-q'] = true;
   setKey('down', true); tap('q'); setKey('down', false);
   check('an in-place rush has no slide aura', !(player.rush.t > 0 && player.rush.look));
-  player.blitz.charges = P.BLITZ_MAX; player.cd.Q = 0; player.readyT.Q = 0; // leave Q as the blitz tests expect
+  player.blitz.charges = P.BLITZ_MAX; player.cd['ground-q'] = 0; player.readyT['ground-q'] = 0; // leave Q as the blitz tests expect
 }
 // --- Electric Blitz: Q's charged upgrade ---
 {
-  arena(20); player.ranks.Q = true; player.ranks.EB = true;
-  check('Electric Blitz replaces Rush Toss on Q', activeSkill('Q').key === 'EB');
+  arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true;
+  check('Electric Blitz replaces Rush Toss on Q', activeSkill('ground-q').key === 'eb');
   check('it starts with two charges', player.blitz.charges === P.BLITZ_MAX);
-  check('the blitz has no cooldown of its own (its charges are the cooldown)', SKILLS.EB.cd === 0 && P.BLITZ_CHARGE_T === 4);
+  check('the blitz has no cooldown of its own (its charges are the cooldown)', SKILLS.eb.cd === 0 && P.BLITZ_CHARGE_T === 4);
   const m = dummy(140);
   const RUSH = 22; // the whole slide, from cast to the strike at its end
   tap('q'); step(RUSH);
@@ -247,11 +247,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   tap('q'); step(1);
   check('with no charges Q does nothing', player.blitz.charges === 0 && player.rush.t === 0,
     `charges ${player.blitz.charges} rushT ${player.rush.t.toFixed(2)}`);
-  check('...and no ready-glow flashes (nothing came off cooldown)', player.readyT.Q === 0);
+  check('...and no ready-glow flashes (nothing came off cooldown)', player.readyT['ground-q'] === 0);
   for (let i = 0; i < P.BLITZ_CHARGE_T * 30 + 2 && player.blitz.charges === 0; i++) step(1);
   check('a charge recharges after 4s', player.blitz.charges === 1, `charges ${player.blitz.charges}`);
-  check('the recharged charge flashes the icon', player.readyT.Q > 0);
-  player.blitz.charges = 1; player.blitz.t = 3; player.linkFrom = 'Q'; player.ranks.W = true; player.casting.useT = 0;
-  cast('W');
+  check('the recharged charge flashes the icon', player.readyT['ground-q'] > 0);
+  player.blitz.charges = 1; player.blitz.t = 3; player.linkFrom = 'ground-q'; player.ranks['ground-w'] = true; player.casting.useT = 0;
+  cast('ground-w');
   check('a linked skill speeds up the charge filling (it never sets it back)', player.blitz.t === 4, `blitzT ${player.blitz.t}`);
 }

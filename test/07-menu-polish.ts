@@ -123,9 +123,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('the key in the Z spot is Z on any layout (AZERTY types W there)', normalize(ev('w', 'KeyZ')) === 'z' && normalize(ev('a', 'KeyQ')) === 'q');
   check('digits, space, arrows and Enter go by physical key', normalize(ev('&', 'Digit1')) === '1' && normalize(ev(' ', 'Space')) === ' ' && normalize(ev('ArrowUp', 'ArrowUp')) === 'up' && normalize(ev('Enter', 'NumpadEnter')) === 'enter');
   check('without a code, the typed key is used', normalize(ev('ArrowLeft')) === 'left' && normalize(ev('X')) === 'x');
-  check('labels are QWERTY until the layout is known', keyName('z') === 'Z' && keyName('Q') === 'Q');
+  check('labels are QWERTY until the layout is known', keyName('z') === 'z' && keyName('ground-q') === 'ground-q');
   setLayout({ KeyZ: 'w', KeyQ: 'a', KeyW: 'z', KeyA: 'q' });
-  check('on AZERTY the labels show what the keys type', keyName('z') === 'W' && keyName('Q') === 'A' && keyName('w') === 'Z' && keyName('escape') === 'ESCAPE');
+  check('on AZERTY the labels show what the keys type', keyName('z') === 'ground-w' && keyName('ground-q') === 'A' && keyName('w') === 'z' && keyName('escape') === 'ESCAPE');
   setLayout({});
   // rooms by hour: floors carry the UTC hour you entered them; towns never do; layouts ignore it
   check('the hour stamp is the UTC hour, YYYYMMDDHH', hourStamp(Date.UTC(2026, 10, 24, 14, 59, 59)) === '2026112414' && hourStamp(Date.UTC(2026, 10, 24, 15, 0, 0)) === '2026112415');

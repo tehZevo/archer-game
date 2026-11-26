@@ -23,7 +23,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Aerial height gate: the air forms want ~2/3 of the jump's peak of height
   // (AIR_MIN_H), not just any airtime
-  arena(20); player.ranks.E = true; player.ranks.PV = true;
+  arena(20); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   dummy(100);
   tap('c'); step(1); // just left the ground: ~9px of height
   const mp0 = player.mp;
@@ -35,7 +35,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // the same gate on Meteor Dive and Cyclone Sweep
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('c'); step(1);
   const mp0 = player.mp;
   tap('q');
@@ -46,14 +46,14 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // ...and on Cyclone Sweep
-  arena(20); player.ranks.W = true; player.ranks.MS = true;
+  arena(20); player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   tap('c'); step(1);
   const mp0 = player.mp;
   tap('w');
-  check('Cyclone Sweep needs real height: early in the jump', player.mp === mp0 && player.cd['W.air'] === 0, `cd ${player.cd['W.air'].toFixed(1)}`);
+  check('Cyclone Sweep needs real height: early in the jump', player.mp === mp0 && player.cd['ground-w.air'] === 0, `cd ${player.cd['ground-w.air'].toFixed(1)}`);
   step(7);
   tap('w');
-  check('Cyclone Sweep fires near the jump apex', player.mp < mp0 && player.cd['W.air'] > 0, `cd ${player.cd['W.air'].toFixed(1)}`);
+  check('Cyclone Sweep fires near the jump apex', player.mp < mp0 && player.cd['ground-w.air'] > 0, `cd ${player.cd['ground-w.air'].toFixed(1)}`);
 }
 
 {
@@ -70,61 +70,61 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Electric Blitz self-link: a second blitz pressed during the first's
   // animation (with a charge banked) fires as soon as it clears
-  arena(20); player.ranks.Q = true; player.ranks.EB = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true; player.ranks['air-q'] = true;
   player.blitz.charges = P.BLITZ_MAX;
   dummy(150);
   check('blitzes start banked', player.blitz.charges === P.BLITZ_MAX, `charges ${player.blitz.charges}`);
   tap('q');
-  check('the blitz links into itself', linkable('EB'), `from ${player.linkFrom}`);
+  check('the blitz links into itself', linkable('eb'), `from ${player.linkFrom}`);
   tap('q'); // pressed mid-animation: buffered, not dropped
-  check('the second blitz is buffered', player.casting.queued === 'Q', `queued ${player.casting.queued}`);
+  check('the second blitz is buffered', player.casting.queued === 'ground-q', `queued ${player.casting.queued}`);
   step(12); // the first blitz's slide (0.34s) ends
   check('the buffered blitz fires', player.blitz.charges === P.BLITZ_MAX - 2 && player.cast === 'rush',
     `charges ${player.blitz.charges} cast ${player.cast}`);
-  check('links now read off the chained blitz', player.linkFrom === 'EB' && player.castT > 0.3, `castT ${player.castT.toFixed(2)}`);
+  check('links now read off the chained blitz', player.linkFrom === 'eb' && player.castT > 0.3, `castT ${player.castT.toFixed(2)}`);
 }
 
 {
   // Aerial skills link into Glide: pressed while the cast is still going,
   // D fires the moment its animation ends (skipping the recovery)
-  arena(20); player.ranks.D = true; player.ranks.E = true; player.ranks.PV = true;
+  arena(20); player.ranks.d = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   dummy(100);
   tap('c'); step(8);
   tap('e');
-  check('the volley links into Glide', linkable('D') && player.casting.useT > 0, `use ${player.casting.useT.toFixed(2)}`);
+  check('the volley links into Glide', linkable('d') && player.casting.useT > 0, `use ${player.casting.useT.toFixed(2)}`);
   tap('d');
-  check('...pressed mid-volley, D waits for the animation', player.casting.queued === 'D', `queued ${player.casting.queued}`);
+  check('...pressed mid-volley, D waits for the animation', player.casting.queued === 'd', `queued ${player.casting.queued}`);
   let wait = 0;
   while (player.casting.queued && wait < 30) { step(1); wait++; }
-  check('...then fires as it ends', player.cast === 'jump' && Math.abs(wait * P.STEP - useTime('PV')) < 0.07,
+  check('...then fires as it ends', player.cast === 'jump' && Math.abs(wait * P.STEP - useTime('air-e')) < 0.07,
     `cast ${player.cast} after ${(wait * P.STEP).toFixed(2)}s`);
 }
 {
   // Downpour links on a miss too: linking needs no hit
-  arena(20); player.ranks.E = true; player.ranks.PV = true;
+  arena(20); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   tap('c'); step(8);
   tap('e');
-  check('a whiffed Downpour still links', game.mobs.length === 0 && linkable('MS'));
+  check('a whiffed Downpour still links', game.mobs.length === 0 && linkable('air-w'));
 }
 {
   // ...and so does the Cyclone Sweep
-  arena(20); player.ranks.D = true; player.ranks.W = true; player.ranks.MS = true;
+  arena(20); player.ranks.d = true; player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   dummy(150);
   tap('c'); step(8);
   tap('w'); step(13);
-  check('Cyclone Sweep links into Glide', linkable('D'));
+  check('Cyclone Sweep links into Glide', linkable('d'));
   tap('d'); for (let i = 0; i < 30 && player.casting.queued; i++) step(1); // fires as the sweep ends
-  check('the spin links into Glide', player.cast === 'jump' && player.casting.useT > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
+  check('the spin links into Glide', player.cast === 'jump' && player.casting.useT > 0, `cast ${player.cast} cd ${player.cd.d.toFixed(2)}`);
 }
 
 {
   // With Skyward Assault (W's upgrade) learned, W in the air is always Cyclone Sweep
-  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.MS = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-w'] = true;
   const m = dummy(140);
   tap('c'); step(8);
   tap('w');
-  check('W in the air is Cyclone Sweep, not Skyward Assault', player.cast === 'shoot' && player.skillPose === 'spin' && player.cd['W.air'] > 0 && player.hang.t === 0,
-    `cast ${player.cast} pose ${player.skillPose} cd ${player.cd['W.air'].toFixed(1)}`);
+  check('W in the air is Cyclone Sweep, not Skyward Assault', player.cast === 'shoot' && player.skillPose === 'spin' && player.cd['ground-w.air'] > 0 && player.hang.t === 0,
+    `cast ${player.cast} pose ${player.skillPose} cd ${player.cd['ground-w.air'].toFixed(1)}`);
   check('the sweep hits the enemy below', m.hp < 1e6);
   step(40);
   check('the spin does not hover', player.onGround);
@@ -133,7 +133,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Tempest is a committed cast: locked in place and invulnerable while it
   // sweeps out (the use time already freezes movement; the storm grants i-frames)
-  arena(20); player.ranks.R = true;
+  arena(20); player.ranks.r = true;
   dummy(140);
   tap('r');
   check('Tempest locks you in place', player.cast === 'shoot' && player.casting.useT > 0, `useT ${player.casting.useT.toFixed(2)}`);
@@ -141,12 +141,12 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     `invuln ${player.invuln.toFixed(2)} castT ${player.castT.toFixed(2)}`);
   step(43); // the 1.4s storm plays out
   check('the invulnerability ends with the storm', player.invuln <= 0, `invuln ${player.invuln.toFixed(2)}`);
-  check('Tempest is a 10s cooldown', SKILLS.R.cd === 10 && player.cd.R > 8, `cd ${player.cd.R.toFixed(2)}`);
+  check('Tempest is a 10s cooldown', SKILLS.r.cd === 10 && player.cd.r > 8, `cd ${player.cd.r.toFixed(2)}`);
 }
 {
   // Midair, the storm pins you completely: no falling, no drift, for its
   // whole cast (not just the usual movement lock).
-  arena(20); player.ranks.R = true;
+  arena(20); player.ranks.r = true;
   tap('c'); step(7); // near the jump apex
   tap('r');
   check('Tempest freezes you midair', player.casting.freeze && player.vy === 0, `vy ${player.vy.toFixed(0)}`);
@@ -158,10 +158,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // A live Tempest window lets Dive (Q) fire straight out of the storm.
-  arena(20); player.ranks.R = true; player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks.r = true; player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('c'); step(7); // airborne, where Q is the Meteor Dive
   tap('r');
-  check('Tempest links into the Dive', linkable('AD') && player.cast === 'shoot', `cast ${player.cast}`);
+  check('Tempest links into the Dive', linkable('air-q') && player.cast === 'shoot', `cast ${player.cast}`);
   const mp0 = player.mp;
   tap('q');
   for (let i = 0; i < 30 && player.casting.queued; i++) step(1);
@@ -169,18 +169,18 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     `cast ${player.cast} mp ${player.mp} of ${mp0}`);
   step(12); // let the dive land, so the next block starts on the floor
   // The storm links into Dive, not the whole aerial kit.
-  arena(20); player.ranks.R = true;
-  tap('r'); player.cd.R = 10;
-  check('the storm links into the Q slot only', linkable('AD') && !linkable('W'));
+  arena(20); player.ranks.r = true;
+  tap('r'); player.cd.r = 10;
+  check('the storm links into the Q slot only', linkable('air-q') && !linkable('ground-w'));
   tap('w'); step(1);
   // A Rising Arrows needs a launcher to link off; the storm isn't one, so the cast pays its own cooldown rather than a shone Tempest's.
-  check('a Rising Arrows off the storm pays its own cooldown', player.cast === 'shoot' && player.cd.R > 9,
-    `cast ${player.cast} cd ${player.cd.R.toFixed(2)}`);
+  check('a Rising Arrows off the storm pays its own cooldown', player.cast === 'shoot' && player.cd.r > 9,
+    `cast ${player.cast} cd ${player.cd.r.toFixed(2)}`);
 }
 {
   // A buffered skill fires in the direction held when it releases, not when
   // it was pressed: Q left, Q right zips you back and forth
-  arena(20); player.ranks.Q = true;
+  arena(20); player.ranks['ground-q'] = true;
   dummy(150);
   setKey('left', true);
   tap('q'); step(1); // the first rush slides left...
@@ -202,24 +202,24 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Cyclone Sweep links into Downpour: E pressed during the sweep fires as it ends
-  arena(20); player.ranks.W = true; player.ranks.MS = true; player.ranks.E = true; player.ranks.PV = true;
+  arena(20); player.ranks['ground-w'] = true; player.ranks['air-w'] = true; player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   dummy(100);
   tap('c'); step(8);
   tap('w'); step(13);
-  check('the spin links into Downpour', linkable('PV') && player.casting.useT > 0);
+  check('the spin links into Downpour', linkable('air-e') && player.casting.useT > 0);
   tap('e'); for (let i = 0; i < 30 && player.casting.queued; i++) step(1); // fires as the sweep ends
-  check('...and Downpour fires as the sweep ends', player.cast === 'barrage' && player.linkFrom === 'PV',
+  check('...and Downpour fires as the sweep ends', player.cast === 'barrage' && player.linkFrom === 'air-e',
     `cast ${player.cast} from ${player.linkFrom}`);
 }
 {
   // Meteor Dive links into the equipped ground rush, Skyfall-style: Electric
   // Blitz, not just the base Rush Toss
-  arena(20); player.ranks.Q = true; player.ranks.EB = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true; player.ranks['air-q'] = true;
   player.blitz.charges = P.BLITZ_MAX;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive links into the Blitz', linkable('EB') && !linkHeld('EB'), `from ${player.linkFrom}`);
+  check('the dive links into the Blitz', linkable('eb') && !linkHeld('eb'), `from ${player.linkFrom}`);
   const charges0 = player.blitz.charges;
   tap('q'); step(1); // the landing rush's tail is buffered, not dropped
   check('the blitz fires off the dive, no use-time wait', player.blitz.charges === charges0 - 1 && player.cast === 'rush',
@@ -228,25 +228,25 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Both Qs end with a committed recovery (delay), shortened by Haste
-  arena(20); player.ranks.Q = true;
+  arena(20); player.ranks['ground-q'] = true;
   dummy(150);
-  const base = delayTime('Q');
-  check('Rush Toss has its own delay, longer than the default', SKILLS.Q.delay === 0.35 && base < 0.35 + 1e-9, `${base.toFixed(3)}`);
+  const base = delayTime('ground-q');
+  check('Rush Toss has its own delay, longer than the default', SKILLS['ground-q'].delay === 0.35 && base < 0.35 + 1e-9, `${base.toFixed(3)}`);
   player.casting.useT = 0; player.casting.recoverT = 0;
-  cast('Q');
+  cast('ground-q');
   check('the cast ends in a recovery that outlasts the slide', player.casting.recoverT === base && player.casting.useT > 0);
-  player.ranks.Q = false; player.ranks.EB = true;
-  check('Electric Blitz carries the same committed recovery', SKILLS.EB.delay === 0.35 && delayTime('EB') === base);
-  player.ranks.HA = true;
-  check('Haste shortens the recovery by 20% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.2) < 1e-6,
-    `${delayTime('EB').toFixed(4)}`);
-  player.ranks.HA = false; player.ranks.EB = false; player.ranks.Q = true;
+  player.ranks['ground-q'] = false; player.ranks.eb = true;
+  check('Electric Blitz carries the same committed recovery', SKILLS.eb.delay === 0.35 && delayTime('eb') === base);
+  player.ranks.ha = true;
+  check('Haste shortens the recovery by 20% attack speed at rank 3', Math.abs(delayTime('eb') - 0.35 / 1.2) < 1e-6,
+    `${delayTime('eb').toFixed(4)}`);
+  player.ranks.ha = false; player.ranks.eb = false; player.ranks['ground-q'] = true;
 }
 
 {
   // Off a Skyward Assault hover: only the assault's links (MS, R, Z, Q) are
   // buffered, so a Glide pressed during the hover is dropped.
-  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.D = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks.d = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('hovering (setup)', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
@@ -257,7 +257,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Off a Skyward Assault hover: the Q slot (Meteor Dive) isn't a link off the
   // assault (only the ground Q is), so a press during the hover is dropped.
-  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.AD = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-q'] = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   tap('q'); // Q's air form (Meteor Dive) pressed during the hover
@@ -268,15 +268,15 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Single-rank skills: each carries its (former) max-level hit/damage numbers
   check('Double Shot hits up to 4 targets at 120% per hit',
-    SKILLS.Z.targets1 === 4 && SKILLS.Z.dmg1 === 120);
-  check('Rising Arrows fires 4', SKILLS.W.hits1 === 4);
-  check('Skyward Assault strikes 4', SKILLS.AB.hits1 === 4);
-  check('Cyclone Sweep sweeps 4 hits at 200%', SKILLS.MS.hits1 === 4 && SKILLS.MS.dmg1 === 200);
-  check('Electric Blitz strikes twice', SKILLS.EB.hits1 === 2);
-  check('Tempest storms up to 8 hits at 200% each', SKILLS.R.hits1 === 8 && SKILLS.R.dmg1 === 200);
-  check('Meteor Dive lands one Rush Toss-strength hit', SKILLS.AD.hits1 === 1 && SKILLS.AD.dmg1 === 400);
+    SKILLS.z.targets1 === 4 && SKILLS.z.dmg1 === 120);
+  check('Rising Arrows fires 4', SKILLS['ground-w'].hits1 === 4);
+  check('Skyward Assault strikes 4', SKILLS.ab.hits1 === 4);
+  check('Cyclone Sweep sweeps 4 hits at 200%', SKILLS['air-w'].hits1 === 4 && SKILLS['air-w'].dmg1 === 200);
+  check('Electric Blitz strikes twice', SKILLS.eb.hits1 === 2);
+  check('Tempest storms up to 8 hits at 200% each', SKILLS.r.hits1 === 8 && SKILLS.r.dmg1 === 200);
+  check('Meteor Dive lands one Rush Toss-strength hit', SKILLS['air-q'].hits1 === 1 && SKILLS['air-q'].dmg1 === 400);
   // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
-  arena(20); player.ranks.Q = true; player.ranks.EB = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true;
   player.blitz.charges = P.BLITZ_MAX;
   const m = dummy(140);
   tap('q'); step(24); // the slide ends and the strike lands (both hits)
@@ -303,7 +303,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // LUK rework: 2% crit chance a point, capped at 100%, overflow to crit damage
-  arena(20); player.ranks.SA = false; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
+  arena(20); player.ranks.sa = false; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
   check('LUK starts at the 15% base crit', Math.abs(critChance() - 0.15) < 1e-9, `${critChance()}`);
   player.stats.luk = 10;
   check('each LUK point is worth 2% crit chance', Math.abs(critChance() - 0.35) < 1e-9, `${critChance()}`);
@@ -317,7 +317,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   player.stats.luk = 0;
   check('below the cap a crit still hits for 1.5x', Math.abs(critMult() - 1.5) < 1e-9);
   // and the multiplier is the one damage() applies
-  arena(20); player.ranks.SA = false; recalcStats();
+  arena(20); player.ranks.sa = false; recalcStats();
   const m = dummy(140); m.level = 20;
   // the same roll on both shots (it also drives the damage's random spread):
   // at 0 LUK it is under the 15% crit threshold, at 60 LUK it always crits
@@ -351,7 +351,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Downpour's vertical reach is half what it was
   check('the volley column reaches 88px below the feet (was 176)', P.PLUNGE_DEPTH === 88);
-  arena(20); player.ranks.E = true; player.ranks.PV = true;
+  arena(20); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   player.y = ground().y - player.h - 120; player.onGround = false; // airborne
   const feet = player.y + player.h;
   const near = dummy(140); near.y = feet + 10; // right below
@@ -364,16 +364,16 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Twin Echoes's arrows always proc and stack above the base hit's number
-  arena(20); player.ranks.Z = true; player.ranks.ES = true;
+  arena(20); player.ranks.z = true; player.ranks.es = true;
   const m = dummy(140); player.x = m.x - 40;
   check('the shadow doubles the shot without changing the skill\'s own hits',
-    rank('Z').hits === 2 && shotCount(rank('Z')) === 4, `${rank('Z').hits}/${shotCount(rank('Z'))}`);
+    rank('z').hits === 2 && shotCount(rank('z')) === 4, `${rank('z').hits}/${shotCount(rank('z'))}`);
   game.dmgNums.length = 0;
   const saved = Math.random; Math.random = () => 0.99; // no crits or misses
   tap('z'); step(Math.ceil((P.Z_WINDUP + 0.4) / P.STEP)); // the whole volley lands
   Math.random = saved;
   const nums = game.dmgNums.filter((d) => d.txt !== 'MISS');
-  check('every arrow shows its own number', nums.length === shotCount(rank('Z')), `${nums.length} numbers`);
+  check('every arrow shows its own number', nums.length === shotCount(rank('z')), `${nums.length} numbers`);
   check('the numbers stack one line apart, not in a pile',
     new Set(nums.map((d) => Math.round(d.y))).size === nums.length, `${nums.map((d) => d.y.toFixed(0)).join(',')}`);
   check('the shadow hits for the same damage as the base arrow',
@@ -383,15 +383,15 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Skyward Assault links into Cyclone Sweep: W in the air sweeps out of the
   // hover with no extra lag (the AB -> MS follow-up)
-  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.MS = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-w'] = true;
   const m = dummy(130);
   tap('q'); step(14); // Skyward Assault is a link off the rush
   tap('w'); step(4); // mid-leap: the hover is live
   check('the assault is hovering', player.hang.t > 0 && player.cast === 'barrage', `hangT ${player.hang.t.toFixed(2)}`);
-  check('...and it links into the sweep', linkable('MS') && !linkHeld('MS'));
+  check('...and it links into the sweep', linkable('air-w') && !linkHeld('air-w'));
   const fervor0 = player.fervor;
   tap('w');
-  check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.linkFrom === 'MS',
+  check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.linkFrom === 'air-w',
     `cast ${player.cast} from ${player.linkFrom}`);
   step(12); // the sweep's four hits stagger out
   check('...and it hits', m.hp < 1e6, `hp ${m.hp}`);
@@ -402,13 +402,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Buffering: W pressed during the assault's own animation is kept and fires
   // on the first free frame
-  arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.MS = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-w'] = true;
   dummy(130);
   tap('q'); step(14);
   tap('w');
   check('the assault starts', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
   tap('w'); step(1); // pressed while the leap is still playing
-  check('the sweep is buffered, not dropped', player.casting.queued === 'W', `queued ${player.casting.queued}`);
+  check('the sweep is buffered, not dropped', player.casting.queued === 'ground-w', `queued ${player.casting.queued}`);
   check('...and the assault is still playing', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
   step(2);
   check('...then fires once the leap is underway', player.cast === 'shoot' && player.casting.queued === null, `cast ${player.cast}`);
@@ -416,7 +416,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Cyclone Sweep on its own (no assault) still works as a standalone sweep
-  arena(20); player.ranks.W = true; player.ranks.MS = true;
+  arena(20); player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   tap('c'); step(10);
   check("a plain jump's sweep is unaffected", player.cast === null && player.linkFrom === null, `cast ${player.cast} from ${player.linkFrom}`);
   tap('w'); step(2);
@@ -485,7 +485,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Bolt Flurry flies as one 4-bolt volley sprite, even on a whiff
-  arena(30); player.ranks.Z = true; player.ranks.S = true;
+  arena(30); player.ranks.z = true; player.ranks.s = true;
   game.shots.length = 0;
   tap('z');
   check('a whiffed Bolt Flurry flies one volley sprite', game.shots.length === 1 && game.shots[0].sprite === 'flurry', `${game.shots.length} shots`);
@@ -493,7 +493,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Bolt Flurry lands its 4 hits on every target, not split across them
-  arena(70); player.ranks.Z = true; player.ranks.S = true;
+  arena(70); player.ranks.z = true; player.ranks.s = true;
   const a = dummy(150), b = dummy(170);
   game.dmgNums.length = 0;
   const seen = new Set<{ x: number }>();
@@ -505,7 +505,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Twin Echoes doubles the volley, not the bolts: two sprites, all 8 hits land
-  arena(70); player.ranks.Z = true; player.ranks.S = true; player.ranks.ES = true;
+  arena(70); player.ranks.z = true; player.ranks.s = true; player.ranks.es = true;
   const m = dummy(160);
   game.shots.length = 0; game.dmgNums.length = 0;
   tap('z');
@@ -513,15 +513,15 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...a little apart, so both show', new Set(game.shots.map((s) => Math.round(s.y))).size === 2);
   const seen = new Set<object>();
   for (let i = 0; i < 60; i++) { step(1); game.dmgNums.forEach((d) => seen.add(d)); }
-  check('...and still lands 8 hits', seen.size === shotCount(rank('Z')) && shotCount(rank('Z')) === 8,
-    `${seen.size} numbers, ${shotCount(rank('Z'))} shots`);
+  check('...and still lands 8 hits', seen.size === shotCount(rank('z')) && shotCount(rank('z')) === 8,
+    `${seen.size} numbers, ${shotCount(rank('z'))} shots`);
   check('...on the enemy', m.hp < 1e6);
 }
 
 {
   // Downpour: one orange/green flare on the archer and a single tornado
   // blast below her, instead of a falling volley on every enemy it hits
-  arena(30); player.ranks.E = true; player.ranks.PV = true;
+  arena(30); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
   player.y = ground().y - player.h - 120; player.onGround = false; player.x = 140;
   const m = dummy(140); m.y = player.y + player.h + 10;
   game.fx.length = 0;
@@ -533,14 +533,14 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Links read off the cast you're in, and nothing else: no timers
-  arena(20); player.ranks.R = true;
-  check('no cast, no links', player.linkFrom === null && !linkable('AD'));
+  arena(20); player.ranks.r = true;
+  check('no cast, no links', player.linkFrom === null && !linkable('air-q'));
   tap('r');
-  check('a cast is what links read off', player.linkFrom === 'R' && linkable('AD'));
+  check('a cast is what links read off', player.linkFrom === 'r' && linkable('air-q'));
   step(40); // the storm and its recovery are over
   check('...and once it ends, a press is a normal cast', player.linkFrom === null, `from ${player.linkFrom}`);
   tap('r'); step(1); closeLinks();
   check('closeLinks forgets it', player.linkFrom === null);
-  player.cd.R = 0; tap('r'); player.hp = 0; step(1);
+  player.cd.r = 0; tap('r'); player.hp = 0; step(1);
   check('a respawn starts with no links', player.linkFrom === null, `from ${player.linkFrom}`);
 }

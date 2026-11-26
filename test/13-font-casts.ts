@@ -9,7 +9,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Piercing Leap off a jump: the tornado's launch is a lift off the floor, so an
   // early cast doesn't stack its full height on top of the jump's.
-  arena(20); player.ranks.E = true;
+  arena(20); player.ranks['ground-e'] = true;
   const g = ground().y - player.h;
   const peak = (n: number) => { let best = g; for (let i = 0; i < n; i++) { step(1); best = Math.min(best, player.y); } return g - best; };
   tap('e'); const flat = peak(40);
@@ -23,13 +23,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Piercing Leap rises to its height and holds there for the whole cast,
   // rather than falling back down while you're still committed to it.
-  arena(20); player.ranks.E = true;
+  arena(20); player.ranks['ground-e'] = true;
   const g = ground().y - player.h;
   tap('e');
   step(Math.ceil((P.SPIKE_LIFT_H / P.SPIKE_RISE_V + 0.1) / P.STEP)); // the rise
   const top = g - player.y;
   check('Piercing Leap rises to its lift height', Math.abs(top - P.SPIKE_LIFT_H) < 3, `${top.toFixed(1)}px`);
-  const until = useTime('E') - P.SPIKE_LIFT_H / P.SPIKE_RISE_V - 0.3;
+  const until = useTime('ground-e') - P.SPIKE_LIFT_H / P.SPIKE_RISE_V - 0.3;
   step(Math.floor(until / P.STEP));
   check('...and holds there until the cast is nearly over', Math.abs(g - player.y - top) < 1 && player.casting.useT > 0,
     `${(g - player.y).toFixed(1)}px useT ${player.casting.useT.toFixed(2)}`);
@@ -72,38 +72,38 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // A Tempest linked off a Skyward Assault still pays its 10s cooldown.
-  arena(30); player.ranks.Q = true; player.ranks.AB = true; player.ranks.R = true;
+  arena(30); player.ranks['ground-q'] = true; player.ranks.ab = true; player.ranks.r = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(4);
   tap('r'); for (let i = 0; i < 40 && player.casting.queued; i++) step(1); // fires as the hover ends
   // The 10s cooldown, less the 1s every link shaves off it (see pay).
   check('the linked Tempest fires off the hover and pays its cooldown',
-    player.cast === 'shoot' && player.cd.R > 8 && player.cd.R < 10, `cast ${player.cast} cd ${player.cd.R.toFixed(2)}`);
+    player.cast === 'shoot' && player.cd.r > 8 && player.cd.r < 10, `cast ${player.cast} cd ${player.cd.r.toFixed(2)}`);
   tap('r');
-  check('...so a second cast right away is spent', player.cd.R > 8 && player.cast === 'shoot' && player.castT > 0,
-    `cd ${player.cd.R.toFixed(2)} cast ${player.cast}`);
+  check('...so a second cast right away is spent', player.cd.r > 8 && player.cast === 'shoot' && player.castT > 0,
+    `cd ${player.cd.r.toFixed(2)} cast ${player.cast}`);
 }
 {
   // The sweep lands before the linked skill starts: a press during the sweep
   // is buffered, not lost, and fires as its animation ends.
-  arena(20); player.ranks.D = true; player.ranks.W = true; player.ranks.MS = true;
+  arena(20); player.ranks.d = true; player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   dummy(150);
   tap('c'); step(8);
   tap('w');
   check('the sweep hits on the cast', player.cast === 'shoot' && game.mobs[0].hp < 1e6, `hp ${game.mobs[0].hp}`);
-  check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > useTime('MS') - 0.4,
-    `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${useTime('MS')}`);
+  check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > useTime('air-w') - 0.4,
+    `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${useTime('air-w')}`);
   tap('d');
-  check('a Glide pressed mid-sweep is buffered, not lost', player.casting.queued === 'D', `queued ${player.casting.queued}`);
+  check('a Glide pressed mid-sweep is buffered, not lost', player.casting.queued === 'd', `queued ${player.casting.queued}`);
   let wait = 0;
-  while (player.casting.queued === 'D' && wait < 40) { step(1); wait++; }
-  check('...and it fires as the sweep ends', Math.abs(wait * P.STEP - useTime('MS')) < 0.1 && player.cast === 'jump',
-    `fired after ${(wait * P.STEP).toFixed(2)}s, sweep ${useTime('MS')}s, cast ${player.cast}`);
+  while (player.casting.queued === 'd' && wait < 40) { step(1); wait++; }
+  check('...and it fires as the sweep ends', Math.abs(wait * P.STEP - useTime('air-w')) < 0.1 && player.cast === 'jump',
+    `fired after ${(wait * P.STEP).toFixed(2)}s, sweep ${useTime('air-w')}s, cast ${player.cast}`);
 }
 {
   // The aerial kit plants you: each skill zeroes your velocity so the move
   // reads as its own move, not as momentum carried in from a run or a jump.
-  arena(30); player.ranks.W = true; player.ranks.MS = true;
+  arena(30); player.ranks['ground-w'] = true; player.ranks['air-w'] = true;
   tap('c'); step(6);
   player.vx = 180; player.vy = -60;
   tap('w');
@@ -115,7 +115,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Meteor Dive: a frozen coil, then the diagonal plunge.
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('c'); step(6);
   player.vx = 180; player.vy = -60;
   tap('q');
@@ -130,7 +130,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Piercing Leap: you rise straight up from where you were running.
-  arena(20); player.ranks.E = true;
+  arena(20); player.ranks['ground-e'] = true;
   player.vx = 200;
   tap('e');
   check('Piercing Leap zeroes vx so you rise straight up', player.vx === 0 && player.vy < 0,
@@ -141,35 +141,35 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // The W-slot skills are paced by the Rush Toss link alone: a fresh Q
   // lets the follow-up fire again immediately, with nothing cooling down.
-  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true;
-  check('Rising Arrows and Skyward Assault carry no cooldown', SKILLS.W.cd === 0 && SKILLS.AB.cd === 0,
-    `W ${SKILLS.W.cd} AB ${SKILLS.AB.cd}`);
+  arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true;
+  check('Rising Arrows and Skyward Assault carry no cooldown', SKILLS['ground-w'].cd === 0 && SKILLS.ab.cd === 0,
+    `W ${SKILLS['ground-w'].cd} AB ${SKILLS.ab.cd}`);
   tap('q'); step(12); tap('w');
-  check('...and casting the Volley leaves nothing to cool down', player.cd.W === 0 && player.cast === 'barrage',
-    `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
+  check('...and casting the Volley leaves nothing to cool down', player.cd['ground-w'] === 0 && player.cast === 'barrage',
+    `cast ${player.cast} cd ${player.cd['ground-w'].toFixed(2)}`);
   while (!player.onGround) step(); // back on the ground: the next press is a Rush Toss, not the air form
   tap('q'); step(12); tap('w');
-  check('...so the next Rush Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd.W === 0,
-    `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
+  check('...so the next Rush Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd['ground-w'] === 0,
+    `cast ${player.cast} cd ${player.cd['ground-w'].toFixed(2)}`);
 }
 {
   // Casting a skill flashes its own icon on the bar: the air and ground forms
   // are stacked in one column, so which key you hit is worth confirming.
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('q');
-  check('casting Rush Toss flashes the Q slot', player.usedT.Q > USE_FLASH - 0.05 && player.usedT.Q > 0 && player.usedT['Q.air'] === 0,
-    `Q ${player.usedT.Q.toFixed(2)} Q.air ${player.usedT['Q.air'].toFixed(2)}`);
+  check('casting Rush Toss flashes the Q slot', player.usedT['ground-q'] > USE_FLASH - 0.05 && player.usedT['ground-q'] > 0 && player.usedT['ground-q.air'] === 0,
+    `Q ${player.usedT['ground-q'].toFixed(2)} Q.air ${player.usedT['ground-q.air'].toFixed(2)}`);
   step(3);
-  check('...and the flash fades over USE_FLASH', player.usedT.Q > 0 && player.usedT.Q < USE_FLASH,
-    `t ${player.usedT.Q.toFixed(2)}`);
+  check('...and the flash fades over USE_FLASH', player.usedT['ground-q'] > 0 && player.usedT['ground-q'] < USE_FLASH,
+    `t ${player.usedT['ground-q'].toFixed(2)}`);
   step(10);
-  check('...and is gone', player.usedT.Q === 0, `t ${player.usedT.Q.toFixed(2)}`);
+  check('...and is gone', player.usedT['ground-q'] === 0, `t ${player.usedT['ground-q'].toFixed(2)}`);
   step(6); // the 0.6s Rush Toss cast finishes, freeing you to jump
   tap('c'); step(6);
   tap('q');
   check('the Meteor Dive flashes the stacked air slot, not the ground one',
-    player.usedT['Q.air'] > 0 && player.usedT.Q === 0,
-    `Q.air ${player.usedT['Q.air'].toFixed(2)} Q ${player.usedT.Q.toFixed(2)}`);
+    player.usedT['ground-q.air'] > 0 && player.usedT['ground-q'] === 0,
+    `Q.air ${player.usedT['ground-q.air'].toFixed(2)} Q ${player.usedT['ground-q'].toFixed(2)}`);
 }
 {
   // A rope on the way up: Glide commits you to the tumble, but the climb you
@@ -286,7 +286,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   // replay it; time is clamped, and a frozen world drops it.
   arena(20);
   dummy(150);
-  player.cdMax.Z = 0;
+  player.cdMax.z = 0;
   const clock = { acc: 0 };
   setKey('z', false); setKey('z', true);
   const steps = advance(clock, P.STEP * 3 + 1e-6, false);
@@ -300,13 +300,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Glide links into Meteor Dive: a Q pressed during a Glide fires as the Glide ends
-  arena(20); player.ranks.Q = true; player.ranks.AD = true;
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('c'); step(4);
   tap('d');
-  check('Glide links into Meteor Dive', player.linkFrom === 'D' && linkable('AD'), `from ${player.linkFrom}`);
+  check('Glide links into Meteor Dive', player.linkFrom === 'd' && linkable('air-q'), `from ${player.linkFrom}`);
   tap('q');
-  check('...and a Q pressed mid-Glide is buffered', player.casting.queued === 'Q', `queued ${player.casting.queued}`);
+  check('...and a Q pressed mid-Glide is buffered', player.casting.queued === 'ground-q', `queued ${player.casting.queued}`);
   let fired = -1;
   for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'dive') fired = i; }
-  check('the Dive fires as the Glide ends, chaining the combo', fired >= 0 && fired < 16 && player.linkFrom === 'AD', `fired ${fired} from ${player.linkFrom}`);
+  check('the Dive fires as the Glide ends, chaining the combo', fired >= 0 && fired < 16 && player.linkFrom === 'air-q', `fired ${fired} from ${player.linkFrom}`);
 }

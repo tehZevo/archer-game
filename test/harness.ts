@@ -131,7 +131,7 @@ function arena(level = 1, x = 100): void {
   release();
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
   player.level = level; player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats();
-  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'AC' ? 0 : ['Z', 'D', 'Q', 'W', 'SA'].includes(k) ? 1 : 0;
+  for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = k === 'ac' ? 0 : ['z', 'd', 'ground-q', 'ground-w', 'sa'].includes(k) ? 1 : 0;
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
   player.casting.useT = 0; player.casting.recoverT = 0; player.casting.freeze = 0; player.cast = null; player.castT = 0; player.casting.queued = null; player.hang.t = 0;

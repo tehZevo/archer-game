@@ -102,71 +102,71 @@ export const TILE = 16;
 /** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Downpour, the
  *  Meteor Dive's landing) links into: the link skills, the Q slot (Meteor
  *  Dive in the air) and W's air form, the Cyclone Sweep. */
-const LAUNCHER_LINKS: SkillKey[] = ['W', 'AB', 'Q', 'EB', 'AD', 'MS'];
+const LAUNCHER_LINKS: SkillKey[] = ['ground-w', 'ab', 'ground-q', 'eb', 'air-q', 'air-w'];
 
 export const SKILLS: Record<SkillKey, SkillDef> = {
   // Every skill is a single rank: its stats are the (former) max-level form.
   // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
   // cooldown, so their pace is their use time alone (which Haste speeds up).
-  Z: { key: 'Z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1,
+  z: { key: 'z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1,
        cd: 0, use: 0.6, mp1: 3, dmg1: 120, hits1: 2, targets1: 4,
        desc: 'Hits the closest enemies in range twice' },
-  AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, passive: true,
+  ac: { key: 'ac', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders' },
-  D: { key: 'D', linksInto: ['AD'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, learn: true,
+  d: { key: 'd', linksInto: ['air-q'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, learn: true,
        cd: 0, use: 0.2, delay: 0.4, mp1: 2, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },
-  Q: { key: 'Q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
+  'ground-q': { key: 'ground-q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
        cd: 0, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
-  W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
+  'ground-w': { key: 'ground-w', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
        cd: 0, use: 0.2, delay: 0.4, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
-  E: { key: 'E', linksInto: [...LAUNCHER_LINKS, 'PV'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
+  'ground-e': { key: 'ground-e', linksInto: [...LAUNCHER_LINKS, 'air-e'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
        cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows and unlock levels, each with
   // no cooldown (use time only) and chaining into its ground form.
-  AD: { key: 'AD', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30,
-       cd: 0, use: 1.1, mp1: 4, dmg1: 400, hits1: 1, requires: 'Q',
+  'air-q': { key: 'air-q', linksInto: [...LAUNCHER_LINKS, 'd'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30,
+       cd: 0, use: 1.1, mp1: 4, dmg1: 400, hits1: 1, requires: 'ground-q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
-  MS: { key: 'MS', linksInto: ['D', 'PV'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
-       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'AB',
+  'air-w': { key: 'air-w', linksInto: ['d', 'air-e'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
+       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
        desc: 'Mid-air W: a 360-degree sweep around you' },
-  PV: { key: 'PV', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 7, dmg1: 240, hits1: 2, targets1: 10, requires: 'E',
+  'air-e': { key: 'air-e', linksInto: [...LAUNCHER_LINKS, 'd'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 7, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
-  R: { key: 'R', linksInto: ['Q', 'EB', 'AD'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,
+  r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,
        cd: 10.0, use: 0.7, mp1: 14, dmg1: 200, hits1: 8, targets1: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
-  EB: { key: 'EB', linksInto: LAUNCHER_LINKS, upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
+  eb: { key: 'eb', linksInto: LAUNCHER_LINKS, upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', linksInto: ['MS', 'R', 'Z', 'Q'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
+  ab: { key: 'ab', linksInto: ['air-w', 'r', 'z', 'ground-q'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
        desc: 'After Rush Toss: leap up to launched enemies' },
-  S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
+  s: { key: 's', upgrades: 'z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
        cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Passives: no key; their effect is `bonus` (0 until learned).
-  ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, passive: true,
+  es: { key: 'es', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 2,
         desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire' },
-  SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true, learn: true,
+  sa: { key: 'sa', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true, learn: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.21,
         desc: 'Crit chance up' },
-  PP: { key: 'PP', name: 'Power Surge', tag: 'Passive', job: 4, minLevel: 60, passive: true,
+  pp: { key: 'pp', name: 'Power Surge', tag: 'Passive', job: 4, minLevel: 60, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.3,
         desc: 'All damage up' },
-  IR: { key: 'IR', name: 'Fervor', tag: 'Passive', job: 2, minLevel: 10, passive: true,
+  ir: { key: 'ir', name: 'Fervor', tag: 'Passive', job: 2, minLevel: 10, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.12,
         desc: 'Each Fervor stack gives more damage' },
-  HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 3, minLevel: 30, passive: true,
+  ha: { key: 'ha', name: 'Haste', tag: 'Passive', job: 3, minLevel: 30, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.2,
         desc: 'Attack speed up (shorter use time, not cooldowns)' },
   // A movement passive: faster and higher jumps.
-  NI: { key: 'NI', name: 'Nimble', tag: 'Passive', job: 2, minLevel: 10, passive: true,
+  ni: { key: 'ni', name: 'Nimble', tag: 'Passive', job: 2, minLevel: 10, passive: true,
         cd: 0, mp1: 0, dmg1: 0,
         desc: 'Move speed up 40%, jump height up 20%' },
 };
@@ -178,6 +178,10 @@ export const startsLearned = (k: SkillKey): boolean => SKILLS[k].minLevel <= 1 &
  *  an air form from its ground form's: see castrules.AIR_FORM). */
 export const SKILL_ORDER: SkillKey[] = (Object.keys(SKILLS) as SkillKey[]).filter((k) => SKILLS[k].keyed);
 
+/** The keyboard binding id (the slot letter) a skill key is bound to: the
+ *  ground/air prefix is dropped, so ground-q and air-q both use the Q key. */
+export const slotOf = (k: SkillKey): string => (k.includes('-') ? k.split('-')[1] : k);
+
 /** The buttons shown in the on-canvas skill bar: the attack keys Z (main), Q,
  *  W, E, R. Slots upgrade in place (Double Shot to Bolt Flurry at Lv.30). */
 export const SKILL_BAR: { label: string; skill: SkillKey }[] = SKILL_ORDER
@@ -185,7 +189,15 @@ export const SKILL_BAR: { label: string; skill: SkillKey }[] = SKILL_ORDER
   .map((k) => ({ label: k, skill: k }));
 
 /** Skills that only work as a link (off Rush Toss and the other launchers). */
-export const LINKED_SKILLS: SkillKey[] = ['W', 'AB'];
+export const LINKED_SKILLS: SkillKey[] = ['ground-w', 'ab'];
+
+/** The old terse key codes (pre-slug), mapped to their current slug, so saves
+ *  written before the rename load correctly. RA (Rising Arrow) is retired. */
+export const LEGACY_KEYS: Record<string, SkillKey> = {
+  Z: 'z', AC: 'ac', D: 'd', Q: 'ground-q', W: 'ground-w', E: 'ground-e', R: 'r',
+  AB: 'ab', S: 's', EB: 'eb', AD: 'air-q', PV: 'air-e', MS: 'air-w', ES: 'es',
+  SA: 'sa', PP: 'pp', IR: 'ir', HA: 'ha', NI: 'ni', RA: 'z',
+};
 
 /* ---------------- mobs ---------------- */
 export const MOB_TYPES: MobType[] = [
@@ -261,7 +273,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.5, spin: SKILLS.MS.use ?? P.USE_TIME,
+  spikes: 0.45, tempest: 0.5, spin: SKILLS['air-w'].use ?? P.USE_TIME,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,

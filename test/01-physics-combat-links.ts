@@ -69,7 +69,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     for (const t of tops) for (const k of [2, 5]) {
       trials++; release();
       player.x = t.x + 8; player.y = t.y - player.h; player.vx = player.vy = 0; player.onGround = true;
-      player.climb = null; player.dropBlock = null; player.casting.useT = 0; player.mp = 999; player.cd.D = 0; player.cd.C = 0;
+      player.climb = null; player.dropBlock = null; player.casting.useT = 0; player.mp = 999; player.cd.d = 0; player.cd.C = 0;
       step();
       setKey('down', true); setKey('c', true); step(); release();
       step(k);
@@ -100,8 +100,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   step(5);
   check('Double Shot: nothing lands during the bow-draw windup', duringDraw);
   check('Double Shot: first hit lands on release', firstHit);
-  check('Double Shot: the animation lasts its use time', Math.abs(player.castTotal - useTime('Z')) < 1e-9,
-    `pose ${player.castTotal.toFixed(2)} use ${useTime('Z').toFixed(2)}`);
+  check('Double Shot: the animation lasts its use time', Math.abs(player.castTotal - useTime('z')) < 1e-9,
+    `pose ${player.castTotal.toFixed(2)} use ${useTime('z').toFixed(2)}`);
   check('Double Shot: each target takes both hits', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 - one * 1.5 && far.hp < 1e6);
 }
 
@@ -112,7 +112,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     arena();
     const m = dummy(140, MOB_TYPES[0].hp);
     let c = 0;
-    while (game.mobs.includes(m) && c < 20) { player.cd.Z = 0; player.casting.useT = 0; tap('z'); step(8); c++; }
+    while (game.mobs.includes(m) && c < 20) { player.cd.z = 0; player.casting.useT = 0; tap('z'); step(8); c++; }
     casts += c;
   }
   const avg = casts / 3;
@@ -123,7 +123,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const name = upgraded ? 'Skyward Assault' : 'Rising Arrows';
   arena(lvl);
-  player.ranks.W = true; if (upgraded) player.ranks.AB = true;
+  player.ranks['ground-w'] = true; if (upgraded) player.ranks.ab = true;
   const m = dummy(125);
   const mp0 = player.mp;
   tap('w');
@@ -131,19 +131,19 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const hp0 = m.hp; tap('w'); step(20);
   check(`${name}: hits after Rush Toss`, m.hp < hp0);
-  step(15); player.cd.W = 0;
+  step(15); player.cd['ground-w'] = 0;
   const hp1 = m.hp; tap('w'); step(20);
   check(`${name}: can't be reused until the next Rush Toss`, m.hp === hp1);
 }
 {
-  arena(12); player.ranks.W = true;
+  arena(12); player.ranks['ground-w'] = true;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const hp0 = m.hp; tap('z'); step(15);
-  check('Z during the Rush Toss casts Double Shot', m.hp < hp0 && player.linkFrom === 'Z', `from ${player.linkFrom}`);
+  check('Z during the Rush Toss casts Double Shot', m.hp < hp0 && player.linkFrom === 'z', `from ${player.linkFrom}`);
 }
 {
-  arena(12); player.ranks.W = true;
+  arena(12); player.ranks['ground-w'] = true;
   dummy(125);
   setKey('down', true); tap('q'); setKey('down', false);
   tap('w'); // pressed mid Rush Toss
@@ -152,7 +152,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('a link pressed during Rush Toss fires when it ends', fired > 0 && fired < 20, `frame ${fired}`);
 }
 {
-  arena(20); player.ranks.W = true; player.ranks.AB = true;
+  arena(20); player.ranks['ground-w'] = true; player.ranks.ab = true;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
   const x0 = player.x, y0 = player.y, hp0 = m.hp;
@@ -167,13 +167,13 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 }
 {
   // Skyward Assault is gated by the link window: one use per Rush Toss, not spammed.
-  arena(20); player.ranks.W = true; player.ranks.AB = true; // Skyward Assault is the W upgrade: maxing W masters it
+  arena(20); player.ranks['ground-w'] = true; player.ranks.ab = true; // Skyward Assault is the W upgrade: maxing W masters it
   dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
-  check('the Rush Toss links into Skyward Assault', linkable('AB'));
+  check('the Rush Toss links into Skyward Assault', linkable('ab'));
   tap('w');
   check('the first Skyward Assault fires', player.cast === 'barrage' && player.hang.t > 0);
-  check('...and links now read off the Assault, not the Rush Toss', player.linkFrom === 'AB' && !linkable('AB'));
+  check('...and links now read off the Assault, not the Rush Toss', player.linkFrom === 'ab' && !linkable('ab'));
   player.hang.t = 0; player.cast = null; player.castT = 0; player.casting.useT = 0;
   tap('w');
   check('a second Skyward Assault waits for a fresh Rush Toss', player.cast !== 'barrage');
@@ -267,7 +267,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(Math.round(0.2 / P.STEP));
   check('HP and MP regen once every 5s', before === 50 && player.hp > 50 && player.mp > 10);
   const hp = player.hp;
-  cast('Z');
+  cast('z');
   step(Math.round(5.1 / P.STEP));
   check('no HP regen within 5s of attacking', player.hp === hp);
   game.pause = { col: 0, row: 0 };
@@ -279,19 +279,19 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
 // --- progression: an upgrade starts at rank 1, not its base skill's rank ---
 {
   arena(30);
-  player.ranks.Z = true; player.sp = 1;
-  spendSkill('S');
-  check('upgrading Double Shot to Bolt Flurry starts at rank 1', activeSkill('Z').key === 'S' && true);
-  check('movement skills are never offered for ranks', !skillRows().some((r) => r.key === 'D' && r.action));
+  player.ranks.z = true; player.sp = 1;
+  spendSkill('s');
+  check('upgrading Double Shot to Bolt Flurry starts at rank 1', activeSkill('z').key === 's' && true);
+  check('movement skills are never offered for ranks', !skillRows().some((r) => r.key === 'd' && r.action));
 }
 
 // --- an upgrade needs its base skill learned (its single rank) ---
 {
   arena(30);
-  player.ranks.Z = false; player.sp = 1;
-  check('an upgrade isn\'t offered until its base is learned', !skillRows().some((r) => r.key === 'S'));
-  player.ranks.Z = true;
-  const row = skillRows().find((r) => r.key === 'S');
+  player.ranks.z = false; player.sp = 1;
+  check('an upgrade isn\'t offered until its base is learned', !skillRows().some((r) => r.key === 's'));
+  player.ranks.z = true;
+  const row = skillRows().find((r) => r.key === 's');
   check('with the base learned, the upgrade is offered', !!row && row.action.startsWith('Upgrade'));
-  check('...and an SP takes it', spendSkill('S') && player.ranks.S === true && player.sp === 0);
+  check('...and an SP takes it', spendSkill('s') && player.ranks.s === true && player.sp === 0);
 }

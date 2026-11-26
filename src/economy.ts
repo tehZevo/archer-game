@@ -155,7 +155,7 @@ export function shopStock(): ShopRow[] {
   const bow = gearFor('weapon', lvl), plate = gearFor('armor', lvl);
   return [
     { kind: 'hp', name: 'HP POTION', key: 'A', desc: 'RESTORES 40% HP', price: PRICES.hp },
-    { kind: 'mp', name: 'MP POTION', key: 'S', desc: 'RESTORES 40% MP', price: PRICES.mp },
+    { kind: 'mp', name: 'MP POTION', key: 's', desc: 'RESTORES 40% MP', price: PRICES.mp },
     { kind: 'weapon', name: bow.name, key: '', price: gearPrice(bow.lvl), item: bow,
       desc: `+${Math.round(weaponBonus(bow) * 100)}% DAMAGE - LV.${bow.lvl}` },
     { kind: 'armor', name: plate.name, key: '', price: gearPrice(plate.lvl), item: plate,
@@ -179,7 +179,7 @@ export const RESPEC_PRICES = { swap: 100, reset: 500 };
 
 /** The slots the trainer can respec, and the label the menu gives each. */
 export const TRAINER_SLOTS: { slot: SkillKey; label: string }[] = [
-  { slot: 'Z', label: 'MAIN' }, { slot: 'Q', label: 'LAUNCH' }, { slot: 'W', label: 'LINK' },
+  { slot: 'z', label: 'MAIN' }, { slot: 'ground-q', label: 'LAUNCH' }, { slot: 'ground-w', label: 'LINK' },
 ];
 
 /** Every skill the slot can be: its base first, then each competing branch. */

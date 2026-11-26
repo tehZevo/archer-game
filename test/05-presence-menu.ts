@@ -146,7 +146,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     game.floor.town && game.floor.portals.length === 1 && placeKey(game.floor.portals[0].to) === 'shore-1');
   stand(game.floor.portals[0]); tap('up');
   check('it leads to Beach 1', here() === 'shore-1' && !game.floor.town);
-  check('skills work in town', (() => { gotoPlace(drift); player.cd.Z = 0; player.mp = 99; player.casting.useT = 0; tap('z'); return player.casting.useT > 0; })());
+  check('skills work in town', (() => { gotoPlace(drift); player.cd.z = 0; player.mp = 99; player.casting.useT = 0; tap('z'); return player.casting.useT > 0; })());
   release();
 }
 
@@ -188,7 +188,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('an enemy does not pin itself to the edge chasing an unreachable player', still < 30, `still ${still} frames`);
 
   // Rush Toss hits at most 6
-  arena(1); player.ranks.Q = true;
+  arena(1); player.ranks['ground-q'] = true;
   const ms = Array.from({ length: 9 }, (_, i) => dummy(120 + i * 6));
   tap('q'); step(14);
   check('Rush Toss hits at most 6 enemies', ms.filter((x) => x.hp < 1e6).length === 6, `${ms.filter((x) => x.hp < 1e6).length} hit`);
@@ -206,11 +206,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     release(); gotoPlace(climb(n));
     const count = Math.min(10, game.mobs.filter((m) => !m.fly).length);
     for (let k = 0; k < count; k++) for (const face of [1, -1]) {
-      release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks.Q = true;
+      release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks['ground-q'] = true;
       const m = game.mobs.filter((x) => !x.fly)[k];
       if (!m) continue;
       player.x = m.x - face * 14; player.y = m.y + m.h - player.h; player.vy = 0; player.face = face;
-      player.onGround = true; player.climb = null; player.cd.Q = 0; player.casting.useT = 0;
+      player.onGround = true; player.climb = null; player.cd['ground-q'] = 0; player.casting.useT = 0;
       step(1); if (!player.onGround) continue;
       runs++;
       tap('q');
