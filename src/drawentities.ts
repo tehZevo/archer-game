@@ -51,9 +51,8 @@ const deathSheets = new Map<string, { frames: HTMLCanvasElement[]; cx: number; c
 function deathSheetFor(c: Corpse): { frames: HTMLCanvasElement[]; cx: number; cy: number } | null {
   let d = deathSheets.get(c.name);
   if (!d) {
-    const s = mobAnim(c.name)?.hurt;
-    if (!s) return null;
-    const sheet = bakeDeathSheet(c.name, c.recipe, s.g);
+    const sheet = bakeDeathSheet(c.name, c.recipe);
+    if (!sheet) return null;
     d = {
       cx: sheet.cx, cy: sheet.cy,
       frames: sheet.frames.map(gridCanvas),
@@ -68,7 +67,7 @@ export function drawCorpse(c: Corpse): void {
   if (!d) return;
   const p = Math.min(1, c.age / DEATH_T);
   // the sheet dies on the spot; a flier killed in the air also falls to the ground
-  const fall = deathPose(c, p).dy - deathPose({ ...c, drop: 0 }, p).dy;
+  const fall = deathPose(c, p).dy;
   const img = d.frames[deathFrame(c.age)], mid = c.feet - c.h / 2;
   ctx.save();
   ctx.translate(Math.round(c.x), Math.round(mid + fall));

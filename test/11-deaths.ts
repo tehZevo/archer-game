@@ -2,7 +2,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 // --- every enemy dies its own way ---
 {
   const bases = MOB_TYPES.filter((m) => !m.of);
-  const looks = bases.map((m) => `${DEATHS[m.n]?.move}/${DEATHS[m.n]?.bits}`);
+  const looks = bases.map((m) => `${DEATHS[m.n]?.story}/${DEATHS[m.n]?.bits}`);
   check('every enemy has its own death', bases.every((m) => DEATHS[m.n]) && new Set(looks).size === looks.length,
     [...bases.filter((m) => !DEATHS[m.n]).map((m) => m.n), ...looks.filter((l, i) => looks.indexOf(l) !== i)].join(', '));
   check('a variant dies like the enemy it is a cousin of', MOB_TYPES.filter((m) => m.of).every((m) => deathOf(m) === DEATHS[m.of!]));
@@ -463,20 +463,21 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 
 {
-  // Enemy deaths are baked sprite sheets: frames built from each enemy's own
-  // sprite and recipe, picked by age (no runtime particles)
-  const W = 12, H = 10, px = new Uint8ClampedArray(W * H * 4);
-  for (let i = 0; i < W * H; i++) { px[i * 4] = 200; px[i * 4 + 1] = 120; px[i * 4 + 2] = 60; px[i * 4 + 3] = 255; }
-  const src = { w: W, h: H, px };
+  // Enemy deaths are baked sheets of drawn frames: each enemy's own body
+  // drawn dying by its recipe's story, picked by age (no runtime particles)
   const solid = (g: { px: Uint8ClampedArray }): number => { let n = 0; for (let i = 3; i < g.px.length; i += 4) if (g.px[i]) n++; return n; };
   const names = Object.keys(DEATHS);
-  const sheets = names.map((n) => bakeDeathSheet(n, DEATHS[n], src));
-  check('every enemy bakes a full strip of death frames that starts solid and fades out',
-    sheets.every((d) => d.frames.length === DEATH_FRAMES && solid(d.frames[0]) > W * H * 0.3 && solid(d.frames[DEATH_FRAMES - 1]) < solid(d.frames[0])),
-    names.filter((_, i) => !sheets[i].frames.every((f, j) => f.px.length > 0 && (j > 0 || solid(sheets[i].frames[0]) > W * H * 0.3))).join(', '));
+  const sheets = names.map((n) => bakeDeathSheet(n, DEATHS[n])!);
+  check('every enemy bakes a full strip of drawn death frames that fades out at the end',
+    sheets.every((d) => d && d.frames.length === DEATH_FRAMES && solid(d.frames[0]) > 40 && solid(d.frames[DEATH_FRAMES - 1]) < solid(d.frames[DEATH_FRAMES - 3])),
+    names.filter((_, i) => !sheets[i] || solid(sheets[i].frames[0]) <= 40).join(', '));
+  check('every enemy with art, variants too, has a drawn death', MOB_TYPES.filter((m) => hasMobArt(m.n)).every((m) => bakeDeathSheet(m.n, deathOf(m))),
+    MOB_TYPES.filter((m) => hasMobArt(m.n) && !bakeDeathSheet(m.n, deathOf(m))).map((m) => m.n).join(', '));
+  // the body is drawn moving, not just faded: the middle frames differ from the first
+  check('the body is drawn dying, frame by frame', sheets.every((d) => d.frames[0].px.join() !== d.frames[DEATH_FRAMES >> 1].px.join()));
   const sig = sheets.map((d) => d.frames.map((g) => Array.from(g.px).join(',')).join('|'));
   check('each enemy\'s death animation is its own', new Set(sig).size === names.length, `${new Set(sig).size}/${names.length}`);
-  check('the same enemy always bakes the same sheet', bakeDeathSheet(names[0], DEATHS[names[0]], src).frames[4].px.join() === sheets[0].frames[4].px.join());
+  check('the same enemy always bakes the same sheet', bakeDeathSheet(names[0], DEATHS[names[0]])!.frames[4].px.join() === sheets[0].frames[4].px.join());
   check('a death\'s age picks its frame, holding the last', deathFrame(0) === 0 && deathFrame(DEATH_T / 2) === DEATH_FRAMES / 2 && deathFrame(DEATH_T * 2) === DEATH_FRAMES - 1);
 }
 
