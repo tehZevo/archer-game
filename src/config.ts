@@ -142,7 +142,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   EB: { key: 'EB', linksInto: LAUNCHER_LINKS, upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 1,
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', linksInto: ['MS', 'R'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 1,
+  AB: { key: 'AB', linksInto: ['MS', 'R', 'Z', 'Q'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 1,
        cd: 0, use: 0.9, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
        desc: 'After Rush Toss: leap up to launched enemies' },
   S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 1,
