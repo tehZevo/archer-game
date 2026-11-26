@@ -5,7 +5,7 @@ import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
 import { closeLink, closeLinks, linkOpen, linksIn } from './links';
-import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, useTime } from './castrules';
+import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, offHover, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
 /** Airborne enemies Sky Assault can reach: around and below the player. */
@@ -74,12 +74,12 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   // Electric Blitz spends a banked charge (Down + Q, the strike in place, needs none).
   if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
-  // An attack skill's animation (and its recovery) blocks every other skill;
-  // a link bypasses it. The airborne kit (Plunging Volley, Glide, Midair
-  // Spin, the Q-slot rush) cuts a Sky Assault hover short: the press is
-  // buffered and fires as the animation ends, not on the spot.
-  const busy = player.castT > 0 || player.casting.recoverT > 0;
-  if (busy && !linked && !chained) return buffer(key);
+  // An attack skill's use time (and its recovery) blocks every other skill;
+  // a link bypasses it. So does the airborne kit (Plunging Volley, Glide,
+  // Midair Spin, the Q-slot rush) pulled out of a Sky Assault hover, which
+  // ends the hover and fires on the press rather than at its end.
+  const busy = player.casting.useT > 0 || player.casting.recoverT > 0;
+  if (busy && !linked && !chained && !offHover(kind)) return buffer(key);
 
   // Attack skills need both hands on the bow: on a ladder only Jump/Glide work.
   if (player.climb && kind !== 'C' && kind !== 'D') return null;
