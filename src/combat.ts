@@ -162,7 +162,7 @@ export function revive(): void {
   game.player.onGround = true; game.player.plat = ground;
   game.player.climb = null; game.player.climbRush = false;
   game.player.fervor = 0;
-  closeLinks(); // a respawn starts with every link window shut
+  closeLinks(); // a respawn starts with no cast to link off
   clearStatus(game.player);
   logMsg('You were knocked out. <b>Revived at the village gate.</b>');
 }

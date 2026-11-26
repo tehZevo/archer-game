@@ -10,7 +10,6 @@ import { slowFactor } from './status';
 import { clamp } from './util';
 import { barrageTargets } from './skills';
 import { landDive } from './rush';
-import { openLink } from './links';
 import { setPose } from './skillfx';
 
 /** Countdown to Acrobatics's next rising-streak effect. */
@@ -90,9 +89,8 @@ function jumpOffClimb(dir: -1 | 1 | 0): void {
 /** Skyward Assault: hover in place, striking airborne enemies at intervals. */
 function hover(dt: number): void {
   player.hang.t -= dt;
-  // the hover ends here: landing opens the link window, so Tempest (R) fires
-  // as a finisher on the Q -> W -> AB chain
-  if (player.hang.t <= 0) openLink('assault', 1.1);
+  // (a Tempest pressed during the hover fires as it ends: the finisher on
+  // the Q -> W -> AB chain, see links.linkHeld)
   player.vx = 0; player.vy = 0;
   player.hang.hitT -= dt;
   if (player.hang.hits > 0 && player.hang.hitT <= 0) {

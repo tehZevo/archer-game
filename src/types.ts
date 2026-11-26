@@ -39,6 +39,8 @@ export interface SkillDef {
   use?: number;
   /** Post-animation recovery (see delayTime); links skip it. Defaults to P.DELAY_TIME. */
   delay?: number;
+  /** The skills a press during this one's cast links into (see links.ts). */
+  linksInto?: SkillKey[];
   /** Stats scale linearly from the Lv.1 value to the master value. */
   mp1: number;
   mpMax: number;
@@ -223,8 +225,6 @@ export interface Body {
   plat: Platform | null;
 }
 
-/** The link windows a skill can open (see links.ts). */
-export type LinkKind = 'combo' | 'dive' | 'assault' | 'blitz' | 'glide' | 'sweep' | 'spin' | 'tempest';
 
 export interface Casting {
   /** s left of the current skill's use time: no other skills or movement. */
@@ -327,8 +327,8 @@ export interface Player extends Body {
   fervor: number;
   fervorT: number;
   superStance: number;
-  /** s left of each link window (see links.ts: open/close/tick only through its helpers). */
-  links: Record<LinkKind, number>;
+  /** The skill whose cast links read off (see links.ts), null when none is running. */
+  linkFrom: SkillKey | null;
   /** Progression. */
   level: number;
   exp: number;

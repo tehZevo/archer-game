@@ -4,7 +4,6 @@ import { generateFloor, pickVariant } from './floor';
 import { expToNext, jobForLevel, mobExp, recalcStats, SKILL_PICK_EVERY, statsForLevel } from './progress';
 import { runtime } from './runtime';
 import { spawnBoss } from './boss';
-import { noLinks } from './links';
 import { visitArea } from './achievements';
 import type {
   Banner, DmgNum, Fx, Mob, PauseMenu, MobType, Player, Shot, SkillKey, Spawn,
@@ -60,7 +59,7 @@ export const player: Player = {
   anim: 0, animState: 'idle',
   fervor: 0, fervorT: 0,
   superStance: 0,
-  links: noLinks(),
+  linkFrom: null,
   level: 1,
   exp: 0,
   expNext: expToNext(1),

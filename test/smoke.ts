@@ -45,7 +45,7 @@ function reset(): void {
   player.onGround = true; player.climb = null;
   player.hp = player.hpMax; player.mp = player.mpMax;
   player.cast = null; player.castT = 0; player.castTotal = 0;
-  player.links.combo = 0; player.fervor = 0; player.fervorT = 0;
+  player.linkFrom = null; player.fervor = 0; player.fervorT = 0;
   player.level = 1; player.exp = 0; player.expNext = expToNext(1); player.sp = 0;
   game.pause = null; player.ap = 0;
   player.invuln = 999; // a wandering enemy's touch would knock you back mid-check
