@@ -124,13 +124,24 @@ export async function loadLayout(): Promise<void> {
 }
 /** Teach the layout by hand (tests). */
 export const setLayout = (m: Record<string, string>): void => { layout.clear(); for (const k in m) layout.set(k, m[k]); };
-/** The label to show for an input id: the letter this layout types on the
- *  key bound to it (upper-case). */
+/* The skill slug each action slot drives (the bar's letters). Slots without a
+   skill (jump, pick up, potions) fall through to their own letter. */
+const SLOT_SKILL: Record<string, string> = {
+  z: 'z', d: 'd', q: 'ground-q', w: 'ground-w', e: 'ground-e', r: 'r', s: 's',
+};
+/** The slot letter a skill key is bound to (the ground/air prefix is dropped). */
+const slot = (k: string): string => (k.includes('-') ? k.split('-')[1] : k);
+
+/** The label to show for an input id: the skill slug its key drives, shown as
+ *  the letter this layout types on the bound key (upper-case for plain keys). */
 export function keyName(input: string): string {
-  const id = binds[input.toLowerCase()] ?? input.toLowerCase();
-  if (id === ' ') return 'SPC';
-  const code = /^[a-z]$/i.test(id) ? 'Key' + id.toUpperCase() : /^[0-9]$/.test(id) ? 'Digit' + id : '';
-  return (layout.get(code) ?? id).toUpperCase();
+  const act = slot(input.toLowerCase());
+  const phys = binds[act] ?? act;
+  if (phys === ' ') return 'SPC';
+  const code = /^[a-z]$/i.test(phys) ? 'Key' + phys.toUpperCase() : /^[0-9]$/.test(phys) ? 'Digit' + phys : '';
+  const typed = code ? layout.get(code) : undefined;
+  if (typed) return SLOT_SKILL[typed.toLowerCase()] ?? typed.toUpperCase();
+  return phys === act ? SLOT_SKILL[act] ?? act.toUpperCase() : phys.toUpperCase();
 }
 
 /** Drive input programmatically (headless tests, console). */

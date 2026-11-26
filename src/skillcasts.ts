@@ -206,7 +206,7 @@ function skyAssault(r: SkillRank): void {
   player.vx = 0; player.vy = 0; player.onGround = false;
   game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
   // hold in the air for the cast's recovery, not a fixed barrage duration
-  player.hang.t = delayTime('AB') * 2; player.hang.hits = r.hits; player.hang.hitT = 0;
+  player.hang.t = delayTime('ab') * 2; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
 }
 

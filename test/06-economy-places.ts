@@ -123,10 +123,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Glide and the climb rush are bought with SP, not given
-  check('a new archer has Double Shot free, Glide not yet', DEFS.D.learn === true && startsLearned('z') && !startsLearned('d'));
+  check('a new archer has Double Shot free, Glide not yet', DEFS.d.learn === true && startsLearned('z') && !startsLearned('d'));
   arena(1); player.ranks.d = false; player.sp = 1;
   check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'd' && !r.learned && !!r.action) && spendSkill('d') && player.ranks.d === true);
-  check('Acrobatics opens at Lv.10', DEFS.AC.minLevel === 10 && !skillRows().some((r) => r.key === 'ac'));
+  check('Acrobatics opens at Lv.10', DEFS.ac.minLevel === 10 && !skillRows().some((r) => r.key === 'ac'));
   const onRope = (): void => {
     const c = [...game.floor.ropes, ...game.floor.ladders][0];
     player.climb = c; player.x = c.x; player.y = c.y2 - player.h - 1; player.onGround = false; player.vx = player.vy = 0;
