@@ -3114,5 +3114,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     player.usedT['Q.air'] > 0 && player.usedT.Q === 0,
     `Q.air ${player.usedT['Q.air'].toFixed(2)} Q ${player.usedT.Q.toFixed(2)}`);
 }
+{
+  // A rope on the way up: Glide commits you to the tumble, but the climb you
+  // fly past should take over from it rather than waiting it out.
+  arena(1);
+  const g = ground();
+  game.floor.ropes.length = 0; game.floor.ladders.length = 0;
+  game.floor.ropes.push({ x: player.x, y1: g.y - 90, y2: g.y });
+  player.y = g.y - player.h - 10; player.onGround = false; player.vx = 0; player.vy = -60;
+  tap('d');
+  check('Glide starts (and locks movement for its use time)', player.cast === 'jump' && player.casting.useT > 0,
+    `cast ${player.cast} useT ${player.casting.useT.toFixed(2)}`);
+  setKey('up', true); player.x = game.floor.ropes[0].x; player.vx = 0; step(1);
+  check('the rope is grabbed on the way up, mid-Glide', player.climb !== null,
+    `climb ${player.climb ? 'y' : 'none'} useT ${player.casting.useT.toFixed(2)}`);
+  check('...and grabbing it ends the Glide', player.casting.useT === 0 && player.casting.key === null,
+    `useT ${player.casting.useT.toFixed(2)} key ${player.casting.key}`);
+  const y0 = player.y; step(6);
+  check('...so the climb keeps going up', player.y < y0 && player.climb !== null, `y ${player.y.toFixed(1)} was ${y0.toFixed(1)}`);
+  step(2);
+  check('...and Up keeps working to the top', player.climb !== null && player.y < y0 - 10, `y ${player.y.toFixed(1)}`);
+}
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
