@@ -1,21 +1,23 @@
-import { bitFly, DEATH_T, deathBits, deathPixel, deathPose, type Corpse, type DeathRecipe } from './deaths';
+import { bitFly, DEATH_T, deathBits, type Corpse, type DeathRecipe } from './deaths';
+import { deathPainter } from './deathdrawn';
+import { shade, Sprite } from './sprites';
 
 /* ============================================================
    ENEMY DEATH SHEETS
-   Each enemy's death is a baked strip of pixel-art frames, built once
-   from its own hurt sprite and its death recipe (deaths.ts): every pixel
-   of the body is moved by hand through the recipe's motion (deathPixel:
-   no rotation or scaling of the sprite), fades out with an ordered dither, and the
-   bits that fly off it (feathers, gears, shards...) are painted into the
-   frames as pixels. So every enemy has its own sheet, and drawing a
-   death is just picking the frame for its age. Pure pixel buffers here;
-   render.ts turns them into canvases.
+   Each enemy's death is a baked strip of drawn frames, built once from
+   its death painter (mobdeath.ts / deathdrawn.ts: its own body, in its
+   own colours, keeling over, cracking, splatting, crumbling...), cel
+   shaded like its walk cycle, fading out with an ordered dither at the
+   very end, with the bits that fly off it (feathers, gears, shards...)
+   painted in as pixels. Drawing a death is just picking the frame for
+   its age. Pure pixel buffers here; drawentities.ts turns them into
+   canvases.
    ============================================================ */
 
-/** Frames per death (DEATH_T long, so ~12fps). */
-export const DEATH_FRAMES = 10;
+/** Frames per death (DEATH_T long, so ~13fps). */
+export const DEATH_FRAMES = 14;
 
-import type { Grid } from './grid';
+import { fillRect, type Grid } from './grid';
 export type { Grid } from './grid';
 
 export interface DeathSheet {
@@ -34,59 +36,38 @@ const seedOf = (name: string): number => [...name].reduce((h, ch) => (h * 31 + c
 const hex = (c: string): [number, number, number] =>
   [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
 
-/** Bake an enemy's death from its hurt sprite (facing right). */
-export function bakeDeathSheet(name: string, recipe: DeathRecipe, src: Grid): DeathSheet {
-  const { w: sw, h: sh } = src;
+/** When the dead body starts to fade out (progress 0..1). */
+const FADE_FROM = 0.8;
+
+/** Bake an enemy's death (facing right), or null if it has no art. */
+export function bakeDeathSheet(name: string, recipe: DeathRecipe): DeathSheet | null {
+  const art = deathPainter(name, recipe.story);
+  if (!art) return null;
+  const { w: sw, h: sh } = art.look;
   const pad = 22, W = sw + pad * 2, H = sh + pad * 2;
-  const cx = Math.floor(W / 2), cy = Math.floor(H / 2); // the body's middle
-  // on the ground: deaths fall nowhere here (a flier's drop is added when drawn)
+  const cx = pad + Math.floor(sw / 2), cy = pad + Math.floor(sh / 2); // the body's middle
   const c: Corpse = { name, recipe, x: 0, feet: sh / 2, w: sw, h: sh, k: 1, dir: 1, drop: 0, age: 0, seed: seedOf(name) };
-  const floor = cy + Math.ceil(sh / 2); // the ground row
+  const floor = pad + sh - 1; // the ground row
   const frames: Grid[] = [];
   for (let f = 0; f < DEATH_FRAMES; f++) {
-    const p = (f + 0.5) / DEATH_FRAMES, t = p * DEATH_T, q = deathPose(c, p);
-    const g: Grid = { w: W, h: H, px: new Uint8ClampedArray(W * H * 4) };
+    const p = (f + 0.5) / DEATH_FRAMES, t = p * DEATH_T;
+    // the body, drawn dying, then shaded like the living sprite
+    const body = new Sprite(W, H);
+    art.paint((x, y, col, gw = 1, gh = 1) => {
+      const y0 = pad + y, y1 = Math.min(floor + 1, y0 + gh);
+      if (y1 > y0) fillRect(body.g, pad + x, y0, gw, y1 - y0, col);
+    }, p);
+    const g = shade(body).g;
+    if (p > FADE_FROM) {
+      const a = 1 - (p - FADE_FROM) / (1 - FADE_FROM);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!dithered(x, y, a)) g.px[(y * W + x) * 4 + 3] = 0;
+    }
     const put = (x: number, y: number, r: number, gg: number, b: number): void => {
       x = Math.round(x); y = Math.round(y);
       if (x < 0 || y < 0 || x >= W || y >= H || y > floor) return;
       const i = (y * W + x) * 4;
       g.px[i] = r; g.px[i + 1] = gg; g.px[i + 2] = b; g.px[i + 3] = 255;
     };
-    const sample = (u: number, v: number): number => {
-      const x = Math.floor(u), y = Math.floor(v);
-      if (x < 0 || y < 0 || x >= sw || y >= sh) return -1;
-      const i = (y * sw + x) * 4;
-      return src.px[i + 3] > 127 ? i : -1;
-    };
-    // the body: each of the sprite's pixels is placed where the death moves it
-    if (q.alpha > 0) {
-      let s = c.seed ^ 0x2c1b;
-      const r = (): number => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
-        const r1 = r(), r2 = r(), i = sample(x, y);
-        if (i < 0) continue;
-        const at = deathPixel(recipe.move, x + 0.5 - sw / 2, y + 0.5 - sh, sh, p, r1, r2);
-        if (!at) continue;
-        const X = Math.round(cx + q.dx + at.x - 0.5), Y = Math.round(cy + sh / 2 + q.dy + at.y - 0.5);
-        if (dithered(X, Y, q.alpha)) put(X, Y, src.px[i], src.px[i + 1], src.px[i + 2]);
-      }
-    }
-    // crumbling: blocks of the body tumble apart and settle on the ground
-    if (recipe.move === 'crumble' && p >= 0.08) {
-      let s = c.seed ^ 0x5bd1;
-      const r = (): number => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-      const tt = t - 0.08 * DEATH_T, B = 4, fade = Math.max(0, 1 - p * p);
-      for (let by = 0; by < sh; by += B) for (let bx = 0; bx < sw; bx += B) {
-        const ox = bx + B / 2 - sw / 2, oy = by + B / 2 - sh;
-        const vx = ox * 3 + (r() - 0.5) * 30, vy = -40 - r() * 50;
-        const px0 = cx + ox + vx * tt - B / 2, py0 = Math.min(floor - B, cy + sh / 2 + oy + vy * tt + 170 * tt * tt);
-        for (let yy = 0; yy < B; yy++) for (let xx = 0; xx < B; xx++) {
-          const i = sample(bx + xx, by + yy);
-          const X = Math.round(px0 + xx), Y = Math.round(py0 + yy);
-          if (i >= 0 && dithered(X, Y, fade)) put(X, Y, src.px[i], src.px[i + 1], src.px[i + 2]);
-        }
-      }
-    }
     // the bits, as pixels in the recipe's colours
     const kind = recipe.bits, fly = bitFly(kind);
     for (const b of deathBits(c, t)) {
