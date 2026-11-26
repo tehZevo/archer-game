@@ -28,3 +28,7 @@ You move through the game by **climbing floors** — single-screen floors, one a
 ## Getting stronger
 
 You get stronger by **gaining levels and spending points to learn new skills and make existing ones hit harder**. Gear isn't the focus — your power comes from the skills you pick and rank up.
+
+## Alone or together
+
+It's **mostly a single-player game**, but with **simple multiplayer interactions** — you can share a floor with other players and see them, keeping things light rather than a deep online experience.
