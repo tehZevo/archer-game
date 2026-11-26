@@ -1,21 +1,17 @@
 # Core
 
-The heart of the game is **combat combos**: firing a chain of archer skills at monsters. The fun comes from stringing attacks together, not from exploring, leveling, or playing with others (those support the combat, they aren't the point).
-
-Everything else in the game exists to serve the combo loop.
+The heart of the game is **combat combos**: firing a chain of archer skills at monsters. The fun comes from stringing attacks together. Everything else in the game serves the combo loop.
 
 ## How a combo works
 
-You **mix skills freely** — there's no fixed recipe to memorize. The only things that limit what you can throw next are:
+You **mix skills freely** — a free-flowing string of whatever skills are ready and applicable right now. The things that shape what you can throw next are:
 
 - **Cooldowns** — a skill needs a beat to recharge after you use it.
-- **Use conditions** — some skills only work in certain situations (for example, an aerial skill needs you to be in the air, a ground skill needs you to be on the ground), and some skills only become available once you've used another one first.
-
-So a combo is a free-flowing string of whatever skills are ready and applicable right now, not a set sequence.
+- **Use conditions** — some skills work in certain situations (an aerial skill in the air, a ground skill on the ground), and some become available once you've used another one first.
 
 ## Combo feel
 
-The combo feels **weighted**: each skill plays out fully before the next one starts. Committing to a skill means you're committed for its whole animation — you can't cut it short to fire the next attack. Each attack lands with weight, and the next one begins once it's done.
+The combo feels **weighted**: each skill plays out fully before the next one starts. Committing to a skill commits you for its whole animation, so each attack lands with weight and the next begins once it's done.
 
 ## What you fight
 
@@ -27,11 +23,11 @@ You move through the game by **climbing floors** — single-screen floors, one a
 
 ## Getting stronger
 
-You get stronger by **gaining levels and spending points to learn new skills and make existing ones hit harder**. Gear isn't the focus — your power comes from the skills you pick and rank up.
+You get stronger by **gaining levels and spending points to learn new skills and rank up existing ones**. Your power comes from the skills you pick and rank up.
 
 ## Alone or together
 
-It's **mostly a single-player game**, but with **simple multiplayer interactions** — you can share a floor with other players and see them, keeping things light rather than a deep online experience.
+It's **mostly a single-player game** with **simple multiplayer interactions** — you can share a floor with other players and see them, keeping the online side light.
 
 ## The look
 
@@ -47,8 +43,8 @@ A typical floor is **quick** — about a minute, a few monsters to fight, then y
 
 ## Surviving
 
-Combat is **moderately forgiving**: you have a health bar and can take a middling number of hits before you go down — not tanky, not glass-cannon.
+Combat is **moderately forgiving**: you have a health bar that takes a middling number of hits before you go down.
 
 ## Moving around
 
-Your archer **runs, jumps, and climbs** ropes and ladders. The move called "Glide" is a bit of a misnomer — it's really a **double jump** (an extra mid-air jump), not a float.
+Your archer **runs, jumps, and climbs** ropes and ladders. The move called "Glide" is really a **double jump** (an extra mid-air jump).
