@@ -21,8 +21,10 @@ import type { SkillKey, SkillRank } from './types';
 type Cast = (r: SkillRank) => void;
 
 /** Double Shot: draw the bow (a short windup), release a volley that whips
- *  out to the closest enemies (no projectile), then follow through. */
+ *  out to the closest enemies (no projectile), then follow through. Off a
+ *  Skyward Assault hover it's a ground link, so it drops you (see links.ts). */
 function twinShot(r: SkillRank): void {
+  endHover();
   pose('shoot', 'Z');
   const face = player.face;
   const tg = nearest(player.x + face * 64, player.y + player.h / 2, 128, 56, r.targets);
@@ -85,8 +87,10 @@ function airDive(r: SkillRank): void {
   });
 }
 
-/** Rush Toss (Q on the ground): the ground rush (see rush.ts). */
+/** Rush Toss (Q on the ground): the ground rush (see rush.ts). Off a Skyward
+ *  Assault hover it's a ground link, so it drops you (see links.ts). */
 function skyToss(): void {
+  endHover();
   groundRush(held('down'), false);
 }
 

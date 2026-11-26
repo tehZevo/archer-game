@@ -38,15 +38,6 @@ export const GRAB_THROUGH = new Set<SkillKey>(['D']);
 export const grabCancels = (): boolean =>
   player.casting.useT <= 0 || (player.casting.key !== null && GRAB_THROUGH.has(player.casting.key));
 
-/** The aerial kit you can pull out of a Skyward Assault hover: each of these
- *  calls links.endHover, so the move starts on the press, not at the hover's
- *  end (see skills.gate). */
-export const AIR_KIT = new Set<SkillKey>(['D', 'PV', 'MS', 'AD']);
-
-/** Whether a press right now cuts a Skyward Assault hover short. */
-export const offHover = (kind: SkillKey): boolean =>
-  player.hang.t > 0 && AIR_KIT.has(kind);
-
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Meteor Dive), W (Cyclone Sweep), E (Downpour). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };

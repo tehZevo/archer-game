@@ -5,7 +5,7 @@ import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
 import { chainsZ, linkable, linkHeld, startLinks } from './links';
-import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, cdSlot, delayTime, offHover, rushHolding, useTime } from './castrules';
+import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, cdSlot, delayTime, rushHolding, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
 /** Airborne enemies Skyward Assault can reach: around and below the player. */
@@ -69,11 +69,10 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
   // An attack skill's use time (and its recovery) blocks every other skill;
-  // a link bypasses it. So does the airborne kit (Downpour, Glide,
-  // Cyclone Sweep, the Q-slot rush) pulled out of a Skyward Assault hover, which
-  // ends the hover and fires on the press rather than at its end.
+  // a link bypasses it. The Skyward Assault's lift is its use time, so a skill
+  // that isn't a link off it waits out the hover.
   const busy = player.casting.useT > 0 || player.casting.recoverT > 0;
-  if (busy && !linked && !chained && !offHover(kind)) return buffer(key);
+  if (busy && !linked && !chained) return buffer(key);
 
   // Attack skills need both hands on the bow: on a ladder only Glide works.
   if (player.climb && kind !== 'D') return null;

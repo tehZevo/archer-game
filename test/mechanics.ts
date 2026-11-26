@@ -538,13 +538,17 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('...at a steady pace, slower than a jump\'s pop', firstStep < 300 * P.STEP && firstStep > 0, `first step ${firstStep.toFixed(1)}px`);
 }
 {
-  // Skyward Assault -> E: Downpour cuts the hover short instead of waiting it out
+  // Skyward Assault -> E: the lift is the use time, so Downpour waits it out
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Skyward Assault hovers', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
   tap('e');
-  check('E fires straight out of the hover', player.hang.t === 0 && player.cast === 'barrage' && player.casting.useT > 0);
+  check('E pressed during the hover waits for it', player.casting.queued === 'E' && player.hang.t > 0,
+    `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
+  let fired = -1;
+  for (let i = 0; i < 40 && fired < 0; i++) { step(1); if (player.casting.key === 'PV') fired = i; }
+  check('...and Downpour fires as the leap ends', fired >= 0 && player.casting.key === 'PV', `fired ${fired}`);
 }
 {
   // Skyward Assault -> R: a Tempest pressed during the hover fires as it ends
@@ -2725,26 +2729,27 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
-  // Off a Skyward Assault hover: Glide ends the hover and carries you, and the
-  // Meteor Dive snaps out of the assault pose into its own dive
+  // Off a Skyward Assault hover: the lift is the use time, so a non-link skill
+  // (Glide) waits for it, then fires and carries you
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.D = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('hovering (setup)', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
   tap('d');
-  check('Glide off the hover ends it', player.hang.t === 0 && player.cast === 'jump' && player.vx !== 0,
-    `hangT ${player.hang.t.toFixed(2)} cast ${player.cast} vx ${player.vx.toFixed(0)}`);
-  step(20);
-  check('...and you fall with the glide', player.onGround || player.vy > -500, `vy ${player.vy.toFixed(0)}`);
+  check('Glide pressed during the hover waits for it', player.casting.queued === 'D' && player.hang.t > 0,
+    `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
+  step(30); // the hover ends, the buffered Glide fires
+  check('...and the Glide fires as the hover ends, carrying you', player.cast === 'jump' && player.vx !== 0,
+    `cast ${player.cast} vx ${player.vx.toFixed(0)}`);
 }
 {
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.AD = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
-  tap('q'); step(4); // past the windup
-  check('Meteor Dive off the hover snaps out of the assault', player.hang.t === 0 && player.cast === 'dive' && player.diving,
-    `hangT ${player.hang.t.toFixed(2)} cast ${player.cast}`);
-  step(2);
+  tap('q'); // Q's air form (Meteor Dive) pressed during the hover waits for it
+  check('Meteor Dive pressed during the hover waits for it', player.casting.queued === 'Q' && player.hang.t > 0,
+    `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
+  step(30); // the hover ends, the buffered Meteor Dive fires
   check('...and the dive plays out (no hover freeze)', player.hang.t === 0 && (player.diving || player.rush.t > 0),
     `diving ${player.diving} rushT ${player.rush.t.toFixed(2)}`);}
 

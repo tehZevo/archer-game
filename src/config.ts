@@ -108,7 +108,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
   // cooldown, so their pace is their use time alone (which Haste speeds up).
   Z: { key: 'Z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 1,
-       cd: 0, use: 0.7, mp1: 3, dmg1: 120, hits1: 2, targets1: 4,
+       cd: 0, use: 0.6, mp1: 3, dmg1: 120, hits1: 2, targets1: 4,
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 1, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
@@ -142,7 +142,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   EB: { key: 'EB', linksInto: LAUNCHER_LINKS, upgrades: 'Q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 1,
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  AB: { key: 'AB', linksInto: ['MS', 'R'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 1,
+  AB: { key: 'AB', linksInto: ['MS', 'R', 'Z', 'Q'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30, maxLevel: 1,
        cd: 0, use: 0.9, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
        desc: 'After Rush Toss: leap up to launched enemies' },
   S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30, maxLevel: 1,
