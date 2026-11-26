@@ -27,7 +27,9 @@ import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
-import { barrageTargets, cast, cdSlot, delayTime } from '../src/skills';
+import { barrageTargets, cast } from '../src/skills';
+import { cdSlot, delayTime } from '../src/castrules';
+import { CASTS } from '../src/skillcasts';
 import { MOB_SOUNDS } from '../src/audio';
 import { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
 import { fmtNum } from '../src/util';
@@ -72,7 +74,7 @@ import { bakeDeathSheet, DEATH_FRAMES, deathFrame } from '../src/deathsheet';
 import { localPose } from '../src/net';
 import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 import { cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX } from '../src/settings';
-import type { Mob, PauseMenu, Platform } from '../src/types';
+import type { Mob, PauseMenu, Platform, SkillKey } from '../src/types';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = ''): void {
@@ -2896,6 +2898,12 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('closeLinks shuts them all', LINK_KINDS.every((k) => player.links[k] === 0));
   openLink('assault', 1); player.hp = 0; step(1);
   check('a respawn starts with every window shut', LINK_KINDS.every((k) => player.links[k] === 0), JSON.stringify(player.links));
+}
+
+// --- every active skill has a cast body
+{
+  const missing = (Object.keys(SKILLS) as SkillKey[]).filter((k) => !SKILLS[k].passive && !CASTS[k]);
+  check('every active skill has a cast', missing.length === 0, missing.join(','));
 }
 
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
