@@ -1,4 +1,4 @@
-import { PATHS, START_TOWN, TOWNS, townArea, townDepth, type Place } from './world';
+import { mobLevel, PATHS, TOWNS, type Place } from './world';
 import { bannerMsg, player } from './state';
 import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
 import { SKILLS } from './config';
@@ -20,16 +20,12 @@ export const dev = {
   sel: 0,
 };
 
-/** The dev menu's rows: the first combat floor (the first floor up from
- *  the start town), then every town (in map order, indented by depth).
- *  `label` is the area the town takes its look from. */
-export const devStops = (): { place: Place; name: string; label: string }[] => {
-  const first = PATHS.find((p) => p.from === START_TOWN)!;
-  return [
-    { place: { path: first.id, floor: 1 }, name: `${first.name} 1 - first floor`, label: '' },
-    ...TOWNS.map((t) => ({ place: { town: t.id }, name: ' '.repeat(townDepth(t.id)) + t.name, label: townArea(t.id) })),
-  ];
-};
+/** The dev menu's rows: a single flat list of every area — each path's first
+ *  floor (with the level its mobs are) and every town (marked "(town)"). */
+export const devStops = (): { place: Place; name: string }[] => [
+  ...PATHS.map((p) => ({ place: { path: p.id, floor: 1 }, name: `${p.name} Lv.${mobLevel({ path: p.id, floor: 1 })}` })),
+  ...TOWNS.map((t) => ({ place: { town: t.id }, name: `${t.name} (town)` })),
+];
 
 /** Dev menu rows shown at once (it scrolls to keep the selection in view). */
 export const DEV_ROWS = 12;

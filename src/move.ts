@@ -136,10 +136,14 @@ function walk(dt: number, locked: boolean): void {
  *  slows the pickup and the stop); in the air, keep momentum and only brake. */
 function steer(dt: number, locked: boolean): void {
   const slow = (player.cast === 'rush' || player.cast === 'dive' ? 0.55 : 1) * slowFactor(player); // chill slows you
+  // Facing follows the held direction even during a cast's lock, so you can
+  // turn around mid-combo (the buffered window) without losing your momentum.
+  if (held('left')) player.face = -1;
+  if (held('right')) player.face = 1;
   let target = 0;
   const speed = P.WALK * nimbleSpeed();
-  if (!locked && held('left'))  { target = -speed * slow; player.face = -1; }
-  if (!locked && held('right')) { target =  speed * slow; player.face =  1; }
+  if (!locked && held('left'))  target = -speed * slow;
+  if (!locked && held('right')) target = speed * slow;
   if (!player.onGround) {
     // holding against your motion brakes toward a standstill but never turns you around
     if (target !== 0 && Math.sign(target) === -Math.sign(player.vx)) {

@@ -30,6 +30,9 @@ export const CRIT_BASE = 1.5;
 export const critMult = (): number => CRIT_BASE + critOverflowPoints() * 0.02;
 /** Built-in damage bonus, raised by the Power Surge passive. */
 export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
+/** Twin Echoes doubles your arrows (see shotCount) at the cost of per-hit
+ *  damage: each arrow deals 60%, so total damage rises from 100% to ~120%. */
+export const twinEchoMult = (): number => passiveBonus('ES') > 0 ? 0.6 : 1;
 
 /* ---- The damage pipeline, in three parts (see damage()). ---- */
 
@@ -38,9 +41,9 @@ export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
 export const baseAttack = (): number => game.player.war * gearDmg();
 
 /** (2) Modifiers: multiplicative buffs stacked on base attack — passives
- *  (Power Surge) and stacks (Fervor). Crit, variance and the airborne bonus are
- *  per-hit and applied in damage(), not here. */
-export const damageModifiers = (): number => passiveDmg() * fervorMult();
+ *  (Power Surge, Twin Echoes) and stacks (Fervor). Crit, variance and the
+ *  airborne bonus are per-hit and applied in damage(), not here. */
+export const damageModifiers = (): number => passiveDmg() * twinEchoMult() * fervorMult();
 
 /** (3) Applied damage, before the target's defense: base attack × modifiers ×
  *  the attack skill's own multiplier (mult, e.g. Double Shot's 120%). */
