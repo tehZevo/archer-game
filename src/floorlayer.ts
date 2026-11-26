@@ -109,6 +109,14 @@ function drawDecor(g: Ctx, back: boolean): void {
   }
 }
 
+/** Houses stand behind the town's levels, so a chimney (and the air over
+ *  it) can be hidden behind a platform: its smoke, drawn over the static
+ *  layer, would then hang in front of the platform, so it isn't drawn. */
+export function smokeHidden(sx: number, sy: number): boolean {
+  const x1 = sx + SMOKE.w, y1 = sy + SMOKE.h + 14; // down to the chimney's base
+  return game.floor.platforms.some((p) => p.x < x1 && p.x + p.w > sx && p.y < y1 && p.y + p.h > sy);
+}
+
 /** The town's moving decor, each frame over the static layer: flickering
  *  lamps, nodding flowers, rippling awnings, creaking signs, and smoke from
  *  every house's chimney. Each piece runs in its own phase. */
@@ -119,8 +127,8 @@ export function drawDecorLive(ctx: Ctx, t: number): void {
     const x0 = Math.round(d.x - w / 2), y0 = Math.round(d.y - h);
     if (d.kind === 'house') {
       const f = (Math.floor(t * SMOKE.fps) + phase) % SMOKE.frames;
-      const sx = d.flip ? w - SMOKE.x - SMOKE.w : SMOKE.x;
-      ctx.drawImage(art(`decor/smoke/${f}`, d.flip), x0 + sx, y0 + SMOKE.y - SMOKE.h);
+      const sx = x0 + (d.flip ? w - SMOKE.x - SMOKE.w : SMOKE.x), sy = y0 + SMOKE.y - SMOKE.h;
+      if (!smokeHidden(sx, sy)) ctx.drawImage(art(`decor/smoke/${f}`, d.flip), sx, sy);
     }
     const n = DECOR_FRAMES[d.kind];
     if (n > 1) ctx.drawImage(art(`decor/${d.kind}/${pal}/${(Math.floor(t * DECOR_FPS) + phase) % n}`, d.flip), x0, y0);
