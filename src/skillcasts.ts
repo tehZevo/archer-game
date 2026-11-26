@@ -224,7 +224,7 @@ function skyfallVolley(r: SkillRank): void {
  *  strikes run on the fixed step in update (see the hang block). */
 function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
-  sfx.shoot();
+  sfx.assaultRise();
   hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
     .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
   const from = player.y + player.h / 2;
@@ -232,7 +232,8 @@ function skyAssault(r: SkillRank): void {
   // you ~3x higher off the top of their arc)
   player.y = Math.max(0, player.y - P.BARRAGE_UP);
   player.vx = 0; player.vy = 0; player.onGround = false;
-  game.fx.push({ type: 'skySwoosh', x: player.x, y: from, t: 0.2, face: player.face }); // where she left
+  // a tall blue slash carving up from where she left to where she hangs
+  game.fx.push({ type: 'assaultRise', x: player.x, y: from, t: FX_DUR.assaultRise, face: player.face });
   // hold in the air for the cast's recovery, not a fixed barrage duration
   player.hang.t = delayTime('ab') * 2; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;

@@ -31,6 +31,10 @@ import tossTrail from '../assets/fx/tossTrail.png';
 import blitzTrail from '../assets/fx/blitzTrail.png';
 import stunHit from '../assets/fx/stunHit.png';
 import spirit from '../assets/fx/spirit.png';
+import assaultRise from '../assets/fx/assaultRise.png';
+import assaultBang from '../assets/fx/assaultBang.png';
+import assaultDrop from '../assets/fx/assaultDrop.png';
+import assaultHit from '../assets/fx/assaultHit.png';
 import galeMuzzle from '../assets/fx/galeMuzzle.png';
 import galeShot from '../assets/fx/galeShot.png';
 import galeHit from '../assets/fx/galeHit.png';
@@ -69,6 +73,10 @@ export const BAKED: Record<string, BakedSheet> = {
   blitzTrail: { src: blitzTrail, w: 22, h: 14, n: 5, ox: 11, oy: 12 },
   stunHit: { src: stunHit, w: 56, h: 34, n: 6, ox: 22, oy: 17 },
   spirit: { src: spirit, w: 44, h: 34, n: 7, ox: 10, oy: 17 },
+  assaultRise: { src: assaultRise, w: 72, h: 128, n: 7, ox: 24, oy: 118 },
+  assaultBang: { src: assaultBang, w: 96, h: 72, n: 6, ox: 48, oy: 36 },
+  assaultDrop: { src: assaultDrop, w: 84, h: 92, n: 8, ox: 44, oy: 82 },
+  assaultHit: { src: assaultHit, w: 44, h: 44, n: 6, ox: 22, oy: 22 },
   galeMuzzle: { src: galeMuzzle, w: 20, h: 18, n: 4, ox: 1, oy: 9 },
   galeShot: { src: galeShot, w: 64, h: 11, n: 4, ox: 0, oy: 5.5 },
   galeHit: { src: galeHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },
