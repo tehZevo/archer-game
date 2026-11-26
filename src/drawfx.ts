@@ -63,7 +63,8 @@ export function drawDmg(d: DmgNum): void {
   // pixel font with a black outline (d.y is the old text baseline); the 2x
   // scale keeps damage readable at a glance
   ctx.save();
-  ctx.globalAlpha = clamp(d.t, 0, 1);
+  // fully solid for the first 3/4 of the rise, then a quick fade over the last 1/4
+  ctx.globalAlpha = clamp(d.t / 0.25, 0, 1);
   const s = d.txt ?? String(d.v), y = Math.round(d.y) - 10;
   // tight tracking: digits overlap by a column (negative gap); outlinedText
   // centers the string on d.x

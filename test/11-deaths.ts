@@ -339,7 +339,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   damage(m, 1);
   check('the missed attack shows a floating MISS', game.dmgNums.length === 1 && game.dmgNums[0].txt === 'MISS',
     `${game.dmgNums.length} ${game.dmgNums[0]?.txt}`);
-  check('...as a stacked damage number, not flat text', game.dmgNums[0].col === '#ffffff' && game.dmgNums[0].vy === -12,
+  check('...as a stacked damage number, not flat text', game.dmgNums[0].col === '#ffb347' && game.dmgNums[0].vy === -12,
     `${game.dmgNums[0].col} ${game.dmgNums[0].vy}`);
   check('...and it procs the invulnerability delay', player.invuln > 0 && player.invuln <= MISS_IFRAMES, `${player.invuln.toFixed(2)}`);
   check('...which is the quiet kind (no flash)', player.invulnQuiet);

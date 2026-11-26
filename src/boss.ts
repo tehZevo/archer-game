@@ -106,7 +106,7 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
   player.combatT = P.COMBAT_TIME;
   player.invuln = 1.0;
   sfx.hit();
-  game.dmgNums.push({ x: player.x, y: player.y - 14, v: dmg, t: 1, crit: false, vy: -80, col: '#ff8f8f' });
+  game.dmgNums.push({ x: player.x, y: player.y - 14, v: dmg, t: 1, crit: false, vy: -80, col: '#b06cff' });
   return true;
 }
 
