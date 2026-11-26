@@ -11,6 +11,7 @@ import { board, boardInput } from './quests';
 import { confirmInput, confirmUi } from './confirm';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import { closeLinkHelp, linkHelp, linkHelpKey, openLinkHelp } from './linkhelp';
+import { openSkillEditor, skillEditor, skillEditorInput } from './skilleditor';
 import type { PauseMenu } from './types';
 
 /**
@@ -35,6 +36,9 @@ export function windowInput(dt: number): boolean {
   // dev menu (?dev only): ` opens it; it freezes the game like the pause menu
   if (dev.on && pressed('`')) dev.open = !dev.open;
   if (dev.open) { devInput(dt); return true; }
+  // the skill timing & link editor (?dev only): T opens it over the frozen game
+  if (dev.on && pressed('t')) { openSkillEditor(); return true; }
+  if (skillEditor.open) { skillEditorInput(dt); return true; }
   // Esc pause menu: arrows move, Z/Enter spends AP or SP
   if (pressed('escape')) game.pause = game.pause ? null : { col: 0, row: 0 };
   if (game.pause) { pauseInput(game.pause, dt); return true; }
@@ -44,7 +48,7 @@ export function windowInput(dt: number): boolean {
 /** True while any of those windows is open (so Enter belongs to it, not the chat line). */
 export function windowOpen(): boolean {
   return shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open
-    || settingsUi.open || achUi.open || linkHelp.open || dev.open || !!game.pause;
+    || settingsUi.open || achUi.open || linkHelp.open || dev.open || skillEditor.open || !!game.pause;
 }
 
 /** Z, Enter or Space: confirm in any window. */
