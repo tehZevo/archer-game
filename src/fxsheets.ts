@@ -1,4 +1,4 @@
-import { FX_GEN } from './fxsprites';
+import { FX_GEN, FX_SIZED } from './fxsprites';
 import { makeCanvas, sheetAnim, type FxAnim } from './fxlight';
 import { BAKED } from './fxbaked';
 
@@ -53,5 +53,16 @@ export function fx(name: string): FxAnim {
   if (got) return got;
   const a = sheetAnim(FX_GEN[name]());
   generated.set(name, a);
+  return a;
+}
+
+/** A distance-spanning effect (see FX_SIZED) built `len` px long, cached per
+ *  length: drawn 1:1, never stretched. */
+export function fxSized(name: string, len: number): FxAnim {
+  const w = Math.max(4, Math.round(len)), key = `${name}@${w}`;
+  const got = generated.get(key);
+  if (got) return got;
+  const a = sheetAnim(FX_SIZED[name](w));
+  generated.set(key, a);
   return a;
 }

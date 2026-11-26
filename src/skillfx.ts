@@ -40,6 +40,6 @@ export function fxUnder(type: FxKind, tg: Mob[], x: number, y: number, t: number
 export function tracers(tg: Mob[], x: number, y: number, face: number): void {
   const ends = tg.length ? tg.map((m) => m.x) : [x + face * 96];
   for (const ex of ends) {
-    game.fx.push({ type: 'tracer', x, y, t: 0.14, face, sx: Math.max(12, Math.abs(ex - x)) / 64 });
+    game.fx.push({ type: 'tracer', x, y, t: 0.14, face, len: Math.max(12, Math.abs(ex - x)) });
   }
 }
