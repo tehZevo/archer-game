@@ -87,7 +87,7 @@ function glide(): void {
  *  (see landDive). */
 function airDive(r: SkillRank): void {
   endHover(); // the dive's own momentum takes over at once, no stuck dive pose
-  sfx.jump();
+  sfx.meteorDive();
   // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP, the yellow
   // arrows leading the way, and the pose covers the coil as well as the plunge.
   pose('dive', 'air-q');
@@ -128,7 +128,7 @@ export const spikeLands = (d: number): number =>
  *  enemy in front is speared as its spike lands. */
 function spikeLift(r: SkillRank): void {
   pose('barrage', 'ground-e');
-  sfx.jump();
+  sfx.piercingLeap();
   const face = player.face, x0 = player.x;
   game.fx.push({ type: 'spikes', x: x0, y: player.y + player.h, t: FX_DUR.spikes, face });
   hitbox(x0 + face * P.SPIKE_REACH / 2, player.y + player.h / 2, P.SPIKE_REACH, 64)
@@ -157,7 +157,7 @@ function spikeLift(r: SkillRank): void {
 function plungingVolley(r: SkillRank): void {
   endHover();
   pose('barrage', 'air-e');
-  sfx.shoot();
+  sfx.downpour();
   const feet = player.y + player.h;
   const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
     .filter((m) => m.y + m.h > feet) // beneath you, not beside you
@@ -180,7 +180,7 @@ function tempest(r: SkillRank): void {
   pose('shoot', 'r');
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
-  sfx.shoot();
+  sfx.tempest();
   const mx = player.x + player.face * 8, my = player.y + 13;
   const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
   game.fx.push({ type: 'tempest', x: player.x, y: player.y + player.h, t: FX_DUR.tempest, follow: true });
@@ -197,7 +197,7 @@ function midairSpin(r: SkillRank): void {
   player.vx = player.vy = 0; // the sweep holds its spot: no drifting on the jump's momentum
   player.skillPose = 'spin';
   endHover(); // swept out of a Skyward Assault hover: the spin takes over
-  sfx.shoot();
+  sfx.cyclone();
   game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
   const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
   eachShot(shotCount(r), 0, (more) => {
@@ -210,7 +210,7 @@ function midairSpin(r: SkillRank): void {
  *  link off it makes this available. */
 function skyfallVolley(r: SkillRank): void {
   pose('shoot', 'ground-w');
-  sfx.shoot();
+  sfx.risingArrows();
   const face = player.face;
   const tg = hitbox(player.x + face * 30, player.y + player.h / 2, 110, 80).slice(0, r.targets);
   // the volley rains onto each target, or onto the ground just ahead if there are none
@@ -244,7 +244,7 @@ function skyAssault(r: SkillRank): void {
  *  the first), so the burst reads heavier while every hit still lands. */
 function shellBarrage(r: SkillRank): void {
   pose('shoot', 's');
-  sfx.shoot();
+  sfx.flurry();
   const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
   const x0 = player.x + player.face * 8, y0 = player.y + 13;
   const shots = shotCount(r), perVolley = r.hits, volleys = Math.ceil(shots / perVolley);
