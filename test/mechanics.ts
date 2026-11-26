@@ -44,6 +44,7 @@ import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
 import { styled } from '../src/archer';
+import { NPC_FRAMES, npcFrame, npcRows } from '../src/npcart';
 import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
@@ -3276,6 +3277,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...with about the same number of pixels', Math.abs(ink(p) - ink(g)) / ink(g) < 0.2, `${ink(p)} vs ${ink(g)}`);
   check('...and no new colours', [...new Set(p.join(''))].every((ch) => g.join('').includes(ch)));
   check('a zero pitch keeps the figure upright (centred in the square)', pitch(g, 0).filter((r) => r.includes('h')).length >= 1);
+}
+
+{
+  // town NPCs idle (breathing, blinking now and then) and wave when you're near
+  const ts = Array.from({ length: 400 }, (_, i) => i * 0.025);
+  const idle = new Set(ts.map((t) => npcFrame(t, false, 1.3))), near = new Set(ts.map((t) => npcFrame(t, true, 1.3)));
+  check('an idle NPC breathes and blinks, and never waves', idle.has(0) && idle.has(1) && idle.has(2) && !idle.has(3));
+  check('a near NPC waves', near.has(3) && !near.has(2));
+  check('NPC frames are all distinct', new Set(Array.from({ length: NPC_FRAMES }, (_, f) => npcRows('shop', f).join())).size === NPC_FRAMES);
+  check('the three NPCs look different', new Set((['shop', 'stylist', 'trainer'] as const).map((k) => npcRows(k, 0).join())).size === 3);
 }
 
 {
