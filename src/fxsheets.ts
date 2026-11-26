@@ -7,7 +7,7 @@ import { BAKED } from './fxbaked';
    Skill effects ship as PNG sprite sheets (assets/fx/<name>.png): one
    horizontal strip per effect, frame f at x = f * w, facing right, drawn
    additively. The sheets are baked from the procedural generators in
-   fxsprites.ts by `npm run bake` (scripts/bakefx.ts), which also writes
+   fxsprites.ts by `npm run bake` (scripts/bake.ts), which also writes
    fxbaked.ts with each sheet's frame size and origin.
 
    Each effect converts on its own: fx(name) draws the baked sheet once it

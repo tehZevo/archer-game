@@ -7,7 +7,8 @@ import { ctx } from './canvas';
 import { game, player } from './state';
 import { HITSTUN } from './combat';
 import { mobFrame } from './mobanim';
-import { SPR } from './sprites';
+import { mobAnim } from './sprites';
+import { gridCanvas } from './grid';
 import { localPose, roster } from './net';
 import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
@@ -50,18 +51,12 @@ const deathSheets = new Map<string, { frames: HTMLCanvasElement[]; cx: number; c
 function deathSheetFor(c: Corpse): { frames: HTMLCanvasElement[]; cx: number; cy: number } | null {
   let d = deathSheets.get(c.name);
   if (!d) {
-    const s = SPR.mob[c.name]?.hurt;
+    const s = mobAnim(c.name)?.hurt;
     if (!s) return null;
-    const src = s.x.getImageData(0, 0, s.w, s.h);
-    const sheet = bakeDeathSheet(c.name, c.recipe, { w: s.w, h: s.h, px: src.data });
+    const sheet = bakeDeathSheet(c.name, c.recipe, s.g);
     d = {
       cx: sheet.cx, cy: sheet.cy,
-      frames: sheet.frames.map((g) => {
-        const cv = document.createElement('canvas'); cv.width = g.w; cv.height = g.h;
-        const x = cv.getContext('2d')!, id = x.createImageData(g.w, g.h);
-        id.data.set(g.px); x.putImageData(id, 0, 0);
-        return cv;
-      }),
+      frames: sheet.frames.map(gridCanvas),
     };
     deathSheets.set(c.name, d);
   }
@@ -83,7 +78,7 @@ export function drawCorpse(c: Corpse): void {
 }
 
 export function drawMob(m: Mob): void {
-  const a = SPR.mob[m.type.n];
+  const a = mobAnim(m.type.n);
   // in hitstun it holds its hurt pose (eyes shut, recoiling); a boss shows its enemy's, grown huge
   const s = a && ((m.hurt ?? 0) > 0 && !m.dead ? a.hurt : a.frames[mobFrame(m, a.frames.length, a.fps)]);
   // a boss is its enemy grown huge; winding up an attack, it shakes and flashes

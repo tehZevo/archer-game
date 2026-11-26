@@ -23,3 +23,39 @@ export function packStrip(frames: Grid[]): Grid {
   });
   return o;
 }
+
+/** A grid as a canvas (browser only). */
+export function gridCanvas(g: Grid): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = g.w; c.height = g.h;
+  const x = c.getContext('2d')!, img = x.createImageData(g.w, g.h);
+  img.data.set(g.px);
+  x.putImageData(img, 0, 0);
+  return c;
+}
+
+/** A canvas's (or image's) pixels as a grid (browser only). */
+export function canvasGrid(src: CanvasImageSource, w: number, h: number, sx = 0, sy = 0): Grid {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d')!;
+  x.drawImage(src, sx, sy, w, h, 0, 0, w, h);
+  return { w, h, px: x.getImageData(0, 0, w, h).data };
+}
+
+const RGB = new Map<string, [number, number, number]>();
+/** '#rrggbb' as numbers (cached). */
+export function hexRgb(col: string): [number, number, number] {
+  let c = RGB.get(col);
+  if (!c) RGB.set(col, (c = [1, 3, 5].map((i) => parseInt(col.slice(i, i + 2), 16)) as [number, number, number]));
+  return c;
+}
+
+/** Fill a rectangle with an opaque '#rrggbb' colour, clipped to the grid. */
+export function fillRect(g: Grid, x: number, y: number, w: number, h: number, col: string): void {
+  const [r, gg, b] = hexRgb(col);
+  for (let yy = Math.max(0, y); yy < Math.min(g.h, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(g.w, x + w); xx++) {
+    const i = (yy * g.w + xx) * 4;
+    g.px[i] = r; g.px[i + 1] = gg; g.px[i + 2] = b; g.px[i + 3] = 255;
+  }
+}

@@ -7,6 +7,9 @@ import { BAKED } from '../src/fxbaked';
 import { FX_GEN } from '../src/fxsprites';
 import { packStrip } from '../src/grid';
 import { decodePng } from '../scripts/png';
+import { BAKED_MOBS } from '../src/mobbaked';
+import { mobAnim, MOB_GEN } from '../src/sprites';
+import { slug } from '../scripts/slug';
 import { game, player, gainExp, gotoPlace } from '../src/state';
 import { nextPlace, placeKey, START } from '../src/world';
 import { setKey } from '../src/input';
@@ -189,6 +192,15 @@ setKey('up', false);
   }).map(([n]) => n);
   check(`every baked effect sheet matches its generator${stale.length ? ' (stale: ' + stale.join(', ') + ')' : ''}`, stale.length === 0);
   check('every effect has a generator', Object.keys(BAKED).every((n) => FX_GEN[n]));
+  const staleMobs = Object.entries(BAKED_MOBS).filter(([name, s]) => {
+    const a = MOB_GEN[name]?.();
+    if (!a || a.hurt.w !== s.w || a.hurt.h !== s.h || a.frames.length !== s.n || a.fps !== s.fps) return true;
+    const png = decodePng(readFileSync(`assets/mobs/${slug(name)}.png`));
+    return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip([...a.frames, a.hurt].map((f) => f.g)).px)) !== 0;
+  }).map(([n]) => n);
+  check(`every baked enemy sheet matches its painter${staleMobs.length ? ' (stale: ' + staleMobs.join(', ') + ')' : ''}`, staleMobs.length === 0);
+  check('every base enemy is baked', Object.keys(MOB_GEN).every((n) => BAKED_MOBS[n]));
+  check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }
 
 console.log(failures === 0 ? '\nAll tests passed.' : `\n${failures} test(s) failed.`);

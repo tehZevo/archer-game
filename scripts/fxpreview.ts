@@ -1,15 +1,24 @@
 import { writeFileSync } from 'node:fs';
 import { FX_GEN } from '../src/fxsprites';
+import { MOB_GEN } from '../src/sprites';
 import { newGrid, type Grid } from '../src/grid';
 import { encodePng } from './png';
 
 /* npm run fxpreview [name...]: every effect's frames (or just the named
    ones), one row each, scaled up on a dark background with the origin
-   marked, written to .tmp/fxpreview.png for reviewing the art. */
+   marked, written to .tmp/fxpreview.png for reviewing the art.
+   npm run fxpreview -- --mobs [name...]: the same for enemies (frames, then
+   the hurt pose), drawn opaque. */
 
 const SCALE = 4, PAD = 4, BG = [24, 26, 34];
-const names = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(FX_GEN);
-const sheets = names.map((n) => FX_GEN[n]());
+const args = process.argv.slice(2), mobs = args[0] === '--mobs';
+const pick = mobs ? args.slice(1) : args;
+const names = pick.length ? pick : Object.keys(mobs ? MOB_GEN : FX_GEN);
+const sheets = names.map((n) => {
+  if (!mobs) return FX_GEN[n]();
+  const a = MOB_GEN[n]();
+  return { w: a.hurt.w, h: a.hurt.h, ox: 0, oy: 0, frames: [...a.frames, a.hurt].map((s) => s.g) };
+});
 const W = Math.max(...sheets.map((s) => s.frames.length * (s.w + PAD))) * SCALE;
 const H = sheets.reduce((a, s) => a + (s.h + PAD) * SCALE, 0);
 const out = newGrid(W, H);
@@ -22,7 +31,7 @@ function blit(g: Grid, x0: number, y0: number): void {
     if (!a) continue;
     for (let v = 0; v < SCALE; v++) for (let u = 0; u < SCALE; u++) {
       const o = ((y0 + y * SCALE + v) * W + x0 + x * SCALE + u) * 4;
-      for (let k = 0; k < 3; k++) out.px[o + k] = Math.min(255, out.px[o + k] + g.px[i + k] * a);
+      for (let k = 0; k < 3; k++) out.px[o + k] = mobs ? g.px[i + k] : Math.min(255, out.px[o + k] + g.px[i + k] * a);
     }
   }
 }
@@ -32,6 +41,7 @@ sheets.forEach((s) => {
   s.frames.forEach((g, f) => {
     const x = f * (s.w + PAD) * SCALE;
     blit(g, x, y);
+    if (mobs) return;
     const ox = x + Math.floor(s.ox) * SCALE, oy = y + Math.floor(s.oy) * SCALE; // origin: a red dot
     for (let k = 0; k < 2; k++) out.px.set([255, 40, 40, 255], ((oy + k) * W + ox) * 4);
   });
