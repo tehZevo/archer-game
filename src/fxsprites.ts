@@ -246,27 +246,40 @@ function spikesAnim(body: RampName = 'purple', core: RampName = 'pink'): FxAnim 
   }, 0.4);
 }
 
-/** Tempest: an oval of energy sweeping up and around where you vanished,
- *  its bright head chasing a fading tail, sparks flung off it. Origin at
- *  your feet. */
+/** Tempest: a large oval slash cuts all the way round you, then shots fire
+ *  from the oval inward at you, one after another round the ring. Origin at
+ *  your feet (the oval is centred on your middle). */
 function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxAnim {
-  const RX = 70, RY = 26, W = RX * 2 + 16, H = 84, cx = W / 2, by = H - 4;
-  return anim(W, H, cx, by, 9, (L, f) => {
-    const R = rng(61 + f), q = f / 8;
-    const cy = by - 10 - q * 34;               // it rises as it sweeps
-    const head = -Math.PI / 2 + q * Math.PI * 3; // a turn and a half
-    const fade = f < 6 ? 1 : 1 - (f - 5) / 4;
-    // the sweep: a long arc behind the head, brightest at the front
-    for (let k = 0; k < 4; k++) {
-      const a1 = head - k * 0.55;
-      arc(L, k ? tail : front, cx, cy, RX * (0.8 + q * 0.2), RY, 2.2 - k * 0.3, (1.2 - k * 0.25) * fade, a1 - 0.7, a1);
+  const RX = 78, RY = 30, W = RX * 2 + 12, H = RY * 2 + 12, cx = W / 2, cy = H / 2, by = cy + 12;
+  const n = 10, SHOTS = 12, oval = (a: number, k = 1): [number, number] => [cx + Math.cos(a) * RX * k, cy + Math.sin(a) * RY * k];
+  return anim(W, H, cx, by, n, (L, f) => {
+    const R = rng(61 + f);
+    // the slash: one fast turn round the oval (frames 0-2), a bright leading
+    // edge with the cut it leaves behind, which lingers as a ring and fades
+    const start = -Math.PI / 2, head = start + Math.min(1, (f + 1) / 3) * Math.PI * 2;
+    if (f < 3) {
+      arc(L, tail, cx, cy, RX, RY, 2, 0.9, start, head - 0.05);
+      arc(L, front, cx, cy, RX, RY, 3.4, 1.3, head - 1.1, head);
+      arc(L, front, cx, cy, RX * 0.94, RY * 0.9, 1.4, 0.8, head - 0.8, head - 0.1);
     }
-    // an inner swirl and the spot you left
-    arc(L, tail, cx, cy + 4, RX * 0.45, RY * 0.5, 1.1, 0.7 * fade, head - 2.6, head - 1);
-    if (f < 3) L.disc(front, cx, by - 12, 6 - f * 2, 1.1);
-    for (let i = 0; i < 6; i++) {
-      const a = head - R() * 2.5;
-      L.spark(i % 2 ? tail : front, cx + Math.cos(a) * RX * 0.9 + R() * 6 - 3, cy + Math.sin(a) * RY + R() * 6 - 3, 0.9 * fade, i === 0);
+    const ring = f < 3 ? 0 : 1 - (f - 3) / (n - 3);
+    if (ring > 0) L.ring(tail, cx, cy, RX, RY, 2, 1.0 * ring);
+    // the shots: each leaves its own point on the oval in turn and streaks
+    // inward toward you over three frames, a pink head on a purple tail
+    for (let i = 0; i < SHOTS; i++) {
+      const born = 2 + (i % 6), t = (f - born) / 3;
+      if (t < 0 || t > 1) continue;
+      const a = -Math.PI / 2 + (i / SHOTS) * Math.PI * 2;
+      const [hx, hy] = oval(a, 1 - t * 0.8), [mx, my] = oval(a, 1.1 - t * 0.8), [sx, sy] = oval(a, Math.min(1, 1.35 - t * 0.8));
+      L.line(tail, sx, sy, mx, my, 0.4, 1.3, 0.95);
+      L.line(front, mx, my, hx, hy, 1.3, 1.6, 1.2);
+      L.spark(front, hx, hy, 1.1, true);
+    }
+    // where the shots meet: a pulse at your middle
+    if (f >= 5) L.disc(front, cx, cy, 8 - (f - 5), 1.1 - (f - 5) * 0.15);
+    for (let i = 0; i < 4; i++) {
+      const [sx, sy] = oval(head - R() * 3);
+      L.spark(i % 2 ? tail : front, sx + R() * 4 - 2, sy + R() * 4 - 2, 0.85 * (f < 3 ? 1 : ring), i === 0);
     }
   });
 }

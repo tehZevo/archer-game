@@ -271,7 +271,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.4, spin: 0.3,
+  spikes: 0.45, tempest: 0.5, spin: 0.3,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
