@@ -28,7 +28,7 @@ Keep the suite minimal and high-value; aim to shrink it as the game stabilizes.
 - **One check per behavior.** Group the assertions that prove one behavior (a value, its effect, its timing) into a single `check` with a detail string, rather than a check per field.
 - **Test the contract, not the implementation.** Assert the player-visible rule (the `linksInto` grammar, the damage, the cooldown), not every internal field that happens to exist today.
 - **Representative over exhaustive.** Cover each source of a family (one launcher, one aerial, one finisher) rather than every pair in a matrix: the `SKILLS` table is the spec, the tests spot-check its rows.
-- **One file per feature group.** Each numbered file in `test/` is one feature; keep every check of that feature in its file (no `-2` sequels) and order the blocks to read like the feature's rules.
+- **Group tests logically.** Each numbered file in `test/` is one feature group: keep every check of that feature in its file (no `-2` sequels), group related checks into blocks that read like the feature's rules, and merge files whose features belong together.
 
 ## Conventions
 
