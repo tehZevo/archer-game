@@ -144,21 +144,45 @@ function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxShe
   });
 }
 
-/** Cyclone Sweep: blades of light whirling a full turn round you, each a
- *  crescent with a bright leading edge. Origin at your feet (the whirl is
- *  centred on your middle). */
-function spinAnim(rp: RampName = 'red'): FxSheet {
-  const S = 52, c = S / 2, MID = 12;
-  return anim(S, S, c, c + MID, 6, (L, f) => {
-    const R = rng(71 + f), fade = f < 4 ? 1 : 1 - (f - 3) / 3;
-    for (let b = 0; b < 2; b++) {
-      const head = -Math.PI + (f / 6) * Math.PI * 2 + b * Math.PI;
-      for (let k = 0; k < 3; k++) {
-        const a1 = head - k * 0.5;
-        arc(L, rp, c, c, 19 - k, 17 - k, 1.6 - k * 0.3, (1.15 - k * 0.3) * fade, a1 - 0.6, a1);
+/** Cyclone Sweep: a storm of blades whirling round you out to the sweep's
+ *  full reach (SPIN_R). Three thick crescents with white-hot leading edges
+ *  turn a turn and a half, wind streaks race round with them, a shockwave
+ *  ring bursts out to the edge of the reach, and sparks fling off the rim.
+ *  Origin at your feet (the whirl is centred on your middle). */
+function spinAnim(rp: RampName = 'red', wind: RampName = 'orange'): FxSheet {
+  const RX = 44, RY = 34, W = RX * 2 + 10, H = RY * 2 + 10, cx = W / 2, cy = H / 2, MID = 12, N = 8;
+  return anim(W, H, cx, cy + MID, N, (L, f) => {
+    const R = rng(71 + f), t = f / N, fade = f < 5 ? 1 : 1 - (f - 4) / 4;
+    const grow = Math.min(1, (f + 1) / 3); // the whirl flares out to full size over the first frames
+    // the blades: each a stack of arcs, thickest and brightest at the front
+    for (let b = 0; b < 3; b++) {
+      const head = -Math.PI / 2 + t * Math.PI * 3 + b * (Math.PI * 2 / 3);
+      const rx = RX * (0.55 + 0.4 * grow), ry = RY * (0.55 + 0.4 * grow);
+      for (let k = 0; k < 4; k++) {
+        const a1 = head - k * 0.32, kx = 1 - k * 0.07;
+        arc(L, k < 2 ? rp : wind, cx, cy, rx * kx, ry * kx, 3.2 - k * 0.6, (1.3 - k * 0.22) * fade, a1 - 0.9 + k * 0.1, a1);
       }
+      // the leading edge: a hot streak from the rim inward
+      const ex = Math.cos(head), ey = Math.sin(head);
+      L.line(rp, cx + ex * rx * 0.45, cy + ey * ry * 0.45, cx + ex * rx, cy + ey * ry, 0.8, 2.4, 1.25 * fade);
     }
-    for (let i = 0; i < 4; i++) { const a = R() * Math.PI * 2; L.spark(rp, c + Math.cos(a) * 21, c + Math.sin(a) * 19, 0.85 * fade, i === 0); }
+    // wind streaks racing round between the blades
+    for (let i = 0; i < 6; i++) {
+      const a = t * Math.PI * 3.6 + i * 1.05 + R() * 0.3, k = 0.35 + R() * 0.45;
+      arc(L, wind, cx, cy, RX * k, RY * k, 1.4, 1.0 * fade, a - 1.0, a);
+    }
+    // the shockwave: bursts out to the reach, then thins away
+    if (f >= 1 && f <= 5) {
+      const g = (f - 1) / 4;
+      L.ring(rp, cx, cy, RX * (0.7 + 0.3 * g), RY * (0.7 + 0.3 * g), 2.2 - g, 1.1 * (1 - g * 0.7));
+    }
+    // the eye of the storm
+    L.disc(rp, cx, cy, (f < 3 ? 8 : 6) * fade + 1, 1.0 * fade);
+    // sparks flung off the rim
+    for (let i = 0; i < 8; i++) {
+      const a = R() * Math.PI * 2, d = 0.85 + R() * 0.2;
+      L.spark(i % 3 ? rp : wind, cx + Math.cos(a) * RX * d, cy + Math.sin(a) * RY * d, 0.95 * fade, i < 3);
+    }
   });
 }
 
