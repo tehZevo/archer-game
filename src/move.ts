@@ -46,7 +46,7 @@ export function movePlayer(dt: number, locked: boolean): void {
  *  with Acrobatics, Up + Jump rushes up and pops off the top. */
 function climb(dt: number, locked: boolean): void {
   const r = player.climb!;
-  if (!locked && pressed('c') && held('up') && player.ranks.AC > 0) { player.climbRush = true; sfx.jump(); }
+  if (!locked && pressed('c') && held('up') && player.ranks.AC) { player.climbRush = true; sfx.jump(); }
   if (player.climbRush) {
     player.y -= P.CLIMB_RUSH * (1 + passiveBonus('AC')) * dt;
     // green streaks shoot up past her as she rushes

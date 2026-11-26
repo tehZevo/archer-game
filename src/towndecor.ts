@@ -61,97 +61,113 @@ function window(p: DecorPaint, x: number, y: number, c: TownPal): void {
   p(x - 1, y - 1, c.wallDk, 8, 8); p(x, y, GLASS, 6, 6); p(x + 1, y + 1, GLOW, 2, 2); p(x + 3, y, c.wallDk, 1, 6); p(x, y + 3, c.wallDk, 6, 1);
 }
 
-export const DECOR: Record<DecorKind, (p: DecorPaint, c: TownPal, f: number) => void> = {
-  house: (p, c) => {
-    const { w, h } = DECOR_SIZE.house, wy = h - 26;
-    p(40, 2, STONE_DK, 6, 12); p(41, 1, STONE, 4, 2); p(41, 5, STONE, 2, 1); p(43, 8, STONE, 2, 1); // chimney bricks
-    p(4, wy, OUT, 48, 26); p(5, wy, c.wall, 46, 26); p(5, h - 3, c.wallDk, 46, 3);
-    // plaster texture: a few scuffs and a shadow under the eaves
-    p(5, wy, c.wallDk, 46, 1);
-    for (const [x, y] of [[8, 6], [20, 17], [45, 9], [33, 4], [23, 7], [46, 19]]) p(x, wy + y, c.wallDk, 2, 1);
-    for (const x of [5, 27, 50]) p(x, wy, WOOD_DK, 1, 26); // timber frame
-    p(5, wy + 11, WOOD_DK, 46, 1);
-    for (let x = 6; x < 27; x += 5) p(x, wy + 12, WOOD, 1, 1); // pegs in the beam
-    p(29, h - 16, WOOD_DK, 14, 1); // the lintel
-    roof(p, 0, 4, w, wy - 3, c);
-    p(30, h - 15, OUT, 12, 15); p(31, h - 14, WOOD, 10, 14); p(36, h - 14, WOOD_DK, 1, 14); p(39, h - 8, GLASS, 1, 1); // door
-    window(p, 11, wy + 3, c); window(p, 11, wy + 15, c);
-  },
-  tower: (p, c) => {
-    const { h } = DECOR_SIZE.tower, wy = 18;
-    p(4, wy, OUT, 22, h - wy); p(5, wy, STONE, 20, h - wy);
-    for (let y = wy + 4; y < h; y += 6) for (let x = 5 + ((y / 6) % 2) * 4; x < 25; x += 8) p(x, y, STONE_DK, 5, 1); // courses
-    for (let y = 0; y < 18; y++) { const half = Math.round((y + 1) * 13 / 18); p(15 - half, y + 1, y === 17 ? c.roofDk : c.roof, half * 2, 1); p(15 - half, y + 1, OUT); p(14 + half, y + 1, OUT); }
-    p(14, 0, OUT, 2, 2); p(16, 0, c.cloth, 4, 2); // a pennant
-    window(p, 12, wy + 6, c); window(p, 12, wy + 24, c);
-    p(11, h - 12, OUT, 8, 12); p(12, h - 11, WOOD, 6, 11);
-  },
-  lamp: (p, _c, f) => {
-    const { h } = DECOR_SIZE.lamp, x = 3, top = 2;
-    p(x + 3, top + 8, OUT, 2, h - top - 8); p(x + 1, h - 2, OUT, 6, 2); p(x + 4, top + 9, '#4a4650', 1, h - top - 12); // post, with a glint
-    p(x + 2, top + 8, OUT, 4, 1); // the bracket
-    // the flame breathes: a hot core that grows and shrinks, and stray halo pixels around the head
-    const core = [4, 3, 4, 2][f], halo = [[-2, 2], [9, 4], [-1, 6], [8, 1], [4, -2], [10, 6], [-2, 4], [3, -2]];
-    p(x, top, OUT, 8, 8); p(x + 1, top + 1, GLASS, 6, 6);
-    p(x + 4 - Math.ceil(core / 2), top + 4 - Math.ceil(core / 2), GLOW, core, core);
-    p(x, top - 1, OUT, 8, 1); p(x + 2, top - 2, OUT, 4, 1); // the cap
-    halo.forEach(([hx, hy], i) => { if ((i + f) % 3 === 0) p(x + hx, top + hy, GLASS, 1, 1); });
-  },
-  bench: (p) => {
-    p(0, 0, WOOD_DK, 20, 2); p(0, 4, WOOD, 20, 2); p(0, 6, WOOD_DK, 20, 1);
-    p(2, 2, OUT, 2, 7); p(16, 2, OUT, 2, 7);
-  },
-  crate: (p) => {
-    p(0, 0, OUT, 12, 12); p(1, 1, WOOD, 10, 10); p(1, 1, '#a87a4e', 10, 1);
-    for (let i = 0; i < 10; i++) p(1 + i, 1 + i, WOOD_DK); // a brace
-    p(1, 6, WOOD_DK, 10, 1); // plank seam
-    for (const [x, y] of [[2, 2], [9, 2], [2, 9], [9, 9]]) p(x, y, '#3a3e48'); // nails
-  },
-  barrel: (p) => {
-    for (let y = 0; y < 12; y++) { const bulge = y > 1 && y < 10 ? 0 : 1; p(bulge, y, y === 2 || y === 9 ? '#3a3e48' : WOOD, 10 - bulge * 2, 1); }
-    p(0, 0, OUT, 10, 1); p(2, 3, '#a87a4e', 1, 6); p(7, 3, WOOD_DK, 1, 6); // highlight and shade
-    p(3, 2, '#6a6e78'); p(3, 9, '#6a6e78'); // hoop glints
-  },
-  flowers: (p, c, f) => {
-    p(0, 4, OUT, 16, 5); p(1, 5, WOOD, 14, 3); p(1, 7, WOOD_DK, 14, 1);
-    // heads nod in a breeze, each a beat behind the last
-    ([[1, c.cloth], [5, '#ffd040'], [9, c.cloth2], [12, c.cloth]] as const).forEach(([x, col], i) => {
-      const sway = [0, 1, 0, -1][(f + i) % 4];
-      p(x + 1, 2, '#4a8a3a', 1, 2); p(x + 1 + sway, 0, col, 3, 2); p(x + 2 + sway, 0, '#ffffff', 1, 1);
-    });
-    p(3, 3, '#4a8a3a', 1, 1); p(11, 3, '#4a8a3a', 1, 1); // leaves
-  },
-  well: (p, c) => {
-    const { h } = DECOR_SIZE.well;
-    p(2, h - 10, OUT, 20, 10); p(3, h - 9, STONE, 18, 9); p(3, h - 9, '#c8c4cc', 18, 1);
-    for (let x = 4; x < 20; x += 5) p(x, h - 5, STONE_DK, 3, 1);
-    p(4, 8, WOOD_DK, 2, h - 18); p(18, 8, WOOD_DK, 2, h - 18); p(4, 12, WOOD_DK, 16, 1); // posts and crossbar
-    p(11, 13, '#c8c4cc', 1, 4); p(10, 17, WOOD, 4, 3); // the bucket
-    roof(p, 0, 0, 24, 9, c);
-  },
-  sign: (p, c, f) => {
-    const { h } = DECOR_SIZE.sign, d = [0, 0, 1, 0][f]; // creaks over a pixel now and then
-    p(6, 6, WOOD_DK, 2, h - 6); p(7, 6, WOOD, 1, h - 6);
-    p(0 + d, 0, OUT, 13, 8); p(1 + d, 1, WOOD, 11, 6); p(1 + d, 6, WOOD_DK, 11, 1); p(2 + d, 1, '#a87a4e', 9, 1);
-    p(5 + d, 2, c.cloth2 === '#ffffff' ? '#f4ecd8' : c.cloth2, 4, 1); p(6 + d, 3, c.cloth2, 2, 2); p(4 + d, 4, c.cloth2, 5, 1); p(5 + d, 5, c.cloth2, 3, 1); // an arrow, down
-  },
-  awning: (p, c, f) => {
-    const { h } = DECOR_SIZE.awning;
-    p(1, 6, WOOD_DK, 2, h - 6); p(25, 6, WOOD_DK, 2, h - 6);
-    for (let x = 0; x < 28; x++) {
-      const col = Math.floor(x / 4) % 2 ? c.cloth2 : c.cloth;
-      p(x, 0, col, 1, 6);
-      // the scalloped edge ripples: a wave running along it
-      const lift = Math.floor(x / 4) % 4 === f ? 1 : 0;
-      if (x % 4 < 3) p(x, 6, col, 1, (x % 4 === 1 ? 2 : 1) - lift);
-    }
-    p(0, 0, OUT, 28, 1);
-    p(3, h - 10, OUT, 22, 2); p(4, h - 10, WOOD, 20, 1); // the counter
-  },
-  fence: (p) => {
-    for (let x = 1; x < 32; x += 6) { p(x, 1, WOOD, 3, 9); p(x + 1, 0, WOOD, 1, 1); }
-    p(0, 3, WOOD_DK, 32, 2); p(0, 7, WOOD_DK, 32, 1);
-  },
+/** A piece's paint routine: draw it onto `p` with a town palette `c` at frame `f`. */
+type Decor = (p: DecorPaint, c: TownPal, f: number) => void;
+
+const paintHouse: Decor = (p, c) => {
+  const { w, h } = DECOR_SIZE.house, wy = h - 26;
+  p(40, 2, STONE_DK, 6, 12); p(41, 1, STONE, 4, 2); p(41, 5, STONE, 2, 1); p(43, 8, STONE, 2, 1); // chimney bricks
+  p(4, wy, OUT, 48, 26); p(5, wy, c.wall, 46, 26); p(5, h - 3, c.wallDk, 46, 3);
+  // plaster texture: a few scuffs and a shadow under the eaves
+  p(5, wy, c.wallDk, 46, 1);
+  for (const [x, y] of [[8, 6], [20, 17], [45, 9], [33, 4], [23, 7], [46, 19]]) p(x, wy + y, c.wallDk, 2, 1);
+  for (const x of [5, 27, 50]) p(x, wy, WOOD_DK, 1, 26); // timber frame
+  p(5, wy + 11, WOOD_DK, 46, 1);
+  for (let x = 6; x < 27; x += 5) p(x, wy + 12, WOOD, 1, 1); // pegs in the beam
+  p(29, h - 16, WOOD_DK, 14, 1); // the lintel
+  roof(p, 0, 4, w, wy - 3, c);
+  p(30, h - 15, OUT, 12, 15); p(31, h - 14, WOOD, 10, 14); p(36, h - 14, WOOD_DK, 1, 14); p(39, h - 8, GLASS, 1, 1); // door
+  window(p, 11, wy + 3, c); window(p, 11, wy + 15, c);
+};
+
+const paintTower: Decor = (p, c) => {
+  const { h } = DECOR_SIZE.tower, wy = 18;
+  p(4, wy, OUT, 22, h - wy); p(5, wy, STONE, 20, h - wy);
+  for (let y = wy + 4; y < h; y += 6) for (let x = 5 + ((y / 6) % 2) * 4; x < 25; x += 8) p(x, y, STONE_DK, 5, 1); // courses
+  for (let y = 0; y < 18; y++) { const half = Math.round((y + 1) * 13 / 18); p(15 - half, y + 1, y === 17 ? c.roofDk : c.roof, half * 2, 1); p(15 - half, y + 1, OUT); p(14 + half, y + 1, OUT); }
+  p(14, 0, OUT, 2, 2); p(16, 0, c.cloth, 4, 2); // a pennant
+  window(p, 12, wy + 6, c); window(p, 12, wy + 24, c);
+  p(11, h - 12, OUT, 8, 12); p(12, h - 11, WOOD, 6, 11);
+};
+
+const paintLamp: Decor = (p, _c, f) => {
+  const { h } = DECOR_SIZE.lamp, x = 3, top = 2;
+  p(x + 3, top + 8, OUT, 2, h - top - 8); p(x + 1, h - 2, OUT, 6, 2); p(x + 4, top + 9, '#4a4650', 1, h - top - 12); // post, with a glint
+  p(x + 2, top + 8, OUT, 4, 1); // the bracket
+  // the flame breathes: a hot core that grows and shrinks, and stray halo pixels around the head
+  const core = [4, 3, 4, 2][f], halo = [[-2, 2], [9, 4], [-1, 6], [8, 1], [4, -2], [10, 6], [-2, 4], [3, -2]];
+  p(x, top, OUT, 8, 8); p(x + 1, top + 1, GLASS, 6, 6);
+  p(x + 4 - Math.ceil(core / 2), top + 4 - Math.ceil(core / 2), GLOW, core, core);
+  p(x, top - 1, OUT, 8, 1); p(x + 2, top - 2, OUT, 4, 1); // the cap
+  halo.forEach(([hx, hy], i) => { if ((i + f) % 3 === 0) p(x + hx, top + hy, GLASS, 1, 1); });
+};
+
+const paintBench: Decor = (p) => {
+  p(0, 0, WOOD_DK, 20, 2); p(0, 4, WOOD, 20, 2); p(0, 6, WOOD_DK, 20, 1);
+  p(2, 2, OUT, 2, 7); p(16, 2, OUT, 2, 7);
+};
+
+const paintCrate: Decor = (p) => {
+  p(0, 0, OUT, 12, 12); p(1, 1, WOOD, 10, 10); p(1, 1, '#a87a4e', 10, 1);
+  for (let i = 0; i < 10; i++) p(1 + i, 1 + i, WOOD_DK); // a brace
+  p(1, 6, WOOD_DK, 10, 1); // plank seam
+  for (const [x, y] of [[2, 2], [9, 2], [2, 9], [9, 9]]) p(x, y, '#3a3e48'); // nails
+};
+
+const paintBarrel: Decor = (p) => {
+  for (let y = 0; y < 12; y++) { const bulge = y > 1 && y < 10 ? 0 : 1; p(bulge, y, y === 2 || y === 9 ? '#3a3e48' : WOOD, 10 - bulge * 2, 1); }
+  p(0, 0, OUT, 10, 1); p(2, 3, '#a87a4e', 1, 6); p(7, 3, WOOD_DK, 1, 6); // highlight and shade
+  p(3, 2, '#6a6e78'); p(3, 9, '#6a6e78'); // hoop glints
+};
+
+const paintFlowers: Decor = (p, c, f) => {
+  p(0, 4, OUT, 16, 5); p(1, 5, WOOD, 14, 3); p(1, 7, WOOD_DK, 14, 1);
+  // heads nod in a breeze, each a beat behind the last
+  ([[1, c.cloth], [5, '#ffd040'], [9, c.cloth2], [12, c.cloth]] as const).forEach(([x, col], i) => {
+    const sway = [0, 1, 0, -1][(f + i) % 4];
+    p(x + 1, 2, '#4a8a3a', 1, 2); p(x + 1 + sway, 0, col, 3, 2); p(x + 2 + sway, 0, '#ffffff', 1, 1);
+  });
+  p(3, 3, '#4a8a3a', 1, 1); p(11, 3, '#4a8a3a', 1, 1); // leaves
+};
+
+const paintWell: Decor = (p, c) => {
+  const { h } = DECOR_SIZE.well;
+  p(2, h - 10, OUT, 20, 10); p(3, h - 9, STONE, 18, 9); p(3, h - 9, '#c8c4cc', 18, 1);
+  for (let x = 4; x < 20; x += 5) p(x, h - 5, STONE_DK, 3, 1);
+  p(4, 8, WOOD_DK, 2, h - 18); p(18, 8, WOOD_DK, 2, h - 18); p(4, 12, WOOD_DK, 16, 1); // posts and crossbar
+  p(11, 13, '#c8c4cc', 1, 4); p(10, 17, WOOD, 4, 3); // the bucket
+  roof(p, 0, 0, 24, 9, c);
+};
+
+const paintSign: Decor = (p, c, f) => {
+  const { h } = DECOR_SIZE.sign, d = [0, 0, 1, 0][f]; // creaks over a pixel now and then
+  p(6, 6, WOOD_DK, 2, h - 6); p(7, 6, WOOD, 1, h - 6);
+  p(0 + d, 0, OUT, 13, 8); p(1 + d, 1, WOOD, 11, 6); p(1 + d, 6, WOOD_DK, 11, 1); p(2 + d, 1, '#a87a4e', 9, 1);
+  p(5 + d, 2, c.cloth2 === '#ffffff' ? '#f4ecd8' : c.cloth2, 4, 1); p(6 + d, 3, c.cloth2, 2, 2); p(4 + d, 4, c.cloth2, 5, 1); p(5 + d, 5, c.cloth2, 3, 1); // an arrow, down
+};
+
+const paintAwning: Decor = (p, c, f) => {
+  const { h } = DECOR_SIZE.awning;
+  p(1, 6, WOOD_DK, 2, h - 6); p(25, 6, WOOD_DK, 2, h - 6);
+  for (let x = 0; x < 28; x++) {
+    const col = Math.floor(x / 4) % 2 ? c.cloth2 : c.cloth;
+    p(x, 0, col, 1, 6);
+    // the scalloped edge ripples: a wave running along it
+    const lift = Math.floor(x / 4) % 4 === f ? 1 : 0;
+    if (x % 4 < 3) p(x, 6, col, 1, (x % 4 === 1 ? 2 : 1) - lift);
+  }
+  p(0, 0, OUT, 28, 1);
+  p(3, h - 10, OUT, 22, 2); p(4, h - 10, WOOD, 20, 1); // the counter
+};
+
+const paintFence: Decor = (p) => {
+  for (let x = 1; x < 32; x += 6) { p(x, 1, WOOD, 3, 9); p(x + 1, 0, WOOD, 1, 1); }
+  p(0, 3, WOOD_DK, 32, 2); p(0, 7, WOOD_DK, 32, 1);
+};
+
+export const DECOR: Record<DecorKind, Decor> = {
+  house: paintHouse, tower: paintTower, lamp: paintLamp, bench: paintBench, crate: paintCrate,
+  barrel: paintBarrel, flowers: paintFlowers, well: paintWell, sign: paintSign, awning: paintAwning, fence: paintFence,
 };
 
 /** Paint one decoration's frame `f` (mirrored if `flip`) with a town's palette. */

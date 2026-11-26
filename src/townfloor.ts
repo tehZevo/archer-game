@@ -26,6 +26,65 @@ export const townPlanFor = (index: number): TownPlan => TOWN_PLANS[index % TOWN_
  * Every level has two tiles (32px) of headroom under the next one up. Houses,
  * lamps, benches and the like (decor) are drawn behind; they never collide.
  */
+/** The pieces a town plan is built from: the ground height `G`, tile size `T`,
+ *  and the helpers that place a level, climb, NPC and decoration. */
+interface TownKit {
+  G: number; T: number;
+  level: (col: number, w: number, storey: 1 | 2) => { x: number; top: number; w: number };
+  at: (col: number) => number;
+  ladder: (col: number, top: number, bottom: number) => void;
+  rope: (col: number, top: number, bottom: number) => void;
+  npc: (kind: Npc['kind'], x: number, y: number) => void;
+  deco: (kind: DecorKind, x: number, y: number, flip?: boolean) => void;
+}
+
+/** Lay out one town plan's decks, climbs, NPCs and decor, returning where its
+ *  way down to the town below sits. */
+function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
+  const { G, T, level, at, ladder, rope, npc, deco } = k;
+  if (plan === 'plaza' || plan === 'loft') {
+    // a deck over columns 6-13 (ladder on its left, rope on its right)...
+    const deck = level(6, 8, 1);
+    ladder(6, deck.top, G); rope(13, deck.top, G);
+    npc('shop', at(7), deck.top); npc('trainer', at(12) - T / 2, deck.top);
+    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G);
+    deco('awning', at(7), deck.top); deco('flowers', at(10) - T / 2, deck.top);
+    deco('house', at(9) + T / 2, G); deco('lamp', at(4) - T / 2, G); deco('lamp', at(15) + T / 2, G);
+    deco('bench', at(11), G); deco('crate', at(8), G);
+    if (plan === 'loft') {
+      // ...and a loft over the deck's columns 9-13, up a ladder at its left end
+      const loft = level(9, 5, 2);
+      ladder(9, loft.top, deck.top);
+      deco('lamp', at(13) + 4, loft.top); deco('barrel', at(10) + 4, loft.top);
+      return { x: 12 * T, y: loft.top };
+    }
+    return { x: WORLD.w / 2, y: deck.top };
+  }
+  if (plan === 'market') {
+    // two stall decks (shop left, trainer right), a bridge between them holding the way down
+    const left = level(4, 5, 1), right = level(11, 5, 1), bridge = level(7, 6, 2);
+    ladder(4, left.top, G); rope(15, right.top, G);
+    ladder(7, bridge.top, left.top); rope(12, bridge.top, right.top);
+    npc('shop', at(5) + 4, left.top); npc('trainer', at(14) - 4, right.top);
+    npc('board', at(5) + T / 2, G); npc('stylist', at(13) + T / 2, G);
+    deco('awning', at(5) + 4, left.top); deco('awning', at(14) - 4, right.top, true);
+    deco('crate', at(8) - 4, left.top); deco('barrel', at(11) + 4, right.top);
+    deco('lamp', at(8) + 4, bridge.top); deco('lamp', at(11) - 4, bridge.top);
+    deco('well', at(9) + T / 2, G); deco('house', at(5) + 4, left.top); deco('house', at(14) - 4, right.top, true);
+    deco('flowers', at(8) - 2, G); deco('flowers', at(11) + 2, G);
+    return { x: at(9) + T / 2, y: bridge.top };
+  }
+  // terraces stepping up to the right: a low one on the left, a high one on the right
+  const low = level(4, 7, 1), high = level(9, 7, 2);
+  ladder(4, low.top, G); rope(9, high.top, low.top); rope(15, high.top, G);
+  npc('shop', at(5) + 4, low.top); npc('trainer', at(8), low.top);
+  npc('board', at(5) + 4, G); npc('stylist', at(8), G);
+  deco('awning', at(5) + 4, low.top); deco('flowers', at(14) - 2, high.top);
+  deco('tower', at(12) + T / 2, high.top); deco('house', at(7), low.top);
+  deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
+  return { x: at(12) + T / 2, y: high.top };
+}
+
 export function townFloor(town: string, rng: Rng): Floor {
   const ground = groundSlab(), G = ground.y, T = TILE;
   const plan = townPlanFor(townIndex(town));
@@ -56,50 +115,9 @@ export function townFloor(town: string, rng: Rng): Floor {
     if (kind !== 'trainer' || townDepth(town) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
   };
   const deco = (kind: DecorKind, x: number, y: number, flip = false): void => { decor.push({ x, y, kind, ...(flip ? { flip } : {}) }); };
-  let downAt: { x: number; y: number };
 
-  if (plan === 'plaza' || plan === 'loft') {
-    // a deck over columns 6-13 (ladder on its left, rope on its right)...
-    const deck = level(6, 8, 1);
-    ladder(6, deck.top, G); rope(13, deck.top, G);
-    npc('shop', at(7), deck.top); npc('trainer', at(12) - T / 2, deck.top);
-    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G);
-    deco('awning', at(7), deck.top); deco('flowers', at(10) - T / 2, deck.top);
-    deco('house', at(9) + T / 2, G); deco('lamp', at(4) - T / 2, G); deco('lamp', at(15) + T / 2, G);
-    deco('bench', at(11), G); deco('crate', at(8), G);
-    if (plan === 'loft') {
-      // ...and a loft over the deck's columns 9-13, up a ladder at its left end
-      const loft = level(9, 5, 2);
-      ladder(9, loft.top, deck.top);
-      downAt = { x: 12 * T, y: loft.top };
-      deco('lamp', at(13) + 4, loft.top); deco('barrel', at(10) + 4, loft.top);
-    } else {
-      downAt = { x: WORLD.w / 2, y: deck.top };
-    }
-  } else if (plan === 'market') {
-    // two stall decks (shop left, trainer right), a bridge between them holding the way down
-    const left = level(4, 5, 1), right = level(11, 5, 1), bridge = level(7, 6, 2);
-    ladder(4, left.top, G); rope(15, right.top, G);
-    ladder(7, bridge.top, left.top); rope(12, bridge.top, right.top);
-    npc('shop', at(5) + 4, left.top); npc('trainer', at(14) - 4, right.top);
-    npc('board', at(5) + T / 2, G); npc('stylist', at(13) + T / 2, G);
-    deco('awning', at(5) + 4, left.top); deco('awning', at(14) - 4, right.top, true);
-    deco('crate', at(8) - 4, left.top); deco('barrel', at(11) + 4, right.top);
-    deco('lamp', at(8) + 4, bridge.top); deco('lamp', at(11) - 4, bridge.top);
-    deco('well', at(9) + T / 2, G); deco('house', at(5) + 4, left.top); deco('house', at(14) - 4, right.top, true);
-    deco('flowers', at(8) - 2, G); deco('flowers', at(11) + 2, G);
-    downAt = { x: at(9) + T / 2, y: bridge.top };
-  } else {
-    // terraces stepping up to the right: a low one on the left, a high one on the right
-    const low = level(4, 7, 1), high = level(9, 7, 2);
-    ladder(4, low.top, G); rope(9, high.top, low.top); rope(15, high.top, G);
-    npc('shop', at(5) + 4, low.top); npc('trainer', at(8), low.top);
-    npc('board', at(5) + 4, G); npc('stylist', at(8), G);
-    deco('awning', at(5) + 4, low.top); deco('flowers', at(14) - 2, high.top);
-    deco('tower', at(12) + T / 2, high.top); deco('house', at(7), low.top);
-    deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
-    downAt = { x: at(12) + T / 2, y: high.top };
-  }
+  // The plan's decks, climbs, NPCs and decor, and where its way down sits.
+  const downAt = buildPlan(plan, { G, T, level, at, ladder, rope, npc, deco });
   // a way down to the start of every path that ends here, side by side (the
   // start town is the bottom of the world: none)
   const down = pathsInto(town).map((p, i) => {

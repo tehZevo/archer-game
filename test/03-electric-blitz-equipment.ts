@@ -1,7 +1,7 @@
 import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES, emoteFor, setEmote, buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, shopStock, START_POTIONS, trainer, TRAINER_ITEMS, wallet, areaOf, isPathEnd, isTown, lastTown, MAP_AREAS, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, samePlace, START, TOWNS, townDepth, type Place, ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE, game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH, confirmInput, confirmUi, cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor, FONT_CHARS, textWidth, fontPng, ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout, update, advance, tick, CHASE_TURN, activeSkill, expBar, MAX_LEVEL, passiveBonus, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN, surfaceYAt, areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, type Layout, makeShape, SHAPES, TOWN_MIN_H, DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR, miniRect, MINI_SCALE, toMini, CAM, TILE, WORLD, ANIM_RATE, BREATH, mobFrame, BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg, barrageTargets, cast, cdSlot, delayTime, rushHolding, useTime, CASTS, MOB_SOUNDS, GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop, fmtNum, BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes, cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook, stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP, styled, DECOR_FRAMES, paintDecor, paintSmoke, SMOKE, TOWN_PALS, type DecorKind, NPC_FRAMES, npcFrame, npcRows, board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests, apply, clearSave, hasSave, load, save, snapshot, boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate, canConnect, hourStamp, net, newCode, parseCode, roomId, activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X, BLOCK_VARIANTS, hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt, PROP_H, PROP_W, propAt, PROPS, BACKDROPS, particlesAt, expToNext, killsToLevel, mobExp, dev, devStops, BASIC, clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS, openStylist, STYLIST_ROWS, devInput, windowOpen, addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap, say, archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle, ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet, keysKey, keysUi, KEY_ROWS, pet, PET, achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea, startRun, DEFS, startsLearned, clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops, READY_FLASH, cameraTarget, mobBounds, coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods, bag, BAG_SIZE, unequip, wear, STAT_KEYS, generateFloor, TOWN_PLANS, corpses, DEATH_T, DEATHS, deathOf, deathPose, closeLinks, linkable, linkHeld, bakeDeathSheet, DEATH_FRAMES, deathFrame, localPose, applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus, cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX, type Mob, type PauseMenu, type Platform, type SkillKey, climb, check, release, step, tap, landLeap, ground, arena, dummy } from './harness';
 // --- Equipment: a weapon and an armor piece ---
 {
-  arena(10); player.ranks.Z = 1;
+  arena(10); player.ranks.Z = true;
   clearGear();
   check('you start with nothing equipped', gear.weapon === null && gear.armor === null);
   check('an empty slot leaves damage and damage taken unchanged', gearDmg() === 1 && gearSoak() === 0);
@@ -75,7 +75,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 // --- E / R ---
 {
   // E is a two-form key: Piercing Leap on the ground, Downpour in the air
-  arena(10); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(10); player.ranks.E = true; player.ranks.PV = true;
   const near = dummy(140);
   tap('e');
   check('Piercing Leap drives spikes into the enemies around you', near.hp < 1e6);
@@ -106,7 +106,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // The spike lift links into Downpour: E pressed during the rise fires as it ends
-  arena(60); player.ranks.E = 1; player.ranks.PV = 1;
+  arena(60); player.ranks.E = true; player.ranks.PV = true;
   dummy(130);
   tap('e'); step(12); // rise to the top of the lift (the air form needs ~2/3 a jump's height)
   check('Piercing Leap lifts you (setup)', !player.onGround && player.liftT > 0, `liftT ${player.liftT.toFixed(2)}`);
@@ -118,7 +118,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // A linked skill refunds 1s off Piercing Leap's cooldown (as it does Tempest's)
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.E = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.E = true;
   dummy(150);
   tap('e'); step(2);
   check('Piercing Leap starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
@@ -136,7 +136,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Cyclone Sweep (W in the air): one sweep per 4s, and a slow rise
-  arena(20); player.ranks.Q = 1; player.ranks.W = 1; player.ranks.MS = 1;
+  arena(20); player.ranks.Q = true; player.ranks.W = true; player.ranks.MS = true;
   tap('c'); step(70);
   check('back on the ground', player.onGround);
   const m = dummy(140);
@@ -151,7 +151,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // Q and Meteor Dive: both paced by the use time alone, no cooldowns
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   tap('q');
   check('the ground rush has no cooldown, only a use time', SKILLS.Q.cd === 0 && SKILLS.Q.use === 0.6 && player.cdMax.Q === 0 && player.casting.useT > 0);
   step(40); player.cd.Q = 0;
@@ -163,7 +163,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // The Meteor Dive's follow-ups fire off its landing, not its coil, and a
   // Double Shot pressed mid-plunge waits out the landing roll.
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true;
   dummy(150);
   tap('c'); step(8);
   tap('q');
@@ -182,7 +182,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // The Meteor Dive links into the grounded kit: pressed as the dive lands,
   // the next skill fires without the use-time wait
-  arena(20); player.ranks.Q = 1; player.ranks.AD = 1; player.ranks.W = 1;
+  arena(20); player.ranks.Q = true; player.ranks.AD = true; player.ranks.W = true;
   dummy(150);
   tap('c'); step(8);
   tap('q'); step(15); // the windup, the plunge, and the landing rush
@@ -192,7 +192,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('Rising Arrows links out of the dive', player.mp < mp0 && player.linkFrom === 'W', `mp ${player.mp} from ${player.linkFrom}`);
 }
 {
-  arena(25); player.ranks.R = 1;
+  arena(25); player.ranks.R = true;
   const a = dummy(130), b = dummy(170);
   tap('r'); step(15);
   check('Tempest hits every enemy caught in the sweep', a.hp < 1e6 && b.hp < 1e6);
@@ -201,7 +201,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 {
   // ready-glow: the bar icon flashes the moment a cooldown runs out
-  arena(20); player.ranks.E = 1;
+  arena(20); player.ranks.E = true;
   tap('e');
   check('casting starts the cooldown with no glow', player.cd.E > 0 && player.readyT.E === 0);
   for (let i = 0; i < 400 && player.cd.E > 0; i++) step(1);
@@ -217,14 +217,14 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   cast('Z');
   const base = player.casting.useT;
   check('Double Shot has a use time and no cooldown', base > 0.4 && player.cd.Z === 0);
-  player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
+  player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = true; cast('R');
   const rCd = player.cd.R, rUse = player.casting.useT;
-  player.ranks.HA = 3; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
-  check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.1) < 1e-6);
+  player.ranks.HA = true; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
+  check('Haste shortens use time by 20% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.2) < 1e-6);
   check('Haste leaves cooldowns alone', player.cd.R === rCd);
   player.casting.useT = 0; player.casting.recoverT = 0; cast('Z');
-  check('a hasted Double Shot fires about 10% faster', Math.abs(player.casting.useT - base / 1.1) < 1e-6);
-  player.ranks.HA = 0; player.ranks.R = 0;
+  check('a hasted Double Shot fires about 20% faster', Math.abs(player.casting.useT - base / 1.2) < 1e-6);
+  player.ranks.HA = false; player.ranks.R = false;
 }
 
 // --- private instances ---

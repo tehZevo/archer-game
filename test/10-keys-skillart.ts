@@ -44,16 +44,16 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const ready = (): void => { for (const k of Object.keys(player.cd)) player.cd[k] = 0; player.casting.useT = 0; player.mp = 999; };
   const fxOf = (t: string): boolean => game.fx.some((f) => f.type === t);
   const air = (): void => { player.y -= 40; player.vy = 0; player.onGround = false; };
-  arena(30); player.ranks.E = 1; player.ranks.W = 1; player.ranks.MS = 1; player.ranks.R = 1;
+  arena(30); player.ranks.E = true; player.ranks.W = true; player.ranks.MS = true; player.ranks.R = true;
   ready(); game.fx.length = 0; tap('e');
   check('Piercing Leap erupts spikes from the ground', fxOf('spikes') && !fxOf('rush'));
-  arena(30); player.ranks.W = 1; player.ranks.MS = 1; ready(); air(); game.fx.length = 0; tap('w');
+  arena(30); player.ranks.W = true; player.ranks.MS = true; ready(); air(); game.fx.length = 0; tap('w');
   check('the Cyclone Sweep whirls blades round you and spins the archer', fxOf('spin') && localPose() === 'spin');
-  arena(30); player.ranks.R = 1; ready(); game.fx.length = 0; tap('r');
+  arena(30); player.ranks.R = true; ready(); game.fx.length = 0; tap('r');
   check('Tempest sweeps an oval of energy as the archer vanishes', fxOf('tempest') && localPose() === 'vanish' && !fxOf('muzzle'));
   step(43);
   check('...and she is back once it ends', localPose() !== 'vanish');
-  arena(30); player.ranks.AD = 1; ready(); air(); tap('q'); step(4); // past the windup
+  arena(30); player.ranks.AD = true; ready(); air(); tap('q'); step(4); // past the windup
   check('the Meteor Dive draws its dive pose', player.diving && localPose() === 'dive');
   release();
 }

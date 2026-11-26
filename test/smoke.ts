@@ -85,13 +85,13 @@ player.ranks.D = 1; player.cd.D = 0;
 player.onGround = false; player.y = 500;
 setKey('d', true);
 step(1);
-// Glide commits you for its 0.4s use time; it has no cooldown to gate re-use.
-check('Glide has a 0.4s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.4) < 0.05,
+// Glide commits you for its 0.2s use time; it has no cooldown to gate re-use.
+check('Glide has a 0.2s use time and no cooldown', player.cd.D === 0 && Math.abs(player.casting.useT - 0.2) < 0.05,
   `cd ${player.cd.D} use ${player.casting.useT.toFixed(2)}`);
 check('Glide launches forward > up', Math.abs(player.vx) > Math.abs(player.vy));
 check('Glide consumes MP', player.mp < player.mpMax);
 setKey('d', false);
-step(7); // the 0.2s glide animation finishes
+step(13); // the 0.4s recovery clears, freeing the next cast
 setKey('d', true);
 step(1);
 check('Glide can be used again mid-air', player.casting.useT > 0 && player.onGround === false,
@@ -143,10 +143,10 @@ check('pause menu spends SP to learn Rising Arrows', isLearned('W') && player.sp
 tap('escape');
 check('esc resumes', !game.pause);
 
-// --- 9. skill ranks: every skill is a single rank (its max-level form) ---
+// --- 9. skills are acquired or not (no rank levels): stats are the authored form ---
 reset();
-check('skills are a single rank', rank('Z').level === 1 && rank('Z').maxLevel === 1 && rank('Z').dmg === SKILLS.Z.dmg1 / 100,
-  `rank ${rank('Z').level}/${rank('Z').maxLevel} dmg ${rank('Z').dmg}`);
+check('skills are a single rank', rank('Z').dmg === SKILLS.Z.dmg1 / 100 && rank('Z').hits === (SKILLS.Z.hits1 ?? 1),
+  `dmg ${rank('Z').dmg} hits ${rank('Z').hits}`);
 
 // --- 10. skill bar exposes the 4 buttons; unlock cadence every 5 levels ---
 check('attack keys are Z Q W E R, all bound', SKILL_BAR.map((s) => s.label).join('') === 'ZQWER' && SKILL_BAR.every((s) => s.skill));

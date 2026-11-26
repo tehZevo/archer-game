@@ -188,7 +188,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('an enemy does not pin itself to the edge chasing an unreachable player', still < 30, `still ${still} frames`);
 
   // Rush Toss hits at most 6
-  arena(1); player.ranks.Q = 3;
+  arena(1); player.ranks.Q = true;
   const ms = Array.from({ length: 9 }, (_, i) => dummy(120 + i * 6));
   tap('q'); step(14);
   check('Rush Toss hits at most 6 enemies', ms.filter((x) => x.hp < 1e6).length === 6, `${ms.filter((x) => x.hp < 1e6).length} hit`);
@@ -206,7 +206,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     release(); gotoPlace(climb(n));
     const count = Math.min(10, game.mobs.filter((m) => !m.fly).length);
     for (let k = 0; k < count; k++) for (const face of [1, -1]) {
-      release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks.Q = 1;
+      release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks.Q = true;
       const m = game.mobs.filter((x) => !x.fly)[k];
       if (!m) continue;
       player.x = m.x - face * 14; player.y = m.y + m.h - player.h; player.vy = 0; player.face = face;

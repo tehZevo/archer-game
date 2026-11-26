@@ -74,10 +74,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => { mem[k] = v; }, removeItem: (k: string) => { delete mem[k]; },
   };
   arena(35); gotoPlace({ town: 'mossgate' });
-  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = 1; player.ranks.W = 1; player.ranks.E = 1;
+  player.exp = 123; player.ap = 7; player.sp = 2; player.stats.dex = 9; player.ranks.Z = true; player.ranks.W = true; player.ranks.E = true;
   save();
   const want = JSON.stringify(snapshot());
-  arena(1); player.ap = 0; player.sp = 0; player.ranks.W = 0; player.ranks.E = 0;
+  arena(1); player.ap = 0; player.sp = 0; player.ranks.W = false; player.ranks.E = false;
   const place = load();
   check('save round-trips level, EXP, points, stats, ranks and the town', JSON.stringify({ ...snapshot(), town: 'mossgate' }) === want && samePlace(place, { town: 'mossgate' }));
   check('you resume in the latest town: a town itself, or the start of the path you were on',
@@ -89,9 +89,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('loading recomputes derived stats', player.hp === player.hpMax && player.war > 14 + 33);
   check('a corrupt save is ignored', apply('junk') === null);
   check('an older save is migrated and keeps its progress', apply({ v: 2, level: 50, exp: 10, ap: 3, sp: 2, stats: { dex: 9 }, ranks: { Z: 1 }, town: 'mossgate' }) !== null
-    && player.level === 50 && player.ap === 3 && player.ranks.Z === 1);
+    && player.level === 50 && player.ap === 3 && player.ranks.Z === true);
   apply({ v: 4, level: 1e9, exp: -5, ap: 'x', sp: 3, stats: { dex: -2 }, ranks: { Z: 99, RA: 1, EB: 1 }, town: 0 });
-  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === 1 && player.ranks.RA + player.ranks.EB === 1);
+  check('out-of-range values are clamped', player.level === 100 && player.exp === 0 && player.ap === 0 && player.stats.dex === 0 && player.ranks.Z === true && player.ranks.EB);
   clearSave();
   check('reset forgets the save', !hasSave() && samePlace(load(), START));
   delete (globalThis as { localStorage?: unknown }).localStorage;

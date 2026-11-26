@@ -150,12 +150,9 @@ function drawBossBar(w: number, h: number): void {
   ctx.fillStyle = '#e05a5a'; ctx.fillRect(bx + 1, by + 1, fill, 3);
 }
 
-function drawHUDItems(): void {
-  const { w, h } = game.view;
-  if (menu.open) { hudShadow(false); drawMenu(); return; } // the title menu replaces the HUD
-  const pad = 6;
-
-  // top-left, one line: wrench (dev) + wifi + level; the floor name goes underneath
+/** The top-left stack: connection + level line, floor name, modifiers, coins,
+ *  quests and unspent points. Returns the y below the last line. */
+function drawTopLeft(pad: number): void {
   let ly = pad;
   let ix = pad;
   if (dev.on) { wrench(ix, ly); ix += WRENCH_W + 4; }
@@ -185,10 +182,12 @@ function drawHUDItems(): void {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
     text(ctx, `${pts} - ESC`, pad, ly, 1, '#ffd166', 'left');
   }
-  drawBossBar(w, h);
+}
 
-  // skill bar (top-right): a column per key (Z, Q, W, E, R), the air form
-  // (Meteor Dive, Cyclone Sweep, Downpour) stacked over the ground form
+/** The top-right skill bar: a column per key (Z, Q, W, E, R), the air form
+ *  (Meteor Dive, Cyclone Sweep, Downpour) stacked over the ground form. */
+function drawSkillBar(pad: number): void {
+  const { w } = game.view;
   const colGap = 3, rowGap = 1;
   const bx = w - SKILL_BAR.length * (ICON + colGap) + colGap - pad, by = pad;
   ctx.save();
@@ -200,29 +199,36 @@ function drawHUDItems(): void {
     skillSlot(slot.skill, slot.skill, x, by + ICON + rowGap);
   });
   ctx.restore();
-  drawMinimap(); // under the skill bar
+}
 
-  // bars across the bottom: HP | MP | EXP
+/** The HP | MP | EXP bars across the bottom. Returns their y. */
+function drawBottomBars(pad: number): number {
+  const { h } = game.view;
   const bw = 74, bgap = 3, y = h - 14;
   bar(pad, y, bw, 'HP', `${fmtNum(player.hp)}/${fmtNum(player.hpMax)}`, player.hp / player.hpMax, '#3fbf72');
   bar(pad + bw + bgap, y, bw, 'MP', `${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, player.mp / player.mpMax, '#3f8fd6');
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', expBar().text, expBar().pct, '#ffd166');
+  return y;
+}
 
-  // status effects on you, over the HP bar: a coloured pip and "POISON x2 4s" each
-  let ey = y;
-  if (player.effects.length) {
-    ey = y - 10;
-    let ex = pad;
-    for (const e of player.effects) {
-      const st = STATUS[e.kind];
-      ctx.fillStyle = st.col; ctx.fillRect(ex, ey + 2, 3, 3);
-      const label = `${st.label}${e.stacks > 1 ? ` x${e.stacks}` : ''} ${Math.ceil(e.t)}s`;
-      text(ctx, label, ex + 5, ey + 1, 1, st.col, 'left');
-      ex += 5 + textWidth(label) + 7;
-    }
+/** Status effects on you, over the HP bar: a coloured pip and "POISON x2 4s"
+ *  each. Returns the y the chat log sits at. */
+function drawStatusEffects(pad: number, y: number): number {
+  if (!player.effects.length) return y;
+  const ey = y - 10;
+  let ex = pad;
+  for (const e of player.effects) {
+    const st = STATUS[e.kind];
+    ctx.fillStyle = st.col; ctx.fillRect(ex, ey + 2, 3, 3);
+    const label = `${st.label}${e.stacks > 1 ? ` x${e.stacks}` : ''} ${Math.ceil(e.t)}s`;
+    text(ctx, label, ex + 5, ey + 1, 1, st.col, 'left');
+    ex += 5 + textWidth(label) + 7;
   }
-  drawChatLog(ey);
-  if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
+  return ey;
+}
+
+/** The full-screen panel open over the HUD (if any), else the transient banner. */
+function drawOverlays(w: number, h: number): void {
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); if (achUi.open) drawAchievements(w, h); return; }
   if (shop.open) { drawShop(); return; }
@@ -237,6 +243,21 @@ function drawHUDItems(): void {
     text(ctx, game.banner.sub, w / 2, 64, 1, '#dbe6f5', 'center');
     ctx.restore();
   }
+}
+
+function drawHUDItems(): void {
+  const { w, h } = game.view;
+  if (menu.open) { hudShadow(false); drawMenu(); return; } // the title menu replaces the HUD
+  const pad = 6;
+
+  drawTopLeft(pad);
+  drawBossBar(w, h);
+  drawSkillBar(pad);
+  drawMinimap(); // under the skill bar
+  const ey = drawStatusEffects(pad, drawBottomBars(pad));
+  drawChatLog(ey);
+  if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
+  drawOverlays(w, h);
 }
 
 /* ---------------- dev menu (?dev, ` key) ---------------- */
