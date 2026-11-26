@@ -14,7 +14,7 @@ Math.random = (): number => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 **
 const climb = (n: number): Place => { let p: Place = START; for (let i = 1; i < n; i++) p = nextPlace(p); return p; };
 
 import { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/config';
-import { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD } from '../src/state';
+import { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH } from '../src/state';
 import { confirmInput, confirmUi } from '../src/confirm';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 import { FONT_CHARS, textWidth } from '../src/font';
@@ -3095,6 +3095,24 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('q'); step(20); tap('w');
   check('...so the next Sky Toss fires the Volley again straight away', player.cast === 'barrage' && player.cd.W === 0,
     `cast ${player.cast} cd ${player.cd.W.toFixed(2)}`);
+}
+{
+  // Casting a skill flashes its own icon on the bar: the air and ground forms
+  // are stacked in one column, so which key you hit is worth confirming.
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  tap('q');
+  check('casting Sky Toss flashes the Q slot', player.usedT.Q > USE_FLASH - 0.05 && player.usedT.Q > 0 && player.usedT['Q.air'] === 0,
+    `Q ${player.usedT.Q.toFixed(2)} Q.air ${player.usedT['Q.air'].toFixed(2)}`);
+  step(3);
+  check('...and the flash fades over USE_FLASH', player.usedT.Q > 0 && player.usedT.Q < USE_FLASH,
+    `t ${player.usedT.Q.toFixed(2)}`);
+  step(10);
+  check('...and is gone', player.usedT.Q === 0, `t ${player.usedT.Q.toFixed(2)}`);
+  tap('c'); step(6);
+  tap('q');
+  check('the Air Dive flashes the stacked air slot, not the ground one',
+    player.usedT['Q.air'] > 0 && player.usedT.Q === 0,
+    `Q.air ${player.usedT['Q.air'].toFixed(2)} Q ${player.usedT.Q.toFixed(2)}`);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

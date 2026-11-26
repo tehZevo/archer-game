@@ -1,5 +1,5 @@
 import { LINKED_SKILLS, P, SKILLS } from './config';
-import { game, player } from './state';
+import { game, player, USE_FLASH } from './state';
 import { held } from './input';
 import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
@@ -92,6 +92,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
 /** Spend the cast's MP, start its cooldown and use time, and cash in a link. */
 function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, linked: boolean): void {
   const slot = cdSlot(key, airborne);
+  player.usedT[slot] = USE_FLASH; // the bar flashes the key you just pressed
   player.mp -= r.mp;
   player.cd[slot] = player.cdMax[slot] = SKILLS[kind].cd;
   // Jump has no animation of its own; Glide commits you for its use time.
