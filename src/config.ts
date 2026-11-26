@@ -32,7 +32,6 @@ export const P = {
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Bolt Flurry bolt speed (px/s)
   Z_WINDUP: 0.10,      // s Double Shot draws the bow before the arrows fly
-  Z_CAST: 0.42,        // s for the whole Double Shot animation (draw, release, follow-through)
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   DELAY_TIME: 0.2,     // s of recovery after the animation (see delayTime; links skip it)
   ACCEL: 1600,         // groundedAccelForce
@@ -46,6 +45,7 @@ export const P = {
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
   BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
+  RUSH_HOLD: 0.34,    // s a rush holds back the links pressed during it (the slide and its strike); its animation runs on to the use time
   LINK_BUFFER: 0.5,   // s of free time a link window stays open past the animation (see linkWindow)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Rush Toss)
   BLITZ_DIST: 96,      // px the blitz travels
@@ -56,7 +56,6 @@ export const P = {
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing rush
   PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
-  PLUNGE_POSE: 0.3,    // s of the volley's firing pose
   PLUNGE_HOP: 112.5,   // px/s (was 150) added to your current momentum (stacks: a falling cast lifts less)
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
@@ -66,8 +65,7 @@ export const P = {
   SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIKE_LIFT_H: 40,    // px the tornado lifts you, from wherever you are (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
-  SPIN_ANIM: 0.6,      // s the whole sweep plays (the archer's turn and the blades round her)
-  SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Downpour link opens (the tail of the longer SPIN_ANIM pose)
+  SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Downpour link opens (the tail of the longer sweep pose)
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
@@ -263,7 +261,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.5, spin: P.SPIN_ANIM,
+  spikes: 0.45, tempest: 0.5, spin: SKILLS.MS.use ?? P.USE_TIME,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,

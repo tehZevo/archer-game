@@ -1,4 +1,4 @@
-import type { Portal } from './types';
+import type { Portal, SkillKey } from './types';
 import { nextPlace } from './world';
 import { EMOTES } from './emotes';
 import { netEmote } from './net';
@@ -10,7 +10,7 @@ import { revive } from './combat';
 import { setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
 import { updateRush } from './rush';
-import { assaultLeaping } from './castrules';
+import { AIR_FORM, assaultLeaping, rushHolding } from './castrules';
 import { isLearned } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
@@ -20,7 +20,7 @@ import { dev, maxOut } from './dev';
 import { bossAlive, portalOpen, updateQuakes } from './boss';
 import { updatePet } from './pets';
 import { updateStatus } from './status';
-import { bufferWindowOpen, linkOpen, tickLinks } from './links';
+import { bufferWindowOpen, linkOpen, ownWindowOpen, tickLinks } from './links';
 import { windowInput } from './windows';
 import { openConfirm } from './confirm';
 import { updateMobs } from './mobai';
@@ -121,19 +121,22 @@ function tickCasting(dt: number): void {
   if (game.banner) { game.banner.t -= dt; if (game.banner.t <= 0) game.banner = null; }
 }
 
+/** The skill a key fires right now: its air form when airborne. */
+const skillFor = (key: SkillKey): SkillKey => (!player.onGround && !player.climb && AIR_FORM[key]) || key;
+
 /** Whether the buffered skill has to keep waiting. */
 function bufferHeld(): boolean {
   const queued = player.casting.queued;
   // a chained link waits for Rush Toss to finish (a chained Double Shot also
   // waits out the slide itself), and the spin waits out the Assault's leap
-  if (player.cast === 'rush' && player.castT > 0) return true;
+  if (rushHolding()) return true;
   if (queued === 'Z' && player.rush.t > 0) return true;
   if (assaultLeaping()) return true;
   // the current skill's animation or its recovery holds it, unless a
   // buffering link window (Q's, a blitz's self-link, the Assault's spin)
   // cuts it short
   const busy = player.castT > 0 || player.casting.recoverT > 0;
-  return busy && !bufferWindowOpen();
+  return busy && !bufferWindowOpen() && !(queued && ownWindowOpen(skillFor(queued)));
 }
 
 /** Fire the buffered skill on the first free frame. It aims where you're

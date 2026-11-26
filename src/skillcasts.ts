@@ -8,8 +8,11 @@ import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover, openLink } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
-import { linkWindow, useTime } from './castrules';
-import { alive, eachShot, fxUnder, nearest, pose, tracers } from './skillfx';
+import { linkWindow } from './castrules';
+import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
+
+/** s of the jump's takeoff pose (Jump is movement, with no use time). */
+const JUMP_POSE = 0.16;
 import type { SkillKey, SkillRank } from './types';
 
 /**
@@ -23,7 +26,7 @@ type Cast = (r: SkillRank) => void;
 /** Double Shot: draw the bow (a short windup), release a volley that whips
  *  out to the closest enemies (no projectile), then follow through. */
 function twinShot(r: SkillRank): void {
-  pose('shoot', P.Z_CAST);
+  pose('shoot', 'Z');
   const face = player.face;
   const tg = nearest(player.x + face * 64, player.y + player.h / 2, 128, 56, r.targets);
   later(P.Z_WINDUP, () => {
@@ -51,7 +54,7 @@ function twinShot(r: SkillRank): void {
  *  slab): a small hop, then fall; that whole block is ignored until the
  *  player lands on something else. */
 function jump(): void {
-  pose('jump', 0.16);
+  setPose('jump', JUMP_POSE);
   sfx.jump();
   const under = player.onGround && held('down') ? surfaceAt(player.x, player.y + player.h, player.w) : null;
   player.onGround = false;
@@ -71,7 +74,7 @@ function jump(): void {
  *  own per-frame vx/vy reset would otherwise eat it). */
 function glide(): void {
   endHover();
-  pose('jump', useTime('D'));
+  pose('jump', 'D');
   sfx.glide();
   const dir = player.face;          // launch in the direction you're facing
   player.vx = dir * P.GLIDE_VX;     // launches forward...
@@ -89,7 +92,7 @@ function airDive(r: SkillRank): void {
   sfx.jump();
   // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP, the yellow
   // arrows leading the way, and the pose covers the coil as well as the plunge.
-  pose('rush', P.DIVE_WINDUP + P.DIVE_TIME);
+  pose('rush', 'AD');
   player.vx = player.vy = 0;
   game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
@@ -121,7 +124,7 @@ function electricBlitz(): void {
 /** Rising Arrow (retired): launch the enemies ahead and leap up with them,
  *  opening the link window for an airborne W. */
 function launchLeap(kind: SkillKey, r: SkillRank, reach: number, w: number, back: boolean, vx: number, vy: number): void {
-  pose('rush', 0.34);
+  pose('rush', kind);
   sfx.jump();
   const face = player.face;
   const cx = player.x + face * reach;
@@ -143,7 +146,7 @@ const risingArrow: Cast = (r) => launchLeap('RA', r, 30, 80, false, P.RISE_VX, P
 /** Piercing Leap (E's ground form): spikes erupt in a burst around you and throw
  *  you into the air. */
 function spikeLift(r: SkillRank): void {
-  pose('barrage', P.PLUNGE_POSE);
+  pose('barrage', 'E');
   sfx.jump();
   game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
   hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64)
@@ -165,7 +168,7 @@ function spikeLift(r: SkillRank): void {
  *  column beneath you, hitting every enemy in it. */
 function plungingVolley(r: SkillRank): void {
   endHover();
-  pose('barrage', P.PLUNGE_POSE);
+  pose('barrage', 'PV');
   sfx.shoot();
   const feet = player.y + player.h;
   const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
@@ -188,7 +191,7 @@ function plungingVolley(r: SkillRank): void {
 /** Tempest: you vanish as an oval of energy sweeps up and around you,
  *  striking every enemy in a wide radius (nearest first). */
 function tempest(r: SkillRank): void {
-  pose('shoot', useTime('R'));
+  pose('shoot', 'R');
   player.skillPose = 'vanish';
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
   // the storm links straight into Dive (Q in the air); its own window, so it
@@ -207,7 +210,7 @@ function tempest(r: SkillRank): void {
 /** Cyclone Sweep (W's air form): a 360° sweep around you, cutting every enemy
  *  in reach several times. */
 function midairSpin(r: SkillRank): void {
-  pose('shoot', P.SPIN_ANIM);
+  pose('shoot', 'MS');
   player.vx = player.vy = 0; // the sweep holds its spot: no drifting on the jump's momentum
   player.skillPose = 'spin';
   endHover(); // swept out of a Skyward Assault hover: the spin takes over
@@ -230,7 +233,7 @@ function midairSpin(r: SkillRank): void {
  *  shoot them before they land. Q's rush gathers them up first, and its link
  *  window is what makes this available. */
 function skyfallVolley(r: SkillRank): void {
-  pose('shoot', 0.30);
+  pose('shoot', 'W');
   sfx.shoot();
   const face = player.face;
   const tg = hitbox(player.x + face * 30, player.y + player.h / 2, 110, 80).slice(0, r.targets);
@@ -244,7 +247,7 @@ function skyfallVolley(r: SkillRank): void {
  *  enemy in reach for a moment before dropping with normal gravity. The
  *  strikes run on the fixed step in update (see the hang block). */
 function skyAssault(r: SkillRank): void {
-  pose('barrage', P.BARRAGE_HANG);
+  pose('barrage', 'AB');
   sfx.shoot();
   hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
     .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
@@ -263,7 +266,7 @@ function skyAssault(r: SkillRank): void {
 
 /** Bolt Flurry: a stream of slower green bolts; each stuns on arrival. */
 function shellBarrage(r: SkillRank): void {
-  pose('shoot', 0.36);
+  pose('shoot', 'S');
   sfx.shoot();
   const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
   const x0 = player.x + player.face * 8, y0 = player.y + 13;

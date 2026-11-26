@@ -1,11 +1,18 @@
 import { game, later, player } from './state';
 import { hitbox, NUM_GAP } from './combat';
-import type { CastName, FxKind, Mob } from './types';
+import { useTime } from './castrules';
+import type { CastName, FxKind, Mob, SkillKey } from './types';
 
-/** Start the player's cast animation: `name`, lasting `t` seconds. */
-export function pose(name: CastName, t: number): void {
+/** Play cast animation `name` for exactly `t` seconds. */
+export function setPose(name: CastName, t: number): void {
   player.cast = name; player.castT = t; player.castTotal = t;
 }
+
+/** Start skill `kind`'s cast animation: it lasts the skill's use time, so the
+ *  animation and the movement lock are one number (Haste shortens both). The
+ *  recovery after it (delayTime) is not part of the animation: that is the
+ *  bit a link skips. */
+export const pose = (name: CastName, kind: SkillKey): void => setPose(name, useTime(kind));
 
 /** The targets still alive (a delayed hit skips the ones already killed). */
 export const alive = (tg: Mob[]): Mob[] => tg.filter((m) => game.mobs.includes(m));

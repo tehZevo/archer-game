@@ -5,7 +5,7 @@ import { airborneInBox } from './combat';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
 import { closeLink, closeLinks, linkOpen, linksIn } from './links';
-import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, offHover, useTime } from './castrules';
+import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, assaultLeaping, cdSlot, delayTime, offHover, rushHolding, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 
 /** Airborne enemies Skyward Assault can reach: around and below the player. */
@@ -56,7 +56,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   const linked = linksIn(kind, key, linkSkill);
   // Link skills only work right after Rush Toss, once per Rush Toss.
   if (linkSkill && !linkOpen('combo')) return null;
-  const rushPlaying = player.cast === 'rush' && player.castT > 0;
+  const rushPlaying = rushHolding();
   // A link pressed while Rush Toss is still playing waits for it to finish.
   if (linked && rushPlaying) return buffer(key);
   // Skyward Assault's leap buffers the sweep it links into, so pressing W on the
