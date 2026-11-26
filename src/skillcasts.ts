@@ -71,7 +71,7 @@ function jump(): void {
  *  own per-frame vx/vy reset would otherwise eat it). */
 function glide(): void {
   endHover();
-  pose('jump', 0.18);
+  pose('jump', useTime('D'));
   sfx.glide();
   const dir = player.face;          // launch in the direction you're facing
   player.vx = dir * P.GLIDE_VX;     // launches forward...
@@ -88,16 +88,19 @@ function airDive(r: SkillRank): void {
   endHover(); // the dive's own momentum takes over at once, no stuck dive pose
   pose('rush', P.DIVE_TIME);
   sfx.jump();
-  player.vx = player.face * P.DIVE_VX;
+  player.vx = player.face * P.DIVE_VX; // the diagonal plunge starts on the press
   player.vy = P.DIVE_VY;
   startSlide(P.DIVE_TIME);
   player.diving = true;
-  // the dive itself stabs down into the enemies under and in front of you
-  hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
-    .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
   clearRushStrike(); // (a strike left over from an earlier rush must not land now)
   openLink('combo', linkWindow('AD'));
   openLink('glide', linkWindow('AD')); // and it links into a Glide
+  // The windup is the dive's coil before it bites: the plunge carries her down
+  // for DIVE_WINDUP before the arrows land on the enemies below.
+  later(P.DIVE_WINDUP, () => {
+    hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
+      .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
+  });
 }
 
 /** Sky Toss (Q on the ground): the ground rush (see rush.ts). */
