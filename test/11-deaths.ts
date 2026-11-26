@@ -433,6 +433,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const snail = MOB_SOUNDS['Garden Snail'], gull = MOB_SOUNDS['Gull'];
   check('...and no two sound the same', new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size >= 20,
     `${new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size} distinct`);
+  check('every enemy has its own voice (cry and material) for its death',
+    new Set(MOB_TYPES.map((t) => { const v = MOB_SOUNDS[t.n]; return `${v.f}:${v.t}:${v.s}:${v.m}`; })).size === MOB_TYPES.length);
+  check('a golem crumbles, a slime splats and a windup soldier clanks apart',
+    MOB_SOUNDS['Meteor Golem'].m === 'stone' && MOB_SOUNDS['Slime'].m === 'goo' && MOB_SOUNDS['Windup Soldier'].m === 'metal');
   check('a snail and a gull are pitched apart', snail.f !== gull.f && snail.t !== gull.t);
 }
 

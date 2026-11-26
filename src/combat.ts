@@ -136,6 +136,7 @@ export function killMob(m: Mob): void {
   if (m.boss) bump('bosses');
   localKill(); // shared with the instance: speeds up other players' waves
   addCorpse(m, m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1); // it dies its own way (deaths.ts)
+  sfx.mobDeath(m.name, !!(m.boss || m.elite)); // ...and sounds its own way (mobvoices.ts)
   gainExp(m.exp);
   dropCoins(m);
   dropGear(m); // a rare piece of gear, scaled to the enemy's level

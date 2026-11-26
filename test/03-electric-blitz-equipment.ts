@@ -76,11 +76,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // E is a two-form key: Piercing Leap on the ground, Downpour in the air
   arena(10); player.ranks.E = true; player.ranks.PV = true;
-  const near = dummy(140);
+  const near = dummy(140), behind = dummy(60);
   tap('e');
-  check('Piercing Leap drives spikes into the enemies around you', near.hp < 1e6);
   check('Piercing Leap throws you into the air', !player.onGround && player.vy < 0);
-  step(2);
+  check('...and its spikes are still falling: nothing is hit yet', near.hp === 1e6);
+  step(Math.ceil(0.3 / P.STEP));
+  check('Piercing Leap spears the enemies in front of you as its spikes land', near.hp < 1e6);
+  check('...but not the ones behind you', behind.hp === 1e6);
   check('Piercing Leap is on a long cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
   // the air form, once you are back on your feet with the cooldown cleared
   landLeap(); player.cd.E = 0;
