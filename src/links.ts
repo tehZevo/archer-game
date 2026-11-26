@@ -19,7 +19,7 @@ import type { LinkKind, SkillKey } from './types';
      spin     Sky Assault                     -> Midair Spin (W in the air)
    ============================================================ */
 
-export const LINK_KINDS: readonly LinkKind[] = ['combo', 'assault', 'blitz', 'glide', 'volley', 'spin'];
+export const LINK_KINDS: readonly LinkKind[] = ['combo', 'assault', 'blitz', 'glide', 'volley', 'spin', 'tempest'];
 
 /** A fresh set of windows, all shut. */
 export const noLinks = (): Record<LinkKind, number> =>
