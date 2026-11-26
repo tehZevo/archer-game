@@ -1,6 +1,6 @@
 import type { Place } from './world';
 import type { BossState } from './boss';
-export type SkillKey = 'z' | 'd' | 'ac' | 'ground-q' | 'ground-w' | 'ground-e' | 'r' | 'ab' | 's' | 'eb' | 'air-q' | 'air-e' | 'air-w' | 'es' | 'sa' | 'pp' | 'ir' | 'ha' | 'ni' | 'held-z';
+export type SkillKey = 'z' | 'd' | 'ac' | 'ground-q' | 'ground-w' | 'ground-e' | 'r' | 'ab' | 's' | 'eb' | 'air-q' | 'air-e' | 'air-w' | 'es' | 'sa' | 'pp' | 'ir' | 'ha' | 'ni' | 'bu' | 'held-z';
 
 /** A status effect (see status.ts). */
 export type StatusKind = 'poison' | 'burn' | 'chill';

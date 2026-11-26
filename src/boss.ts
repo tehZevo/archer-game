@@ -4,7 +4,7 @@ import { game, logMsg, mobDmg, mobHp, player } from './state';
 import { areaMobs } from './floor';
 import { CHASE_TURN } from './mobai';
 import { areaOf, isPathEnd, mobLevel } from './world';
-import { mobExp } from './progress';
+import { mobExp, passiveBonus } from './progress';
 import { gearSoak } from './gear';
 import { missChance } from './combat';
 import { sfx } from './audio';
@@ -102,8 +102,8 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
     player.vy -= P.HIT_HOP;
     player.onGround = false;
   }
-  // armor soaks a share of the hit
-  dmg = Math.max(1, Math.round(dmg * (1 - gearSoak())));
+  // armor soaks a share of the hit, then the Bubble passive a flat share of the rest
+  dmg = Math.max(1, Math.round(dmg * (1 - gearSoak()) * (1 - passiveBonus('bu'))));
   player.hp = Math.max(0, player.hp - dmg);
   player.combatT = P.COMBAT_TIME;
   player.invuln = 1.0;

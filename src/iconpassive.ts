@@ -93,4 +93,17 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '.aaaaaaa..',
     '.aaaaaa...',
   ],
+  // Bubble: a round, glossy shield bubble with a highlight
+  bu: [
+    '...aaaa...',
+    '..a....a..',
+    '.a.xx...a.',
+    'a.x......a',
+    'a.x......a',
+    'a........a',
+    'a.......Aa',
+    '.a.....AA.',
+    '..aAAAAA..',
+    '...aaaa...',
+  ],
 };
