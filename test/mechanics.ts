@@ -898,10 +898,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = 1; cast('R');
   const rCd = player.cd.R, rUse = player.casting.useT;
   player.ranks.HA = 3; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
-  check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.1) < 1e-6);
+  check('Haste shortens use time by 20% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.2) < 1e-6);
   check('Haste leaves cooldowns alone', player.cd.R === rCd);
   player.casting.useT = 0; player.casting.recoverT = 0; cast('Z');
-  check('a hasted Double Shot fires about 10% faster', Math.abs(player.casting.useT - base / 1.1) < 1e-6);
+  check('a hasted Double Shot fires about 20% faster', Math.abs(player.casting.useT - base / 1.2) < 1e-6);
   player.ranks.HA = 0; player.ranks.R = 0;
 }
 
@@ -1558,7 +1558,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent (Glide too)',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 3 && player.ranks.D === 0 && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === 1 && player.sp === 4 && player.ranks.D === 0 && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
@@ -2750,7 +2750,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.ranks.Q = 0; player.ranks.EB = 1;
   check('Electric Blitz carries the same committed recovery', SKILLS.EB.delay === 0.35 && delayTime('EB') === base);
   player.ranks.HA = 3;
-  check('Haste shortens the recovery by 10% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.1) < 1e-6,
+  check('Haste shortens the recovery by 20% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.2) < 1e-6,
     `${delayTime('EB').toFixed(4)}`);
   player.ranks.HA = 0; player.ranks.EB = 0; player.ranks.Q = 1;
 }
