@@ -169,7 +169,12 @@ function spikeLift(r: SkillRank): void {
   game.fx.push({ type: 'spikes', x: player.x, y: player.y + player.h, t: FX_DUR.spikes });
   hitbox(player.x, player.y + player.h / 2, P.SPIKE_R * 2, 64)
     .slice(0, r.targets).forEach((m) => damage(m, P.SPIKE_DMG, { fx: 'spikeHit' }));
-  player.vy = -P.SPIKE_RISE_V; player.liftT = P.SPIKE_RISE_T; // a steady push up (see update)
+  // The launch is a fixed lift off the floor, not a stack on top of a jump:
+  // cast on the way up, you keep whatever the jump has already given you.
+  const floor = game.floor.platforms[0].y - player.h;
+  const gained = Math.max(0, floor - (player.y + player.h));
+  player.vy = -Math.max(0, P.SPIKE_RISE_V - gained * 4);
+  player.liftT = P.SPIKE_RISE_T * (1 - Math.min(1, gained / P.SPIKE_LIFT_H));
   player.onGround = false;
   // the launch opens the link window, so Air Dive (Q in the air) can start on the way up
   openLink('combo', linkWindow('E'));

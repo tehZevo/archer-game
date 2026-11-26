@@ -2954,5 +2954,32 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('font.png is one 5x7 cell per character', u32(16) === [...FONT_CHARS].length * 5 && u32(20) === 7, `${u32(16)}x${u32(20)}`);
 }
 
+{
+  // Spike Lift off a jump: the tornado's launch is a lift off the floor, so an
+  // early cast doesn't stack its full height on top of the jump's.
+  arena(20); player.ranks.E = 1;
+  const g = ground().y - player.h;
+  const peak = (n: number) => { let best = g; for (let i = 0; i < n; i++) { step(1); best = Math.min(best, player.y); } return g - best; };
+  tap('e'); const flat = peak(40);
+  check('Spike Lift from the floor rises about its own height', flat > 35 && flat < 48, `${flat.toFixed(1)}px`);
+  tap('c'); step(1); tap('e'); step(1);
+  check('...and cast a frame into a jump the launch is scaled to the floor', player.liftT < P.SPIKE_RISE_T,
+    `liftT ${player.liftT.toFixed(2)} of ${P.SPIKE_RISE_T}`);
+  const linked = peak(40);
+  check('...so it does not stack on the jump', linked < flat, `${linked.toFixed(1)}px vs ${flat.toFixed(1)}px`);
+}
+{
+  // Bosses turn to face you at the same pace as the regular enemies (CHASE_TURN),
+  // so they don't snap-rotate the instant you get past them.
+  arena(20);
+  const boss = dummy(100); boss.boss = { act: 'walk', t: 0, cd: 99, air: false }; boss.dir = 1; boss.spd = 40;
+  player.x = 60; // behind it: it wants to face left
+  step(1);
+  check('a boss starts its turn facing the old way', boss.dir === 1, `dir ${boss.dir}`);
+  step(6); // 0.2s in: still turning
+  check('...and turns over the regular enemies\' beat, not at once', boss.dir === 1 && boss.vx === 0, `dir ${boss.dir} vx ${boss.vx.toFixed(0)}`);
+  step(4); // past CHASE_TURN
+  check('...and completes the turn', boss.dir === -1, `dir ${boss.dir}`);
+}
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
