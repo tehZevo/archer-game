@@ -9,6 +9,8 @@ import { gearDrops } from './gear';
 import { drops, FLY_T, flying, npcNear, RESPEC_PRICES, shop, shopStock, TRAINER_ITEMS, TRAINER_SLOTS, trainer, wallet } from './economy';
 import { board, boardRows, isDone, QUEST_MAX, quests } from './quests';
 import type { Npc } from './types';
+import { art } from './artsheets';
+import { npcFrame } from './npcart';
 
 /* Coins, town NPCs and the shop window (drawing only; see economy.ts). */
 
@@ -42,99 +44,6 @@ function pile(px: number, py: number, v: number): void {
   }
 }
 
-/* the shopkeeper: hat, face, apron (12 x 22) */
-const PAL: Record<string, string> = { o: '#0d1424', h: '#7a4bb8', H: '#5a3590', s: '#f2d0a9', e: '#0d1424', c: '#3f9fdc', a: '#f4efe2', b: '#7a5232', m: '#2f8f6f', w: '#9a6a3a', W: '#5e3b1f', p: '#efe6c8', r: '#e05a5a', i: '#7d735c' };
-const KEEPER = [
-  '....oooo....',
-  '...ohhhho...',
-  '..ohhhhhho..',
-  '.oHHHHHHHHo.',
-  '..ossssso...',
-  '..osesseso..',
-  '..ossssso...',
-  '...osssso...',
-  '..occccco...',
-  '.occaaaacco.',
-  '.ocaaaaaaco.',
-  '.ocaaaaaaco.',
-  '.ocaaaaaaco.',
-  '.ocaaaaaaco.',
-  '.osaaaaaaso.',
-  '..oaaaaaao..',
-  '..occccco...',
-  '..occ..cco..',
-  '..occ..cco..',
-  '..obb..bbo..',
-  '.obbb..bbbo.',
-  '............',
-];
-let keeper: HTMLCanvasElement | null = null;
-
-/** Bake a 12-wide pixel grid (one PAL letter per pixel, `pal` overriding). */
-function bakeGrid(rows: readonly string[], pal: Record<string, string> = {}): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = 12; c.height = rows.length;
-  const x = c.getContext('2d') as CanvasRenderingContext2D;
-  rows.forEach((row, gy) => [...row].forEach((ch, gx) => {
-    const col = pal[ch] ?? PAL[ch];
-    if (col) { x.fillStyle = col; x.fillRect(gx, gy, 1, 1); }
-  }));
-  return c;
-}
-
-/** The stylist: the shopkeeper's build in a pink hat and a violet apron. */
-const STYLIST_PAL = { h: '#f29ac0', H: '#c46a92', a: '#b48ae6', c: '#5a3f8a' };
-let stylistSprite: HTMLCanvasElement | null = null;
-
-// the trainer: same build, a plain green tunic
-const TRAINER = [
-  '....oooo....',
-  '...ohhhho...',
-  '..ohhhhhho..',
-  '.oHHHHHHHHo.',
-  '..ossssso...',
-  '..osesseso..',
-  '..ossssso...',
-  '...osssso...',
-  '..occccco...',
-  '.ocmmmmmmco.',
-  '.ocmmmmmmco.',
-  '.ocmmmmmmco.',
-  '.ocmmmmmmco.',
-  '.osmmmmmmso.',
-  '..ommmmmmo..',
-  '..occccco...',
-  '..occ..cco..',
-  '..occ..cco..',
-  '..obb..bbo..',
-  '.obbb..bbbo.',
-  '............',
-];
-let trainerSprite: HTMLCanvasElement | null = null;
-
-/* the quest board: a wooden notice board on two posts, notes pinned up (12 x 18) */
-const BOARD = [
-  'WWWWWWWWWWWW',
-  'WwwwwwwwwwwW',
-  'WwrppwwrppwW',
-  'WwpiiwwpiiwW',
-  'WwppiwwpppwW',
-  'WwpiiwwpiiwW',
-  'WwwwwrppwwwW',
-  'WwwwwpiiwwwW',
-  'WwwwwpppwwwW',
-  'WwwwwwwwwwwW',
-  'WWWWWWWWWWWW',
-  '.WW......WW.',
-  '.WW......WW.',
-  '.WW......WW.',
-  '.WW......WW.',
-  '.WW......WW.',
-  '.WW......WW.',
-  'WWWW....WWWW',
-];
-let boardSprite: HTMLCanvasElement | null = null;
-
 /** Gear lying on the floor: a small crate-coloured tile with its name above
  *  it, blinking out the way a coin pile does. */
 export function drawGearDrops(): void {
@@ -157,13 +66,12 @@ export function drawNpcs(): void {
   for (const n of game.floor.npcs ?? []) drawNpc(n, n === near);
 }
 
+/** Town NPCs (see npcart.ts): idling, and waving at you when you can talk
+ *  to them; the quest board just stands there. */
 function drawNpc(n: Npc, near: boolean): void {
-  const sprite = n.kind === 'shop' ? (keeper ??= bakeGrid(KEEPER))
-    : n.kind === 'stylist' ? (stylistSprite ??= bakeGrid(KEEPER, STYLIST_PAL))
-    : n.kind === 'board' ? (boardSprite ??= bakeGrid(BOARD))
-    : (trainerSprite ??= bakeGrid(TRAINER));
-  const bob = n.kind === 'board' ? 0 : Math.round(Math.sin(performance.now() / 500) * 0.6);
-  ctx.drawImage(sprite, Math.round(n.x - 6), Math.round(n.y - sprite.height + 1 + bob));
+  const sprite = n.kind === 'board' ? art('npc/board')
+    : art(`npc/${n.kind}/${npcFrame(performance.now() / 1000, near, (n.x * 0.37) % 4)}`);
+  ctx.drawImage(sprite, Math.round(n.x - sprite.width / 2), Math.round(n.y - sprite.height + 1));
   labelShadow(ctx);
   text(ctx, near ? `UP: ${n.name}` : n.name, Math.round(n.x), Math.round(n.y - sprite.height - 8), 1, near ? GOLD : '#e6d6ff', 'center');
   labelShadow(ctx, false);

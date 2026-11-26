@@ -3,6 +3,7 @@ import { DECOR_SIZE, paintDecor, TOWN_PALS } from './towndecor';
 import { PROP_H, PROP_W, PROPS } from './props';
 import { canvasGrid, fillRect, flipGrid, gridCanvas, newGrid, type Grid } from './grid';
 import { portalGrid } from './sprites';
+import { boardGrid, NPC_FRAMES, npcGrid, type NpcLook } from './npcart';
 import { BAKED_ART } from './artbaked';
 import type { DecorKind } from './types';
 
@@ -13,6 +14,7 @@ import type { DecorKind } from './types';
      decor/<kind>/<palette>   town decor in each town palette (towndecor.ts)
      backdrop/<area>/far|mid  an area's two parallax layers (backdrop.ts)
      portal                   the warp pad
+     npc/<kind>/<frame>       town NPCs (npcart.ts), and npc/board
    baked from those painters by `npm run bake`. art(key) is the loaded
    PNG, or the painter's output until it has loaded.
    ============================================================ */
@@ -29,6 +31,9 @@ function paint(w: number, h: number, draw: (p: (x: number, y: number, col: strin
 /** Every piece of scenery's painter, by key. */
 export const ART_GEN: Record<string, () => Grid> = {
   portal: portalGrid,
+  'npc/board': boardGrid,
+  ...Object.fromEntries((['shop', 'stylist', 'trainer'] as NpcLook[]).flatMap((k) =>
+    Array.from({ length: NPC_FRAMES }, (_, f) => [`npc/${k}/${f}`, () => npcGrid(k, f)]))),
   ...Object.fromEntries(Object.entries(PROPS).flatMap(([area, ps]) =>
     ps.map((p, i) => [`prop/${area}/${i}`, () => paint(PROP_W, PROP_H, p)]))),
   ...Object.fromEntries(DECOR_KINDS.flatMap((kind) => TOWN_PALS.map((pal, i) =>
