@@ -52,9 +52,9 @@ export const P = {
   BLITZ_DIST: 96,      // px the blitz travels
   // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
-  DIVE_VX: 260,        // px/s forward
-  DIVE_VY: 420,        // px/s down
-  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll
+  DIVE_VX: 150,        // px/s forward (45°: equal to DIVE_VY, so the plunge is diagonal)
+  DIVE_VY: 150,        // px/s down (45°: equal to DIVE_VX)
+  DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll (the two together carry ~64px, like Rush Toss)
   DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's)...
   DIVE_ROLL_DIST: 64,  // ...px it travels at most...
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
@@ -121,33 +121,33 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.2, delay: 0.4, mp1: 2, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },
   'ground-q': { key: 'ground-q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
-       cd: 0, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,
+       cd: 0, use: 0.6, delay: 0.35, mp1: 20, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
   'ground-w': { key: 'ground-w', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
-       cd: 0, use: 0.2, delay: 0.6, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
+       cd: 0, use: 0.2, delay: 0.6, mp1: 25, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
   'ground-e': { key: 'ground-e', linksInto: [...LAUNCHER_LINKS, 'air-e'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
-       cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
+       cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 120, dmg1: 400, hits1: 2, targets1: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows and unlock levels, each with
   // no cooldown (use time only) and chaining into its ground form.
   'air-q': { key: 'air-q', linksInto: [...LAUNCHER_LINKS, 'd', 'ground-e'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30,
-       cd: 0, use: 1.1, mp1: 4, dmg1: 400, hits1: 1, requires: 'ground-q',
+       cd: 0, use: 1.1, mp1: 50, dmg1: 400, hits1: 1, requires: 'ground-q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   'air-w': { key: 'air-w', linksInto: ['d', 'air-e'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
-       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
+       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 140, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
        desc: 'Mid-air W: a 360-degree sweep around you' },
   'air-e': { key: 'air-e', linksInto: [...LAUNCHER_LINKS, 'd'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 7, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
+       cd: 0, use: 0.2, delay: 0.4, mp1: 60, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,
-       cd: 10.0, use: 0.7, mp1: 14, dmg1: 200, hits1: 8, targets1: 8,
+       cd: 10.0, use: 0.7, mp1: 200, dmg1: 200, hits1: 8, targets1: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   eb: { key: 'eb', linksInto: LAUNCHER_LINKS, upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   ab: { key: 'ab', linksInto: ['air-w', 'r', 'z', 'ground-q'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
+       cd: 0, use: 0.2, delay: 0.4, mp1: 70, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
        desc: 'After Rush Toss: leap up to launched enemies' },
   // Fired by holding Z: after a Double Shot / Bolt Flurry, keep Z held to stream
   // arrows into the closest enemy ahead (see rapid.ts). mp1 is per shot.
@@ -155,7 +155,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.1, mp1: 1, dmg1: 110, hits1: 2, targets1: 1,
        desc: 'Hold Z after a shot: a stream of arrows into the closest enemy, and you can walk while firing' },
   s: { key: 's', upgrades: 'z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
-       cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
+       cd: 0, use: 0.6, mp1: 80, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Passives: no key; their effect is `bonus` (0 until learned).
   es: { key: 'es', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 30, passive: true,
@@ -308,4 +308,5 @@ export const FX_DUR: Record<Fx['type'], number> = {
   volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
   tossTrail: 0.3, blitzTrail: 0.35,
   galeMuzzle: 0.15, galeShot: 0.12, galeHit: 0.24,
+  assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.4, assaultHit: 0.24,
 };

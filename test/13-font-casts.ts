@@ -125,7 +125,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...and is still in the coil a frame in', !player.diving && player.vx === 0,
     `diving ${player.diving} vx ${player.vx.toFixed(0)}`);
   step(2);
-  check('...then plunges down and forward', player.diving && player.vx > 200 && player.vy > 300,
+  check('...then plunges down and forward at 45°', player.diving && player.vx > 100 && player.vy > 100,
     `diving ${player.diving} vx ${player.vx.toFixed(0)} vy ${player.vy.toFixed(0)}`);
 }
 {

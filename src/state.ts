@@ -112,9 +112,9 @@ export { mobLevel } from './world';
 export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   // Mobs scale with their floor's level: higher floors hit harder and take longer to bring down.
   const level = mobLevel(game.floor.place);
-  const scale = 1 + (level - 1) * 0.12;
+  const scale = 1 + (level - 1) * 6.1;
   const e = elite ? ELITE : { SCALE: 1, HP: 1, DMG: 1, EXP: 1 };
-  const hp = Math.round(type.hp * scale * e.HP);
+  const hp = Math.round(type.hp * 1.5 * scale * e.HP);
   const w = Math.round(type.w * e.SCALE), h = Math.round(type.h * e.SCALE);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
@@ -123,7 +123,7 @@ export function spawnMob(s: Spawn, type: MobType, elite = false): void {
     x: spot.x, y: spot.y - h, w, h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: Math.round(type.spd * P.MOB_SPEED),
-    dmg: Math.round(type.dmg * (1 + (level - 1) * 0.09) * e.DMG), // ...and hits you 1.5x as hard per level
+    dmg: Math.round(type.dmg * 3.5 * (1 + (level - 1) * 3.2) * e.DMG), // ...and hits you far harder per level
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level) * e.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
