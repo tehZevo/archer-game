@@ -123,9 +123,11 @@ function bufferHeld(): boolean {
   if (player.cast === 'rush' && player.castT > 0) return true;
   if (queued === 'Z' && player.rush.t > 0) return true;
   if (assaultLeaping()) return true;
-  // the animation's recovery holds it, unless a buffering link window
-  // (Q's, a blitz's self-link, the Assault's spin) cuts it short
-  return player.casting.recoverT > 0 && !bufferWindowOpen();
+  // the current skill's animation or its recovery holds it, unless a
+  // buffering link window (Q's, a blitz's self-link, the Assault's spin)
+  // cuts it short
+  const busy = player.castT > 0 || player.casting.recoverT > 0;
+  return busy && !bufferWindowOpen();
 }
 
 /** Fire the buffered skill on the first free frame. It aims where you're

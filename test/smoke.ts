@@ -72,7 +72,7 @@ check('Glide cd is 0.3s', Math.abs(player.cd.D - 0.3) < 0.01);
 check('Glide launches forward > up', Math.abs(player.vx) > Math.abs(player.vy));
 check('Glide consumes MP', player.mp < player.mpMax);
 setKey('d', false);
-step(1); player.cd.D = 0;
+step(6); player.cd.D = 0; // let the 0.18s glide animation finish
 setKey('d', true);
 step(1);
 check('Glide can be used again mid-air', player.cd.D > 0.25);

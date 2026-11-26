@@ -9,7 +9,8 @@ import type { LinkKind, SkillKey } from './types';
    through these helpers, so "which skill opens what" reads at the cast
    (openLink) and "what fires out of it" at the gate (linkOpen).
 
-     combo    Sky Toss / Air Dive / launchers -> the link skills (W, AB, Z chain...)
+     combo    Sky Toss / Air Dive / launchers -> the link skills (W, AB, Z chain, and
+                W in the air: the Midair Spin)
      assault  Sky Assault's hover ending      -> Tempest (R)
      blitz    Electric Blitz                  -> the next blitz
      glide    the aerial skills               -> Glide (D)
@@ -29,11 +30,13 @@ export const LINKS_INTO: Partial<Record<SkillKey, LinkKind>> = {
   R: 'assault', EB: 'blitz', D: 'glide', PV: 'volley', MS: 'spin',
 };
 
-/** Whether this cast is a link: a link skill or the Q slot inside the combo
- *  window, or a skill whose own window is open. */
+/** Whether this cast is a link: a link skill, the Q slot (or W's air form,
+ *  the Midair Spin) inside the combo window, or a skill whose own window is
+ *  open. */
 export const linksIn = (kind: SkillKey, key: SkillKey, isLinkSkill: boolean): boolean => {
   const own = LINKS_INTO[kind];
-  return isLinkSkill || (key === 'Q' && linkOpen('combo')) || (own !== undefined && linkOpen(own));
+  const ridesCombo = (key === 'Q' || (key === 'W' && kind === 'MS')) && linkOpen('combo');
+  return isLinkSkill || ridesCombo || (own !== undefined && linkOpen(own));
 };
 
 /** Open (or re-open) a window for s seconds. */

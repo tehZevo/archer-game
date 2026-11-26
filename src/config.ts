@@ -25,7 +25,7 @@ export const P = {
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
-  BARRAGE_HANG: 0.8,   // s Sky Assault hovers (striking) before falling (longer so the strike sequence reads)
+  BARRAGE_HANG: 0.3,   // s Sky Assault hovers (striking) before falling
   ASSAULT_LEAP: 0.12,  // s the assault's opening leap: a W pressed in it is buffered, after it the sweep fires out of the hover
   ASSAULT_SPIN_LINK: 0.35, // s of extra link window Sky Assault keeps open for Midair Spin after the hover
   BARRAGE_UP: 43,      // px Sky Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
@@ -46,7 +46,7 @@ export const P = {
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
   BLITZ_CHARGE_T: 10,  // s to recharge one charge (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
-  BLITZ_LINK: 0.8,     // s the self-link window stays open after a blitz (covers its use time + delay)
+  LINK_BUFFER: 0.5,   // s of free time a link window stays open past the animation (see linkWindow)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Sky Toss)
   BLITZ_DIST: 96,      // px the blitz travels
   // Air Dive: Q's air form. A diagonal plunge that carries enemies with you.
@@ -68,8 +68,7 @@ export const P = {
   SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
-  GLIDE_LINK: 0.6,     // s the glide-link window an aerial skill opens (covers its use time + delay)
-  SPIN_VOLLEY: 0.6,    // s the window a Midair Spin opens for a linked Plunging Volley
+
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
