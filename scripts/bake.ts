@@ -4,6 +4,8 @@ import { MOB_GEN } from '../src/sprites';
 import { newGrid, packStrip, type Grid } from '../src/grid';
 import { TILESETS } from '../src/tileset';
 import { ART_GEN } from '../src/artsheets';
+import { archerShape, sheetRows } from '../src/archer';
+import { LOOK_COUNTS } from '../src/look';
 import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
 import { encodePng } from './png';
 import { slug } from './slug';
@@ -104,6 +106,35 @@ ${lines.join('\n')}
 
 export const BAKED_ART: Record<string, string> = {
 ${lines.join('\n')}
+};
+`);
+}
+
+/* ---- the archer: one sheet per hair style x body type, a row per pose ---- */
+{
+  mkdirSync('assets/archer', { recursive: true });
+  const imports: string[] = [], lines: string[] = [];
+  let rows = '';
+  for (let style = 0; style < LOOK_COUNTS.style; style++) for (let body = 0; body < LOOK_COUNTS.body; body++) {
+    const shape = archerShape(style, body), r = sheetRows(shape);
+    rows = JSON.stringify(r);
+    const W = Math.max(...Object.values(r).map((x) => x.w * x.n)), H = Object.values(r).reduce((a, x) => a + x.h, 0);
+    const sheet = newGrid(W, H);
+    for (const [p, row] of Object.entries(r)) shape[p as keyof typeof shape].forEach((g, f) => {
+      for (let y = 0; y < g.h; y++) sheet.px.set(g.px.subarray(y * g.w * 4, (y + 1) * g.w * 4), ((row.y + y) * W + f * row.w) * 4);
+    });
+    writeFileSync(`assets/archer/${style}-${body}.png`, encodePng(sheet));
+    imports.push(`import a${style}_${body} from '../assets/archer/${style}-${body}.png';`);
+    lines.push(`    '${style}-${body}': a${style}_${body},`);
+  }
+  writeFileSync('src/archerbaked.ts', `${header}${imports.join('\n')}
+import type { ArcherPose, SheetRow } from './archer';
+
+export const BAKED_ARCHER: { sheets: Record<string, string>; rows: Record<ArcherPose, SheetRow> } = {
+  sheets: {
+${lines.join('\n')}
+  },
+  rows: ${rows},
 };
 `);
 }
