@@ -88,6 +88,8 @@ const KEYS = ['left', 'right', 'up', 'down', 'c', 'd', 'z', 'q', 'w', 'e', 'r', 
 const release = (): void => { KEYS.forEach((k) => setKey(k, false)); clearPressed(); };
 const step = (n = 1): void => { for (let i = 0; i < n; i++) { update(P.STEP); clearPressed(); } };
 const tap = (k: string): void => { setKey(k, false); setKey(k, true); step(1); setKey(k, false); };
+/** Let a Piercing Leap's rise-and-hold play out and land (bounded at 3s). */
+const landLeap = (): void => { for (let i = 0; i < 90 && (player.liftT > 0 || !player.onGround); i++) step(1); };
 const ground = (): Platform => game.floor.platforms[0];
 
 /** Fresh Beach 1 (stage 2; stage 1 is the Harbor town) with no mobs, the player standing at x on the ground. */
@@ -729,7 +731,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   step(2);
   check('Piercing Leap is on a long cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
   // the air form, once you are back on your feet with the cooldown cleared
-  step(40); player.cd.E = 0;
+  landLeap(); player.cd.E = 0;
   const under = dummy(100), beside = dummy(170);
   tap('c'); step(8);
   const yTop = player.y; player.vx = 40; tap('e'); step(1);
@@ -756,7 +758,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   dummy(150);
   tap('e'); step(2);
   check('Piercing Leap starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
-  step(20); // let the lift land
+  landLeap(); // let the lift's hover play out and land
   player.cd.R = 5; // so the Tempest shave is visible too
   tap('q'); step(14); // the rush ends, the link window is live
   const cd1 = player.cd.E, cdR1 = player.cd.R;
@@ -2966,10 +2968,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('e'); const flat = peak(40);
   check('Piercing Leap from the floor rises about its own height', flat > 35 && flat < 48, `${flat.toFixed(1)}px`);
   tap('c'); step(1); tap('e'); step(1);
-  check('...and cast a frame into a jump the launch is scaled to the floor', player.liftT < P.SPIKE_RISE_T,
-    `liftT ${player.liftT.toFixed(2)} of ${P.SPIKE_RISE_T}`);
+  check('...and cast a frame into a jump the target is still measured off the floor',
+    Math.abs(g + player.h - P.SPIKE_LIFT_H - player.liftTop) < 8, `top ${(g + player.h - player.liftTop).toFixed(1)}px up`);
   const linked = peak(40);
-  check('...so it does not stack on the jump', linked < flat, `${linked.toFixed(1)}px vs ${flat.toFixed(1)}px`);
+  check('...so it does not stack on the jump', linked < flat + 4, `${linked.toFixed(1)}px vs ${flat.toFixed(1)}px`);
+}
+{
+  // Piercing Leap rises to its height and holds there for the whole cast,
+  // rather than falling back down while you're still committed to it.
+  arena(20); player.ranks.E = 1;
+  const g = ground().y - player.h;
+  tap('e');
+  step(Math.ceil((P.SPIKE_LIFT_H / P.SPIKE_RISE_V + 0.1) / P.STEP)); // the rise
+  const top = g - player.y;
+  check('Piercing Leap rises to its lift height', Math.abs(top - P.SPIKE_LIFT_H) < 3, `${top.toFixed(1)}px`);
+  const until = useTime('E') - P.SPIKE_LIFT_H / P.SPIKE_RISE_V - 0.3;
+  step(Math.floor(until / P.STEP));
+  check('...and holds there until the cast is nearly over', Math.abs(g - player.y - top) < 1 && player.casting.useT > 0,
+    `${(g - player.y).toFixed(1)}px useT ${player.casting.useT.toFixed(2)}`);
+  step(Math.ceil(0.4 / P.STEP));
+  check('...then falls once the cast ends', g - player.y < top - 2, `${(g - player.y).toFixed(1)}px`);
 }
 {
   // Bosses turn to face you at the same pace as the regular enemies (CHASE_TURN),

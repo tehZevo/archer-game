@@ -8,7 +8,7 @@ import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover, openLink } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
-import { linkWindow } from './castrules';
+import { linkWindow, useTime } from './castrules';
 import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
 
 /** s of the jump's takeoff pose (Jump is movement, with no use time). */
@@ -156,8 +156,13 @@ function spikeLift(r: SkillRank): void {
   const floor = game.floor.platforms[0].y - player.h;
   const gained = Math.max(0, floor - (player.y + player.h));
   player.vx = 0; // you plant in place and rise straight up, no run momentum carried
-  player.vy = -Math.max(0, P.SPIKE_RISE_V - gained * 4);
-  player.liftT = P.SPIKE_RISE_T * (1 - Math.min(1, gained / P.SPIKE_LIFT_H));
+  // Rise to SPIKE_LIFT_H off the floor (never below where you are), then hold
+  // there for the rest of the cast, so the hover lasts as long as the
+  // commitment does. move.skillForces drives it; any other skill ends it.
+  const feet = player.y + player.h;
+  player.liftTop = Math.min(feet, feet + gained - P.SPIKE_LIFT_H);
+  player.liftT = useTime('E');
+  player.vy = 0;
   player.onGround = false;
   // the launch opens the link window, so Meteor Dive (Q in the air) can start on the way up
   openLink('combo', linkWindow('E'));

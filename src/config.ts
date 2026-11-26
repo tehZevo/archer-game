@@ -61,9 +61,8 @@ export const P = {
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
   SPIKE_R: 56,         // px radius of the burst around you
-  SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed...
-  SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
-  SPIKE_LIFT_H: 40,    // px the tornado lifts you, from wherever you are (see spikeLift)
+  SPIKE_RISE_V: 118,   // px/s: the spikes push you up at this steady speed (slower than a jump's pop)...
+  SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
   SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Downpour link opens (the tail of the longer sweep pose)
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)

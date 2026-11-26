@@ -270,7 +270,10 @@ export interface Player extends Body {
   /** Rush Toss / Electric Blitz slide (see the rush in skills.ts). */
   rush: RushState;
   /** Piercing Leap: seconds left of the steady push up. */
+  /** s left of a Piercing Leap's rise-and-hold (0 when none). */
   liftT: number;
+  /** Feet y the Piercing Leap rises to and holds at. */
+  liftTop: number;
   /** How the current cast draws you, over its usual pose: whirling
    *  round (Cyclone Sweep) or gone (Tempest). Cleared by the next cast. */
   skillPose?: 'spin' | 'vanish' | null;

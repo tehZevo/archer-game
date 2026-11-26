@@ -157,8 +157,15 @@ function skillForces(dt: number): void {
     const feet = player.y + player.h, nx = player.x + player.vx * dt;
     if (!surfaceBetween(nx, 1, feet - 12, feet + 12)) player.vx = 0;
   }
-  // Piercing Leap: the spikes push you up steadily, against gravity
-  if (player.liftT > 0) { player.liftT -= dt; player.vy = -P.SPIKE_RISE_V - P.GRAVITY * dt; }
+  // Piercing Leap: the spikes push you up steadily, against gravity, until you
+  // reach the top; then you hold there (vy cancels gravity) until the cast ends
+  if (player.liftT > 0) {
+    player.liftT -= dt;
+    const left = Math.max(0, player.y + player.h - player.liftTop);
+    // half a step of gravity: integrate() moves on the average of the pre- and
+    // post-gravity speeds, so this moves you exactly `rise` px/s this step
+    player.vy = -Math.min(P.SPIKE_RISE_V, left / dt) - P.GRAVITY * dt / 2;
+  }
   // Cyclone Sweep: the sweep holds you steady, so you don't fall straight through the animation
   if (player.cast === 'shoot' && player.skillPose === 'spin' && !player.onGround) player.vy = 0;
 

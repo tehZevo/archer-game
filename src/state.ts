@@ -46,7 +46,7 @@ export const player: Player = {
   casting: { useT: 0, recoverT: 0, queued: null, freeze: false, key: null },
   rush: { t: 0, dist: 0, goal: P.RUSH_DIST, carry: [] },
   hang: { t: 0, hits: 0, hitT: 0, dmg: 0, targets: 0 },
-  liftT: 0,
+  liftT: 0, liftTop: 0,
   regenT: 0,
   combatT: 0,
   hp: start.hpMax, hpMax: start.hpMax,
