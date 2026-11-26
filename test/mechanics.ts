@@ -784,14 +784,15 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   tap('e'); step(2);
   check('Piercing Leap starts on its full cooldown', player.cd.E > 4, `cd ${player.cd.E.toFixed(1)}`);
   landLeap(); // let the lift's hover play out and land
-  player.cd.R = 5; // so the Tempest shave is visible too
+  player.cd.R = 5; player.cd['W.air'] = 3; // so the Tempest and Cyclone Sweep shaves are visible too
   tap('q'); step(14); // the rush ends, the link window is live
-  const cd1 = player.cd.E, cdR1 = player.cd.R;
+  const cd1 = player.cd.E, cdR1 = player.cd.R, cdW1 = player.cd['W.air'];
   tap('w'); step(4); // the queued volley fires as the rush clears
   check('the linked Rising Arrows fires', player.cast === 'shoot' && player.links.combo <= 0,
     `cast ${player.cast} combo ${player.links.combo.toFixed(2)}`);
   check('the link refunds 1s off Piercing Leap', Math.abs(player.cd.E - (cd1 - 1 - 4 / 30)) < 0.05,
     `cd ${player.cd.E.toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
+  check('...and 1s off Cyclone Sweep', player.cd['W.air'] < cdW1 - 0.9 && player.cd['W.air'] > cdW1 - 1.3, `cd ${player.cd['W.air'].toFixed(2)} of ${cdW1.toFixed(2)}`);
   check('the same link also shaves Tempest', player.cd.R < cdR1 - 0.9 && player.cd.R > cdR1 - 1.3, `cd.R ${player.cd.R.toFixed(2)} of ${cdR1.toFixed(2)}`);
 }
 {
@@ -2576,12 +2577,19 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('the volley links into Glide', player.cast === 'jump' && player.links.glide <= 0, `cast ${player.cast} t ${player.links.glide.toFixed(2)}`);
 }
 {
+  // Downpour opens its link window on a miss too: linking needs no hit
+  arena(20); player.ranks.E = 1; player.ranks.PV = 1;
+  tap('c'); step(8);
+  tap('e');
+  check('a whiffed Downpour still opens its link window', game.mobs.length === 0 && player.links.combo > 0, `t ${player.links.combo.toFixed(2)}`);
+}
+{
   // ...and so does the Cyclone Sweep
   arena(20); player.ranks.D = 1; player.ranks.W = 1; player.ranks.MS = 1;
   dummy(150);
   tap('c'); step(8);
   tap('w'); step(13); // the sweep plays, then its window opens
-  check('Cyclone Sweep opens the glide window', player.links.glide > 0, `t ${player.links.glide.toFixed(2)}`);
+  check('Cyclone Sweep opens its link window', player.links.sweep > 0, `t ${player.links.sweep.toFixed(2)}`);
   tap('d');
   check('the spin links into Glide', player.cast === 'jump' && player.casting.useT > 0, `cast ${player.cast} cd ${player.cd.D.toFixed(2)}`);
 }
@@ -2677,10 +2685,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   dummy(100);
   tap('c'); step(8);
   tap('w'); step(13); // the sweep plays, then its window opens
-  check('the spin opens the volley window', player.links.volley > 0 && player.casting.useT > 0, `t ${player.links.volley.toFixed(2)}`);
+  check('the spin opens its link window', player.links.sweep > 0 && player.casting.useT > 0, `t ${player.links.sweep.toFixed(2)}`);
   tap('e');
-  check('the spin links into Downpour', player.cast === 'barrage' && player.links.volley <= 0,
-    `cast ${player.cast} t ${player.links.volley.toFixed(2)}`);
+  check('the spin links into Downpour', player.cast === 'barrage' && player.links.sweep <= 0,
+    `cast ${player.cast} t ${player.links.sweep.toFixed(2)}`);
 }
 {
   // Meteor Dive links into the equipped ground rush, Skyfall-style: the dive's
@@ -3116,8 +3124,8 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('c'); step(8);
   tap('w');
   check('the sweep hits on the cast', player.cast === 'shoot' && game.mobs[0].hp < 1e6, `hp ${game.mobs[0].hp}`);
-  check('...and its link windows start shut', player.links.glide === 0 && player.links.volley === 0,
-    `glide ${player.links.glide.toFixed(2)} volley ${player.links.volley.toFixed(2)}`);
+  check('...and its link windows start shut', player.links.glide === 0 && player.links.sweep === 0,
+    `glide ${player.links.glide.toFixed(2)} sweep ${player.links.sweep.toFixed(2)}`);
   check('the sweep poses for its whole animation', player.cast === 'shoot' && player.castT > useTime('MS') - 0.4,
     `cast ${player.cast} castT ${player.castT.toFixed(2)} of ${useTime('MS')}`);
   tap('d');

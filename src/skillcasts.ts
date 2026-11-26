@@ -167,8 +167,8 @@ function plungingVolley(r: SkillRank): void {
   eachShot(shotCount(r), 0.08, (more) => {
     alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more }));
   });
-  // a hit opens the link window, so Cyclone Sweep follows the rain at once
-  if (tg.length) openLink('combo', linkWindow('PV'));
+  // the rain opens the link window, hit or miss, so Cyclone Sweep follows it at once
+  openLink('combo', linkWindow('PV'));
   openLink('glide', linkWindow('PV')); // and into a Glide
 }
 
@@ -208,8 +208,7 @@ function midairSpin(r: SkillRank): void {
   // is buffered and fires as the window opens, so the chain reads as
   // spin-then-hit rather than both at once. (SPIN_LINK_DELAY.)
   later(P.SPIN_LINK_DELAY, () => {
-    openLink('glide', linkWindow('MS')); // the spin links into a Glide...
-    openLink('volley', linkWindow('MS')); // ...and into a Downpour
+    openLink('sweep', linkWindow('MS')); // the spin links into a Glide or a Downpour, off one clock
   });
 }
 
