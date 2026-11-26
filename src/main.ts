@@ -12,6 +12,7 @@ import * as boost from './boost';
 import { initMenu, menu } from './menu';
 import { bindMenu } from './menudom';
 import { bindChat } from './chatdom';
+import { loadFxSheets } from './fxsheets';
 import { loadLayout } from './input';
 import { hasSave, load, save, startRun, tickSave } from './save';
 const { sync } = net;
@@ -68,6 +69,7 @@ bindChat(cv);
 void loadLayout(); // key labels follow the keyboard layout
 // the lobby only shares channel head-counts, so the menu can show them
 net.joinLobby();
+loadFxSheets(); // skill effects, baked to PNG (see fxsheets.ts)
 // a background tab has no frames: keep publishing our (still) position anyway
 keepAliveWhileHidden(sync);
 requestAnimationFrame(frame);

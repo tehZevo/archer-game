@@ -1,3 +1,4 @@
+import { flipGrid, newGrid, type Grid } from './grid';
 /**
  * The light primitives skill effects are painted with (fxsprites.ts holds the
  * effects themselves): a Light accumulates rays, rings, discs and sparkles
@@ -101,23 +102,29 @@ export class Light {
       }
     }
   }
-  /** Quantize to palette steps and paint into a canvas (optionally mirrored). */
-  bake(flip = false): HTMLCanvasElement {
-    const c = makeCanvas(this.w, this.h), g = c.getContext('2d')!;
+  /** Quantize to palette steps: each layer, in order, painted over the last
+   *  (source-over, as the old canvas bake did). Pure pixels, so it runs headless. */
+  pixels(): Grid {
+    const g = newGrid(this.w, this.h), px = g.px;
     for (const [name, l] of this.layers) {
-      const rp = RAMPS[name];
-      for (let y = 0; y < this.h; y++) for (let x = 0; x < this.w; x++) {
-        const v = l[y * this.w + x];
-        let col: string | null = null;
+      const rp = RAMP_RGBA[name];
+      for (let i = 0; i < l.length; i++) {
+        const v = l[i];
+        let col: number[] | null = null;
         for (const [th, cc] of rp) if (v >= th) col = cc;
         if (!col) continue;
-        g.fillStyle = col;
-        g.fillRect(flip ? this.w - 1 - x : x, y, 1, 1);
+        const o = i * 4, sa = col[3], da = px[o + 3] / 255, oa = sa + da * (1 - sa);
+        for (let k = 0; k < 3; k++) px[o + k] = (col[k] * sa + px[o + k] * da * (1 - sa)) / oa;
+        px[o + 3] = Math.round(oa * 255);
       }
     }
-    return c;
+    return g;
   }
 }
+
+/** The ramps as numbers, [threshold, [r, g, b, a 0..1]]. */
+const RAMP_RGBA = Object.fromEntries(Object.entries(RAMPS).map(([k, rp]) => [k, rp.map(([th, c]) =>
+  [th, c.slice(5, -1).split(',').map(Number)] as [number, number[]])])) as Record<RampName, [number, number[]][]>;
 
 /** Deterministic pseudo-random so the baked frames are stable. */
 export function rng(seed: number): () => number {
@@ -125,18 +132,37 @@ export function rng(seed: number): () => number {
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
 }
 
+/** An effect as the generator makes it: n frames of w x h pixels, facing
+ *  right, with its origin (ox, oy). This is what gets baked to PNG. */
+export interface FxSheet { w: number; h: number; ox: number; oy: number; frames: Grid[] }
+
+/** An effect ready to draw: its frames as canvases, and mirrored for facing left. */
 export interface FxAnim { frames: HTMLCanvasElement[]; flipped: HTMLCanvasElement[]; ox: number; oy: number; }
 
-export function anim(w: number, h: number, ox: number, oy: number, n: number, draw: (L: Light, f: number, n: number) => void, glowAmt = 0.45): FxAnim {
-  const frames: HTMLCanvasElement[] = [], flipped: HTMLCanvasElement[] = [];
+/** Paint n frames of an effect with the light primitives, each glowed and quantized. */
+export function anim(w: number, h: number, ox: number, oy: number, n: number, draw: (L: Light, f: number, n: number) => void, glowAmt = 0.45): FxSheet {
+  const frames: Grid[] = [];
   for (let f = 0; f < n; f++) {
     const L = new Light(w, h);
     draw(L, f, n);
     L.glow(glowAmt);
-    frames.push(L.bake(false)); flipped.push(L.bake(true));
+    frames.push(L.pixels());
   }
-  return { frames, flipped, ox, oy };
+  return { w, h, ox, oy, frames };
 }
+
+/** A grid as a canvas. */
+export function gridCanvas(g: Grid): HTMLCanvasElement {
+  const c = makeCanvas(g.w, g.h), x = c.getContext('2d')!;
+  const img = x.createImageData(g.w, g.h);
+  img.data.set(g.px);
+  x.putImageData(img, 0, 0);
+  return c;
+}
+
+/** A generated sheet, ready to draw (the procedural fallback, see fxsheets.ts). */
+export const sheetAnim = (s: FxSheet): FxAnim =>
+  ({ frames: s.frames.map(gridCanvas), flipped: s.frames.map((g) => gridCanvas(flipGrid(g))), ox: s.ox, oy: s.oy });
 
 /** An arc of a ring from a0 to a1 (any angles, a0 < a1 < a0 + 2pi): the
  *  ring itself only takes -pi..pi, so an arc across pi is drawn in two. */

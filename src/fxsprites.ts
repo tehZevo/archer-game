@@ -1,14 +1,16 @@
 /**
  * Skill effect animations: original pixel art in the style of classic MMOs'
  * glowing skill effects (white-hot core, cyan/teal halo, soft outer glow,
- * drawn additively). Each effect is a short strip of frames rendered once at
- * boot from simple light primitives (rays, rings, discs, sparkles), then
- * quantized to a few palette steps so it stays crisp pixel art.
+ * drawn additively). Each effect is a short strip of frames painted from
+ * simple light primitives (rays, rings, discs, sparkles), then quantized to
+ * a few palette steps so it stays crisp pixel art. These generators are the
+ * authoring source: `npm run bake` writes them to PNG sheets in assets/fx,
+ * which is what the game ships and draws (see fxsheets.ts).
  */
-import { anim, arc, rng, type FxAnim, type Light, type RampName } from './fxlight';
+import { anim, arc, rng, type FxSheet, type Light, type RampName } from './fxlight';
 
 /** Hit: a spiky starburst that collapses into an expanding oval shockwave and sparkle dust. */
-function hitAnim(big: boolean, rp: RampName): FxAnim {
+function hitAnim(big: boolean, rp: RampName): FxSheet {
   const S = big ? 41 : 31, c = S / 2;
   return anim(S, S, c, c, 6, (L, f) => {
     const R = rng(7 + (big ? 100 : 0));
@@ -37,7 +39,7 @@ function hitAnim(big: boolean, rp: RampName): FxAnim {
 }
 
 /** Double Shot muzzle: a bright streak with teal crescents curling round the tip. Faces right. */
-function muzzleAnim(): FxAnim {
+function muzzleAnim(): FxSheet {
   // kept tight to the bow: the origin is the muzzle, everything within ~16px of it
   const W = 22, H = 18, y = H / 2;
   return anim(W, H, 1, y, 6, (L, f) => {
@@ -56,7 +58,7 @@ function muzzleAnim(): FxAnim {
 }
 
 /** Arrow projectile: a long thin glowing streak. Faces right; origin at the tip. */
-function arrowAnim(): FxAnim {
+function arrowAnim(): FxSheet {
   return anim(26, 7, 24, 3.5, 1, (L) => {
     L.line('cyan', 1, 3.5, 24, 3.5, 0.3, 1.4, 1.2);
     L.line('teal', 8, 3.5, 22, 3.5, 0.2, 2.2, 0.55);
@@ -65,7 +67,7 @@ function arrowAnim(): FxAnim {
 
 /** Double Shot tracer: twin streaks whipping out from the bow across
  *  the range. Faces right; origin at the muzzle; stretched to the target. */
-function tracerAnim(): FxAnim {
+function tracerAnim(): FxSheet {
   const W = 64, H = 9, y = 4.5;
   // [tail, head] of each streak per frame, as fractions of W
   const spans: [number, number][] = [[0, 0.45], [0.1, 1], [0.45, 1], [0.75, 1], [0.92, 1]];
@@ -80,7 +82,7 @@ function tracerAnim(): FxAnim {
 /** Piercing Leap: a burst of glowing spikes erupting from the ground on
  *  both sides of you, nearest first, then sinking back with dust at their
  *  bases. Origin at your feet. */
-function spikesAnim(body: RampName = 'purple', core: RampName = 'pink'): FxAnim {
+function spikesAnim(body: RampName = 'purple', core: RampName = 'pink'): FxSheet {
   const R0 = 56, W = R0 * 2 + 10, H = 40, bx = W / 2, by = H - 3;
   // each spike: offset from you, height, lean
   const r = rng(91);
@@ -107,7 +109,7 @@ function spikesAnim(body: RampName = 'purple', core: RampName = 'pink'): FxAnim 
 /** Tempest: a large oval slash cuts all the way round you, then shots fire
  *  from the oval inward at you, one after another round the ring. Origin at
  *  your feet (the oval is centred on your middle). */
-function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxAnim {
+function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxSheet {
   const RX = 78, RY = 30, W = RX * 2 + 12, H = RY * 2 + 12, cx = W / 2, cy = H / 2, by = cy + 12;
   const n = 10, SHOTS = 12, oval = (a: number, k = 1): [number, number] => [cx + Math.cos(a) * RX * k, cy + Math.sin(a) * RY * k];
   return anim(W, H, cx, by, n, (L, f) => {
@@ -145,7 +147,7 @@ function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxAni
 /** Cyclone Sweep: blades of light whirling a full turn round you, each a
  *  crescent with a bright leading edge. Origin at your feet (the whirl is
  *  centred on your middle). */
-function spinAnim(rp: RampName = 'red'): FxAnim {
+function spinAnim(rp: RampName = 'red'): FxSheet {
   const S = 52, c = S / 2, MID = 12;
   return anim(S, S, c, c + MID, 6, (L, f) => {
     const R = rng(71 + f), fade = f < 4 ? 1 : 1 - (f - 3) / 3;
@@ -162,7 +164,7 @@ function spinAnim(rp: RampName = 'red'): FxAnim {
 
 /** Level up: a gold pillar of light at the player's feet with rings and
  *  rising sparkles. Origin at the feet. */
-function levelUpAnim(): FxAnim {
+function levelUpAnim(): FxSheet {
   const W = 44, H = 70, bx = W / 2, by = H - 4;
   return anim(W, H, bx, by, 10, (L, f) => {
     const R = rng(77 + f), rise = Math.min(1, (f + 1) / 3), fade = f < 6 ? 1 : 1 - (f - 5) / 5;
@@ -179,7 +181,7 @@ function levelUpAnim(): FxAnim {
 
 /** Rush Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base.
  *  `hue`/`rim` colour the horn and its wings (the Meteor Dive's landing is yellow). */
-function rushAnim(hue: RampName = 'cyan', rim: RampName = 'teal'): FxAnim {
+function rushAnim(hue: RampName = 'cyan', rim: RampName = 'teal'): FxSheet {
   const W = 30, H = 52, bx = W / 2, by = H - 4;
   return anim(W, H, bx, by, 8, (L, f) => {
     const R = rng(11 + f);
@@ -216,7 +218,7 @@ function rushAnim(hue: RampName = 'cyan', rim: RampName = 'teal'): FxAnim {
 }
 
 /** Skyward Assault strike: a white-blue crescent swoosh that sweeps and thins. Faces right. */
-function swooshAnim(rp: RampName = 'cyan'): FxAnim {
+function swooshAnim(rp: RampName = 'cyan'): FxSheet {
   const W = 30, H = 30, c = W / 2;
   return anim(W, H, c, c, 4, (L, f) => {
     const R = rng(21 + f);
@@ -229,7 +231,7 @@ function swooshAnim(rp: RampName = 'cyan'): FxAnim {
 
 /** Rising Arrows: a volley of yellow-green arrows raining down onto the target,
  *  spiky gold impacts, a flat green crescent swirl and dust. Origin at the base. */
-function rainAnim(): FxAnim {
+function rainAnim(): FxSheet {
   const W = 40, H = 64, bx = W / 2, by = H - 6;
   const cols = [-7, 3, -2, 8, -10, 5]; // streak x offsets
   return anim(W, H, bx, by, 8, (L, f) => {
@@ -273,10 +275,10 @@ function rushStreaks(L: Light, f: number, hue: RampName, rim: RampName, heavy: b
     L.line(hue, x0 - len, y, x0, y, 0.2, heavy ? 1.4 : 1.1, 0.95);
   });
   // the bow wave: a low arc of air pushed ahead of her feet
-  L.ring(rim, AURA_X + 6, AURA_Y - 1, 5 + (f % 2), 3, 1.1, 0.9, -1.4, 0.2);
+  L.ring(rim, AURA_X + 4, AURA_Y - 4, 7 + (f % 2), 6, 1.3, 1.0, -1.5, 0.4);
 }
 
-function tossRushAnim(): FxAnim {
+function tossRushAnim(): FxSheet {
   return anim(AURA_W, AURA_H, AURA_X, AURA_Y, RUSH_AURA_FRAMES, (L, f) => {
     const R = rng(61 + f);
     rushStreaks(L, f, 'cyan', 'teal', false);
@@ -296,7 +298,7 @@ function zap(L: Light, R: () => number, hue: RampName, x0: number, y0: number, x
   }
 }
 
-function blitzRushAnim(): FxAnim {
+function blitzRushAnim(): FxSheet {
   return anim(AURA_W, AURA_H, AURA_X, AURA_Y, RUSH_AURA_FRAMES, (L, f) => {
     const R = rng(71 + f * 13);
     rushStreaks(L, f, 'yellow', 'gold', true);
@@ -313,7 +315,7 @@ function blitzRushAnim(): FxAnim {
 }
 
 /** A scuff left on the ground: Rush Toss dust and a skid line. Origin at the ground. */
-function tossTrailAnim(): FxAnim {
+function tossTrailAnim(): FxSheet {
   const W = 22, H = 10, bx = 11, by = H - 2;
   return anim(W, H, bx, by, 5, (L, f) => {
     const R = rng(81 + f), fade = 1 - f / 5;
@@ -323,7 +325,7 @@ function tossTrailAnim(): FxAnim {
 }
 
 /** Electric Blitz's scuff: a scorch line that sparks, and a little arc jumping off it. */
-function blitzTrailAnim(): FxAnim {
+function blitzTrailAnim(): FxSheet {
   const W = 22, H = 14, bx = 11, by = H - 2;
   return anim(W, H, bx, by, 5, (L, f) => {
     const R = rng(91 + f * 7), fade = 1 - f / 5;
@@ -337,21 +339,21 @@ function blitzTrailAnim(): FxAnim {
  *  brighter head, jostling forward and back so the volley flickers as it
  *  flies. Loops (see drawShot). Faces right; origin at the lead bolt's tip. */
 export const FLURRY_FRAMES = 4;
-function flurryAnim(): FxAnim {
-  const W = 48, H = 17, tip = W - 2, y = H / 2;
-  const bolts = [[0, 0], [-9, -5], [-9, 5], [-17, 0]]; // lead, upper, lower, tail
+function flurryAnim(): FxSheet {
+  const W = 44, H = 19, tip = W - 2, y = H / 2;
+  const bolts = [[0, -1], [-9, -6], [-4, 4], [-13, 8]]; // each bolt on its own row, staggered back
   return anim(W, H, tip, y, FLURRY_FRAMES, (L, f) => {
     bolts.forEach(([dx, dy], i) => {
       const x = tip + dx - (((f + i) % FLURRY_FRAMES) - 1.5) * 1.5;
-      L.line('green', x - 24, y + dy, x, y + dy, 0.3, 1.5, 1.15);
-      L.line('lime', x - 11, y + dy, x - 1, y + dy, 0.3, 2.4, 0.6);
+      L.line('green', x - 18, y + dy, x, y + dy, 0.2, 1.4, 1.15);
+      L.line('lime', x - 8, y + dy, x - 1, y + dy, 0.3, 2.2, 0.6);
     });
   }, 0.35);
 }
 
 /** Bolt Flurry hit: green-white starburst with a long horizontal streak and a fading crescent
  *  (drawn mirrored so the streak points back toward the shooter). */
-function stunHitAnim(): FxAnim {
+function stunHitAnim(): FxSheet {
   const W = 56, H = 34, c = 22, y = H / 2;
   return anim(W, H, c, y, 6, (L, f) => {
     const R = rng(41 + f);
@@ -373,7 +375,7 @@ function stunHitAnim(): FxAnim {
 /** Glide launch: concentric green rings (a portal seen side-on) with
  *  streaks extending to the right of them. Drawn mirrored so the rings are
  *  ahead of the player and the streaks trail behind. */
-function spiritAnim(): FxAnim {
+function spiritAnim(): FxSheet {
   const W = 44, H = 34, cx = 10, y = H / 2;
   return anim(W, H, cx, y, 7, (L, f) => {
     const R = rng(51 + f);
@@ -394,7 +396,7 @@ function spiritAnim(): FxAnim {
 
 /** Downpour, on the archer: an orange burst at the bow with green
  *  motes flung off it. Origin at her middle. */
-function volleyFlareAnim(): FxAnim {
+function volleyFlareAnim(): FxSheet {
   const S = 40, c = S / 2;
   return anim(S, S, c, c, 5, (L, f) => {
     const R = rng(81 + f), fade = 1 - f / 5;
@@ -410,7 +412,7 @@ function volleyFlareAnim(): FxAnim {
 /** Downpour's blast: a flat tornado under the archer's feet:
  *  a low, wide whirl of orange rings sweeping out under her, with a
  *  green-shot impact ring. Origin at the top centre (her feet). */
-function tornadoAnim(depth: number): FxAnim {
+function tornadoAnim(depth: number): FxSheet {
   const W = 84, H = Math.round(depth) + 14, cx = W / 2, top = 4;
   return anim(W, H, cx, top, 8, (L, f) => {
     const R = rng(131 + f), fade = f < 5 ? 1 : 1 - (f - 4) / 4;
@@ -435,7 +437,7 @@ function tornadoAnim(depth: number): FxAnim {
 
 /** Acrobatics's rush: green streaks shooting up past the archer with
  *  sparkles left behind. Origin at her feet. */
-function climbRiseAnim(): FxAnim {
+function climbRiseAnim(): FxSheet {
   const W = 24, H = 44, bx = W / 2, by = H - 2;
   const lanes = [-7, 6, -2, 9, -10, 3];
   return anim(W, H, bx, by, 6, (L, f) => {
@@ -450,7 +452,7 @@ function climbRiseAnim(): FxAnim {
 
 /** Meteor Dive windup: three yellow arrows streak along curved paths diagonally
  *  down and forward, leading the dive. Faces right; origin at the player's middle. */
-function diveWindupAnim(): FxAnim {
+function diveWindupAnim(): FxSheet {
   const W = 56, H = 48, ox = 12, oy = 10, n = 6;
   // each arrow bows up, then sweeps down-right: a quadratic curve start -> end
   const paths = [
@@ -484,44 +486,40 @@ function diveWindupAnim(): FxAnim {
   }, 0.4);
 }
 
-let cache: Record<string, FxAnim> | null = null;
-/** Lazily build every effect (needs a canvas, so not at import time). */
-export function FX(): Record<string, FxAnim> {
-  if (!cache) {
-    cache = {
-      hit: hitAnim(false, 'cyan'),
-      crit: hitAnim(true, 'green'),
-      muzzle: muzzleAnim(),
-      arrow: arrowAnim(),
-      tracer: tracerAnim(),
-      spikes: spikesAnim(),
-      tempest: tempestAnim(),
-      spin: spinAnim(),
-      levelUp: levelUpAnim(),
-      rush: rushAnim(),
-      diveLand: rushAnim('yellow', 'gold'),
-      swoosh: swooshAnim(),
-      skySwoosh: swooshAnim('sky'),
-      // per-skill hit sparks, in each attack's colour
-      diveHit: hitAnim(false, 'yellow'),
-      spikeHit: hitAnim(false, 'purple'),
-      tempestHit: hitAnim(false, 'pink'),
-      skyHit: hitAnim(false, 'sky'),
-      spinHit: hitAnim(false, 'red'),
-      volleyFlare: volleyFlareAnim(),
-      tornado: tornadoAnim(20), // a flat sweeping blast under her, not a tall column
-      climbRise: climbRiseAnim(),
-      diveWindup: diveWindupAnim(),
-      rain: rainAnim(),
-      rainHit: hitAnim(false, 'gold'),
-      flurry: flurryAnim(),
-      tossRush: tossRushAnim(),
-      blitzRush: blitzRushAnim(),
-      tossTrail: tossTrailAnim(),
-      blitzTrail: blitzTrailAnim(),
-      stunHit: stunHitAnim(),
-      spirit: spiritAnim(),
-    };
-  }
-  return cache;
-}
+/** Every effect's generator, by name: the authoring source. The game draws
+ *  the baked PNG sheets (assets/fx, see fxsheets.ts) and only runs these for
+ *  an effect that hasn't been baked yet. */
+export const FX_GEN: Record<string, () => FxSheet> = {
+  hit: () => hitAnim(false, 'cyan'),
+  crit: () => hitAnim(true, 'green'),
+  muzzle: () => muzzleAnim(),
+  arrow: () => arrowAnim(),
+  tracer: () => tracerAnim(),
+  spikes: () => spikesAnim(),
+  tempest: () => tempestAnim(),
+  spin: () => spinAnim(),
+  levelUp: () => levelUpAnim(),
+  rush: () => rushAnim(),
+  diveLand: () => rushAnim('yellow', 'gold'),
+  swoosh: () => swooshAnim(),
+  skySwoosh: () => swooshAnim('sky'),
+  // per-skill hit sparks, in each attack's colour
+  diveHit: () => hitAnim(false, 'yellow'),
+  spikeHit: () => hitAnim(false, 'purple'),
+  tempestHit: () => hitAnim(false, 'pink'),
+  skyHit: () => hitAnim(false, 'sky'),
+  spinHit: () => hitAnim(false, 'red'),
+  volleyFlare: () => volleyFlareAnim(),
+  tornado: () => tornadoAnim(20), // a flat sweeping blast under her, not a tall column
+  climbRise: () => climbRiseAnim(),
+  diveWindup: () => diveWindupAnim(),
+  rain: () => rainAnim(),
+  rainHit: () => hitAnim(false, 'gold'),
+  flurry: () => flurryAnim(),
+  tossRush: () => tossRushAnim(),
+  blitzRush: () => blitzRushAnim(),
+  tossTrail: () => tossTrailAnim(),
+  blitzTrail: () => blitzTrailAnim(),
+  stunHit: () => stunHitAnim(),
+  spirit: () => spiritAnim(),
+};

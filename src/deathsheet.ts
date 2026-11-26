@@ -15,8 +15,8 @@ import { bitFly, DEATH_T, deathBits, deathPose, type Corpse, type DeathRecipe } 
 /** Frames per death (DEATH_T long, so ~12fps). */
 export const DEATH_FRAMES = 10;
 
-/** An RGBA pixel buffer. */
-export interface Grid { w: number; h: number; px: Uint8ClampedArray }
+import type { Grid } from './grid';
+export type { Grid } from './grid';
 
 export interface DeathSheet {
   frames: Grid[];

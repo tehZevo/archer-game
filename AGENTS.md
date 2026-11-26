@@ -10,10 +10,16 @@ A vanilla-TypeScript, canvas-based vertical platformer (classic MMO-flavoured ar
 - `npm run watch` — esbuild watch mode
 - `npm start` — static server on :8000
 - `npm run worktree -- <branch> [base]` — make a branch worktree in `../archer-game-wt/<branch>` with `node_modules` linked correctly
+- `npm run bake` — write the skill effects' PNG sheets (`assets/fx`) and `src/fxbaked.ts` from their generators
+- `npm run fxpreview -- [name...]` — render effects' frames, scaled up, to `.tmp/fxpreview.png` for reviewing the art
 
 ## Worktrees and node_modules
 
 Do branch work in a worktree made by `npm run worktree`, not by hand. It links the worktree's `node_modules` to the main checkout's real install by absolute path. Hand-made relative links (`ln -s ../archer-game/node_modules`) get the depth wrong and end up broken or pointing at themselves. Never commit `node_modules` in any form, link or directory. If the main checkout's `node_modules` is ever a symlink, delete it and run `npm ci` there.
+
+## Effect sheets
+
+Skill effects ship as PNG sprite sheets in `assets/fx` (one strip per effect, facing right, drawn additively). They are baked from the procedural generators in `src/fxsprites.ts`, which stay in the tree as the authoring source. To add or change an effect, edit its generator, add it to `BAKE` in `scripts/bakefx.ts` if it's new, run `npm run bake`, and commit the PNG along with the generated `src/fxbaked.ts`. The smoke test fails if a sheet no longer matches its generator. An effect that isn't baked still runs its generator at runtime (see `src/fxsheets.ts`).
 
 ## Conventions
 
