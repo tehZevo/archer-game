@@ -108,7 +108,10 @@ function tickCasting(dt: number): void {
   fireBuffered();
   if (player.superStance > 0) player.superStance -= dt;
   if (player.invuln > 0) player.invuln -= dt;
-  if (player.casting.useT > 0) player.casting.useT -= dt;
+  if (player.casting.useT > 0) {
+    player.casting.useT -= dt;
+    if (player.casting.useT <= 0) player.casting.freeze = false; // the freeze ends with the cast
+  }
   if (player.casting.recoverT > 0) player.casting.recoverT -= dt;
   tickLinks(dt);
   if (player.fervorT > 0) { player.fervorT -= dt; if (player.fervorT <= 0) player.fervor = 0; }

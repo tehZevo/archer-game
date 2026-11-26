@@ -39,7 +39,7 @@ export const player: Player = {
   dropBlock: null,
   dropY: 0,
   climbRush: false,
-  casting: { useT: 0, recoverT: 0, queued: null },
+  casting: { useT: 0, recoverT: 0, queued: null, freeze: false },
   rush: { t: 0, dist: 0, goal: P.RUSH_DIST, carry: [] },
   hang: { t: 0, hits: 0, hitT: 0, dmg: 0, targets: 0 },
   liftT: 0,

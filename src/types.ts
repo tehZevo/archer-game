@@ -222,6 +222,9 @@ export interface Casting {
   useT: number;
   /** s of recovery after the animation: blocks new skills, not movement. Links skip it. */
   recoverT: number;
+  /** True for a cast that pins you in place: gravity stops and vx/vy are
+   *  zeroed for its whole duration (Tempest), not just the ground lock. */
+  freeze: boolean;
   /** A skill pressed too early, fired on the first free frame. */
   queued: SkillKey | null;
 }
