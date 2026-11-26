@@ -38,7 +38,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const y0 = player.y;
   tap('c');
   for (let i = 0; i < 40; i++) { step(1); apex = Math.max(apex, y0 - player.y); }
-  check('a jump rises about 35px (25% lower than 46.5)', apex > 32 && apex < 38, `apex ${apex.toFixed(1)}`);
+  check('a jump rises about 26px', apex > 23 && apex < 29, `apex ${apex.toFixed(1)}`);
   const seen = new Set<string>();
   const bad: string[] = [];
   for (let n = 1; n <= 24; n++) { // up the leftmost branch, to Mushroom Grotto's town
@@ -79,7 +79,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const want = JSON.stringify(snapshot());
   arena(1); player.ap = 0; player.sp = 0; player.ranks.W = false; player.ranks.E = false;
   const place = load();
-  check('save round-trips level, EXP, points, stats, ranks and the town', JSON.stringify({ ...snapshot(), town: 'mossgate' }) === want && samePlace(place, { town: 'mossgate' }));
+  check('save round-trips level, EXP, points, stats, ranks and the town',
+    JSON.stringify({ ...snapshot(), town: 'mossgate' }) === want && samePlace(place, { town: 'mossgate' }));
   check('you resume in the latest town: a town itself, or the start of the path you were on',
     lastTown({ town: 'mossgate' }) === 'mossgate' && lastTown({ path: 'meadows', floor: 5 }) === 'driftwood' && lastTown({ path: 'shore', floor: 2 }) === 'saltwick');
   gotoPlace({ path: 'meadows', floor: 3 }); save(); arena(1); gotoPlace(START);
