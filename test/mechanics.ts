@@ -21,6 +21,7 @@ import { FONT_CHARS, textWidth } from '../src/font';
 import fontPng from '../assets/font.png';
 import { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 import { update } from '../src/update';
+import { advance, tick } from '../src/loop';
 import { CHASE_TURN } from '../src/mobai';
 import { activeSkill, expBar, MAX_LEVEL, passiveBonus, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN } from '../src/progress';
 import { surfaceYAt } from '../src/surface';
@@ -86,7 +87,7 @@ function check(name: string, cond: boolean, detail = ''): void {
 }
 const KEYS = ['left', 'right', 'up', 'down', 'c', 'd', 'z', 'q', 'w', 'e', 'r', 'escape'];
 const release = (): void => { KEYS.forEach((k) => setKey(k, false)); clearPressed(); };
-const step = (n = 1): void => { for (let i = 0; i < n; i++) { update(P.STEP); clearPressed(); } };
+const step = (n = 1): void => { for (let i = 0; i < n; i++) tick(); };
 const tap = (k: string): void => { setKey(k, false); setKey(k, true); step(1); setKey(k, false); };
 /** Let a Piercing Leap's rise-and-hold play out and land (bounded at 3s). */
 const landLeap = (): void => { for (let i = 0; i < 90 && (player.liftT > 0 || !player.onGround); i++) step(1); };
@@ -1633,7 +1634,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   release(); arena(30); game.pause = { col: 1, row: 0 };
   setKey('down', true);
   const frames = Math.ceil((REPEAT_DELAY + 4 * REPEAT_RATE) / P.STEP) + 1;
-  for (let i = 0; i < frames; i++) { update(P.STEP); clearPressed(); }
+  for (let i = 0; i < frames; i++) tick();
   const moved = game.pause.row;
   setKey('down', false); step(5);
   check('holding Down in the Esc menu repeats the move', moved >= 3, `moved ${moved}`);
@@ -3231,6 +3232,24 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...and is not buffered to fire once it ends', player.onGround);
   tap('c');
   check('once movement is free, Jump fires on the press', !player.onGround && player.vy < 0, `vy ${player.vy.toFixed(0)}`);
+}
+{
+  // The loop contract (loop.ts): a key tap is consumed by the first physics
+  // step that sees it, so a frame that runs several catch-up steps doesn't
+  // replay it; time is clamped, and a frozen world drops it.
+  arena(20);
+  dummy(150);
+  player.cdMax.Z = 0;
+  const clock = { acc: 0 };
+  setKey('z', false); setKey('z', true);
+  const steps = advance(clock, P.STEP * 3 + 1e-6, false);
+  setKey('z', false);
+  check('a frame can run several catch-up steps', steps === 3, `${steps} steps`);
+  check('...but a tap fires once, not on every one of them', player.casting.queued === null && player.cast === 'shoot',
+    `queued ${player.casting.queued} cast ${player.cast}`);
+  check('a stalled frame is clamped to MAX_DT', advance({ acc: 0 }, 5, false) === Math.floor(0.1 / P.STEP + 1e-9));
+  const frozen = { acc: 0.05 };
+  check('a frozen world runs no steps and drops the time', advance(frozen, 0.1, true) === 0 && frozen.acc === 0);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
