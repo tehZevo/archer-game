@@ -60,7 +60,7 @@ function galeShot(r: SkillRank): void {
   sfx.gale();
   game.fx.push({ type: 'galeMuzzle', x: mx, y: my, t: FX_DUR.galeMuzzle, face });
   const len = m ? Math.max(12, Math.abs(m.x - mx)) : P.GALE_RANGE * 0.7;
-  game.fx.push({ type: 'galeShot', x: mx, y: my, t: FX_DUR.galeShot, face, sx: len / 64 });
+  game.fx.push({ type: 'galeShot', x: mx, y: my, t: FX_DUR.galeShot, face, len });
   netShot(mx, my, face, len, 1);
   if (!m) return;
   const shots = shotCount(r);

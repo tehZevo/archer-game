@@ -3,7 +3,6 @@ import hit from '../assets/fx/hit.png';
 import crit from '../assets/fx/crit.png';
 import muzzle from '../assets/fx/muzzle.png';
 import arrow from '../assets/fx/arrow.png';
-import tracer from '../assets/fx/tracer.png';
 import spikes from '../assets/fx/spikes.png';
 import tempest from '../assets/fx/tempest.png';
 import spin from '../assets/fx/spin.png';
@@ -36,7 +35,6 @@ import assaultBang from '../assets/fx/assaultBang.png';
 import assaultDrop from '../assets/fx/assaultDrop.png';
 import assaultHit from '../assets/fx/assaultHit.png';
 import galeMuzzle from '../assets/fx/galeMuzzle.png';
-import galeShot from '../assets/fx/galeShot.png';
 import galeHit from '../assets/fx/galeHit.png';
 import type { BakedSheet } from './fxsheets';
 
@@ -45,7 +43,6 @@ export const BAKED: Record<string, BakedSheet> = {
   crit: { src: crit, w: 41, h: 41, n: 6, ox: 20.5, oy: 20.5 },
   muzzle: { src: muzzle, w: 22, h: 18, n: 6, ox: 1, oy: 9 },
   arrow: { src: arrow, w: 26, h: 7, n: 1, ox: 24, oy: 3.5 },
-  tracer: { src: tracer, w: 64, h: 9, n: 5, ox: 0, oy: 4.5 },
   spikes: { src: spikes, w: 88, h: 96, n: 10, ox: 4, oy: 92 },
   tempest: { src: tempest, w: 168, h: 72, n: 10, ox: 84, oy: 48 },
   spin: { src: spin, w: 98, h: 78, n: 8, ox: 49, oy: 51 },
@@ -78,6 +75,5 @@ export const BAKED: Record<string, BakedSheet> = {
   assaultDrop: { src: assaultDrop, w: 84, h: 92, n: 8, ox: 44, oy: 82 },
   assaultHit: { src: assaultHit, w: 44, h: 44, n: 6, ox: 22, oy: 22 },
   galeMuzzle: { src: galeMuzzle, w: 20, h: 18, n: 4, ox: 1, oy: 9 },
-  galeShot: { src: galeShot, w: 64, h: 11, n: 4, ox: 0, oy: 5.5 },
   galeHit: { src: galeHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },
 };

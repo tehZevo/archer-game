@@ -379,8 +379,9 @@ export interface Fx {
   t: number;
   face?: number;
   col?: string;
-  /** Horizontal stretch (tracer length / sprite width). */
-  sx?: number;
+  /** Length in px of a muzzle-to-target streak (tracer, galeShot): its sheet
+   *  is built this long (see fxSized), never stretched. */
+  len?: number;
   /** Stick to the player (level-up pillar). */
   follow?: boolean;
 }

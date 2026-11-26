@@ -1,4 +1,5 @@
-import { fx } from './fxsheets';
+import { fx, fxSized } from './fxsheets';
+import type { FxAnim } from './fxlight';
 import { FX_DUR } from './config';
 import { ctx } from './canvas';
 import { clamp } from './util';
@@ -35,15 +36,15 @@ export function drawShot(s: Shot): void {
 /** Draw the frame of a baked effect animation for progress k (0..1), additively. */
 export const drawFxFrame = (name: string, x: number, y: number, k: number, face = 1): void => drawAnim(name, x, y, k, face);
 
-function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 1): void {
-  const A = fx(name);
+function drawAnim(name: string, x: number, y: number, k: number, face = 1, A: FxAnim = fx(name)): void {
   // clamped both ways: an effect living longer than its animation holds the first frame
   const f = Math.max(0, Math.min(A.frames.length - 1, Math.floor(k * A.frames.length)));
   const img = face < 0 ? A.flipped[f] : A.frames[f];
-  const ox = (face < 0 ? img.width - A.ox : A.ox) * sx;
+  const ox = face < 0 ? img.width - A.ox : A.ox;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  ctx.drawImage(img, Math.round(x - ox), Math.round(y - A.oy), Math.round(img.width * sx), img.height);
+  // always 1:1, at the sheet's natural resolution
+  ctx.drawImage(img, Math.round(x - ox), Math.round(y - A.oy));
   ctx.restore();
 }
 
@@ -55,7 +56,9 @@ export function drawLoop(name: string, x: number, y: number, t: number, fps: num
 }
 
 export function drawFx(f: Fx): void {
-  drawAnim(f.type, f.x, f.y, 1 - f.t / FX_DUR[f.type], f.face ?? 1, f.sx ?? 1);
+  // a muzzle-to-target streak is built at its own length rather than stretched
+  const A = f.len !== undefined ? fxSized(f.type, f.len) : fx(f.type);
+  drawAnim(f.type, f.x, f.y, 1 - f.t / FX_DUR[f.type], f.face ?? 1, A);
 }
 
 export function drawDmg(d: DmgNum): void {

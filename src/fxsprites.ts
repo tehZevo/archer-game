@@ -92,9 +92,10 @@ function galeMuzzleAnim(): FxSheet {
 }
 
 /** Gale Stream shot: one green bolt with a twist of wind wrapped round it,
- *  whipping out to the target. Faces right; origin at the muzzle; stretched to the target. */
-function galeShotAnim(): FxSheet {
-  const W = 64, H = 11, y = 5.5;
+ *  whipping out to the target. Faces right; origin at the muzzle; drawn W px long
+ *  (the shot's own length), so it is never stretched. */
+function galeShotAnim(W: number): FxSheet {
+  const H = 11, y = 5.5;
   const spans: [number, number][] = [[0, 0.55], [0.2, 1], [0.6, 1], [0.88, 1]];
   return anim(W, H, 0, y, spans.length, (L, f) => {
     const [a, b] = spans[f], fade = f < 2 ? 1 : 1 - (f - 1) / 3;
@@ -115,9 +116,10 @@ function arrowAnim(): FxSheet {
 }
 
 /** Double Shot tracer: twin streaks whipping out from the bow across
- *  the range. Faces right; origin at the muzzle; stretched to the target. */
-function tracerAnim(): FxSheet {
-  const W = 64, H = 9, y = 4.5;
+ *  the range. Faces right; origin at the muzzle; drawn W px long (the shot's
+ *  own length), so it is never stretched. */
+function tracerAnim(W: number): FxSheet {
+  const H = 9, y = 4.5;
   // [tail, head] of each streak per frame, as fractions of W
   const spans: [number, number][] = [[0, 0.45], [0.1, 1], [0.45, 1], [0.75, 1], [0.92, 1]];
   return anim(W, H, 0, y, spans.length, (L, f) => {
@@ -728,6 +730,14 @@ function diveWindupAnim(): FxSheet {
   }, 0.4);
 }
 
+/** Effects that span a distance (muzzle to target): built at runtime for each
+ *  length they're drawn at (see fxSized), so they keep their natural
+ *  resolution instead of a fixed sheet stretched to fit. Not baked. */
+export const FX_SIZED: Record<string, (len: number) => FxSheet> = {
+  tracer: (len) => tracerAnim(len),
+  galeShot: (len) => galeShotAnim(len),
+};
+
 /** Every effect's generator, by name: the authoring source. The game draws
  *  the baked PNG sheets (assets/fx, see fxsheets.ts) and only runs these for
  *  an effect that hasn't been baked yet. */
@@ -736,7 +746,6 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   crit: () => hitAnim(true, 'green'),
   muzzle: () => muzzleAnim(),
   arrow: () => arrowAnim(),
-  tracer: () => tracerAnim(),
   spikes: () => spikesAnim(),
   tempest: () => tempestAnim(),
   spin: () => spinAnim(),
@@ -770,6 +779,5 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   assaultDrop: () => assaultDropAnim(),
   assaultHit: () => assaultHitAnim(),
   galeMuzzle: () => galeMuzzleAnim(),
-  galeShot: () => galeShotAnim(),
   galeHit: () => hitAnim(false, 'lime'),
 };

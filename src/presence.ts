@@ -105,12 +105,12 @@ export function queueShot(tr: GhostTrack | undefined, s: ShotMsg, now: number): 
   const due = tr && Number.isFinite(tr.offset) ? s.t + tr.offset + INTERP_MS : now;
   pending.push({ due, fx: [
     { type: 'muzzle', x: s.x, y: s.y, t: 0.18, face },
-    { type: 'tracer', x: s.x, y: s.y, t: 0.14, face, sx: len / 64 },
+    { type: 'tracer', x: s.x, y: s.y, t: 0.14, face, len },
   ] });
   // the rest of a multi-arrow shot, one tracer each
   const n = Number.isFinite(s.n) ? Math.max(1, Math.min(8, Math.floor(s.n!))) : 1;
   for (let i = 1; i < n && pending.length < MAX_PENDING; i++) {
-    pending.push({ due: due + i * SHOT_GAP, fx: [{ type: 'tracer', x: s.x, y: s.y, t: 0.14, face, sx: len / 64 }] });
+    pending.push({ due: due + i * SHOT_GAP, fx: [{ type: 'tracer', x: s.x, y: s.y, t: 0.14, face, len }] });
   }
 }
 
