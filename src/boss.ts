@@ -25,7 +25,7 @@ export const BOSS = {
   /** size multiple of the enemy it's based on */
   SCALE: 2,
   /** HP, damage and EXP multiples */
-  HP: 14, DMG: 1.5, EXP: 12,
+  HP: 14, DMG: 2, EXP: 12,
   /** coin piles it drops */
   COINS: 8,
   /** seconds between attacks, and the wind-up before each */
@@ -75,7 +75,7 @@ export function spawnBoss(): void {
     x: WORLD.w * 0.75, y: ground.y - h, w, h,
     vx: 0, vy: 0, home: WORLD.w / 2, range: WORLD.w / 2 - 24, dir: -1,
     type, name: bossName(type), hp, hpMax: hp, spd: type.spd,
-    dmg: Math.round(type.dmg * (1 + (player.level - 1) * 0.06) * BOSS.DMG),
+    dmg: Math.round(type.dmg * 3.5 * (1 + (level - 1) * 3.2) * BOSS.DMG),
     fly: false, col: type.col, level, exp: mobExp(level) * BOSS.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: true, hitFlash: 0, barT: 0, anim: 0,
     spawn: { x: WORLD.w / 2, y: ground.y, types: [], minX: 24, maxX: WORLD.w - 24 },
