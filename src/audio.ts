@@ -64,6 +64,50 @@ export const sfx = {
     osc({ type: 'triangle', f: 1250, to: 700, dur: 0.045, vol: 0.07 });
   },
   glide: (): void => tone(300, 0.22, 'triangle', 0.18, 560),
+  /** Rush Toss: a low forward heave — a thump under a short rush of air. */
+  rushToss: (): void => {
+    osc({ type: 'sine', f: 180, to: 60, dur: 0.25, vol: 0.3, drive: 0.3 });
+    noise({ dur: 0.18, vol: 0.22, filter: { type: 'lowpass', f: 1800, to: 400 } });
+  },
+  /** Electric Blitz: a crackling charge that snaps forward. */
+  blitz: (): void => {
+    osc({ type: 'sawtooth', f: 1400, to: 400, dur: 0.18, vol: 0.14, filter: { type: 'highpass', f: 800 } });
+    noise({ dur: 0.12, vol: 0.2, filter: { type: 'highpass', f: 4000 } });
+  },
+  /** Meteor Dive: a falling whistle that lands with a weight. */
+  meteorDive: (): void => {
+    osc({ type: 'sawtooth', f: 900, to: 200, dur: 0.3, vol: 0.18, filter: { type: 'lowpass', f: 3000 } });
+    noise({ dur: 0.25, vol: 0.2, filter: { type: 'bandpass', f: 3000, to: 600, q: 2 } });
+  },
+  /** Piercing Leap: a rising spike of air as you launch. */
+  piercingLeap: (): void => {
+    osc({ type: 'triangle', f: 300, to: 900, dur: 0.25, vol: 0.18 });
+    noise({ dur: 0.15, vol: 0.16, filter: { type: 'bandpass', f: 1200, to: 3000, q: 2 } });
+  },
+  /** Rising Arrows: a light volley lifting upward. */
+  risingArrows: (): void => {
+    osc({ type: 'triangle', f: 500, to: 1100, dur: 0.22, vol: 0.16 });
+    noise({ dur: 0.12, vol: 0.14, filter: { type: 'highpass', f: 2000 } });
+  },
+  /** Cyclone Sweep: a swirling 360° whoosh. */
+  cyclone: (): void => {
+    noise({ dur: 0.4, vol: 0.24, attack: 0.2, filter: { type: 'bandpass', f: 400, to: 3000, q: 3 }, flutter: 18 });
+  },
+  /** Downpour: arrows raining straight down. */
+  downpour: (): void => {
+    noise({ dur: 0.3, vol: 0.2, filter: { type: 'highpass', f: 1500, to: 5000 } });
+    osc({ type: 'triangle', f: 700, to: 300, dur: 0.2, vol: 0.12 });
+  },
+  /** Tempest: a wide storm that booms as it sweeps out. */
+  tempest: (): void => {
+    osc({ type: 'sine', f: 90, to: 40, dur: 0.6, vol: 0.45, drive: 0.5 });
+    noise({ dur: 0.5, vol: 0.3, filter: { type: 'bandpass', f: 600, to: 4000, q: 2 }, flutter: 10 });
+  },
+  /** Bolt Flurry: a rapid crack of a multi-arrow burst. */
+  flurry: (): void => {
+    osc({ type: 'square', f: 880, to: 1320, dur: 0.1, vol: 0.16 });
+    noise({ dur: 0.08, vol: 0.18, filter: { type: 'highpass', f: 3000 } });
+  },
   hit: (): void => tone(220, 0.08, 'square', 0.12, 140),
   /** Each enemy's own impact (see mobvoices.ts): a slime and a golem should not sound the same. */
   mobHit: (name: string): void => mobHit(voiced(name)),
