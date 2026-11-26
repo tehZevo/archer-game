@@ -40,3 +40,7 @@ The game is **2D pixel art** — pixel-art characters in a side-view world, like
 ## Your toolkit
 
 Your toolkit **starts small and grows**. At level 1 you have just a few skills; by level 60+ you're juggling 8 or more. The kit evolves as you climb, so the combo deepens over the run.
+
+## Pace of a floor
+
+A typical floor is **quick** — about a minute, a few monsters to fight, then you're climbing to the next one.
