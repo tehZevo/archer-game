@@ -18,6 +18,12 @@ A vanilla-TypeScript, canvas-based vertical platformer (classic MMO-flavoured ar
 - Debug keys: `[` levels up, `]` warps to the next floor. Esc pauses.
 - Types are declared in `src/types.ts` and imported with `import type`.
 
+## Code style
+
+- Prefer clean, concise, DRY code: factor out repetition into small, well-named helpers instead of copy-pasting.
+- Avoid tricks: no clever one-liners, obscure language features, or hacks where a plain, readable version works.
+- Don't continue complex patterns just because they exist: when touching convoluted code, simplify it rather than extending it.
+
 ## Specs
 
 Design specs live in [`specs/`](specs/). Agents must not update the specs except by explicit user request. Organize them as follows:
