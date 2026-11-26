@@ -1,27 +1,23 @@
-// Procedurally-built pixel-art sprites. Each sprite is a tiny canvas drawn with
-// 1px blocks; the base-resolution canvas + image-rendering:pixelated keeps them
-// crisp. Built once at boot, drawn with drawImage.
+// Procedurally-built pixel-art sprites, painted with 1px blocks into pixel
+// grids (so they run headless: the bake writes them to PNG, see
+// scripts/bake.ts), and turned into canvases when first drawn.
 
 import { HURT, MOB_ART, RECOLOR, mobSize, paintMob } from './mobart';
+import { canvasGrid, fillRect, gridCanvas, hexRgb, newGrid, type Grid } from './grid';
+import { BAKED_MOBS } from './mobbaked';
 
-export interface Sprite {
-  c: HTMLCanvasElement;
-  x: CanvasRenderingContext2D;
-  w: number;
-  h: number;
+/** A sprite's pixels, and its canvas (made on first draw). */
+export class Sprite {
+  readonly g: Grid;
+  private canvas: HTMLCanvasElement | null = null;
+  constructor(readonly w: number, readonly h: number, g?: Grid) { this.g = g ?? newGrid(w, h); }
+  get c(): HTMLCanvasElement { return (this.canvas ??= gridCanvas(this.g)); }
 }
 
-export function make(w: number, h: number): Sprite {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const x = c.getContext('2d') as CanvasRenderingContext2D;
-  x.imageSmoothingEnabled = false;
-  return { c, x, w, h };
-}
+export const make = (w: number, h: number): Sprite => new Sprite(w, h);
 
 export function px(s: Sprite, gx: number, gy: number, col: string, gw = 1, gh = 1): void {
-  s.x.fillStyle = col;
-  s.x.fillRect(gx, gy, gw, gh);
+  fillRect(s.g, gx, gy, gw, gh, col);
 }
 
 /* Enemy walk cycles take a frame index f (0-3): 0 and 2 are the passing
@@ -126,17 +122,14 @@ function hogHurt(): Sprite {
 
 /** A copy of a sprite with some exact colours swapped (map keys are #rrggbb). */
 function recolor(src: Sprite, map: Record<string, string>): Sprite {
-  const s = make(src.w, src.h);
-  s.x.drawImage(src.c, 0, 0);
-  const img = s.x.getImageData(0, 0, s.w, s.h), d = img.data;
+  const s = make(src.w, src.h), d = s.g.px;
+  d.set(src.g.px);
   const hex = (v: number): string => v.toString(16).padStart(2, '0');
-  const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   for (let i = 0; i < d.length; i += 4) {
     if (!d[i + 3]) continue;
     const to = map[`#${hex(d[i])}${hex(d[i + 1])}${hex(d[i + 2])}`];
-    if (to) [d[i], d[i + 1], d[i + 2]] = rgb(to);
+    if (to) [d[i], d[i + 1], d[i + 2]] = hexRgb(to);
   }
-  s.x.putImageData(img, 0, 0);
   return s;
 }
 
@@ -254,17 +247,61 @@ const artMob = (name: string, fps: number): MobAnim => {
 
 export const SPR = {
   portal: portalSprite(),
-  /** Enemy animations: frames in order, and how fast they play. */
-  mob: {
-    'Garden Snail': anim(snailSprite, 4, 6, snailHurt),
-    'Boar': anim(pigSprite, 4, 9, pigHurt),
-    'Wisp': anim(wispSprite, 4, 8, wispHurt),
-    'Iron Hog': anim(hogSprite, 4, 7, hogHurt),
-    'Enemy Crab': anim(crabSprite, 2, 7, crabHurt),
-    'Hermit Crab': anim(hermitSprite, 2, 5, hermitHurt),
-    'Gull': anim(gullSprite, 2, 5, gullHurt),
-    ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
-  } as Record<string, MobAnim>,
 };
-// palette-swapped variants of the hand-drawn enemies
-for (const [n, { base, map }] of Object.entries(RECOLOR)) SPR.mob[n] = recolorAnim(SPR.mob[base], map);
+
+/* ---------------- enemy sheets ----------------
+   Enemies ship as PNG sheets (assets/mobs/<name>.png): the walk/flap
+   frames then the hurt pose, in one strip, facing right. They are baked
+   from the painters above (npm run bake), which stay as the source and as
+   the fallback until a sheet has loaded. Palette-swapped variants
+   (RECOLOR: Red Snail, Blue Crab...) are recoloured from their base's
+   sheet at runtime, so they follow it. */
+
+/** Every base enemy's painter: its frames in order, how fast they play, and its hurt pose. */
+export const MOB_GEN: Record<string, () => MobAnim> = {
+  'Garden Snail': () => anim(snailSprite, 4, 6, snailHurt),
+  'Boar': () => anim(pigSprite, 4, 9, pigHurt),
+  'Wisp': () => anim(wispSprite, 4, 8, wispHurt),
+  'Iron Hog': () => anim(hogSprite, 4, 7, hogHurt),
+  'Enemy Crab': () => anim(crabSprite, 2, 7, crabHurt),
+  'Hermit Crab': () => anim(hermitSprite, 2, 5, hermitHurt),
+  'Gull': () => anim(gullSprite, 2, 5, gullHurt),
+  ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, () => artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
+};
+
+/** A baked enemy sheet's PNG (a data URL) and layout: n frames, then the hurt pose. */
+export interface BakedMob { src: string; w: number; h: number; n: number; fps: number }
+
+const loaded = new Map<string, MobAnim>();
+const generated = new Map<string, MobAnim>();
+const recolored = new Map<string, { from: MobAnim; a: MobAnim }>();
+
+/** Start decoding every baked enemy sheet (no-op headless). */
+export function loadMobSheets(): void {
+  if (typeof Image === 'undefined') return;
+  for (const [name, s] of Object.entries(BAKED_MOBS)) {
+    const img = new Image();
+    img.onload = () => {
+      const cut = (f: number): Sprite => new Sprite(s.w, s.h, canvasGrid(img, s.w, s.h, f * s.w));
+      loaded.set(name, { frames: Array.from({ length: s.n }, (_, f) => cut(f)), fps: s.fps, hurt: cut(s.n) });
+    };
+    img.src = s.src;
+  }
+}
+
+/** An enemy's animation: its baked sheet, or its painter's until that loads (undefined: no art). */
+export function mobAnim(name: string): MobAnim | undefined {
+  const rc = RECOLOR[name];
+  if (rc) {
+    const base = mobAnim(rc.base);
+    if (!base) return undefined;
+    let r = recolored.get(name);
+    if (!r || r.from !== base) recolored.set(name, (r = { from: base, a: recolorAnim(base, rc.map) }));
+    return r.a;
+  }
+  const got = loaded.get(name) ?? generated.get(name);
+  if (got || !MOB_GEN[name]) return got;
+  const a = MOB_GEN[name]();
+  generated.set(name, a);
+  return a;
+}

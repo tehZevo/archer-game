@@ -1,4 +1,4 @@
-import { flipGrid, newGrid, type Grid } from './grid';
+import { flipGrid, gridCanvas, newGrid, type Grid } from './grid';
 /**
  * The light primitives skill effects are painted with (fxsprites.ts holds the
  * effects themselves): a Light accumulates rays, rings, discs and sparkles
@@ -149,15 +149,6 @@ export function anim(w: number, h: number, ox: number, oy: number, n: number, dr
     frames.push(L.pixels());
   }
   return { w, h, ox, oy, frames };
-}
-
-/** A grid as a canvas. */
-export function gridCanvas(g: Grid): HTMLCanvasElement {
-  const c = makeCanvas(g.w, g.h), x = c.getContext('2d')!;
-  const img = x.createImageData(g.w, g.h);
-  img.data.set(g.px);
-  x.putImageData(img, 0, 0);
-  return c;
 }
 
 /** A generated sheet, ready to draw (the procedural fallback, see fxsheets.ts). */
