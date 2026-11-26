@@ -1,6 +1,6 @@
 import type { Place } from './world';
 import type { BossState } from './boss';
-export type SkillKey = 'z' | 'd' | 'ac' | 'ground-q' | 'ground-w' | 'ground-e' | 'r' | 'ab' | 's' | 'eb' | 'air-q' | 'air-e' | 'air-w' | 'es' | 'sa' | 'pp' | 'ir' | 'ha' | 'ni';
+export type SkillKey = 'z' | 'd' | 'ac' | 'ground-q' | 'ground-w' | 'ground-e' | 'r' | 'ab' | 's' | 'eb' | 'air-q' | 'air-e' | 'air-w' | 'es' | 'sa' | 'pp' | 'ir' | 'ha' | 'ni' | 'held-z';
 
 /** A status effect (see status.ts). */
 export type StatusKind = 'poison' | 'burn' | 'chill';
@@ -302,6 +302,10 @@ export interface Player extends Body {
   usedT: Record<string, number>;
   /** True while a Meteor Dive is in flight; the landing rolls into the rush. */
   diving: boolean;
+  /** Gale Stream (see rapid.ts): `armed` once a Z shot fires with Z held,
+   *  `on` while the stream runs, `t` s to its next shot, `face` the way it
+   *  fires (locked for the whole stream). */
+  rapid: { armed: boolean; on: boolean; t: number; face: 1 | -1 };
   /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
   blitz: { charges: number; t: number };
   cast: CastName | null;
@@ -359,7 +363,8 @@ export interface Shot {
 /** Effects are all baked animations (see fxsprites.ts). */
 export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
   | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit'
-  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand' | 'tossTrail' | 'blitzTrail';
+  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand' | 'tossTrail' | 'blitzTrail'
+  | 'galeMuzzle' | 'galeShot' | 'galeHit';
 /** The looping effect on the archer for a ground rush's slide (see drawRushAura). */
 export type RushLook = 'tossRush' | 'blitzRush';
 

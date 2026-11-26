@@ -10,6 +10,7 @@ import { revive } from './combat';
 import { setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
 import { updateRush } from './rush';
+import { updateRapid } from './rapid';
 import { AIR_FORM, assaultLeaping, rushHolding } from './castrules';
 import { activeSkill } from './progress';
 import { sfx } from './audio';
@@ -42,6 +43,7 @@ export function update(dt: number): void {
   if (keyInput()) return;
   tickWaves(dt);
   tickCasting(dt);
+  updateRapid(dt);
   movePlayer(dt, player.casting.useT > 0); // a skill's use time blocks movement input
   if (usePortal()) return;
   tickWorld(dt);
