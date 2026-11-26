@@ -69,6 +69,7 @@ export const P = {
   SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIKE_LIFT_H: 40,    // px the tornado lifts you, from wherever you are (see spikeLift)
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
+  SPIN_LINK_DELAY: 0.25, // s the sweep plays before its Glide / Plunging Volley link opens
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px

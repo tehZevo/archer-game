@@ -232,13 +232,18 @@ function midairSpin(r: SkillRank): void {
   pose('shoot', 0.30);
   player.skillPose = 'spin';
   endHover(); // swept out of a Sky Assault hover: the spin takes over
-  openLink('glide', linkWindow('MS')); // the spin links into a Glide...
-  openLink('volley', linkWindow('MS')); // ...and into a Plunging Volley
   sfx.shoot();
   game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
   const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
   eachShot(shotCount(r), 0, (more) => {
     alive(tg).forEach((m) => damage(m, r.dmg, { fx: 'spinHit', more }));
+  });
+  // The sweep lands, and only then does it link out: a press inside this gap
+  // is buffered and fires as the window opens, so the chain reads as
+  // spin-then-hit rather than both at once. (SPIN_LINK_DELAY.)
+  later(P.SPIN_LINK_DELAY, () => {
+    openLink('glide', linkWindow('MS')); // the spin links into a Glide...
+    openLink('volley', linkWindow('MS')); // ...and into a Plunging Volley
   });
 }
 
