@@ -11,17 +11,17 @@ export const P = {
   HEAT_HOT: 3,         // kills on one platform (cooling by half each wave) before its enemies start turning up elsewhere
   HEAT_EXTRA: 2,       // ...how many over its cap another platform can hold meanwhile
   STEP: 1 / 30,        // g_FrameDt30FPS = 0.0333
-  GRAVITY: 772.2,      // px/s^2 (lowered from 2000, then 1040, 780, then 858)
+  GRAVITY: 694.98,     // px/s^2 (10% under 772.2)
   TERMINAL: 670,       // terminalVelocity
   WALK: 66,            // halved from 131
-  JUMP_V: 210,         // 10% over 193.92 (rounded): a ~26px jump at 858 gravity
+  JUMP_V: 189,         // 10% under 210
   JUMP_H: 81.25,       // halved from 162.5
   CLIMB_RUSH: 330,     // Up + Jump on a rope/ladder: rush speed, px/s
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
   CLIMB: 90,           // rope/ladder climb speed, px/s (was 140)
   DROP_HOP_V: 110,     // Down+Jump hop before falling through (v²/2g ≈ 6px)
   GLIDE_VX: 190,       // Glide forward launch speed, px/s (was 160; ×1-1.3 with rank)
-  GLIDE_VY_MAX: 180,   // max upward speed after Glide (v²/2g ≈ 10px of extra rise)
+  GLIDE_VY_MAX: 162,   // max upward speed after Glide (10% under 180)
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
@@ -57,7 +57,8 @@ export const P = {
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
   PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
-  PLUNGE_HOP: 112.5,   // px/s (was 150) added to your current momentum (stacks: a falling cast lifts less)
+  PLUNGE_HOP: 121.5,   // px/s bump added to your upward velocity (10% under 135)
+  PLUNGE_MAX: 160,     // ...capped so vy never exceeds -160 (upward); faster speeds are left untouched
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
@@ -66,7 +67,7 @@ export const P = {
   SPIKE_LIFT_H: 40,    // ...to this height off the floor (a jump's), where you hold for the rest of the cast (see spikeLift)
   SPIN_R: 44,          // Cyclone Sweep: reach of the sweep around you, px
   SPIN_RISE_V: 22.5,   // px/s: the midair sweep lifts you at this steady speed (was a slow fall)
-  SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
+  SPIN_CD: 8,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
@@ -114,16 +115,16 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders' },
   D: { key: 'D', linksInto: ['AD'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, learn: true,
-       cd: 0, use: 0.4, mp1: 2, dmg1: 0,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 2, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },
   Q: { key: 'Q', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
        cd: 0, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
   W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
-       cd: 0, use: 0.9, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
+       cd: 0, use: 0.2, delay: 0.4, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
   E: { key: 'E', linksInto: [...LAUNCHER_LINKS, 'PV'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
-       cd: P.SPIKE_CD, use: 0.7, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
+       cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows and unlock levels, each with
   // no cooldown (use time only) and chaining into its ground form.
@@ -131,7 +132,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 1.1, mp1: 4, dmg1: 400, hits1: 1, requires: 'Q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   MS: { key: 'MS', linksInto: ['D', 'PV'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
-       cd: P.SPIN_CD, use: 0.8, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'AB',
+       cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 5, dmg1: 200, hits1: 4, targets1: 8, requires: 'AB',
        desc: 'Mid-air W: a 360-degree sweep around you' },
   PV: { key: 'PV', linksInto: [...LAUNCHER_LINKS, 'D'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30,
        cd: 0, use: 0.2, delay: 0.4, mp1: 7, dmg1: 240, hits1: 2, targets1: 10, requires: 'E',
@@ -143,16 +144,20 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   AB: { key: 'AB', linksInto: ['MS', 'R', 'Z', 'Q'], upgrades: 'W', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
-       cd: 0, use: 0.9, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
+       cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'W',
        desc: 'After Rush Toss: leap up to launched enemies' },
   S: { key: 'S', upgrades: 'Z', name: 'Bolt Flurry', tag: 'Burst', job: 3, minLevel: 30,
        cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
+  // Branch upgrades: each competes with the other upgrade on the same slot.
+  RA: { key: 'RA', linksInto: LAUNCHER_LINKS, upgrades: 'Q', retired: true, name: 'Rising Arrow', tag: 'Launcher', job: 4, minLevel: 60,
+       cd: 0.80, mp1: 7, dmg1: 380, targets1: 8,
+       desc: 'Launch enemies ahead and rise with them' },
   // Passives: no key; their effect is `bonus` (0 until learned).
   ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 2,
         desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire' },
-  SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true,
+  SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true, learn: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.21,
         desc: 'Crit chance up' },
   PP: { key: 'PP', name: 'Power Surge', tag: 'Passive', job: 4, minLevel: 60, passive: true,
@@ -162,7 +167,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.12,
         desc: 'Each Fervor stack gives more damage' },
   HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 3, minLevel: 30, passive: true,
-        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.1,
+        cd: 0, mp1: 0, dmg1: 0, bonus1: 0.2,
         desc: 'Attack speed up (shorter use time, not cooldowns)' },
   // A movement passive: faster and higher jumps.
   NI: { key: 'NI', name: 'Nimble', tag: 'Passive', job: 2, minLevel: 10, passive: true,

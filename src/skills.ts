@@ -69,10 +69,10 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   if (kind === 'EB' && !airborne && !held('down') && player.blitz.charges <= 0) return null;
   if (player.mp < r.mp) return null;
   // An attack skill's use time (and its recovery) blocks every other skill;
-  // a link bypasses it. The Skyward Assault's lift is its use time, so a skill
-  // that isn't a link off it waits out the hover.
+  // a link bypasses it. Only a skill the current cast links into is buffered to
+  // fire as that cast ends; anything else is dropped.
   const busy = player.casting.useT > 0 || player.casting.recoverT > 0;
-  if (busy && !linked && !chained) return buffer(key);
+  if (busy && !linked && !chained) return null;
 
   // Attack skills need both hands on the bow: on a ladder only Glide works.
   if (player.climb && kind !== 'D') return null;

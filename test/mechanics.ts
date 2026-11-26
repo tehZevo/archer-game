@@ -261,8 +261,8 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(12); player.ranks.W = true;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
-  const hp0 = m.hp; tap('z'); step(20);
-  check('Z during the Rush Toss casts the link skill', m.hp < hp0 && player.linkFrom === 'W', `from ${player.linkFrom}`);
+  const hp0 = m.hp; tap('z'); step(15);
+  check('Z during the Rush Toss casts Double Shot', m.hp < hp0 && player.linkFrom === 'Z', `from ${player.linkFrom}`);
 }
 {
   arena(12); player.ranks.W = true;
@@ -538,17 +538,15 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('...at a steady pace, slower than a jump\'s pop', firstStep < 300 * P.STEP && firstStep > 0, `first step ${firstStep.toFixed(1)}px`);
 }
 {
-  // Skyward Assault -> E: the lift is the use time, so Downpour waits it out
+  // Skyward Assault -> E: Downpour isn't a link off the assault, so a press
+  // during the hover is dropped (only MS, R, Z and Q are buffered).
   arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.E = true; player.ranks.PV = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Skyward Assault hovers', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
   tap('e');
-  check('E pressed during the hover waits for it', player.casting.queued === 'E' && player.hang.t > 0,
+  check('E pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
-  let fired = -1;
-  for (let i = 0; i < 40 && fired < 0; i++) { step(1); if (player.casting.key === 'PV') fired = i; }
-  check('...and Downpour fires as the leap ends', fired >= 0 && player.casting.key === 'PV', `fired ${fired}`);
 }
 {
   // Skyward Assault -> R: a Tempest pressed during the hover fires as it ends
@@ -898,10 +896,10 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; player.ranks.R = true; cast('R');
   const rCd = player.cd.R, rUse = player.casting.useT;
   player.ranks.HA = true; player.casting.useT = 0; player.casting.recoverT = 0; player.cd.R = 0; cast('R');
-  check('Haste shortens use time by 10% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.1) < 1e-6);
+  check('Haste shortens use time by 20% attack speed at rank 3', Math.abs(player.casting.useT - rUse / 1.2) < 1e-6);
   check('Haste leaves cooldowns alone', player.cd.R === rCd);
   player.casting.useT = 0; player.casting.recoverT = 0; cast('Z');
-  check('a hasted Double Shot fires about 10% faster', Math.abs(player.casting.useT - base / 1.1) < 1e-6);
+  check('a hasted Double Shot fires about 20% faster', Math.abs(player.casting.useT - base / 1.2) < 1e-6);
   player.ranks.HA = false; player.ranks.R = false;
 }
 
@@ -1068,7 +1066,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const bad: string[] = [];
   for (const key of ['Z', 'Q', 'W', 'E', 'R', 'D'] as const) {
     arena(60, 200);
-    for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['S', 'AB'].includes(k) ? false : true;
+    for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['S', 'BS', 'VS', 'RA', 'AB'].includes(k) ? 0 : 1;
     dummy(240); dummy(280);
     game.fx = [];
     cast(key); step(1);
@@ -1558,7 +1556,7 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   tap('up');
   trainer.sel = TRAINER_ITEMS.length - 1; tap('z');
   check('a full reset refunds every AP and SP spent (Glide too)',
-    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === true && player.sp === 3 && player.ranks.D === false && wallet.coins === 0,
+    player.stats.dex === 0 && player.ap === 4 && player.ranks.Z === true && player.sp === 4 && player.ranks.D === false && wallet.coins === 0,
     `ap ${player.ap} sp ${player.sp} Z ${player.ranks.Z}`);
   tap('escape');
   release();
@@ -2750,35 +2748,32 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   player.ranks.Q = false; player.ranks.EB = true;
   check('Electric Blitz carries the same committed recovery', SKILLS.EB.delay === 0.35 && delayTime('EB') === base);
   player.ranks.HA = true;
-  check('Haste shortens the recovery by 10% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.1) < 1e-6,
+  check('Haste shortens the recovery by 20% attack speed at rank 3', Math.abs(delayTime('EB') - 0.35 / 1.2) < 1e-6,
     `${delayTime('EB').toFixed(4)}`);
   player.ranks.HA = false; player.ranks.EB = false; player.ranks.Q = true;
 }
 
 {
-  // Off a Skyward Assault hover: the lift is the use time, so a non-link skill
-  // (Glide) waits for it, then fires and carries you
+  // Off a Skyward Assault hover: only the assault's links (MS, R, Z, Q) are
+  // buffered, so a Glide pressed during the hover is dropped.
   arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.D = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('hovering (setup)', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
   tap('d');
-  check('Glide pressed during the hover waits for it', player.casting.queued === 'D' && player.hang.t > 0,
+  check('Glide pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
-  step(30); // the hover ends, the buffered Glide fires
-  check('...and the Glide fires as the hover ends, carrying you', player.cast === 'jump' && player.vx !== 0,
-    `cast ${player.cast} vx ${player.vx.toFixed(0)}`);
 }
 {
+  // Off a Skyward Assault hover: the Q slot (Meteor Dive) isn't a link off the
+  // assault (only the ground Q is), so a press during the hover is dropped.
   arena(30); player.ranks.Q = true; player.ranks.W = true; player.ranks.AB = true; player.ranks.AD = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
-  tap('q'); // Q's air form (Meteor Dive) pressed during the hover waits for it
-  check('Meteor Dive pressed during the hover waits for it', player.casting.queued === 'Q' && player.hang.t > 0,
+  tap('q'); // Q's air form (Meteor Dive) pressed during the hover
+  check('Meteor Dive pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
-  step(30); // the hover ends, the buffered Meteor Dive fires
-  check('...and the dive plays out (no hover freeze)', player.hang.t === 0 && (player.diving || player.rush.t > 0),
-    `diving ${player.diving} rushT ${player.rush.t.toFixed(2)}`);}
+}
 
 {
   // Single-rank skills: each carries its (former) max-level hit/damage numbers
