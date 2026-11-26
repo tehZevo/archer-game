@@ -21,6 +21,7 @@ const flower = (p: Paint, x: number, y: number, h: number, petal: string, mid: s
 /* ---------------- Murky Swamp: black peat, slimy moss, cattails, dripping ooze ---------------- */
 const swamp: Tileset = {
   name: 'Murky Swamp',
+  sway: [1],
   sky: ['#1a2420', '#2a3a2c', '#121a16'],
   fill(x, y, v) {
     // peat: dark mud in soft blotches, with bubbles and sunken bits
@@ -197,6 +198,7 @@ const sky: Tileset = {
 /* ---------------- Sunny Meadows: bright clover turf, rich loam, flowers, straw rope ---------------- */
 const meadow: Tileset = {
   name: 'Sunny Meadows',
+  sway: [0, 1, 2],
   sky: ['#5aa0d8', '#9ccaec', '#d8ecf8'],
   fill(x, y, v) {
     // soft brown loam in loose horizontal bands, with pebbles and roots
@@ -255,6 +257,7 @@ const meadow: Tileset = {
 /* ---------------- Misty Riverbank: wet clay, river pebbles, reeds, bamboo ladders ---------------- */
 const riverbank: Tileset = {
   name: 'Misty Riverbank',
+  sway: [1, 3],
   sky: ['#3a7aa0', '#6aa4c0', '#a8d0d8'],
   fill(x, y, v) {
     // grey-brown clay with fine sediment lines and a few smooth river pebbles
@@ -315,6 +318,7 @@ const riverbank: Tileset = {
 /* ---------------- Rolling Hills: windswept grass, chalky soil with boulders, pegged rope ---------------- */
 const hills: Tileset = {
   name: 'Rolling Hills',
+  sway: [0, 1, 3],
   sky: ['#4a8ac4', '#8cc0e4', '#e8f0e0'],
   fill(x, y, v) {
     // pale chalky soil, with a big embedded boulder in some tiles

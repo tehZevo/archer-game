@@ -1,6 +1,6 @@
 import { NB } from './nb';
 import { make, px, Sprite } from './sprites';
-import { BLOCK_VARIANTS, BOT_H, TOP_H, TOP_W, painter, type Tileset } from './tileset';
+import { BLOCK_VARIANTS, BOT_H, TOP_H, TOP_W, TOP_Y, painter, type Tileset } from './tileset';
 import { canvasGrid, newGrid, type Grid } from './grid';
 import { BAKED_TILES } from './tilebaked';
 
@@ -52,7 +52,10 @@ export function pieces(ts: Tileset): [string, () => Sprite | null][] {
     out.push([K.foot(ts, dir), () => slopeFoot(ts, dir)]);
   }
   for (let v = 0; v < 4; v++) {
-    for (const w of [false, true]) for (const e of [false, true]) out.push([K.top(ts, v, w, e), () => topDeco(ts, v, w, e)]);
+    for (const w of [false, true]) for (const e of [false, true]) {
+      out.push([K.top(ts, v, w, e), () => topDeco(ts, v, w, e)]);
+      if (sways(ts, v)) for (const f of [1, 3]) out.push([K.top(ts, v, w, e) + `|${f}`, () => topDeco(ts, v, w, e, f)]);
+    }
     out.push([K.bottom(ts, v), () => bottomDeco(ts, v)]);
   }
   out.push([K.rope(ts), () => rope(ts)], [K.ladder(ts), () => ladder(ts)]);
@@ -172,10 +175,26 @@ export function slopeFoot(ts: Tileset, dir: 1 | -1): Sprite {
   });
 }
 
-/** Decoration standing on an exposed top (TOP_W x TOP_H; drawn 2px left of and TOP_Y above the tile). */
-export function topDeco(ts: Tileset, v: number, w: boolean, e: boolean): Sprite | null {
+/** Swaying plants: a 4-frame cycle, each frame leaning the growth more
+ *  than SWAY_ROWS above the surface by this many pixels. */
+export const SWAY = [0, 1, 0, -1], SWAY_FPS = 2.5, SWAY_ROWS = 3;
+export const sways = (ts: Tileset, v: number): boolean => !!ts.top && !!ts.sway?.includes(v);
+
+/** Decoration standing on an exposed top (TOP_W x TOP_H; drawn 2px left of
+ *  and TOP_Y above the tile), in sway frame `f` if its plants sway. */
+export function topDeco(ts: Tileset, v: number, w: boolean, e: boolean, f = 0): Sprite | null {
   if (!ts.top) return null;
-  const top = ts.top;
+  const top = ts.top, lean = sways(ts, v) ? SWAY[f % SWAY.length] : 0;
+  if (lean) {
+    const still = topDeco(ts, v, w, e) as Sprite;
+    return cached(ts, K.top(ts, v, w, e) + `|${f}`, TOP_W, TOP_H, (s) => {
+      const a = still.g, b = s.g;
+      for (let y = 0; y < TOP_H; y++) for (let x = 0; x < TOP_W; x++) {
+        const sx = y < TOP_Y - SWAY_ROWS ? x - lean : x;
+        if (sx >= 0 && sx < TOP_W) b.px.set(a.px.subarray((y * TOP_W + sx) * 4, (y * TOP_W + sx) * 4 + 4), (y * TOP_W + x) * 4);
+      }
+    });
+  }
   return cached(ts, K.top(ts, v, w, e), TOP_W, TOP_H, (s) => top(painter(s, px), v, w, e));
 }
 

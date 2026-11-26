@@ -99,6 +99,7 @@ const beach: Tileset = {
 /* ---------------- Whispering Woods: dark loam and roots, thick grass, vines, log ladders ---------------- */
 const forest: Tileset = {
   name: 'Whispering Woods',
+  sway: [0, 1, 2],
   sky: ['#1c3a2c', '#2a573a', '#173024'],
   fill(x, y, v) {
     let col = hash(x >> 1, y >> 1, v + 3) < 0.25 ? '#553a25' : '#4a3220';
