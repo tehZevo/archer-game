@@ -16,7 +16,7 @@ const args = process.argv.slice(2), opaque = args[0] === '--mobs' || args[0] ===
 const pick = opaque ? args.slice(1) : args;
 /* --art <prefix>: scenery keys under the prefix, a row per parent ("npc/shop/0..3" in one row) */
 const artRows = args[0] === '--art'
-  ? [...Object.keys(ART_GEN).filter((k) => k.startsWith(pick[0] ?? '')).reduce((m, k) => {
+  ? [...Object.keys(ART_GEN).filter((k) => !pick.length || pick.some((p) => k.startsWith(p))).reduce((m, k) => {
       const parent = k.includes('/') ? k.slice(0, k.lastIndexOf('/')) : k;
       return m.set(parent, [...(m.get(parent) ?? []), k]);
     }, new Map<string, string[]>()).entries()]

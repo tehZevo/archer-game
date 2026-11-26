@@ -54,123 +54,215 @@ import a51 from '../assets/art/prop-starfall-observatory-0.png';
 import a52 from '../assets/art/prop-starfall-observatory-1.png';
 import a53 from '../assets/art/prop-void-garden-0.png';
 import a54 from '../assets/art/prop-void-garden-1.png';
-import a55 from '../assets/art/decor-house-0.png';
-import a56 from '../assets/art/decor-house-1.png';
-import a57 from '../assets/art/decor-house-2.png';
-import a58 from '../assets/art/decor-house-3.png';
-import a59 from '../assets/art/decor-house-4.png';
-import a60 from '../assets/art/decor-house-5.png';
-import a61 from '../assets/art/decor-house-6.png';
-import a62 from '../assets/art/decor-tower-0.png';
-import a63 from '../assets/art/decor-tower-1.png';
-import a64 from '../assets/art/decor-tower-2.png';
-import a65 from '../assets/art/decor-tower-3.png';
-import a66 from '../assets/art/decor-tower-4.png';
-import a67 from '../assets/art/decor-tower-5.png';
-import a68 from '../assets/art/decor-tower-6.png';
-import a69 from '../assets/art/decor-lamp-0.png';
-import a70 from '../assets/art/decor-lamp-1.png';
-import a71 from '../assets/art/decor-lamp-2.png';
-import a72 from '../assets/art/decor-lamp-3.png';
-import a73 from '../assets/art/decor-lamp-4.png';
-import a74 from '../assets/art/decor-lamp-5.png';
-import a75 from '../assets/art/decor-lamp-6.png';
-import a76 from '../assets/art/decor-bench-0.png';
-import a77 from '../assets/art/decor-bench-1.png';
-import a78 from '../assets/art/decor-bench-2.png';
-import a79 from '../assets/art/decor-bench-3.png';
-import a80 from '../assets/art/decor-bench-4.png';
-import a81 from '../assets/art/decor-bench-5.png';
-import a82 from '../assets/art/decor-bench-6.png';
-import a83 from '../assets/art/decor-crate-0.png';
-import a84 from '../assets/art/decor-crate-1.png';
-import a85 from '../assets/art/decor-crate-2.png';
-import a86 from '../assets/art/decor-crate-3.png';
-import a87 from '../assets/art/decor-crate-4.png';
-import a88 from '../assets/art/decor-crate-5.png';
-import a89 from '../assets/art/decor-crate-6.png';
-import a90 from '../assets/art/decor-barrel-0.png';
-import a91 from '../assets/art/decor-barrel-1.png';
-import a92 from '../assets/art/decor-barrel-2.png';
-import a93 from '../assets/art/decor-barrel-3.png';
-import a94 from '../assets/art/decor-barrel-4.png';
-import a95 from '../assets/art/decor-barrel-5.png';
-import a96 from '../assets/art/decor-barrel-6.png';
-import a97 from '../assets/art/decor-flowers-0.png';
-import a98 from '../assets/art/decor-flowers-1.png';
-import a99 from '../assets/art/decor-flowers-2.png';
-import a100 from '../assets/art/decor-flowers-3.png';
-import a101 from '../assets/art/decor-flowers-4.png';
-import a102 from '../assets/art/decor-flowers-5.png';
-import a103 from '../assets/art/decor-flowers-6.png';
-import a104 from '../assets/art/decor-well-0.png';
-import a105 from '../assets/art/decor-well-1.png';
-import a106 from '../assets/art/decor-well-2.png';
-import a107 from '../assets/art/decor-well-3.png';
-import a108 from '../assets/art/decor-well-4.png';
-import a109 from '../assets/art/decor-well-5.png';
-import a110 from '../assets/art/decor-well-6.png';
-import a111 from '../assets/art/decor-sign-0.png';
-import a112 from '../assets/art/decor-sign-1.png';
-import a113 from '../assets/art/decor-sign-2.png';
-import a114 from '../assets/art/decor-sign-3.png';
-import a115 from '../assets/art/decor-sign-4.png';
-import a116 from '../assets/art/decor-sign-5.png';
-import a117 from '../assets/art/decor-sign-6.png';
-import a118 from '../assets/art/decor-awning-0.png';
-import a119 from '../assets/art/decor-awning-1.png';
-import a120 from '../assets/art/decor-awning-2.png';
-import a121 from '../assets/art/decor-awning-3.png';
-import a122 from '../assets/art/decor-awning-4.png';
-import a123 from '../assets/art/decor-awning-5.png';
-import a124 from '../assets/art/decor-awning-6.png';
-import a125 from '../assets/art/decor-fence-0.png';
-import a126 from '../assets/art/decor-fence-1.png';
-import a127 from '../assets/art/decor-fence-2.png';
-import a128 from '../assets/art/decor-fence-3.png';
-import a129 from '../assets/art/decor-fence-4.png';
-import a130 from '../assets/art/decor-fence-5.png';
-import a131 from '../assets/art/decor-fence-6.png';
-import a132 from '../assets/art/backdrop-classic-far.png';
-import a133 from '../assets/art/backdrop-classic-mid.png';
-import a134 from '../assets/art/backdrop-harbor-far.png';
-import a135 from '../assets/art/backdrop-harbor-mid.png';
-import a136 from '../assets/art/backdrop-tide-pools-far.png';
-import a137 from '../assets/art/backdrop-tide-pools-mid.png';
-import a138 from '../assets/art/backdrop-sunlit-shore-far.png';
-import a139 from '../assets/art/backdrop-sunlit-shore-mid.png';
-import a140 from '../assets/art/backdrop-whispering-woods-far.png';
-import a141 from '../assets/art/backdrop-whispering-woods-mid.png';
-import a142 from '../assets/art/backdrop-echoing-caves-far.png';
-import a143 from '../assets/art/backdrop-echoing-caves-mid.png';
-import a144 from '../assets/art/backdrop-murky-swamp-far.png';
-import a145 from '../assets/art/backdrop-murky-swamp-mid.png';
-import a146 from '../assets/art/backdrop-craggy-mountains-far.png';
-import a147 from '../assets/art/backdrop-craggy-mountains-mid.png';
-import a148 from '../assets/art/backdrop-endless-sky-far.png';
-import a149 from '../assets/art/backdrop-endless-sky-mid.png';
-import a150 from '../assets/art/backdrop-clockwork-spire-far.png';
-import a151 from '../assets/art/backdrop-clockwork-spire-mid.png';
-import a152 from '../assets/art/backdrop-sunny-meadows-far.png';
-import a153 from '../assets/art/backdrop-sunny-meadows-mid.png';
-import a154 from '../assets/art/backdrop-misty-riverbank-far.png';
-import a155 from '../assets/art/backdrop-misty-riverbank-mid.png';
-import a156 from '../assets/art/backdrop-rolling-hills-far.png';
-import a157 from '../assets/art/backdrop-rolling-hills-mid.png';
-import a158 from '../assets/art/backdrop-mushroom-grotto-far.png';
-import a159 from '../assets/art/backdrop-mushroom-grotto-mid.png';
-import a160 from '../assets/art/backdrop-crystal-caverns-far.png';
-import a161 from '../assets/art/backdrop-crystal-caverns-mid.png';
-import a162 from '../assets/art/backdrop-sunken-ruins-far.png';
-import a163 from '../assets/art/backdrop-sunken-ruins-mid.png';
-import a164 from '../assets/art/backdrop-dreamwood-far.png';
-import a165 from '../assets/art/backdrop-dreamwood-mid.png';
-import a166 from '../assets/art/backdrop-mirror-lake-far.png';
-import a167 from '../assets/art/backdrop-mirror-lake-mid.png';
-import a168 from '../assets/art/backdrop-starfall-observatory-far.png';
-import a169 from '../assets/art/backdrop-starfall-observatory-mid.png';
-import a170 from '../assets/art/backdrop-void-garden-far.png';
-import a171 from '../assets/art/backdrop-void-garden-mid.png';
+import a55 from '../assets/art/decor-house-0-0.png';
+import a56 from '../assets/art/decor-house-1-0.png';
+import a57 from '../assets/art/decor-house-2-0.png';
+import a58 from '../assets/art/decor-house-3-0.png';
+import a59 from '../assets/art/decor-house-4-0.png';
+import a60 from '../assets/art/decor-house-5-0.png';
+import a61 from '../assets/art/decor-house-6-0.png';
+import a62 from '../assets/art/decor-tower-0-0.png';
+import a63 from '../assets/art/decor-tower-1-0.png';
+import a64 from '../assets/art/decor-tower-2-0.png';
+import a65 from '../assets/art/decor-tower-3-0.png';
+import a66 from '../assets/art/decor-tower-4-0.png';
+import a67 from '../assets/art/decor-tower-5-0.png';
+import a68 from '../assets/art/decor-tower-6-0.png';
+import a69 from '../assets/art/decor-lamp-0-0.png';
+import a70 from '../assets/art/decor-lamp-0-1.png';
+import a71 from '../assets/art/decor-lamp-0-2.png';
+import a72 from '../assets/art/decor-lamp-0-3.png';
+import a73 from '../assets/art/decor-lamp-1-0.png';
+import a74 from '../assets/art/decor-lamp-1-1.png';
+import a75 from '../assets/art/decor-lamp-1-2.png';
+import a76 from '../assets/art/decor-lamp-1-3.png';
+import a77 from '../assets/art/decor-lamp-2-0.png';
+import a78 from '../assets/art/decor-lamp-2-1.png';
+import a79 from '../assets/art/decor-lamp-2-2.png';
+import a80 from '../assets/art/decor-lamp-2-3.png';
+import a81 from '../assets/art/decor-lamp-3-0.png';
+import a82 from '../assets/art/decor-lamp-3-1.png';
+import a83 from '../assets/art/decor-lamp-3-2.png';
+import a84 from '../assets/art/decor-lamp-3-3.png';
+import a85 from '../assets/art/decor-lamp-4-0.png';
+import a86 from '../assets/art/decor-lamp-4-1.png';
+import a87 from '../assets/art/decor-lamp-4-2.png';
+import a88 from '../assets/art/decor-lamp-4-3.png';
+import a89 from '../assets/art/decor-lamp-5-0.png';
+import a90 from '../assets/art/decor-lamp-5-1.png';
+import a91 from '../assets/art/decor-lamp-5-2.png';
+import a92 from '../assets/art/decor-lamp-5-3.png';
+import a93 from '../assets/art/decor-lamp-6-0.png';
+import a94 from '../assets/art/decor-lamp-6-1.png';
+import a95 from '../assets/art/decor-lamp-6-2.png';
+import a96 from '../assets/art/decor-lamp-6-3.png';
+import a97 from '../assets/art/decor-bench-0-0.png';
+import a98 from '../assets/art/decor-bench-1-0.png';
+import a99 from '../assets/art/decor-bench-2-0.png';
+import a100 from '../assets/art/decor-bench-3-0.png';
+import a101 from '../assets/art/decor-bench-4-0.png';
+import a102 from '../assets/art/decor-bench-5-0.png';
+import a103 from '../assets/art/decor-bench-6-0.png';
+import a104 from '../assets/art/decor-crate-0-0.png';
+import a105 from '../assets/art/decor-crate-1-0.png';
+import a106 from '../assets/art/decor-crate-2-0.png';
+import a107 from '../assets/art/decor-crate-3-0.png';
+import a108 from '../assets/art/decor-crate-4-0.png';
+import a109 from '../assets/art/decor-crate-5-0.png';
+import a110 from '../assets/art/decor-crate-6-0.png';
+import a111 from '../assets/art/decor-barrel-0-0.png';
+import a112 from '../assets/art/decor-barrel-1-0.png';
+import a113 from '../assets/art/decor-barrel-2-0.png';
+import a114 from '../assets/art/decor-barrel-3-0.png';
+import a115 from '../assets/art/decor-barrel-4-0.png';
+import a116 from '../assets/art/decor-barrel-5-0.png';
+import a117 from '../assets/art/decor-barrel-6-0.png';
+import a118 from '../assets/art/decor-flowers-0-0.png';
+import a119 from '../assets/art/decor-flowers-0-1.png';
+import a120 from '../assets/art/decor-flowers-0-2.png';
+import a121 from '../assets/art/decor-flowers-0-3.png';
+import a122 from '../assets/art/decor-flowers-1-0.png';
+import a123 from '../assets/art/decor-flowers-1-1.png';
+import a124 from '../assets/art/decor-flowers-1-2.png';
+import a125 from '../assets/art/decor-flowers-1-3.png';
+import a126 from '../assets/art/decor-flowers-2-0.png';
+import a127 from '../assets/art/decor-flowers-2-1.png';
+import a128 from '../assets/art/decor-flowers-2-2.png';
+import a129 from '../assets/art/decor-flowers-2-3.png';
+import a130 from '../assets/art/decor-flowers-3-0.png';
+import a131 from '../assets/art/decor-flowers-3-1.png';
+import a132 from '../assets/art/decor-flowers-3-2.png';
+import a133 from '../assets/art/decor-flowers-3-3.png';
+import a134 from '../assets/art/decor-flowers-4-0.png';
+import a135 from '../assets/art/decor-flowers-4-1.png';
+import a136 from '../assets/art/decor-flowers-4-2.png';
+import a137 from '../assets/art/decor-flowers-4-3.png';
+import a138 from '../assets/art/decor-flowers-5-0.png';
+import a139 from '../assets/art/decor-flowers-5-1.png';
+import a140 from '../assets/art/decor-flowers-5-2.png';
+import a141 from '../assets/art/decor-flowers-5-3.png';
+import a142 from '../assets/art/decor-flowers-6-0.png';
+import a143 from '../assets/art/decor-flowers-6-1.png';
+import a144 from '../assets/art/decor-flowers-6-2.png';
+import a145 from '../assets/art/decor-flowers-6-3.png';
+import a146 from '../assets/art/decor-well-0-0.png';
+import a147 from '../assets/art/decor-well-1-0.png';
+import a148 from '../assets/art/decor-well-2-0.png';
+import a149 from '../assets/art/decor-well-3-0.png';
+import a150 from '../assets/art/decor-well-4-0.png';
+import a151 from '../assets/art/decor-well-5-0.png';
+import a152 from '../assets/art/decor-well-6-0.png';
+import a153 from '../assets/art/decor-sign-0-0.png';
+import a154 from '../assets/art/decor-sign-0-1.png';
+import a155 from '../assets/art/decor-sign-0-2.png';
+import a156 from '../assets/art/decor-sign-0-3.png';
+import a157 from '../assets/art/decor-sign-1-0.png';
+import a158 from '../assets/art/decor-sign-1-1.png';
+import a159 from '../assets/art/decor-sign-1-2.png';
+import a160 from '../assets/art/decor-sign-1-3.png';
+import a161 from '../assets/art/decor-sign-2-0.png';
+import a162 from '../assets/art/decor-sign-2-1.png';
+import a163 from '../assets/art/decor-sign-2-2.png';
+import a164 from '../assets/art/decor-sign-2-3.png';
+import a165 from '../assets/art/decor-sign-3-0.png';
+import a166 from '../assets/art/decor-sign-3-1.png';
+import a167 from '../assets/art/decor-sign-3-2.png';
+import a168 from '../assets/art/decor-sign-3-3.png';
+import a169 from '../assets/art/decor-sign-4-0.png';
+import a170 from '../assets/art/decor-sign-4-1.png';
+import a171 from '../assets/art/decor-sign-4-2.png';
+import a172 from '../assets/art/decor-sign-4-3.png';
+import a173 from '../assets/art/decor-sign-5-0.png';
+import a174 from '../assets/art/decor-sign-5-1.png';
+import a175 from '../assets/art/decor-sign-5-2.png';
+import a176 from '../assets/art/decor-sign-5-3.png';
+import a177 from '../assets/art/decor-sign-6-0.png';
+import a178 from '../assets/art/decor-sign-6-1.png';
+import a179 from '../assets/art/decor-sign-6-2.png';
+import a180 from '../assets/art/decor-sign-6-3.png';
+import a181 from '../assets/art/decor-awning-0-0.png';
+import a182 from '../assets/art/decor-awning-0-1.png';
+import a183 from '../assets/art/decor-awning-0-2.png';
+import a184 from '../assets/art/decor-awning-0-3.png';
+import a185 from '../assets/art/decor-awning-1-0.png';
+import a186 from '../assets/art/decor-awning-1-1.png';
+import a187 from '../assets/art/decor-awning-1-2.png';
+import a188 from '../assets/art/decor-awning-1-3.png';
+import a189 from '../assets/art/decor-awning-2-0.png';
+import a190 from '../assets/art/decor-awning-2-1.png';
+import a191 from '../assets/art/decor-awning-2-2.png';
+import a192 from '../assets/art/decor-awning-2-3.png';
+import a193 from '../assets/art/decor-awning-3-0.png';
+import a194 from '../assets/art/decor-awning-3-1.png';
+import a195 from '../assets/art/decor-awning-3-2.png';
+import a196 from '../assets/art/decor-awning-3-3.png';
+import a197 from '../assets/art/decor-awning-4-0.png';
+import a198 from '../assets/art/decor-awning-4-1.png';
+import a199 from '../assets/art/decor-awning-4-2.png';
+import a200 from '../assets/art/decor-awning-4-3.png';
+import a201 from '../assets/art/decor-awning-5-0.png';
+import a202 from '../assets/art/decor-awning-5-1.png';
+import a203 from '../assets/art/decor-awning-5-2.png';
+import a204 from '../assets/art/decor-awning-5-3.png';
+import a205 from '../assets/art/decor-awning-6-0.png';
+import a206 from '../assets/art/decor-awning-6-1.png';
+import a207 from '../assets/art/decor-awning-6-2.png';
+import a208 from '../assets/art/decor-awning-6-3.png';
+import a209 from '../assets/art/decor-fence-0-0.png';
+import a210 from '../assets/art/decor-fence-1-0.png';
+import a211 from '../assets/art/decor-fence-2-0.png';
+import a212 from '../assets/art/decor-fence-3-0.png';
+import a213 from '../assets/art/decor-fence-4-0.png';
+import a214 from '../assets/art/decor-fence-5-0.png';
+import a215 from '../assets/art/decor-fence-6-0.png';
+import a216 from '../assets/art/decor-smoke-0.png';
+import a217 from '../assets/art/decor-smoke-1.png';
+import a218 from '../assets/art/decor-smoke-2.png';
+import a219 from '../assets/art/decor-smoke-3.png';
+import a220 from '../assets/art/decor-smoke-4.png';
+import a221 from '../assets/art/decor-smoke-5.png';
+import a222 from '../assets/art/decor-smoke-6.png';
+import a223 from '../assets/art/decor-smoke-7.png';
+import a224 from '../assets/art/backdrop-classic-far.png';
+import a225 from '../assets/art/backdrop-classic-mid.png';
+import a226 from '../assets/art/backdrop-harbor-far.png';
+import a227 from '../assets/art/backdrop-harbor-mid.png';
+import a228 from '../assets/art/backdrop-tide-pools-far.png';
+import a229 from '../assets/art/backdrop-tide-pools-mid.png';
+import a230 from '../assets/art/backdrop-sunlit-shore-far.png';
+import a231 from '../assets/art/backdrop-sunlit-shore-mid.png';
+import a232 from '../assets/art/backdrop-whispering-woods-far.png';
+import a233 from '../assets/art/backdrop-whispering-woods-mid.png';
+import a234 from '../assets/art/backdrop-echoing-caves-far.png';
+import a235 from '../assets/art/backdrop-echoing-caves-mid.png';
+import a236 from '../assets/art/backdrop-murky-swamp-far.png';
+import a237 from '../assets/art/backdrop-murky-swamp-mid.png';
+import a238 from '../assets/art/backdrop-craggy-mountains-far.png';
+import a239 from '../assets/art/backdrop-craggy-mountains-mid.png';
+import a240 from '../assets/art/backdrop-endless-sky-far.png';
+import a241 from '../assets/art/backdrop-endless-sky-mid.png';
+import a242 from '../assets/art/backdrop-clockwork-spire-far.png';
+import a243 from '../assets/art/backdrop-clockwork-spire-mid.png';
+import a244 from '../assets/art/backdrop-sunny-meadows-far.png';
+import a245 from '../assets/art/backdrop-sunny-meadows-mid.png';
+import a246 from '../assets/art/backdrop-misty-riverbank-far.png';
+import a247 from '../assets/art/backdrop-misty-riverbank-mid.png';
+import a248 from '../assets/art/backdrop-rolling-hills-far.png';
+import a249 from '../assets/art/backdrop-rolling-hills-mid.png';
+import a250 from '../assets/art/backdrop-mushroom-grotto-far.png';
+import a251 from '../assets/art/backdrop-mushroom-grotto-mid.png';
+import a252 from '../assets/art/backdrop-crystal-caverns-far.png';
+import a253 from '../assets/art/backdrop-crystal-caverns-mid.png';
+import a254 from '../assets/art/backdrop-sunken-ruins-far.png';
+import a255 from '../assets/art/backdrop-sunken-ruins-mid.png';
+import a256 from '../assets/art/backdrop-dreamwood-far.png';
+import a257 from '../assets/art/backdrop-dreamwood-mid.png';
+import a258 from '../assets/art/backdrop-mirror-lake-far.png';
+import a259 from '../assets/art/backdrop-mirror-lake-mid.png';
+import a260 from '../assets/art/backdrop-starfall-observatory-far.png';
+import a261 from '../assets/art/backdrop-starfall-observatory-mid.png';
+import a262 from '../assets/art/backdrop-void-garden-far.png';
+import a263 from '../assets/art/backdrop-void-garden-mid.png';
 
 export const BAKED_ART: Record<string, string> = {
   "portal": a0,
@@ -228,121 +320,213 @@ export const BAKED_ART: Record<string, string> = {
   "prop/Starfall Observatory/1": a52,
   "prop/Void Garden/0": a53,
   "prop/Void Garden/1": a54,
-  "decor/house/0": a55,
-  "decor/house/1": a56,
-  "decor/house/2": a57,
-  "decor/house/3": a58,
-  "decor/house/4": a59,
-  "decor/house/5": a60,
-  "decor/house/6": a61,
-  "decor/tower/0": a62,
-  "decor/tower/1": a63,
-  "decor/tower/2": a64,
-  "decor/tower/3": a65,
-  "decor/tower/4": a66,
-  "decor/tower/5": a67,
-  "decor/tower/6": a68,
-  "decor/lamp/0": a69,
-  "decor/lamp/1": a70,
-  "decor/lamp/2": a71,
-  "decor/lamp/3": a72,
-  "decor/lamp/4": a73,
-  "decor/lamp/5": a74,
-  "decor/lamp/6": a75,
-  "decor/bench/0": a76,
-  "decor/bench/1": a77,
-  "decor/bench/2": a78,
-  "decor/bench/3": a79,
-  "decor/bench/4": a80,
-  "decor/bench/5": a81,
-  "decor/bench/6": a82,
-  "decor/crate/0": a83,
-  "decor/crate/1": a84,
-  "decor/crate/2": a85,
-  "decor/crate/3": a86,
-  "decor/crate/4": a87,
-  "decor/crate/5": a88,
-  "decor/crate/6": a89,
-  "decor/barrel/0": a90,
-  "decor/barrel/1": a91,
-  "decor/barrel/2": a92,
-  "decor/barrel/3": a93,
-  "decor/barrel/4": a94,
-  "decor/barrel/5": a95,
-  "decor/barrel/6": a96,
-  "decor/flowers/0": a97,
-  "decor/flowers/1": a98,
-  "decor/flowers/2": a99,
-  "decor/flowers/3": a100,
-  "decor/flowers/4": a101,
-  "decor/flowers/5": a102,
-  "decor/flowers/6": a103,
-  "decor/well/0": a104,
-  "decor/well/1": a105,
-  "decor/well/2": a106,
-  "decor/well/3": a107,
-  "decor/well/4": a108,
-  "decor/well/5": a109,
-  "decor/well/6": a110,
-  "decor/sign/0": a111,
-  "decor/sign/1": a112,
-  "decor/sign/2": a113,
-  "decor/sign/3": a114,
-  "decor/sign/4": a115,
-  "decor/sign/5": a116,
-  "decor/sign/6": a117,
-  "decor/awning/0": a118,
-  "decor/awning/1": a119,
-  "decor/awning/2": a120,
-  "decor/awning/3": a121,
-  "decor/awning/4": a122,
-  "decor/awning/5": a123,
-  "decor/awning/6": a124,
-  "decor/fence/0": a125,
-  "decor/fence/1": a126,
-  "decor/fence/2": a127,
-  "decor/fence/3": a128,
-  "decor/fence/4": a129,
-  "decor/fence/5": a130,
-  "decor/fence/6": a131,
-  "backdrop/Classic/far": a132,
-  "backdrop/Classic/mid": a133,
-  "backdrop/Harbor/far": a134,
-  "backdrop/Harbor/mid": a135,
-  "backdrop/Tide Pools/far": a136,
-  "backdrop/Tide Pools/mid": a137,
-  "backdrop/Sunlit Shore/far": a138,
-  "backdrop/Sunlit Shore/mid": a139,
-  "backdrop/Whispering Woods/far": a140,
-  "backdrop/Whispering Woods/mid": a141,
-  "backdrop/Echoing Caves/far": a142,
-  "backdrop/Echoing Caves/mid": a143,
-  "backdrop/Murky Swamp/far": a144,
-  "backdrop/Murky Swamp/mid": a145,
-  "backdrop/Craggy Mountains/far": a146,
-  "backdrop/Craggy Mountains/mid": a147,
-  "backdrop/Endless Sky/far": a148,
-  "backdrop/Endless Sky/mid": a149,
-  "backdrop/Clockwork Spire/far": a150,
-  "backdrop/Clockwork Spire/mid": a151,
-  "backdrop/Sunny Meadows/far": a152,
-  "backdrop/Sunny Meadows/mid": a153,
-  "backdrop/Misty Riverbank/far": a154,
-  "backdrop/Misty Riverbank/mid": a155,
-  "backdrop/Rolling Hills/far": a156,
-  "backdrop/Rolling Hills/mid": a157,
-  "backdrop/Mushroom Grotto/far": a158,
-  "backdrop/Mushroom Grotto/mid": a159,
-  "backdrop/Crystal Caverns/far": a160,
-  "backdrop/Crystal Caverns/mid": a161,
-  "backdrop/Sunken Ruins/far": a162,
-  "backdrop/Sunken Ruins/mid": a163,
-  "backdrop/Dreamwood/far": a164,
-  "backdrop/Dreamwood/mid": a165,
-  "backdrop/Mirror Lake/far": a166,
-  "backdrop/Mirror Lake/mid": a167,
-  "backdrop/Starfall Observatory/far": a168,
-  "backdrop/Starfall Observatory/mid": a169,
-  "backdrop/Void Garden/far": a170,
-  "backdrop/Void Garden/mid": a171,
+  "decor/house/0/0": a55,
+  "decor/house/1/0": a56,
+  "decor/house/2/0": a57,
+  "decor/house/3/0": a58,
+  "decor/house/4/0": a59,
+  "decor/house/5/0": a60,
+  "decor/house/6/0": a61,
+  "decor/tower/0/0": a62,
+  "decor/tower/1/0": a63,
+  "decor/tower/2/0": a64,
+  "decor/tower/3/0": a65,
+  "decor/tower/4/0": a66,
+  "decor/tower/5/0": a67,
+  "decor/tower/6/0": a68,
+  "decor/lamp/0/0": a69,
+  "decor/lamp/0/1": a70,
+  "decor/lamp/0/2": a71,
+  "decor/lamp/0/3": a72,
+  "decor/lamp/1/0": a73,
+  "decor/lamp/1/1": a74,
+  "decor/lamp/1/2": a75,
+  "decor/lamp/1/3": a76,
+  "decor/lamp/2/0": a77,
+  "decor/lamp/2/1": a78,
+  "decor/lamp/2/2": a79,
+  "decor/lamp/2/3": a80,
+  "decor/lamp/3/0": a81,
+  "decor/lamp/3/1": a82,
+  "decor/lamp/3/2": a83,
+  "decor/lamp/3/3": a84,
+  "decor/lamp/4/0": a85,
+  "decor/lamp/4/1": a86,
+  "decor/lamp/4/2": a87,
+  "decor/lamp/4/3": a88,
+  "decor/lamp/5/0": a89,
+  "decor/lamp/5/1": a90,
+  "decor/lamp/5/2": a91,
+  "decor/lamp/5/3": a92,
+  "decor/lamp/6/0": a93,
+  "decor/lamp/6/1": a94,
+  "decor/lamp/6/2": a95,
+  "decor/lamp/6/3": a96,
+  "decor/bench/0/0": a97,
+  "decor/bench/1/0": a98,
+  "decor/bench/2/0": a99,
+  "decor/bench/3/0": a100,
+  "decor/bench/4/0": a101,
+  "decor/bench/5/0": a102,
+  "decor/bench/6/0": a103,
+  "decor/crate/0/0": a104,
+  "decor/crate/1/0": a105,
+  "decor/crate/2/0": a106,
+  "decor/crate/3/0": a107,
+  "decor/crate/4/0": a108,
+  "decor/crate/5/0": a109,
+  "decor/crate/6/0": a110,
+  "decor/barrel/0/0": a111,
+  "decor/barrel/1/0": a112,
+  "decor/barrel/2/0": a113,
+  "decor/barrel/3/0": a114,
+  "decor/barrel/4/0": a115,
+  "decor/barrel/5/0": a116,
+  "decor/barrel/6/0": a117,
+  "decor/flowers/0/0": a118,
+  "decor/flowers/0/1": a119,
+  "decor/flowers/0/2": a120,
+  "decor/flowers/0/3": a121,
+  "decor/flowers/1/0": a122,
+  "decor/flowers/1/1": a123,
+  "decor/flowers/1/2": a124,
+  "decor/flowers/1/3": a125,
+  "decor/flowers/2/0": a126,
+  "decor/flowers/2/1": a127,
+  "decor/flowers/2/2": a128,
+  "decor/flowers/2/3": a129,
+  "decor/flowers/3/0": a130,
+  "decor/flowers/3/1": a131,
+  "decor/flowers/3/2": a132,
+  "decor/flowers/3/3": a133,
+  "decor/flowers/4/0": a134,
+  "decor/flowers/4/1": a135,
+  "decor/flowers/4/2": a136,
+  "decor/flowers/4/3": a137,
+  "decor/flowers/5/0": a138,
+  "decor/flowers/5/1": a139,
+  "decor/flowers/5/2": a140,
+  "decor/flowers/5/3": a141,
+  "decor/flowers/6/0": a142,
+  "decor/flowers/6/1": a143,
+  "decor/flowers/6/2": a144,
+  "decor/flowers/6/3": a145,
+  "decor/well/0/0": a146,
+  "decor/well/1/0": a147,
+  "decor/well/2/0": a148,
+  "decor/well/3/0": a149,
+  "decor/well/4/0": a150,
+  "decor/well/5/0": a151,
+  "decor/well/6/0": a152,
+  "decor/sign/0/0": a153,
+  "decor/sign/0/1": a154,
+  "decor/sign/0/2": a155,
+  "decor/sign/0/3": a156,
+  "decor/sign/1/0": a157,
+  "decor/sign/1/1": a158,
+  "decor/sign/1/2": a159,
+  "decor/sign/1/3": a160,
+  "decor/sign/2/0": a161,
+  "decor/sign/2/1": a162,
+  "decor/sign/2/2": a163,
+  "decor/sign/2/3": a164,
+  "decor/sign/3/0": a165,
+  "decor/sign/3/1": a166,
+  "decor/sign/3/2": a167,
+  "decor/sign/3/3": a168,
+  "decor/sign/4/0": a169,
+  "decor/sign/4/1": a170,
+  "decor/sign/4/2": a171,
+  "decor/sign/4/3": a172,
+  "decor/sign/5/0": a173,
+  "decor/sign/5/1": a174,
+  "decor/sign/5/2": a175,
+  "decor/sign/5/3": a176,
+  "decor/sign/6/0": a177,
+  "decor/sign/6/1": a178,
+  "decor/sign/6/2": a179,
+  "decor/sign/6/3": a180,
+  "decor/awning/0/0": a181,
+  "decor/awning/0/1": a182,
+  "decor/awning/0/2": a183,
+  "decor/awning/0/3": a184,
+  "decor/awning/1/0": a185,
+  "decor/awning/1/1": a186,
+  "decor/awning/1/2": a187,
+  "decor/awning/1/3": a188,
+  "decor/awning/2/0": a189,
+  "decor/awning/2/1": a190,
+  "decor/awning/2/2": a191,
+  "decor/awning/2/3": a192,
+  "decor/awning/3/0": a193,
+  "decor/awning/3/1": a194,
+  "decor/awning/3/2": a195,
+  "decor/awning/3/3": a196,
+  "decor/awning/4/0": a197,
+  "decor/awning/4/1": a198,
+  "decor/awning/4/2": a199,
+  "decor/awning/4/3": a200,
+  "decor/awning/5/0": a201,
+  "decor/awning/5/1": a202,
+  "decor/awning/5/2": a203,
+  "decor/awning/5/3": a204,
+  "decor/awning/6/0": a205,
+  "decor/awning/6/1": a206,
+  "decor/awning/6/2": a207,
+  "decor/awning/6/3": a208,
+  "decor/fence/0/0": a209,
+  "decor/fence/1/0": a210,
+  "decor/fence/2/0": a211,
+  "decor/fence/3/0": a212,
+  "decor/fence/4/0": a213,
+  "decor/fence/5/0": a214,
+  "decor/fence/6/0": a215,
+  "decor/smoke/0": a216,
+  "decor/smoke/1": a217,
+  "decor/smoke/2": a218,
+  "decor/smoke/3": a219,
+  "decor/smoke/4": a220,
+  "decor/smoke/5": a221,
+  "decor/smoke/6": a222,
+  "decor/smoke/7": a223,
+  "backdrop/Classic/far": a224,
+  "backdrop/Classic/mid": a225,
+  "backdrop/Harbor/far": a226,
+  "backdrop/Harbor/mid": a227,
+  "backdrop/Tide Pools/far": a228,
+  "backdrop/Tide Pools/mid": a229,
+  "backdrop/Sunlit Shore/far": a230,
+  "backdrop/Sunlit Shore/mid": a231,
+  "backdrop/Whispering Woods/far": a232,
+  "backdrop/Whispering Woods/mid": a233,
+  "backdrop/Echoing Caves/far": a234,
+  "backdrop/Echoing Caves/mid": a235,
+  "backdrop/Murky Swamp/far": a236,
+  "backdrop/Murky Swamp/mid": a237,
+  "backdrop/Craggy Mountains/far": a238,
+  "backdrop/Craggy Mountains/mid": a239,
+  "backdrop/Endless Sky/far": a240,
+  "backdrop/Endless Sky/mid": a241,
+  "backdrop/Clockwork Spire/far": a242,
+  "backdrop/Clockwork Spire/mid": a243,
+  "backdrop/Sunny Meadows/far": a244,
+  "backdrop/Sunny Meadows/mid": a245,
+  "backdrop/Misty Riverbank/far": a246,
+  "backdrop/Misty Riverbank/mid": a247,
+  "backdrop/Rolling Hills/far": a248,
+  "backdrop/Rolling Hills/mid": a249,
+  "backdrop/Mushroom Grotto/far": a250,
+  "backdrop/Mushroom Grotto/mid": a251,
+  "backdrop/Crystal Caverns/far": a252,
+  "backdrop/Crystal Caverns/mid": a253,
+  "backdrop/Sunken Ruins/far": a254,
+  "backdrop/Sunken Ruins/mid": a255,
+  "backdrop/Dreamwood/far": a256,
+  "backdrop/Dreamwood/mid": a257,
+  "backdrop/Mirror Lake/far": a258,
+  "backdrop/Mirror Lake/mid": a259,
+  "backdrop/Starfall Observatory/far": a260,
+  "backdrop/Starfall Observatory/mid": a261,
+  "backdrop/Void Garden/far": a262,
+  "backdrop/Void Garden/mid": a263,
 };

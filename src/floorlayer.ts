@@ -5,7 +5,7 @@ import { TOP_Y, variantAt, type Tileset } from './tileset';
 import { lastTown, townIndex } from './world';
 import { PROP_H, PROP_W, PROPS, propAt, propsFor } from './props';
 import { art } from './artsheets';
-import { BACK_DECOR, DECOR_SIZE, TOWN_PALS } from './towndecor';
+import { BACK_DECOR, DECOR_FRAMES, DECOR_FPS, DECOR_SIZE, SMOKE, TOWN_PALS } from './towndecor';
 import { NB } from './nb';
 import type { Sprite } from './sprites';
 import type { Climbable, Floor } from './types';
@@ -98,13 +98,32 @@ function drawProps(g: Ctx, ts: Tileset): void {
   });
 }
 
-/** Town decor, in the town's palette and facing (see towndecor.ts; baked, see artsheets.ts). */
+/** Town decor that holds still, in the town's palette and facing (see
+ *  towndecor.ts; baked, see artsheets.ts). The moving pieces are drawn live. */
 function drawDecor(g: Ctx, back: boolean): void {
   const pal = townIndex(lastTown(game.floor.place)) % TOWN_PALS.length;
   for (const d of game.floor.decor ?? []) {
-    if (BACK_DECOR.has(d.kind) !== back) continue;
+    if (BACK_DECOR.has(d.kind) !== back || DECOR_FRAMES[d.kind] > 1) continue;
     const { w, h } = DECOR_SIZE[d.kind];
-    g.drawImage(art(`decor/${d.kind}/${pal}`, d.flip), Math.round(d.x - w / 2), Math.round(d.y - h));
+    g.drawImage(art(`decor/${d.kind}/${pal}/0`, d.flip), Math.round(d.x - w / 2), Math.round(d.y - h));
+  }
+}
+
+/** The town's moving decor, each frame over the static layer: flickering
+ *  lamps, nodding flowers, rippling awnings, creaking signs, and smoke from
+ *  every house's chimney. Each piece runs in its own phase. */
+export function drawDecorLive(ctx: Ctx, t: number): void {
+  const pal = townIndex(lastTown(game.floor.place)) % TOWN_PALS.length;
+  for (const d of game.floor.decor ?? []) {
+    const { w, h } = DECOR_SIZE[d.kind], phase = Math.abs(Math.round(d.x * 0.13));
+    const x0 = Math.round(d.x - w / 2), y0 = Math.round(d.y - h);
+    if (d.kind === 'house') {
+      const f = (Math.floor(t * SMOKE.fps) + phase) % SMOKE.frames;
+      const sx = d.flip ? w - SMOKE.x - SMOKE.w : SMOKE.x;
+      ctx.drawImage(art(`decor/smoke/${f}`, d.flip), x0 + sx, y0 + SMOKE.y - SMOKE.h);
+    }
+    const n = DECOR_FRAMES[d.kind];
+    if (n > 1) ctx.drawImage(art(`decor/${d.kind}/${pal}/${(Math.floor(t * DECOR_FPS) + phase) % n}`, d.flip), x0, y0);
   }
 }
 

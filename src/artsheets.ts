@@ -1,5 +1,5 @@
 import { BACKDROPS, LAYER, wrapPaint } from './backdrop';
-import { DECOR_SIZE, paintDecor, TOWN_PALS } from './towndecor';
+import { DECOR_FRAMES, DECOR_SIZE, paintDecor, paintSmoke, SMOKE, TOWN_PALS } from './towndecor';
 import { PROP_H, PROP_W, PROPS } from './props';
 import { canvasGrid, fillRect, flipGrid, gridCanvas, newGrid, type Grid } from './grid';
 import { portalGrid } from './sprites';
@@ -11,7 +11,7 @@ import type { DecorKind } from './types';
    SCENERY SHEETS
    The scenery ships as PNGs (assets/art/<key>.png), one image each:
      prop/<area>/<i>          an area's props (props.ts)
-     decor/<kind>/<palette>   town decor in each town palette (towndecor.ts)
+     decor/<kind>/<palette>/<frame>  town decor in each town palette (towndecor.ts), and decor/smoke/<frame>
      backdrop/<area>/far|mid  an area's two parallax layers (backdrop.ts)
      portal                   the warp pad
      npc/<kind>/<frame>       town NPCs (npcart.ts), and npc/board
@@ -36,8 +36,9 @@ export const ART_GEN: Record<string, () => Grid> = {
     Array.from({ length: NPC_FRAMES }, (_, f) => [`npc/${k}/${f}`, () => npcGrid(k, f)]))),
   ...Object.fromEntries(Object.entries(PROPS).flatMap(([area, ps]) =>
     ps.map((p, i) => [`prop/${area}/${i}`, () => paint(PROP_W, PROP_H, p)]))),
-  ...Object.fromEntries(DECOR_KINDS.flatMap((kind) => TOWN_PALS.map((pal, i) =>
-    [`decor/${kind}/${i}`, () => paint(DECOR_SIZE[kind].w, DECOR_SIZE[kind].h, (p) => paintDecor(kind, pal, p))]))),
+  ...Object.fromEntries(DECOR_KINDS.flatMap((kind) => TOWN_PALS.flatMap((pal, i) => Array.from({ length: DECOR_FRAMES[kind] }, (_, f) =>
+    [`decor/${kind}/${i}/${f}`, () => paint(DECOR_SIZE[kind].w, DECOR_SIZE[kind].h, (p) => paintDecor(kind, pal, p, false, f))])))),
+  ...Object.fromEntries(Array.from({ length: SMOKE.frames }, (_, f) => [`decor/smoke/${f}`, () => paint(SMOKE.w, SMOKE.h, (p) => paintSmoke(p, f))])),
   ...Object.fromEntries(Object.entries(BACKDROPS).flatMap(([area, bd]) => (['far', 'mid'] as const).map((layer) =>
     [`backdrop/${area}/${layer}`, () => paint(LAYER, LAYER, (p) => bd[layer](wrapPaint((x, y, col, w, h) => p(x, y, col, w, h))))]))),
 };

@@ -44,6 +44,8 @@ import { BOSS, bossAlive, bossName, bossType, hurtPlayer, quakes } from '../src/
 import { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
 import { styled } from '../src/archer';
+import { DECOR_FRAMES, paintDecor, paintSmoke, SMOKE, TOWN_PALS } from '../src/towndecor';
+import type { DecorKind } from '../src/types';
 import { NPC_FRAMES, npcFrame, npcRows } from '../src/npcart';
 import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
@@ -3287,6 +3289,20 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('a near NPC waves', near.has(3) && !near.has(2));
   check('NPC frames are all distinct', new Set(Array.from({ length: NPC_FRAMES }, (_, f) => npcRows('shop', f).join())).size === NPC_FRAMES);
   check('the three NPCs look different', new Set((['shop', 'stylist', 'trainer'] as const).map((k) => npcRows(k, 0).join())).size === 3);
+}
+
+{
+  // the moving town decor: every frame of each animated piece is different
+  const frames = (kind: DecorKind, pal = TOWN_PALS[0]): string[] => Array.from({ length: DECOR_FRAMES[kind] }, (_, f) => {
+    const cells: string[] = [];
+    paintDecor(kind, pal, (x, y, col, w = 1, h = 1) => cells.push(`${x},${y},${w},${h},${col}`), false, f);
+    return cells.join(';');
+  });
+  const moving = (Object.keys(DECOR_FRAMES) as DecorKind[]).filter((k) => DECOR_FRAMES[k] > 1);
+  check('lamps, flowers, signs and awnings move', ['lamp', 'flowers', 'sign', 'awning'].every((k) => moving.includes(k as DecorKind)));
+  check('...and every frame of each is its own', moving.every((k) => new Set(frames(k)).size > 1), moving.filter((k) => new Set(frames(k)).size <= 1).join(', '));
+  const smoke = Array.from({ length: SMOKE.frames }, (_, f) => { const c: string[] = []; paintSmoke((x, y) => c.push(`${x},${y}`), f); return c.join(';'); });
+  check('chimney smoke rises frame by frame', new Set(smoke).size === SMOKE.frames);
 }
 
 {
