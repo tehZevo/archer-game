@@ -34,6 +34,21 @@ export const passiveDmg = (): number => 1.20 + passiveBonus('PP');
  *  damage: each arrow deals 60%, so total damage rises from 100% to ~120%. */
 export const twinEchoMult = (): number => passiveBonus('ES') > 0 ? 0.6 : 1;
 
+/* ---- The damage pipeline, in three parts (see damage()). ---- */
+
+/** (1) Base attack: the player's raw attack stat (level + DEX, see recalcStats)
+ *  scaled by the weapon's bonus. This is the "attack" the whole build raises. */
+export const baseAttack = (): number => game.player.war * gearDmg();
+
+/** (2) Modifiers: multiplicative buffs stacked on base attack — passives
+ *  (Power Surge, Twin Echoes) and stacks (Fervor). Crit, variance and the
+ *  airborne bonus are per-hit and applied in damage(), not here. */
+export const damageModifiers = (): number => passiveDmg() * twinEchoMult() * fervorMult();
+
+/** (3) Applied damage, before the target's defense: base attack × modifiers ×
+ *  the attack skill's own multiplier (mult, e.g. Double Shot's 120%). */
+export const appliedDamage = (mult: number): number => baseAttack() * damageModifiers() * mult;
+
 /** Level-based miss rate: each level the target stands above the attacker
  *  adds 5% to the chance of missing it (capped), and the same in reverse.
  *  Applies to the archer's shots and to the mobs' contact hits alike. */
@@ -61,8 +76,8 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
     game.player.invulnQuiet = true;
     return;
   }
-  // the weapon in hand multiplies everything the bow fires
-  let dmg = game.player.war * mult * passiveDmg() * fervorMult() * gearDmg() * twinEchoMult() * rand(0.92, 1.08);
+  // the weapon in hand multiplies everything the bow fires (see baseAttack)
+  let dmg = appliedDamage(mult) * rand(0.92, 1.08);
   const crit = Math.random() < critChance();
   if (crit) dmg *= critMult();
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Rush Toss airborne bonus
