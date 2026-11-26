@@ -270,10 +270,8 @@ function drawDev(): void {
   stops.slice(top, top + DEV_ROWS).forEach((s, row) => {
     const i = top + row, y = 26 + row * 11, on = i === dev.sel;
     if (on) { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 1; ctx.strokeRect(28.5, y - 2.5, w - 57, 11); }
-    const name = s.name.toUpperCase(), label = s.label.toUpperCase();
+    const name = s.name.toUpperCase();
     text(ctx, name, 34, y, 1, on ? '#eaf2ff' : '#8ea3c2', 'left');
-    // the area it tops, where it fits beside the (indented) town name
-    if (textWidth(name) + textWidth(label) + 8 <= w - 68) text(ctx, label, w - 34, y, 1, '#5f7391', 'right');
   });
   text(ctx, 'Z/ENTER WARP  ESC CLOSE', w / 2, h - 12, 1, '#8ea3c2', 'center');
 }
