@@ -4,7 +4,7 @@ import { text } from './font';
 import { art } from './artsheets';
 import { wallet } from './economy';
 import { PET_LIST } from './petart';
-import { pet, PET_CUSTOMS, PET_KINDS, petCustoms, petShop } from './pets';
+import { PET_SHOP_ROWS, pet, PET_CUSTOMS, PET_KINDS, petCustoms, petShop, petShopScroll } from './pets';
 
 /* The pet following you, and the pet keeper's window (drawing only; see pets.ts). */
 
@@ -41,8 +41,7 @@ export function drawPetShop(): void {
   const { w, h } = game.view;
   ctx.fillStyle = '#050a14c8'; ctx.fillRect(0, 0, w, h);
   const kind = PET_LIST[petShop.sel];
-  const owned = pet.owned.includes(kind);
-  const ROW = 18, bw = 196, bh = (owned ? 92 : 64) + PET_LIST.length * ROW;
+  const ROW = 18, bw = 196, bh = 78 + PET_LIST.length * ROW;
   const bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
   ctx.fillStyle = '#101a2e'; ctx.fillRect(bx, by, bw, bh);
   ctx.strokeStyle = GOLD; ctx.lineWidth = 1; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
@@ -59,20 +58,23 @@ export function drawPetShop(): void {
     const [label, col] = status(k);
     text(ctx, label, bx + bw - 9, y + 4, 1, col, 'right');
   });
-  let foot = by + 22 + PET_LIST.length * ROW;
-  if (owned) {
-    // the four customizations, each with the number key that flips it
-    const c = petCustoms(kind);
-    text(ctx, 'CUSTOMIZATIONS  1-4', w / 2, foot + 4, 1, GOLD, 'center');
-    PET_CUSTOMS.forEach((row, i) => {
-      const y = foot + 18 + i * 11;
-      const on = c[row.key];
-      text(ctx, `${i + 1}`, bx + 14, y, 1, DIM, 'left');
-      text(ctx, row.label, bx + 28, y, 1, on ? MINE : DIM, 'left');
-      text(ctx, on ? 'ON' : 'OFF', bx + bw - 12, y, 1, on ? MINE : POOR, 'right');
-    });
-    foot += 18 + PET_CUSTOMS.length * 11;
-  }
-  text(ctx, `${action(kind)}   ESC CLOSE`, w / 2, foot + 4, 1, DIM, 'center');
-  text(ctx, PET_KINDS[kind].desc, w / 2, foot + 17, 1, '#5d708f', 'center');
+  // the customizations are global (shared by every pet) and always shown as a
+  // scrollable list; 1-4 (or Left/Right + Z) toggle one, owned pet or not
+  const foot = by + 22 + PET_LIST.length * ROW;
+  const c = petCustoms();
+  text(ctx, 'CUSTOMIZATIONS  1-4', w / 2, foot + 4, 1, GOLD, 'center');
+  const top = petShopScroll();
+  PET_CUSTOMS.slice(top, top + PET_SHOP_ROWS).forEach((row, vi) => {
+    const i = top + vi, y = foot + 18 + vi * 11, on = c[row.key], sel = petShop.cSel === i;
+    if (sel) { ctx.fillStyle = '#16223a'; ctx.fillRect(bx + 5, y - 3, bw - 10, 10); }
+    text(ctx, `${i + 1}`, bx + 14, y, 1, DIM, 'left');
+    text(ctx, row.label, bx + 28, y, 1, on ? MINE : DIM, 'left');
+    text(ctx, on ? 'ON' : 'OFF', bx + bw - 12, y, 1, on ? MINE : POOR, 'right');
+  });
+  // little arrows show there are more customizations above / below the list
+  ctx.fillStyle = DIM;
+  if (top > 0) for (let k = 0; k < 3; k++) ctx.fillRect(bx + bw - 7 - k, foot + 16 - k, 2 * k + 1, 1);
+  if (top + PET_SHOP_ROWS < PET_CUSTOMS.length) for (let k = 0; k < 3; k++) ctx.fillRect(bx + bw - 7 - k, foot + 16 + PET_SHOP_ROWS * 11 - 2 + k, 2 * k + 1, 1);
+  text(ctx, `${action(kind)}   ESC CLOSE`, w / 2, foot + 18 + PET_SHOP_ROWS * 11 + 4, 1, DIM, 'center');
+  text(ctx, PET_KINDS[kind].desc, w / 2, foot + 18 + PET_SHOP_ROWS * 11 + 17, 1, '#5d708f', 'center');
 }

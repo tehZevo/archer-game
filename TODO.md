@@ -22,4 +22,3 @@
 - Use full-size skill icons in the skills menu (not scaled down to fit the row) and space the surrounding text out to make room for them. Use the same icons as the HUD.
 - Should not be able to turn around during a skill, but SHOULD be able to buffer the next skill's direction by holding (or facing) that direction when pressing the next skill's button.
 - Give Rush Toss a 3s cooldown that is lowered (reduced) by using its link skills.
-- Always show customizations in the pet keeper shop (as a scrollable list). Once you buy a customization you can toggle it on/off by selecting it again. Customizations are global (not per-pet): they apply to whichever pet you have equipped, and you don't configure them separately per pet.

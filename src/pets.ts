@@ -59,6 +59,9 @@ export const PET_CUSTOMS: { key: keyof PetCustoms; label: string }[] = [
   { key: 'potions', label: 'POTIONS' },
 ];
 
+/** The customizations every pet starts switched on (global, shared by all pets). */
+export const DEFAULT_CUSTOMS: PetCustoms = { coins: true, items: false, range: false, potions: false };
+
 export const PET = {
   /** where it hovers: behind you and up by your head */
   BACK: 12, UP: 0,
@@ -76,8 +79,8 @@ export const pet = {
   kind: null as PetKind | null,
   x: 0, y: 0, face: 1 as 1 | -1, anim: 0,
   target: null as Target | null,
-  /** each pet you own's chosen customizations (defaults until you change them) */
-  customs: {} as Partial<Record<PetKind, PetCustoms>>,
+  /** the customizations you've bought, shared by every pet (global, not per-pet) */
+  customs: { ...DEFAULT_CUSTOMS } as PetCustoms,
 };
 
 let onFloor: Floor | null = null;
@@ -85,9 +88,9 @@ let onFloor: Floor | null = null;
 /** The pet following you (its stats), if any. */
 export const activePet = (): PetDef | null => (pet.kind ? PET_KINDS[pet.kind] : null);
 
-/** A pet's current customizations: its kind's defaults until you toggle them. */
-export const petCustoms = (kind: PetKind): PetCustoms =>
-  (pet.customs[kind] ??= { ...PET_KINDS[kind].customs });
+/** The active customizations (global: one set shared by every pet). The `kind`
+ *  argument is kept for call sites that name the pet; it no longer selects a set. */
+export const petCustoms = (_kind?: PetKind): PetCustoms => pet.customs;
 
 /** Follow, fetch, return. Call each step (after the coins have moved). */
 export function updatePet(dt: number): void {
@@ -171,30 +174,40 @@ export function buyPet(kind: PetKind): boolean {
 
 /** Forget every pet (a fresh start). */
 export function clearPets(): void {
-  pet.owned = []; pet.kind = null; pet.target = null; pet.customs = {};
+  pet.owned = []; pet.kind = null; pet.target = null; pet.customs = { ...DEFAULT_CUSTOMS };
 }
 
 /** Restore saved pets, dropping anything that isn't one. */
 export function loadPets(owned: unknown, kind: unknown, customs: unknown): void {
   clearPets();
-  const saved = (customs && typeof customs === 'object' ? customs : {}) as Partial<Record<PetKind, PetCustoms>>;
+  // customizations are global now: a saved set (an object with keys) replaces
+  // the defaults; an empty/absent one (a pre-global save) keeps the defaults.
+  if (customs && typeof customs === 'object' && Object.keys(customs).length) {
+    pet.customs = { ...DEFAULT_CUSTOMS, ...(customs as Partial<PetCustoms>) };
+  }
   if (Array.isArray(owned)) for (const k of owned) {
     if (!PET_LIST.includes(k) || pet.owned.includes(k)) continue;
     pet.owned.push(k);
-    // carry over its saved customizations (the kind's defaults when absent)
-    const c = saved[k];
-    if (c) pet.customs[k] = { ...PET_KINDS[k].customs, ...c };
   }
   if (pet.owned.includes(kind as PetKind)) pet.kind = kind as PetKind;
 }
 
 /* ---------------- the pet keeper's window ----------------
    Every pet, cheapest first: Z buys one you don't have, or calls one you
-   own to follow you (or sends the one following you home). */
+   own to follow you (or sends the one following you home). The customizations
+   are global (shared by every pet) and always shown as a scrollable list. */
 
-export const petShop = { open: false, sel: 0 };
+export const petShop = { open: false, sel: 0, cSel: 0 };
 
-export function openPetShop(): void { petShop.open = true; petShop.sel = 0; }
+/** How many customizations fit in the shop's list at once (it scrolls to keep
+ *  the selected one in view). */
+export const PET_SHOP_ROWS = 3;
+
+/** The scroll offset (top visible row) that keeps the selected customization in view. */
+export const petShopScroll = (): number =>
+  Math.max(0, Math.min(petShop.cSel - (PET_SHOP_ROWS >> 1), PET_CUSTOMS.length - PET_SHOP_ROWS));
+
+export function openPetShop(): void { petShop.open = true; petShop.sel = 0; petShop.cSel = 0; }
 
 /** Z on a row: buy it, swap to it, or (on the one following you) send it home. */
 export function choosePet(kind: PetKind): boolean {
@@ -203,22 +216,25 @@ export function choosePet(kind: PetKind): boolean {
   return true;
 }
 
-/** Flip one of an owned pet's customizations on/off (the keeper's 1-4 keys). */
+/** Flip one of the (global) customizations on/off (the keeper's 1-4 keys).
+ *  The `kind` argument is kept for call sites that name the pet. */
 export function toggleCustom(kind: PetKind, key: keyof PetCustoms): boolean {
-  if (!pet.owned.includes(kind)) return false;
-  const c = petCustoms(kind);
+  void kind; // customizations are global: any owned pet's toggle changes the shared set
+  const c = petCustoms();
   c[key] = !c[key];
   return true;
 }
 
-/** Up/Down pick a pet, Z/Enter buys or summons, 1-4 toggle the selected pet's
- *  customizations, Esc or X closes. */
+/** Up/Down pick a pet, Z/Enter buys or summons, 1-4 (or Left/Right + Z) pick and
+ *  toggle a customization from the always-shown list, Esc or X closes. */
 export function petShopInput(): void {
   const n = PET_LIST.length;
   if (pressed('up')) petShop.sel = (petShop.sel + n - 1) % n;
   if (pressed('down')) petShop.sel = (petShop.sel + 1) % n;
   if (pressed('z') || pressed('enter') || pressed(' ')) choosePet(PET_LIST[petShop.sel]);
-  const row = PET_LIST[petShop.sel];
-  PET_CUSTOMS.forEach((c, i) => { if (pressed(String(i + 1))) toggleCustom(row, c.key); });
+  // the customization list is global and always visible: number keys pick + flip
+  PET_CUSTOMS.forEach((c, i) => { if (pressed(String(i + 1))) { petShop.cSel = i; toggleCustom(PET_LIST[petShop.sel], c.key); } });
+  if (pressed('left')) petShop.cSel = (petShop.cSel + PET_CUSTOMS.length - 1) % PET_CUSTOMS.length;
+  if (pressed('right')) petShop.cSel = (petShop.cSel + 1) % PET_CUSTOMS.length;
   if (pressed('escape') || pressed('x')) petShop.open = false;
 }

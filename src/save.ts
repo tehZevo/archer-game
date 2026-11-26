@@ -44,7 +44,7 @@ export interface SaveData {
   pets?: PetKind[];
   petKind?: PetKind | null;
   /** Each owned pet's chosen customizations (absent: the kind's defaults). */
-  petCustoms?: Partial<Record<PetKind, PetCustoms>>;
+  petCustoms?: PetCustoms;
   /** The equipped weapon and armor (absent in older saves: nothing worn). */
   gear?: { weapon: GearItem | null; armor: GearItem | null };
   /** Spare gear (absent in older saves: an empty bag). */
