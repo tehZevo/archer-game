@@ -60,7 +60,7 @@ import { dev, devStops } from '../src/dev';
 import { BASIC } from '../src/look';
 import { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src/townlooks';
 import { openStylist, STYLIST_ROWS } from '../src/stylist';
-import { devInput } from '../src/windows';
+import { devInput, windowOpen } from '../src/windows';
 import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
 import { say } from '../src/net';
 import { archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle } from '../src/archer';
@@ -3075,7 +3075,10 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   stand(); tap('up');
   check('...stepping into it asks before it sends you', confirmUi.open && game.floor.place.floor === 3,
     `open ${confirmUi.open}`);
-  confirmUi.yes = false; tap('z');
+  check('...and Enter belongs to the dialog, not the chat line', windowOpen());
+  confirmUi.yes = false; tap('enter');
+  check('...Enter takes the answer', !confirmUi.open);
+  stand(); tap('up'); confirmUi.yes = false; tap('z');
   check('...saying no keeps you on the floor', !confirmUi.open && game.floor.place.floor === 3);
   stand(); tap('up'); confirmUi.yes = true; tap('z');
   check('...saying yes travels to that town', game.floor.town && placeKey(game.floor.place) === 'driftwood',
