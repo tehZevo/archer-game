@@ -108,7 +108,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // `use` is the use time (see SkillDef); Double Shot and its upgrades have no
   // cooldown, so their pace is their use time alone (which Haste speeds up).
   Z: { key: 'Z', keyed: true, bar: true, name: 'Double Shot', tag: 'Main Attack', job: 1, minLevel: 1, maxLevel: 1,
-       cd: 0, use: 0.7, mp1: 3, dmg1: 120, hits1: 2, targets1: 4,
+       cd: 0, use: 0.6, mp1: 3, dmg1: 120, hits1: 2, targets1: 4,
        desc: 'Hits the closest enemies in range twice' },
   AC: { key: 'AC', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, maxLevel: 1, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
