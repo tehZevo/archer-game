@@ -1,7 +1,7 @@
 import { NB } from './nb';
 import { make, px, Sprite } from './sprites';
 import { BLOCK_VARIANTS, BOT_H, TOP_H, TOP_W, TOP_Y, painter, type Tileset } from './tileset';
-import { canvasGrid, newGrid, type Grid } from './grid';
+import { canvasGrid, hexRgb, newGrid, type Grid } from './grid';
 import { BAKED_TILES } from './tilebaked';
 
 /* Turns a tileset's pieces (tileset.ts) into cached 16px sprites:
@@ -94,6 +94,12 @@ const K = {
   ladder: (ts: Tileset) => `${ts.name}|ladder`,
 };
 
+/** `a` mixed toward `b` by k (0..1), as #rrggbb. */
+function mix(a: string, b: string, k: number): string {
+  const x = hexRgb(a), y = hexRgb(b);
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * k).toString(16).padStart(2, '0')).join('');
+}
+
 /** A block tile for its neighbourhood (`nb`, see NB) in fill variant `v`.
  *  Exposed sides get the edge outline, shaped by the edge style; an exposed
  *  top gets the surface layer. */
@@ -101,7 +107,8 @@ export function block(ts: Tileset, nb: number, v: number): Sprite {
   return cached(ts, K.block(ts, nb, v), 16, 16, (s) => {
     const solid = (b: number) => (nb & b) !== 0;
     const n = !solid(NB.N), e = !solid(NB.E), so = !solid(NB.S), w = !solid(NB.W);
-    const { edge } = ts, r = edge.r;
+    // rounded tilesets vary their outer corners: half the variants a pixel rounder
+    const { edge } = ts, r = edge.r && edge.style === 'round' ? edge.r + (v >> 2) : edge.r;
     // chip: some 4px runs of an exposed side are knocked in by 1px (never at the tile's ends, so neighbours meet)
     const chip = (side: number, along: number): number =>
       edge.style === 'chip' && along > 1 && along < 14 && (side * 7 + (along >> 2) + v) % 3 === 0 ? 1 : 0;
@@ -137,7 +144,13 @@ export function block(ts: Tileset, nb: number, v: number): Sprite {
       } else if (n && topD === 0) col = edge.outer;
       else if (d === 0) col = edge.outer;
       else if (d === 1) col = edge.style === 'bevel' && dside === 3 && edge.light ? edge.light : edge.inner;
-      else col = v < 4 ? ts.fill(x, y, v) : ts.fill(15 - x, y, v - 4); // 4-7: 0-3's fill mirrored
+      else {
+        col = v < 4 ? ts.fill(x, y, v) : ts.fill(15 - x, y, v - 4); // 4-7: 0-3's fill mirrored
+        // depth: the fill shades toward the rim just inside an exposed side,
+        // and the surface layer casts a lip of shadow onto the fill under it
+        if (d === 2) col = mix(col, edge.inner, 0.35);
+        else if (n && topD > 0 && ts.surface(x, topD - 1, v & 3)) col = mix(col, '#000000', 0.22);
+      }
       // inner corners: both neighbours solid but the diagonal open
       if ((!n && !w && !solid(NB.NW) && x === 0 && y === 0) || (!n && !e && !solid(NB.NE) && x === 15 && y === 0) ||
           (!so && !w && !solid(NB.SW) && x === 0 && y === 15) || (!so && !e && !solid(NB.SE) && x === 15 && y === 15)) col = edge.outer;
