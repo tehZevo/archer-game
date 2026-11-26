@@ -1,5 +1,6 @@
 import { ctx } from './canvas';
-import { SKILLS, SKILL_ORDER } from './config';
+import { SKILLS } from './config';
+import type { SkillKey } from './types';
 import { game } from './state';
 import { text } from './font';
 import { ICON, skillIcon } from './icons';
@@ -16,8 +17,10 @@ export const linkHelp = { open: false, sel: 0 };
 export const openLinkHelp = (): void => { linkHelp.open = true; linkHelp.sel = 0; };
 export const closeLinkHelp = (): void => { linkHelp.open = false; };
 
-/** The skills that can start a link (they have a linksInto list). */
-const linkable = () => SKILL_ORDER.filter((k) => (SKILLS[k].linksInto?.length ?? 0) > 0);
+/** The skills that can start a link (they have a linksInto list) — every skill
+ *  with links, not just the keyed ones, so the air forms and upgrades show too. */
+const linkable = () =>
+  (Object.keys(SKILLS) as SkillKey[]).filter((k) => (SKILLS[k].linksInto?.length ?? 0) > 0);
 
 /** Up/Down scroll the list, Esc / H / Z close. */
 export function linkHelpKey(k: 'up' | 'down' | 'escape'): void {

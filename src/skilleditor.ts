@@ -35,6 +35,24 @@ export const closeSkillEditor = (): void => { skillEditor.open = false; };
 /** Bump a time by one 0.1s step, never below a hair. */
 const step = (v: number, dir: number): number => Math.max(0.1, Math.round((v + dir * 0.1) * 10) / 10);
 
+/** The kit's starting use / delay / links, captured at load (the live SKILLS
+ *  table is edited in place, so the originals have to be kept aside to reset to). */
+const DEFAULTS = Object.fromEntries(
+  (Object.keys(SKILLS) as SkillKey[]).map((k) => [
+    k,
+    { use: SKILLS[k].use, delay: SKILLS[k].delay, linksInto: [...(SKILLS[k].linksInto ?? [])] },
+  ]),
+) as Record<SkillKey, { use: number | undefined; delay: number | undefined; linksInto: SkillKey[] }>;
+
+/** Restore the selected skill's use / delay / links to their starting values. */
+export const resetSkill = (): void => {
+  const cur = editableSkills()[skillEditor.sel];
+  const d = DEFAULTS[cur];
+  SKILLS[cur].use = d.use;
+  SKILLS[cur].delay = d.delay;
+  SKILLS[cur].linksInto = [...d.linksInto];
+};
+
 /** The use / delay a skill runs on today (its own value, else the global default). */
 const useOf = (k: SkillKey): number => SKILLS[k].use ?? P.USE_TIME;
 const delayOf = (k: SkillKey): number => SKILLS[k].delay ?? P.DELAY_TIME;
@@ -63,6 +81,7 @@ export function skillEditorInput(dt: number): void {
 
   if (pressed('escape') || pressed('t')) { closeSkillEditor(); return; }
   if (pressed('c')) { navigator.clipboard?.writeText(skillEditorJson()); return; }
+  if (pressed('r')) { resetSkill(); return; }
   if (pressed('tab')) { e.field = (e.field + 1) % 3; return; }
 
   if (e.field < 2) {
@@ -83,7 +102,7 @@ export function skillEditorInput(dt: number): void {
       const list = SKILLS[cur].linksInto ?? (SKILLS[cur].linksInto = []);
       const i = list.indexOf(t);
       if (i >= 0) list.splice(i, 1);
-      else if (t !== cur) list.push(t); // a skill never links into itself
+      else list.push(t); // a skill can link into itself
     }
   }
 }
@@ -131,6 +150,6 @@ export function drawSkillEditor(): void {
     text(ctx, `${has ? '[x]' : '[ ]'} ${SKILLS[t].name}`, rx, ty, 1, on ? gold : has ? white : dim, 'left');
   });
 
-  text(ctx, 'UP/DOWN PICK  LEFT/RIGHT TUNE  TAB FIELD  Z TOGGLE  C COPY JSON  T ESC CLOSE',
+  text(ctx, 'UP/DOWN PICK  LEFT/RIGHT TUNE  TAB FIELD  Z TOGGLE  C COPY JSON  R RESET  T ESC CLOSE',
     w / 2, h - 8, 1, '#5d708f', 'center');
 }
