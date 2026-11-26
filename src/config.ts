@@ -69,7 +69,8 @@ export const P = {
   SPIKE_RISE_T: 0.25,  // ...for this long, then you coast up a little and fall (~40px in all, a jump's height, but slower than a jump's pop)
   SPIKE_LIFT_H: 40,    // px the tornado lifts you, from wherever you are (see spikeLift)
   SPIN_R: 44,          // Midair Spin: reach of the sweep around you, px
-  SPIN_LINK_DELAY: 0.25, // s the sweep plays before its Glide / Plunging Volley link opens
+  SPIN_ANIM: 0.6,      // s the whole sweep plays (the archer's turn and the blades round her)
+  SPIN_LINK_DELAY: 0.4,  // s the sweep plays before its Glide / Plunging Volley link opens (the tail of the longer SPIN_ANIM pose)
   SPIN_CD: 4,          // ...and its cooldown, s (so one jump gets one sweep)
 
   TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
@@ -272,7 +273,7 @@ export const ELITE = { CHANCE: 1 / 25, SCALE: 1.5, HP: 8, DMG: 1.6, EXP: 6, COIN
 /** Animation length of each effect; an effect's lifetime t must not exceed it. */
 export const FX_DUR: Record<Fx['type'], number> = {
   tracer: 0.14, levelUp: 0.9,
-  spikes: 0.45, tempest: 0.5, spin: 0.3,
+  spikes: 0.45, tempest: 0.5, spin: P.SPIN_ANIM,
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
