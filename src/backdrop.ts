@@ -5,7 +5,7 @@ import { hash } from './tilekit';
    Behind each area's floor: the sky gradient (tileset.sky), then two
    painted layers that scroll slower than the floor (parallax), then a
    few drifting particles. Floors are tall and narrow, so layers tile in
-   both directions: they hold scattered motifs (trunks, ridges, clouds,
+   both directions: they hold scattered motifs (trunks, clouds,
    pillars...) rather than a single horizon.
 
    Layers are painted once into a LAYER x LAYER tile (backdropdraw.ts
@@ -41,11 +41,10 @@ export function wrapPaint(put: (x: number, y: number, col: string, w: number, h:
   };
 }
 
+/** A layer with nothing on it. */
+const NONE = (): void => {};
+
 /* ---------------- motifs ---------------- */
-/** A smooth wave that repeats exactly across the tile (integer periods). */
-const wave = (x: number, seed: number): number =>
-  Math.sin((2 * Math.PI * x * 2) / LAYER + seed) * 0.6 + Math.sin((2 * Math.PI * x * 5) / LAYER + seed * 2.3) * 0.3 +
-  Math.sin((2 * Math.PI * x * 11) / LAYER + seed * 4.1) * 0.1;
 
 function blob(p: BgPaint, cx: number, cy: number, r: number, col: string): void {
   for (let y = -r; y <= r; y++) { const half = Math.round(Math.sqrt(r * r - y * y)); p(cx - half, cy + y, col, half * 2 + 1, 1); }
@@ -53,13 +52,6 @@ function blob(p: BgPaint, cx: number, cy: number, r: number, col: string): void 
 function cloud(p: BgPaint, cx: number, cy: number, s: number, col: string): void {
   blob(p, cx, cy, s, col); blob(p, cx - s * 1.2, cy + s * 0.4, s * 0.7, col); blob(p, cx + s * 1.3, cy + s * 0.3, s * 0.8, col);
   p(cx - s * 1.8, cy + s * 0.5, col, s * 3.8, s * 0.6);
-}
-/** Ridges: a wavy silhouette `depth` px deep starting near y0, repeated `n` times down the tile. */
-function ridges(p: BgPaint, y0: number, amp: number, depth: number, col: string, seed: number, n = 2): void {
-  for (let i = 0; i < n; i++) for (let x = 0; x < LAYER; x++) {
-    const top = y0 + (i * LAYER) / n + amp * wave(x, seed + i * 1.7);
-    p(x, top, col, 1, depth);
-  }
 }
 /** A tree trunk the full height of the tile, with a few branch stubs. */
 function trunk(p: BgPaint, x: number, w: number, col: string, seed: number): void {
@@ -123,15 +115,12 @@ export const BACKDROPS: Record<string, Backdrop> = {
   },
   'Tide Pools': {
     far: CLOUDS('#ffffff20', 5, 6, 40),
-    mid: (p) => { ridges(p, 100, 8, 12, '#2e5a7a50', 41); scatter(4, 42, (x, _y, _r, i) => { const by = 100 + (i % 2) * 128; p(x, by - 14, '#2e5a7a50', 6, 14); p(x + 1, by - 22, '#f4f7fc50', 4, 8); }); }, // sea stacks and a lighthouse or two
+    mid: NONE,
     particles: { kind: 'bubbles', cols: ['#bfefff', '#ffffff'], n: 6 },
   },
   'Sunlit Shore': {
     far: CLOUDS('#ffffff22', 6, 6, 3),
-    mid: (p) => { // distant islands with palms
-      ridges(p, 90, 6, 10, '#1e5a7a60', 4);
-      scatter(3, 5, (x, y, r, i) => { const by = 90 + (i % 2) * 128 - 6; p(x, by - 10, '#1e5a7a60', 2, 10); blob(p, x + 1, by - 11, 4, '#1e5a7a60'); void y; void r; });
-    },
+    mid: NONE,
   },
   'Whispering Woods': {
     far: (p) => scatter(7, 6, (x, _y, r, i) => trunk(p, x, 3 + Math.round(r * 3), '#0e2a1c80', i + 10)),
@@ -149,8 +138,8 @@ export const BACKDROPS: Record<string, Backdrop> = {
     particles: { kind: 'fireflies', cols: ['#d8f070', '#a8d040'], n: 10 },
   },
   'Craggy Mountains': {
-    far: (p) => ridges(p, 60, 22, 30, '#a8c0dc50', 11),
-    mid: (p) => { ridges(p, 120, 26, 40, '#5a708c70', 12); ridges(p, 118, 26, 3, '#ffffff50', 12); },
+    far: NONE,
+    mid: NONE,
     particles: { kind: 'snow', cols: ['#ffffff', '#e4eef8'], n: 22 },
   },
   'Endless Sky': {
@@ -164,11 +153,11 @@ export const BACKDROPS: Record<string, Backdrop> = {
   },
   'Sunny Meadows': {
     far: CLOUDS('#ffffff38', 5, 7, 19),
-    mid: (p) => { ridges(p, 110, 10, 24, '#6ab84a50', 20); scatter(20, 21, (x, _y, r) => p(x, 104 + (r < 0.5 ? 0 : 128) + r * 10, r < 0.3 ? '#ff8ac080' : '#ffffff80')); },
+    mid: NONE,
     particles: { kind: 'petals', cols: ['#ff8ac0', '#ffffff', '#ffe070'], n: 8 },
   },
   'Misty Riverbank': {
-    far: (p) => ridges(p, 80, 14, 26, '#3a7a6a40', 22),
+    far: NONE,
     mid: (p) => scatter(2, 23, (x) => { // waterfalls
       p(x, 0, '#7ac0e070', 12, LAYER);
       for (let y = 0; y < LAYER; y += 7) p(x + (y * 3) % 10, y, '#ffffff70', 1, 4);
@@ -176,15 +165,8 @@ export const BACKDROPS: Record<string, Backdrop> = {
     particles: { kind: 'fireflies', cols: ['#6ad8f0'], n: 4 },
   },
   'Rolling Hills': {
-    far: (p) => ridges(p, 70, 12, 20, '#6a9a5a40', 24),
-    mid: (p) => {
-      ridges(p, 130, 14, 26, '#4a7a3a60', 25, 1);
-      scatter(2, 26, (x, _y, _r, i) => { // windmills on the ridge
-        const by = 120 + i * 4;
-        p(x, by - 16, '#e8e0d090', 3, 16);
-        for (let k = 0; k < 8; k++) { p(x + 1 - k, by - 17 - k, '#e8e0d090'); p(x + 1 + k, by - 17 + k, '#e8e0d090'); }
-      });
-    },
+    far: NONE,
+    mid: NONE,
   },
   'Mushroom Grotto': {
     far: (p) => scatter(5, 27, (x, y, r) => mushroom(p, x, y, 10 + Math.round(r * 10), '#3a2a4a70', '#5a2a5a70')),
@@ -207,8 +189,8 @@ export const BACKDROPS: Record<string, Backdrop> = {
     particles: { kind: 'spores', cols: ['#ffd8f0', '#a8e8ff', '#fff8d8'], n: 12 },
   },
   'Mirror Lake': {
-    far: (p) => { ridges(p, 70, 16, 18, '#c8d8ec50', 35); ridges(p, 88, -16, 14, '#c8d8ec28', 35); }, // a skyline and its reflection
-    mid: (p) => { for (let i = 0; i < 4; i++) p(0, 30 + i * 64, '#ffffff14', LAYER, 10); },
+    far: NONE,
+    mid: NONE,
     particles: { kind: 'snow', cols: ['#ffffff'], n: 8 },
   },
   'Starfall Observatory': {
