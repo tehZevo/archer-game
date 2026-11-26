@@ -56,7 +56,7 @@ import { openStylist, STYLIST_ROWS } from '../src/stylist';
 import { devInput } from '../src/windows';
 import { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
 import { say } from '../src/net';
-import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
+import { archerFrame, climbPhase, GRIDS, POSE_FPS, poseCycle } from '../src/archer';
 import { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { keysKey, keysUi, KEY_ROWS } from '../src/keys';
 import { pet, PET } from '../src/pets';
@@ -3161,6 +3161,16 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
     if (Math.abs(game.cam.x - w2.x) > 1 || Math.abs(game.cam.y - w2.y) > 1) off++;
   }
   check('...on every floor up the tower', off === 0, `${off} floor(s) start off-centre`);
+  // The other players stand still: the idle's breathing cycle is what read as
+  // a float, so a ghost's frame is the standing one, not one cycling on time.
+  const frames = { ...GRIDS, idle: [['a'], ['b']] } as never;
+  const ghost = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t, false));
+  const mine = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t));
+  check('a ghost\u2019s idle frame does not cycle with time', ghost(0) === ghost(0.4) && ghost(0) === ghost(1.2),
+    `${ghost(0)} ${ghost(0.4)} ${ghost(1.2)}`);
+  check('...while your own archer keeps breathing', mine(0) !== mine(1.2));
+  check('...and a climb still steps with the height climbed', poseCycle('climb', 100, 0) === poseCycle('climb', 100, 0.5)
+    && poseCycle('climb', 100, 0) !== poseCycle('climb', 108, 0));
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

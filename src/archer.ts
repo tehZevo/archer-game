@@ -313,6 +313,12 @@ export function archerFrames(look: Look): Record<ArcherPose, HTMLCanvasElement[]
   return f;
 }
 
+/** The cycle time a pose is drawn at: the climb runs on height, everything
+ *  else on the clock — except a ghost's, which is pinned to the first frame so
+ *  the other players stand still instead of breathing (see render.drawArcher). */
+export const poseCycle = (pose: ArcherPose, feet: number, t: number, breathe = true): number =>
+  pose === 'climb' ? climbPhase(feet) : breathe ? t : 0;
+
 /** Climb frame time from height: one hand-over-hand step every CLIMB_STEP px,
  *  so the climb only animates while actually moving up or down. */
 const CLIMB_STEP = 8;
