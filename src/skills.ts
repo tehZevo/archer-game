@@ -8,6 +8,7 @@ import { chainsZ, linkable, linkHeld, startLinks } from './links';
 import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, cdSlot, delayTime, rushHolding, useTime } from './castrules';
 import { CASTS } from './skillcasts';
 import { armRapid } from './rapid';
+import { heldDir } from './move';
 
 /** Airborne enemies Skyward Assault can reach: around and below the player. */
 export function barrageTargets() {
@@ -40,9 +41,11 @@ export function cast(key: SkillKey, chained = false): void {
   CASTS[kind]?.(r);
 }
 
-/** Put a key on the input buffer: it fires on the first free frame (see update). */
+/** Put a key on the input buffer: it fires on the first free frame (see update),
+ *  facing the direction held right now (see Casting.queuedFace). */
 function buffer(key: SkillKey): null {
   player.casting.queued = key;
+  player.casting.queuedFace = heldDir();
   return null;
 }
 

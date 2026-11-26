@@ -138,14 +138,16 @@ function bufferHeld(): boolean {
   return player.castT > 0 || player.casting.recoverT > 0;
 }
 
-/** Fire the buffered skill on the first free frame. It aims where you're
- *  holding when it fires, not where you faced when you pressed it (mashing
- *  Q left, Q right zips you back and forth). */
+/** Fire the buffered skill on the first free frame. It aims the direction you
+ *  were holding when you pressed it (captured in queuedFace); holding a new
+ *  direction while it's buffered re-aims it, so a buffered combo follows your
+ *  stick even though the cast you're in stays locked facing one way. */
 function fireBuffered(): void {
   const k = player.casting.queued;
   if (!k) return;
   const aim = heldDir();
-  if (aim !== 0) player.face = aim;
+  if (aim !== 0) player.casting.queuedFace = aim; // re-aim while buffered
+  if (player.casting.queuedFace !== 0) player.face = player.casting.queuedFace;
   if (bufferHeld()) return;
   player.casting.queued = null;
   cast(k, k === 'z');

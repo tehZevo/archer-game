@@ -148,11 +148,12 @@ function walk(dt: number, locked: boolean): void {
  *  slows the pickup and the stop); in the air, keep momentum and only brake. */
 function steer(dt: number, locked: boolean): void {
   const slow = (player.cast === 'rush' || player.cast === 'dive' ? 0.55 : streaming() ? P.GALE_SLOW : 1) * slowFactor(player); // chill slows you
-  // Facing follows the held direction even during a cast's lock, so you can
-  // turn around mid-combo (the buffered window) without losing your momentum.
-  // A Gale Stream holds its facing: walking backward keeps it firing ahead.
-  if (!streaming() && held('left')) player.face = -1;
-  if (!streaming() && held('right')) player.face = 1;
+  // Facing follows the held direction while you're free; during a cast's lock
+  // it stays put (you can't turn mid-skill), and the buffered skill carries the
+  // direction you press it with. A Gale Stream holds its facing: walking
+  // backward keeps it firing ahead.
+  if (!streaming() && !locked && held('left')) player.face = -1;
+  if (!streaming() && !locked && held('right')) player.face = 1;
   let target = 0;
   const speed = P.WALK * nimbleSpeed();
   if (!locked && held('left'))  target = -speed * slow;
