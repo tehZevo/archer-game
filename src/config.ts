@@ -122,7 +122,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10, maxLevel: 1,
        cd: 0, use: 0.9, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
-  E: { key: 'E', linksInto: LAUNCHER_LINKS, keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 1,
+  E: { key: 'E', linksInto: [...LAUNCHER_LINKS, 'PV'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60, maxLevel: 1,
        cd: P.SPIKE_CD, use: 0.7, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows and unlock levels, each with
