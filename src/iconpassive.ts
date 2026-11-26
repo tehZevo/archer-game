@@ -80,4 +80,17 @@ export const PASSIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..RrgrrR..',
     '...RRRR...',
   ],
+  // Nimble: a boot (quick on her feet)
+  NI: [
+    '..........',
+    '.......aa.',
+    '......aaa.',
+    '.....aaa..',
+    '....aaa...',
+    '...aaa....',
+    '..aaaa....',
+    '.aaaaaaa..',
+    '.aaaaaaa..',
+    '.aaaaaa...',
+  ],
 };

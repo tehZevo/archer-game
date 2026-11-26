@@ -1,6 +1,7 @@
 import type { JobDef, PauseMenu, SkillDef, SkillKey, SkillRank, StatKey } from './types';
 import { SKILLS } from './config';
 import { player } from './state';
+import { dev } from './dev';
 import { fmtNum } from './util';
 
 /* ============================================================
@@ -122,13 +123,13 @@ export function rank(key: SkillKey): SkillRank {
   return {
     level,
     maxLevel: s.maxLevel,
-    mp: Math.round(lerp(s.mp1, s.mpMax, t)),
-    dmg: lerp(s.dmg1, s.dmgMax, t) / 100,
+    mp: Math.round(lerp(s.mp1, s.mpMax ?? s.mp1, t)),
+    dmg: lerp(s.dmg1, s.dmgMax ?? s.dmg1, t) / 100,
     // The skill's own shots. Twin Echoes is a separate multiplier (see shots()):
     // keeping the two apart is what lets the shadow's arrows ride the same
     // damage-number stack as the base volley instead of colliding with it.
-    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? 1, t)),
-    targets: Math.round(lerp(s.targets1 ?? 1, s.targetsMax ?? 1, t)),
+    hits: Math.round(lerp(s.hits1 ?? 1, s.hitsMax ?? s.hits1 ?? 1, t)),
+    targets: Math.round(lerp(s.targets1 ?? 1, s.targetsMax ?? s.targets1 ?? 1, t)),
   };
 }
 
@@ -146,6 +147,13 @@ export function passiveBonus(key: SkillKey): number {
 }
 
 export const isLearned = (key: SkillKey): boolean => (player.ranks[activeSkill(key).key] || 0) > 0;
+
+/* ---------------- Nimble ----------------
+   A passive that makes the archer quicker on her feet: +40% move speed and
+   +20% jump height once learned. These two multipliers are applied where the
+   base walk speed and jump velocity are read (see move.ts). */
+export const nimbleSpeed = (): number => isLearned('NI') ? 1.4 : 1;
+export const nimbleJump = (): number => isLearned('NI') ? 1.2 : 1;
 
 /**
  * The skill currently bound to a bar slot. The Z slot starts as Double Shot
@@ -244,6 +252,13 @@ function rivals(k: SkillKey): string {
 
 /** Spend one SP on a skill row: learn, upgrade (keeping the base's rank), or rank up. */
 export function spendSkill(key: SkillKey): boolean {
+  // In dev mode a skill cycles freely: no SP is spent, and past its max level
+  // it wraps back to 0 (unlearned), so you can step through every form.
+  if (dev.on) {
+    const cur = player.ranks[key] || 0;
+    player.ranks[key] = cur >= activeSkill(key).maxLevel ? 0 : Math.max(1, cur + 1);
+    return true;
+  }
   const row = skillRows().find((r) => r.key === key);
   if (player.sp <= 0 || !row || !row.action) return false;
   // an upgrade starts at rank 1, not at its base skill's rank: the first SP
