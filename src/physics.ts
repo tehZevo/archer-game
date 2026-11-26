@@ -48,31 +48,53 @@ export function integrate(o: { x: number; y: number; vx: number; vy: number }, d
   o.x += o.vx * dt;
 }
 
-export function collideGround(
-  o: { x: number; y: number; w: number; h: number; vy: number; onGround: boolean; plat: Platform | null; dropBlock?: number | null; dropY?: number },
-  prevFeet: number,
-  prevX: number = o.x,
-): boolean {
-  const feet = o.y + o.h;
-  // A down-jumped block is ignored only until the feet were below its surface
-  // at the start of a frame; after that it's solid again from above.
+/** A body that lands on platforms: the player or an enemy. */
+type Body = { x: number; y: number; w: number; h: number; vy: number; onGround: boolean; plat: Platform | null; dropBlock?: number | null; dropY?: number };
+
+/** A surface to land on, and the x the feet land at. */
+interface Landing { surf: Platform; x: number }
+
+/**
+ * Land a body on the ground after it moved from (prevX, prevFeet) to its
+ * current position. Returns whether it's standing on something. In order:
+ *  1. a down-jumped block turns solid again once the feet have cleared it
+ *     (releaseDropBlock);
+ *  2. an airborne body sweeps its path and lands on the first surface it
+ *     crosses from above (sweepLanding); a grounded one tests only its end x;
+ *  3. failing that, a grounded body that isn't rising follows the surface up or
+ *     down by a small reach, wider on slopes (stickToSurface);
+ *  4. otherwise it's airborne.
+ */
+export function collideGround(o: Body, prevFeet: number, prevX: number = o.x): boolean {
+  releaseDropBlock(o, prevFeet);
+  const hit = sweepLanding(o, prevX, prevFeet) ?? stickToSurface(o, prevX);
+  if (hit) { land(o, hit); return true; }
+  o.onGround = false;
+  return false;
+}
+
+/** A down-jumped block is ignored only until the feet were below its surface
+ *  at the start of a frame; after that it's solid again from above. */
+function releaseDropBlock(o: Body, prevFeet: number): void {
   if (o.dropBlock != null && prevFeet > (o.dropY ?? 0) + 2) o.dropBlock = null;
-  // Swept test: walk the feet's path from (prevX, prevFeet) to (x, feet) in
-  // short sub-segments (<=2px across) and land on the first surface a
-  // sub-segment crosses from above, so a fast diagonal move can't skip a
-  // ramp or a tile it only passes over mid-frame. Slopes count even while
-  // rising (a fast horizontal move can outrun the climb into a ramp); flat
-  // tiles only when falling.
-  // A grounded body (walking) tests only its final x, so it keeps its full
-  // horizontal move; the sweep is for airborne bodies.
-  const ignore = o.dropBlock ?? null;
-  const air = !o.onGround;
+}
+
+/**
+ * Swept test: walk the feet's path from (prevX, prevFeet) to (x, feet) in
+ * short sub-segments (<=2px across) and land on the first surface a
+ * sub-segment crosses from above, so a fast diagonal move can't skip a ramp
+ * or a tile it only passes over mid-frame. Slopes count even while rising (a
+ * fast horizontal move can outrun the climb into a ramp); flat tiles only
+ * when falling. A grounded body (walking) tests only its final x, so it keeps
+ * its full horizontal move; the sweep is for airborne bodies.
+ */
+function sweepLanding(o: Body, prevX: number, prevFeet: number): Landing | null {
+  const feet = o.y + o.h, ignore = o.dropBlock ?? null, air = !o.onGround;
   const n = air ? Math.max(1, Math.ceil(Math.abs(o.x - prevX) / 2)) : 1;
-  let surf: Platform | null = null, landX = o.x;
-  for (let j = 1; j <= n && !surf; j++) {
+  for (let j = 1; j <= n; j++) {
     const xa = prevX + (o.x - prevX) * (j - 1) / n, fa = prevFeet + (feet - prevFeet) * (j - 1) / n;
     const xb = prevX + (o.x - prevX) * j / n, fb = prevFeet + (feet - prevFeet) * j / n;
-    let bestY = Infinity, bestIn = false;
+    let best: Landing | null = null, bestY = Infinity, bestIn = false;
     // airborne: tiles under either end, so a sub-segment that leaves a tile still tests it
     const cands = new Set(air ? [...surfacesAt(xb, o.w, ignore), ...surfacesAt(xa, o.w, ignore)] : surfacesAt(xb, o.w, ignore));
     for (const p of cands) {
@@ -82,34 +104,41 @@ export function collideGround(
       // on/above it at the sub-segment's start, at/below it at the end;
       // on a tie prefer the tile under the end point (keeps the full move)
       if (fa <= syA + 0.01 && fb >= syB - 0.01 && (syB < bestY || (syB === bestY && inB && !bestIn))) {
-        surf = p; bestY = syB; bestIn = inB; landX = inB ? xb : xa;
+        best = { surf: p, x: inB ? xb : xa }; bestY = syB; bestIn = inB;
       }
     }
+    if (best) return best;
   }
-  // A grounded body also follows the surface up/down by STICK px. On a slope
-  // the reach grows with horizontal speed (a 2:1 slope moves the surface half
-  // as far as x), so a fast slide or dash (Rush Toss, ~10px/frame) stays on the
-  // ramp instead of sinking into it.
-  if (!surf && o.onGround && o.vy >= 0) {
-    let bestY = Infinity;
-    const slopeReach = Math.max(STICK, Math.abs(o.x - prevX) * 0.5 + 1);
-    for (const p of surfacesAt(o.x, o.w, ignore)) {
-      // (also onto the flat tile a ramp tops out at, or runs down onto)
-      const sy = surfaceYAt(p, o.x), reach = p.slope || o.plat?.slope ? slopeReach : STICK;
-      if (sy >= feet - reach && sy <= feet + reach && sy < bestY) { surf = p; bestY = sy; }
-    }
+  return null;
+}
+
+/**
+ * A grounded body (not rising) follows the surface up/down by STICK px. On a
+ * slope the reach grows with horizontal speed (a 2:1 slope moves the surface
+ * half as far as x), so a fast slide or dash (Rush Toss, ~10px/frame) stays on
+ * the ramp instead of sinking into it.
+ */
+function stickToSurface(o: Body, prevX: number): Landing | null {
+  if (!o.onGround || o.vy < 0) return null;
+  const feet = o.y + o.h;
+  const slopeReach = Math.max(STICK, Math.abs(o.x - prevX) * 0.5 + 1);
+  let best: Platform | null = null, bestY = Infinity;
+  for (const p of surfacesAt(o.x, o.w, o.dropBlock ?? null)) {
+    // (also onto the flat tile a ramp tops out at, or runs down onto)
+    const sy = surfaceYAt(p, o.x), reach = p.slope || o.plat?.slope ? slopeReach : STICK;
+    if (sy >= feet - reach && sy <= feet + reach && sy < bestY) { best = p; bestY = sy; }
   }
-  if (surf) {
-    o.dropBlock = null; // landed on something else: the dropped-through block is solid again
-    o.x = landX;
-    o.y = surfaceYAt(surf, o.x) - o.h;
-    o.vy = 0;
-    o.onGround = true;
-    o.plat = surf;
-    return true;
-  }
-  o.onGround = false;
-  return false;
+  return best && { surf: best, x: o.x };
+}
+
+/** Stand the body on a surface at x. */
+function land(o: Body, { surf, x }: Landing): void {
+  o.dropBlock = null; // landed on something else: the dropped-through block is solid again
+  o.x = x;
+  o.y = surfaceYAt(surf, o.x) - o.h;
+  o.vy = 0;
+  o.onGround = true;
+  o.plat = surf;
 }
 
 /**
