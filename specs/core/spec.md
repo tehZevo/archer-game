@@ -24,3 +24,7 @@ You fight a **mix**: groups of small monsters you clear out, plus occasional big
 ## The world
 
 You move through the game by **climbing floors** — single-screen floors, one after another, getting higher as you go.
+
+## Getting stronger
+
+You get stronger by **gaining levels and spending points to learn new skills and make existing ones hit harder**. Gear isn't the focus — your power comes from the skills you pick and rank up.
