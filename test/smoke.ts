@@ -1,7 +1,12 @@
 // Headless smoke test. Bundled with esbuild for node and run with `npm test`.
 // No DOM required: runtime.ts falls back to stubs.
 
+import { readFileSync } from 'node:fs';
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
+import { BAKED } from '../src/fxbaked';
+import { FX_GEN } from '../src/fxsprites';
+import { packStrip } from '../src/grid';
+import { decodePng } from '../scripts/png';
 import { game, player, gainExp, gotoPlace } from '../src/state';
 import { nextPlace, placeKey, START } from '../src/world';
 import { setKey } from '../src/input';
@@ -172,6 +177,18 @@ setKey('up', false);
   check(`icon glyphs are ${GLYPH}x${GLYPH}`, Object.values(ICON_GLYPHS).every((g) => g.length === GLYPH && g.every((r) => r.length === GLYPH)));
   const flat = Object.values(ICON_GLYPHS).map((g) => g.join(''));
   check('icons are all distinct', new Set(flat).size === flat.length);
+}
+
+// baked effect sheets match their generators (re-run `npm run bake` after changing an effect)
+{
+  const stale = Object.entries(BAKED).filter(([name, s]) => {
+    const g = FX_GEN[name]?.();
+    if (!g || g.w !== s.w || g.h !== s.h || g.frames.length !== s.n || g.ox !== s.ox || g.oy !== s.oy) return true;
+    const png = decodePng(readFileSync(`assets/fx/${name}.png`));
+    return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip(g.frames).px)) !== 0;
+  }).map(([n]) => n);
+  check(`every baked effect sheet matches its generator${stale.length ? ' (stale: ' + stale.join(', ') + ')' : ''}`, stale.length === 0);
+  check('every effect has a generator', Object.keys(BAKED).every((n) => FX_GEN[n]));
 }
 
 console.log(failures === 0 ? '\nAll tests passed.' : `\n${failures} test(s) failed.`);

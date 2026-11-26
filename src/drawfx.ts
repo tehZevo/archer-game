@@ -1,4 +1,4 @@
-import { FX } from './fxsprites';
+import { fx } from './fxsheets';
 import { FX_DUR } from './config';
 import { ctx } from './canvas';
 import { clamp } from './util';
@@ -20,7 +20,7 @@ export function drawQuake(q: { x: number; y: number; t: number }): void {
 
 export function drawShot(s: Shot): void {
   if (s.delay && s.delay > 0) return; // not launched yet
-  const A = FX()[s.sprite ?? 'arrow'];
+  const A = fx(s.sprite ?? 'arrow');
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   // never rotated: arrows fly horizontally, mirrored when going left;
@@ -34,7 +34,7 @@ export function drawShot(s: Shot): void {
 
 /** Draw the frame of a baked effect animation for progress k (0..1), additively. */
 function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 1): void {
-  const A = FX()[name];
+  const A = fx(name);
   // clamped both ways: an effect living longer than its animation holds the first frame
   const f = Math.max(0, Math.min(A.frames.length - 1, Math.floor(k * A.frames.length)));
   const img = face < 0 ? A.flipped[f] : A.frames[f];
@@ -48,7 +48,7 @@ function drawAnim(name: string, x: number, y: number, k: number, face = 1, sx = 
 
 /** A looping effect sheet at (x, y), stepping `fps` frames a second of time `t`. */
 export function drawLoop(name: string, x: number, y: number, t: number, fps: number, face = 1): void {
-  const n = FX()[name].frames.length;
+  const n = fx(name).frames.length;
   drawAnim(name, x, y, (Math.floor(t * fps) % n + 0.5) / n, face);
 }
 
