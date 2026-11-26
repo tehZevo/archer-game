@@ -261,8 +261,8 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   arena(12); player.ranks.W = 1;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);
-  const hp0 = m.hp; tap('z'); step(20);
-  check('Z during the Rush Toss casts the link skill', m.hp < hp0 && player.linkFrom === 'W', `from ${player.linkFrom}`);
+  const hp0 = m.hp; tap('z'); step(15);
+  check('Z during the Rush Toss casts Double Shot', m.hp < hp0 && player.linkFrom === 'Z', `from ${player.linkFrom}`);
 }
 {
   arena(12); player.ranks.W = 1;
@@ -538,17 +538,15 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('...at a steady pace, slower than a jump\'s pop', firstStep < 300 * P.STEP && firstStep > 0, `first step ${firstStep.toFixed(1)}px`);
 }
 {
-  // Skyward Assault -> E: the lift is the use time, so Downpour waits it out
+  // Skyward Assault -> E: Downpour isn't a link off the assault, so a press
+  // during the hover is dropped (only MS, R, Z and Q are buffered).
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.E = 1; player.ranks.PV = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('Skyward Assault hovers', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
   tap('e');
-  check('E pressed during the hover waits for it', player.casting.queued === 'E' && player.hang.t > 0,
+  check('E pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
-  let fired = -1;
-  for (let i = 0; i < 40 && fired < 0; i++) { step(1); if (player.casting.key === 'PV') fired = i; }
-  check('...and Downpour fires as the leap ends', fired >= 0 && player.casting.key === 'PV', `fired ${fired}`);
 }
 {
   // Skyward Assault -> R: a Tempest pressed during the hover fires as it ends
@@ -2756,29 +2754,26 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
 }
 
 {
-  // Off a Skyward Assault hover: the lift is the use time, so a non-link skill
-  // (Glide) waits for it, then fires and carries you
+  // Off a Skyward Assault hover: only the assault's links (MS, R, Z, Q) are
+  // buffered, so a Glide pressed during the hover is dropped.
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.D = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
   check('hovering (setup)', player.hang.t > 0 && !player.onGround, `hangT ${player.hang.t.toFixed(2)}`);
   tap('d');
-  check('Glide pressed during the hover waits for it', player.casting.queued === 'D' && player.hang.t > 0,
+  check('Glide pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
-  step(30); // the hover ends, the buffered Glide fires
-  check('...and the Glide fires as the hover ends, carrying you', player.cast === 'jump' && player.vx !== 0,
-    `cast ${player.cast} vx ${player.vx.toFixed(0)}`);
 }
 {
+  // Off a Skyward Assault hover: the Q slot (Meteor Dive) isn't a link off the
+  // assault (only the ground Q is), so a press during the hover is dropped.
   arena(30); player.ranks.Q = 1; player.ranks.W = 3; player.ranks.AB = 3; player.ranks.AD = 1;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
-  tap('q'); // Q's air form (Meteor Dive) pressed during the hover waits for it
-  check('Meteor Dive pressed during the hover waits for it', player.casting.queued === 'Q' && player.hang.t > 0,
+  tap('q'); // Q's air form (Meteor Dive) pressed during the hover
+  check('Meteor Dive pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
-  step(30); // the hover ends, the buffered Meteor Dive fires
-  check('...and the dive plays out (no hover freeze)', player.hang.t === 0 && (player.diving || player.rush.t > 0),
-    `diving ${player.diving} rushT ${player.rush.t.toFixed(2)}`);}
+}
 
 {
   // Single-rank skills: each carries its (former) max-level hit/damage numbers
