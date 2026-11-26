@@ -1,8 +1,7 @@
 import { PATHS, START_TOWN, TOWNS, townArea, townDepth, type Place } from './world';
 import { bannerMsg, player } from './state';
 import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
-import { SKILLS } from './config';
-import type { SkillKey } from './types';
+import { SKILLS, SKILL_BAR } from './config';
 
 /* ============================================================
    DEV MODE
@@ -38,7 +37,9 @@ export const DEV_ROWS = 12;
 export const devTag = (): string => (dev.on ? '-dev' : '');
 
 /** Max the player out for testing: level 100 (with its job and a stack of
- *  ability points) and every skill at max rank. Bound to the `\` dev key. */
+ *  ability points) and every skill on the skill bar at max rank. Skills not
+ *  on the bar (the off-bar upgrades and passives) keep their current ranks.
+ *  Bound to the `\` dev key. */
 export const maxOut = (): void => {
   player.level = MAX_LEVEL;
   player.exp = 0;
@@ -48,6 +49,6 @@ export const maxOut = (): void => {
   recalcStats();
   player.hp = player.hpMax;
   player.mp = player.mpMax;
-  for (const k of Object.keys(SKILLS) as SkillKey[]) if (k !== 'HA') player.ranks[k] = SKILLS[k].maxLevel;
-  bannerMsg('MAXED', 'LEVEL 100 - ALL SKILLS MAXED');
+  for (const { skill } of SKILL_BAR) if (skill) player.ranks[skill] = SKILLS[skill].maxLevel;
+  bannerMsg('MAXED', 'LEVEL 100 - SKILL BAR MAXED');
 };
