@@ -2,7 +2,7 @@ import { CARRY_MAX, resetWallet, START_POTIONS, wallet } from './economy';
 import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
 import type { Quest } from './quests';
-import { clearPets, loadPets, pet, type PetKind } from './pets';
+import { clearPets, loadPets, pet, type PetCustoms, type PetKind } from './pets';
 import { bag, BAG_SIZE, gear } from './gear';
 import type { GearItem, GearKind } from './gear';
 import { runBonus } from './achievements';
@@ -43,6 +43,8 @@ export interface SaveData {
   /** The pets you own, and the one following you (absent: none). */
   pets?: PetKind[];
   petKind?: PetKind | null;
+  /** Each owned pet's chosen customizations (absent: the kind's defaults). */
+  petCustoms?: Partial<Record<PetKind, PetCustoms>>;
   /** The equipped weapon and armor (absent in older saves: nothing worn). */
   gear?: { weapon: GearItem | null; armor: GearItem | null };
   /** Spare gear (absent in older saves: an empty bag). */
@@ -62,7 +64,7 @@ export function snapshot(): SaveData {
     town: lastTown(game.floor.place),
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
-    pets: [...pet.owned], petKind: pet.kind,
+    pets: [...pet.owned], petKind: pet.kind, petCustoms: pet.customs,
     gear: { weapon: gear.weapon, armor: gear.armor },
     bag: bag.map((i) => ({ ...i })),
   };
@@ -124,7 +126,7 @@ export function apply(d: unknown): Place | null {
   wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, START_POTIONS);
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, START_POTIONS);
   loadQuests(s.quests);
-  loadPets(s.pets, s.petKind);
+  loadPets(s.pets, s.petKind, s.petCustoms);
   gear.weapon = cleanGear(s.gear?.weapon, 'weapon');
   gear.armor = cleanGear(s.gear?.armor, 'armor');
   bag.length = 0;
