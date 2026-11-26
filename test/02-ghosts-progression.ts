@@ -207,7 +207,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...and it scales with the skill\'s own rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
   player.ranks.ES = true;
   check('Twin Echoes stays doubled at max rank', shotCount(rank('Z')) === 4, `${shotCount(rank('Z'))}`);
-  check('Twin Echoes unlocks at Lv.60 and is a passive', SKILLS.ES.minLevel === 60 && SKILLS.ES.passive === true);
+  check('Twin Echoes unlocks at Lv.30 and is a passive', SKILLS.ES.minLevel === 30 && SKILLS.ES.passive === true);
   player.ranks.ES = false;
   check("a passive's bonus is one lot of arrows until learned", shotCount(rank('Z')) === 2);
   arena(20); player.ranks.Z = true; player.ranks.ES = true;

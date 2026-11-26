@@ -121,7 +121,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
   W: { key: 'W', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
+       cd: 0, use: 0.2, delay: 0.6, mp1: 5, dmg1: 110, hits1: 4, targets1: 4,
        desc: 'Airborne-only volley after Rush Toss' },
   E: { key: 'E', linksInto: [...LAUNCHER_LINKS, 'PV'], keyed: true, bar: true, name: 'Piercing Leap', tag: 'Launcher', job: 4, minLevel: 60,
        cd: P.SPIKE_CD, use: 0.5, delay: 0.4, mp1: 7, dmg1: 400, hits1: 2, targets1: 4,
@@ -150,7 +150,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.6, mp1: 6, dmg1: 220, hits1: 4, targets1: 6,
        desc: 'Multi-arrow burst that stuns' },
   // Passives: no key; their effect is `bonus` (0 until learned).
-  ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 60, passive: true,
+  ES: { key: 'ES', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 30, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 2,
         desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire' },
   SA: { key: 'SA', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true, learn: true,
@@ -162,7 +162,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   IR: { key: 'IR', name: 'Fervor', tag: 'Passive', job: 2, minLevel: 10, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.12,
         desc: 'Each Fervor stack gives more damage' },
-  HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 3, minLevel: 30, passive: true,
+  HA: { key: 'HA', name: 'Haste', tag: 'Passive', job: 3, minLevel: 60, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.2,
         desc: 'Attack speed up (shorter use time, not cooldowns)' },
   // A movement passive: faster and higher jumps.
