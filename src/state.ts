@@ -191,6 +191,7 @@ export function gotoPlace(place: Place): void {
   player.leftClimbX = null;
   player.dropBlock = null;
   player.climbRush = false;
+  centerCamera(); // the view opens on the player, not on the world's corner
   player.casting.useT = 0;
   player.casting.recoverT = 0;
   player.casting.queued = null;
@@ -199,6 +200,17 @@ export function gotoPlace(place: Place): void {
   player.rush.t = 0; player.rush.dist = 0; player.rush.carry = [];
   player.effects.length = 0; // effects don't follow you to another floor
   if (game.floor.mods?.includes('icy')) logMsg('The ground here is <b>icy</b>: mind your footing. Coins are worth more.');
+}
+
+/** Snap the camera onto the player (a fresh floor, a respawn): the position
+ *  that centres them in the deadzone box, clamped like cameraTarget. Without
+ *  this the view starts at the world's top-left and eases in from there. */
+export function centerCamera(): void {
+  const { w, h } = game.view;
+  const x = player.x - w * (CAM.left + CAM.right) / 2;
+  const y = player.y + player.h - h * (CAM.top + CAM.bottom) / 2;
+  game.cam.x = Math.max(0, Math.min(x, WORLD.w - w));
+  game.cam.y = Math.max(0, Math.min(y, WORLD.h - h));
 }
 
 /** Where the camera wants to be: the nearest position that puts the player

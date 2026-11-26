@@ -27,7 +27,7 @@ import { surfaceYAt } from '../src/surface';
 import { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, makeShape, SHAPES, TOWN_MIN_H, type Layout } from '../src/floor';
 import { DRAWN, hasMobArt, HURT, MOB_ART, paintMob, RECOLOR } from '../src/mobart';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
-import { TILE, WORLD } from '../src/config';
+import { CAM, TILE, WORLD } from '../src/config';
 import { ANIM_RATE, mobFrame } from '../src/mobanim';
 import { BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg } from '../src/combat';
 import { barrageTargets, cast } from '../src/skills';
@@ -3136,6 +3136,31 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('...so the climb keeps going up', player.y < y0 && player.climb !== null, `y ${player.y.toFixed(1)} was ${y0.toFixed(1)}`);
   step(2);
   check('...and Up keeps working to the top', player.climb !== null && player.y < y0 - 10, `y ${player.y.toFixed(1)}`);
+}
+{
+  // A floor opens with the view on the player. It used to start at the world's
+  // top-left and ease in, so the first half-second was a pan down to her.
+  game.view.w = 240; game.view.h = 180;
+  gotoPlace(climb(2));
+  const want = cameraTarget();
+  check('a floor loads with the camera centred on the player',
+    Math.abs(game.cam.x - want.x) < 1 && Math.abs(game.cam.y - want.y) < 1,
+    `cam ${game.cam.x.toFixed(0)},${game.cam.y.toFixed(0)} want ${want.x.toFixed(0)},${want.y.toFixed(0)}`);
+  check('...so she sits in the middle of the deadzone',
+    player.x > game.cam.x + game.view.w * CAM.left && player.x < game.cam.x + game.view.w * CAM.right
+    && player.y + player.h > game.cam.y + game.view.h * CAM.top && player.y + player.h < game.cam.y + game.view.h * CAM.bottom,
+    `x ${player.x.toFixed(0)} in ${game.cam.x.toFixed(0)}..${(game.cam.x + game.view.w).toFixed(0)}`);
+  step(1);
+  check('...and it stays there on the first frame', Math.abs(game.cam.x - want.x) < 1 && Math.abs(game.cam.y - want.y) < 1,
+    `cam ${game.cam.x.toFixed(0)},${game.cam.y.toFixed(0)}`);
+  // every floor, not just the first
+  let off = 0;
+  for (const n of [1, 3, 5, 8, 10]) {
+    gotoPlace(climb(n)); game.view.w = 240; game.view.h = 180;
+    const w2 = cameraTarget();
+    if (Math.abs(game.cam.x - w2.x) > 1 || Math.abs(game.cam.y - w2.y) > 1) off++;
+  }
+  check('...on every floor up the tower', off === 0, `${off} floor(s) start off-centre`);
 }
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
