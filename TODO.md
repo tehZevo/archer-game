@@ -5,7 +5,6 @@
 - (art) Remove death animation rotation: all death animations should be unique and drawn, not transforms.
 - (art) Create natural-resolution (not scaled) damage numbers in a playful font. The digits should have no gaps between them (bubble-letter style) so they stay easy to read when stacked.
 - Increase damage number vertical spacing by 25% (the `NUM_LINE` line offset in combat.ts:111, currently 9 → ~11).
-- Give each enemy a random damage roll of 50%–100% of its max, picked once at spawn (in `spawnMob`, state.ts), so two mobs of the same species don't hit identically. The base `dmg` becomes the max; multiply by `0.5 + Math.random() * 0.5`.
 - Replace the linear enemy HP scaling (`type.hp × 1.5 × (1 + (level − 1) × 6.1)` in state.ts:115-117) with an exponential curve anchored at `LV_1_HP = 30` and `LV_100_HP = 200000`, keeping a per-species multiplier so tanky mobs stay tanky: (#305)
   ```
   LV_1_HP   = 30
