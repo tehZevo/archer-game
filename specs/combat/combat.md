@@ -20,3 +20,7 @@ Combat is **moderately forgiving**: you have a health bar that takes a middling 
 ## Enemies
 
 You fight a **mix**: groups of small monsters you clear out, plus occasional big bosses that take a longer combo to bring down.
+
+## Aiming
+
+You aim **directionally** — you face a direction and your attack flies that way, hitting enemies in a **strictly rectangular** area in front of you.
