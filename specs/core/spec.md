@@ -36,3 +36,7 @@ It's **mostly a single-player game**, but with **simple multiplayer interactions
 ## The look
 
 The game is **2D pixel art** — pixel-art characters in a side-view world, like a classic 2D MMO.
+
+## Your toolkit
+
+Your toolkit **starts small and grows**. At level 1 you have just a few skills; by level 60+ you're juggling 8 or more. The kit evolves as you climb, so the combo deepens over the run.
