@@ -130,7 +130,7 @@ function walk(dt: number, locked: boolean): void {
   // grab a rope/ladder first, so a rope hanging from the platform you're
   // standing on is caught before the drop-through consumes the Down press
   if (grabClimbable()) return;
-  player.animState = !player.onGround ? 'jump'
+  player.animState = !player.onGround ? (player.vy > 60 ? 'fall' : 'jump')
     : prone ? 'prone' : Math.abs(player.vx) > 12 ? 'walk' : 'idle';
 }
 

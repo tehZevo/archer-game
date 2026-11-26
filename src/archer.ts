@@ -98,6 +98,8 @@ const FOLLOW_BODY = [
 ];
 
 // Rush Toss: crouched low, leaning into the slide.
+// (the second frame trails the cape a pixel further back in the wind)
+const RUSH_FLUTTER: [number, number, string][] = [[12, 1, 'oC'], [13, 0, 'oC'], [14, 0, 'oC']];
 const RUSH_BODY = [
   '..oCcctttttssow.',
   '.oCccTttttto.xw.',
@@ -202,6 +204,25 @@ const IDLE = [...HEAD, ...IDLE_BODY];
 // idle breathing: the second frame sinks the upper body a pixel onto the legs
 const IDLE2 = ['................', ...IDLE.slice(0, 17), ...IDLE.slice(18)];
 
+/** Cells of a frame changed: [row, column, letters]. */
+function poke(base: string[], cells: [number, number, string][]): string[] {
+  const g = base.slice();
+  for (const [row, col, s] of cells) g[row] = g[row].slice(0, col) + s + g[row].slice(col + s.length);
+  return g;
+}
+/** Eyes shut for a beat: the lid shadow over the eye. */
+const blink = (g: string[]): string[] => poke(g, [[6, 11, 'S']]);
+/** The cape's hem flaring back a pixel behind the legs. */
+const CAPE_FLARE: [number, number, string][] = [[15, 2, 'oC'], [16, 3, 'oC']];
+/** Sinking a pixel onto the legs (rows 0-16 down one, the hip row kept). */
+const sink = (g: string[]): string[] => ['................', ...g.slice(0, 17), ...g.slice(18)];
+
+/** Falling (past the top of the arc): legs hanging loose, toes down, and
+ *  the cape lifting off the back as the air rushes up; two frames flap it. */
+const FALL_LEGS = ['.....olloollo...', '....ollo..ollo..', '....ollo..ollo..', '....obbo...obbo.', '....obbo...obbo.', '....oooo...oooo.'];
+const FALL_CAPE: [number, number, string][] = [[10, 1, 'oC'], [11, 1, 'oCC'], [12, 1, 'oC'], [13, 1, 'oc']];
+const FALL_CAPE2: [number, number, string][] = [[9, 1, 'oo'], [10, 0, 'oCC'], [11, 1, 'oCC'], [12, 1, 'oC']];
+
 /** Lying flat (holding Down on the ground): a wider 24px frame, on her
  *  belly with the full-size head propped up over the bow hand (the same
  *  head as standing, so the sprite keeps its proportions). */
@@ -221,28 +242,38 @@ const PRONE = [
   '..ooo.ooooooooooooooooo.',
 ];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish';
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish' | 'fall';
+
+const RUSH = ['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY];
+// walk: the body sinks a pixel on the long stride and the cape's hem swings
+// out behind on the push-off
+const walkFrame = (legs: string[], i: number): string[] => {
+  const g = withRows(IDLE, 18, legs);
+  return i === 0 ? sink(poke(g, CAPE_FLARE)) : i === 1 ? poke(g, CAPE_FLARE) : g;
+};
 
 /** Frames per pose (as grids); a climb frame is mirrored for the second step. */
 export const GRIDS: Record<ArcherPose, string[][]> = {
-  idle: [IDLE, IDLE2],
-  walk: WALK_LEGS.map((legs) => withRows(IDLE, 18, legs)),
+  // breathing in and out, with a blink on every third breath
+  idle: [IDLE, IDLE2, IDLE, IDLE2, blink(IDLE), IDLE2],
+  walk: WALK_LEGS.map(walkFrame),
   jump: [withRows(IDLE, 18, JUMP_LEGS)],
   climb: CLIMB,
   // draw → release → follow-through, picked by time since the shot (shootFrame)
   shoot: [withRows(IDLE, 12, DRAW_BODY), withRows(IDLE, 12, SHOOT_BODY), withRows(IDLE, 12, FOLLOW_BODY)],
-  rush: [['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY]],
+  rush: [RUSH, poke(RUSH, RUSH_FLUTTER)],
   barrage: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, JUMP_LEGS)],
   prone: [PRONE],
   spin: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, SPIN_LOWER)],
   dive: DIVE_LEGS.map((legs) => withRows(withRows(IDLE, 12, FOLLOW_BODY), 18, legs)),
   // the release frame breaking up into a shimmer (render.ts fades it out)
   vanish: [dither(withRows(IDLE, 12, SHOOT_BODY), 0), dither(withRows(IDLE, 12, SHOOT_BODY), 1)],
+  fall: [poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE), poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE2)],
 };
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 1.2, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 1, barrage: 1, prone: 1, spin: 1, dive: 10, vanish: 20,
+  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, barrage: 1, prone: 1, spin: 1, dive: 10, vanish: 20, fall: 7,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;
@@ -317,10 +348,11 @@ export function styled(grid: string[], pose: ArcherPose, style: number, body = 0
     return g;
   }
   // crouched low (the head drawn 2 rows down): the hair's out of sight, but the face shows
-  const top = pose === 'rush' ? 2 : 0;
-  if (!top) {
-    for (const [row, r] of Object.entries(st.head ?? {})) g[+row] = r;
-    for (const [row, col, s] of st.back ?? []) put(row, col, s, 'cCo.');
+  // a breath or a stride sinks the whole upper body a row: find the head's top
+  const top = pose === 'rush' ? 2 : Math.max(0, grid.findIndex((r) => r.includes('o')) - 1);
+  if (top < 2) {
+    for (const [row, r] of Object.entries(st.head ?? {})) if (+row + top < 12) g[+row + top] = r;
+    for (const [row, col, s] of st.back ?? []) put(row + top, col, s, 'cCo.');
   }
   for (const [row, col, s, only] of body ? MALE_FACE : FEMALE_FACE) put(row + top, col, s, only);
   return g;
