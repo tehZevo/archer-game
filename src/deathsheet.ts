@@ -1,11 +1,11 @@
-import { bitFly, DEATH_T, deathBits, deathPose, type Corpse, type DeathRecipe } from './deaths';
+import { bitFly, DEATH_T, deathBits, deathPixel, deathPose, type Corpse, type DeathRecipe } from './deaths';
 
 /* ============================================================
    ENEMY DEATH SHEETS
    Each enemy's death is a baked strip of pixel-art frames, built once
-   from its own hurt sprite and its death recipe (deaths.ts): the body
-   is resampled pixel by pixel through the recipe's motion (no smooth
-   canvas rotation or scaling), fades out with an ordered dither, and the
+   from its own hurt sprite and its death recipe (deaths.ts): every pixel
+   of the body is moved by hand through the recipe's motion (deathPixel:
+   no rotation or scaling of the sprite), fades out with an ordered dither, and the
    bits that fly off it (feathers, gears, shards...) are painted into the
    frames as pixels. So every enemy has its own sheet, and drawing a
    death is just picking the frame for its age. Pure pixel buffers here;
@@ -58,15 +58,17 @@ export function bakeDeathSheet(name: string, recipe: DeathRecipe, src: Grid): De
       const i = (y * sw + x) * 4;
       return src.px[i + 3] > 127 ? i : -1;
     };
-    // the body: each frame pixel maps back into the sprite (nearest pixel)
+    // the body: each of the sprite's pixels is placed where the death moves it
     if (q.alpha > 0) {
-      const cos = Math.cos(-q.rot), sin = Math.sin(-q.rot);
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        if (!dithered(x, y, q.alpha)) continue;
-        const ox = x + 0.5 - cx - q.dx, oy = y + 0.5 - cy - q.dy;
-        const lx = ox * cos - oy * sin, ly = ox * sin + oy * cos;
-        const i = sample(lx / q.sx + sw / 2, (ly - sh / 2) / q.sy + sh);
-        if (i >= 0) put(x, y, src.px[i], src.px[i + 1], src.px[i + 2]);
+      let s = c.seed ^ 0x2c1b;
+      const r = (): number => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        const r1 = r(), r2 = r(), i = sample(x, y);
+        if (i < 0) continue;
+        const at = deathPixel(recipe.move, x + 0.5 - sw / 2, y + 0.5 - sh, sh, p, r1, r2);
+        if (!at) continue;
+        const X = Math.round(cx + q.dx + at.x - 0.5), Y = Math.round(cy + sh / 2 + q.dy + at.y - 0.5);
+        if (dithered(X, Y, q.alpha)) put(X, Y, src.px[i], src.px[i + 1], src.px[i + 2]);
       }
     }
     // crumbling: blocks of the body tumble apart and settle on the ground
