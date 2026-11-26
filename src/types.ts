@@ -364,7 +364,7 @@ export interface Shot {
 export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
   | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit'
   | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand' | 'tossTrail' | 'blitzTrail'
-  | 'galeMuzzle' | 'galeShot' | 'galeHit';
+  | 'galeMuzzle' | 'galeShot' | 'galeHit' | 'assaultRise' | 'assaultBang' | 'assaultDrop';
 /** The looping effect on the archer for a ground rush's slide (see drawRushAura). */
 export type RushLook = 'tossRush' | 'blitzRush';
 

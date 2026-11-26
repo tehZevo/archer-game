@@ -330,6 +330,92 @@ function swooshAnim(rp: RampName = 'cyan'): FxSheet {
   });
 }
 
+/** A blade of light sweeping round an ellipse: its head at angle `head`,
+ *  trailing `trail` radians behind it the way it came (`dir` +1: sweeping
+ *  to larger angles, -1: smaller), thickest and brightest at the head, with
+ *  a white-hot tip. */
+function crescent(L: Light, rp: RampName, wind: RampName, cx: number, cy: number, rx: number, ry: number,
+  head: number, trail: number, dir: 1 | -1, I: number, thick = 4): void {
+  for (let k = 0; k < 5; k++) {
+    const h = head - dir * k * trail * 0.16, len = trail * (1 - k * 0.12), kx = 1 - k * 0.05;
+    const [a0, a1] = dir > 0 ? [h - len, h] : [h, h + len];
+    arc(L, k < 2 ? rp : wind, cx, cy, rx * kx, ry * kx, thick - k * 0.6, (1.3 - k * 0.2) * I, a0, a1);
+  }
+  // the white-hot tip
+  L.disc(rp, cx + Math.cos(head) * rx, cy + Math.sin(head) * ry, thick * 0.6, 1.3 * I);
+}
+
+/** Skyward Assault's leap: a tall blue crescent carving up from where she
+ *  left, round the front and over the top to where she hangs, with a column
+ *  of wind under it. Faces right; origin at her body middle where she left. */
+function assaultRiseAnim(): FxSheet {
+  const W = 64, H = 124, ox = 22, oy = H - 16, N = 7;
+  const cx = ox + 6, cy = oy - 46, rx = 26, ry = 52;
+  return anim(W, H, ox, oy, N, (L, f) => {
+    const R = rng(151 + f), p = Math.min(1, (f + 1) / 4), fade = f < 4 ? 1 : 1 - (f - 3) / 4;
+    // the head sweeps from under her feet round the front to over the top
+    crescent(L, 'sky', 'cyan', cx, cy, rx, ry, Math.PI / 2 - 0.3 - p * (Math.PI - 0.1), 0.5 + p * 1.6, -1, fade, 4.4);
+    // the wind column she rose up
+    for (const dx of [-4, 0, 4]) L.line('cyan', ox + dx, oy + 4, ox + dx, oy - 70 * p, 0.4, 1.2, (dx ? 0.55 : 0.9) * fade);
+    // a flash where she kicked off
+    if (f < 2) L.disc('sky', ox, oy, 7 - f * 3, 1.2);
+    for (let i = 0; i < 7; i++) {
+      const a = -Math.PI / 2 + R() * Math.PI, d = 0.9 + R() * 0.25;
+      L.spark(i % 2 ? 'sky' : 'cyan', cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d, 0.95 * fade, i < 2);
+    }
+  });
+}
+
+/** Skyward Assault's strike in the air: a bang on the enemy, a white flash
+ *  with a cross of rays, then a double shockwave ring and flying sparks. */
+function assaultBangAnim(): FxSheet {
+  const S = 52, c = S / 2;
+  return anim(S, S, c, c, 6, (L, f) => {
+    const R = rng(171 + f), fade = f < 3 ? 1 : 1 - (f - 2) / 4;
+    if (f < 2) {
+      const len = f === 0 ? 24 : 16;
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4, l = len * (i % 2 ? 0.5 : 1);
+        L.line('sky', c, c, c + Math.cos(a) * l, c + Math.sin(a) * l, 2.2, 0.4, 1.25);
+      }
+      L.disc('sky', c, c, f === 0 ? 8 : 6, 1.4);
+    }
+    if (f >= 1) {
+      const g = (f - 1) / 4;
+      L.ring('sky', c, c, 9 + g * 14, 9 + g * 14, 2.6 - g * 1.6, 1.15 * fade);
+      L.ring('cyan', c, c, 5 + g * 9, 5 + g * 9, 1.4, 0.8 * fade);
+    }
+    for (let i = 0; i < 10; i++) {
+      const a = R() * Math.PI * 2, d = 6 + f * 4 + R() * 6;
+      L.spark(i % 3 ? 'sky' : 'cyan', c + Math.cos(a) * d, c + Math.sin(a) * d, 0.95 * fade, i < 3);
+    }
+  });
+}
+
+/** Skyward Assault's last strike: a crescent slashing back down in front
+ *  of her from over her head to below her feet, ending in a flat flare.
+ *  Faces right; origin at her body middle. */
+function assaultDropAnim(): FxSheet {
+  const W = 76, H = 112, ox = 22, oy = 40, N = 7;
+  const cx = ox + 8, cy = oy + 12, rx = 32, ry = 50;
+  return anim(W, H, ox, oy, N, (L, f) => {
+    const R = rng(191 + f), p = Math.min(1, (f + 1) / 4), fade = f < 4 ? 1 : 1 - (f - 3) / 4;
+    crescent(L, 'sky', 'cyan', cx, cy, rx, ry, -Math.PI / 2 + 0.3 + p * (Math.PI - 0.1), 0.5 + p * 1.6, 1, fade, 4.8);
+    // streaks raining down the blade's path
+    for (let i = 0; i < 4; i++) {
+      const x = cx + 8 + i * 6 + R() * 3, y0 = oy - 20 + i * 4;
+      L.line('cyan', x, y0, x, y0 + 50 * p, 0.3, 1.1, 0.7 * fade);
+    }
+    // the flare where the slash bottoms out
+    if (f >= 3) {
+      const g = (f - 3) / 4, by = cy + ry;
+      L.line('sky', cx - 22 * (0.5 + g), by, cx + 22 * (0.5 + g), by, 1.6, 1.6, 1.2 * (1 - g));
+      L.ring('sky', cx, by, 10 + g * 16, 3 + g * 4, 1.6, 1.0 * (1 - g));
+      L.disc('sky', cx, by, 4 * (1 - g) + 1, 1.2 * (1 - g));
+    }
+  });
+}
+
 /** Rising Arrows: a volley of yellow-green arrows raining down onto the target,
  *  spiky gold impacts, a flat green crescent swirl and dust. Origin at the base. */
 function rainAnim(): FxSheet {
@@ -624,6 +710,9 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   blitzTrail: () => blitzTrailAnim(),
   stunHit: () => stunHitAnim(),
   spirit: () => spiritAnim(),
+  assaultRise: () => assaultRiseAnim(),
+  assaultBang: () => assaultBangAnim(),
+  assaultDrop: () => assaultDropAnim(),
   galeMuzzle: () => galeMuzzleAnim(),
   galeShot: () => galeShotAnim(),
   galeHit: () => hitAnim(false, 'lime'),
