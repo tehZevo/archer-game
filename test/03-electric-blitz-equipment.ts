@@ -156,7 +156,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   // Q and Meteor Dive: both paced by the use time alone, no cooldowns
   arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('q');
-  check('the ground rush has no cooldown, only a use time', SKILLS['ground-q'].cd === 0 && SKILLS['ground-q'].use === 0.6 && player.cdMax['ground-q'] === 0 && player.casting.useT > 0);
+  check('the ground rush has a 3s cooldown, on top of its use time', SKILLS['ground-q'].cd === 3 && SKILLS['ground-q'].use === 0.6 && player.cdMax['ground-q'] === 3 && player.casting.useT > 0);
   step(40); player.cd['ground-q'] = 0;
   tap('c'); step(6); tap('q');
   check('the Meteor Dive has no cooldown, only a use time', SKILLS['air-q'].cd === 0 && player.cd['ground-q.air'] === 0 && player.casting.useT > 0 && player.casting.recoverT > 0,
