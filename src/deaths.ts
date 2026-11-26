@@ -5,8 +5,8 @@ import type { Floor, Mob, MobType } from './types';
 
 /* ============================================================
    ENEMY DEATHS
-   Every enemy dies its own way: its body (its hurt pose) moves through
-   one of a few motions, and bits of the right stuff fly off it (feathers
+   Every enemy dies its own way: its body (its hurt pose) comes apart
+   pixel by pixel in one of a few drawn motions (never rotated or scaled), and bits of the right stuff fly off it (feathers
    from birds, gears from clockwork, shards from crystal, spores from
    fungi...). Each base enemy has its own recipe; a variant dies like
    the enemy it is a cousin of, in its own colours.
@@ -17,27 +17,27 @@ import type { Floor, Mob, MobType } from './types';
    ============================================================ */
 
 export type DeathMove =
-  /** tips over sideways onto the ground */
+  /** slumps over backwards into a heap */
   | 'topple'
-  /** hops up and lands on its back */
+  /** hops up and splats flat on landing */
   | 'flip'
-  /** flattens and spreads into a puddle */
+  /** drips down column by column and pools into a puddle */
   | 'melt'
-  /** swells up, then bursts */
+  /** trembles, then bursts outward */
   | 'pop'
-  /** spins as it drops to the ground */
+  /** sheds pixels that swirl away as it drops */
   | 'spiral'
-  /** folds its wings and drops like a stone */
+  /** drops like a stone and splashes apart on impact */
   | 'plummet'
-  /** floats up and fades away */
+  /** drifts up and away a pixel at a time */
   | 'rise'
   /** breaks into chunks of itself that tumble apart */
   | 'crumble'
-  /** shrinks into its shell (or itself) and is gone */
+  /** pulls in from the edges to its middle and is gone */
   | 'retract'
-  /** droops and sinks into the ground */
+  /** droops, then sinks into the ground column by column */
   | 'wilt'
-  /** runs down like a clock: wobbles, then keels over */
+  /** runs down like a clock: judders, then rattles apart */
   | 'winddown';
 
 export type BitKind = 'dust' | 'feather' | 'shard' | 'gear' | 'spore' | 'spark' | 'drop' | 'petal' | 'rock' | 'ember' | 'star' | 'smoke' | 'shell';
@@ -151,56 +151,123 @@ export function updateCorpses(dt: number): void {
   }
 }
 
-/** Where the body is at progress p (0..1): an offset (px, from where it
- *  died), a turn (radians), a squash (x, y scale) and how solid it is. */
-export interface Pose { dx: number; dy: number; rot: number; sx: number; sy: number; alpha: number }
+/** Where the body as a whole is at progress p (0..1): an offset (px, from
+ *  where it died) and how solid it is. Only ever a shift (a hop, a fall, a
+ *  wobble): the body is never turned or squashed. How it comes apart is drawn
+ *  pixel by pixel (see deathPixel). */
+export interface Pose { dx: number; dy: number; alpha: number }
 
 /** Ease out. */
 const out = (p: number): number => 1 - (1 - p) * (1 - p);
 /** Fades over the last part of the death. */
 const tail = (p: number, from = 0.6): number => (p < from ? 1 : Math.max(0, 1 - (p - from) / (1 - from)));
+const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 
 /** How far it falls to the ground. */
 const air = (c: Corpse): number => c.drop;
 
 export function deathPose(c: Corpse, p: number): Pose {
-  const P0: Pose = { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, alpha: 1 };
+  const P0: Pose = { dx: 0, dy: 0, alpha: 1 };
   const fall = (q: number): number => air(c) * Math.min(1, q * q); // a flier dropping to the ground
   switch (c.recipe.move) {
-    case 'topple': {
-      // a tall body falls flat; a long one (seen side-on, a quarter turn
-      // would stand it on its tail) rolls over onto its back
-      const turn = c.w > c.h * 1.1 ? Math.PI : Math.PI / 2;
-      return { ...P0, rot: -c.dir * turn * out(Math.min(1, p * 2.2)), dy: fall(p * 2), alpha: tail(p) };
-    }
     case 'flip': {
       const q = Math.min(1, p * 2.2), hop = Math.sin(q * Math.PI) * 10;
-      return { ...P0, dy: -hop + fall(p * 2), rot: c.dir * Math.PI * out(q), alpha: tail(p) };
-    }
-    case 'melt':
-      return { ...P0, sx: 1 + out(p) * 0.9, sy: Math.max(0.12, 1 - out(p) * 0.88), dy: fall(p * 2), alpha: tail(p, 0.5) };
-    case 'pop': {
-      if (p < 0.3) { const s = 1 + (p / 0.3) * 0.35; return { ...P0, sx: s, sy: s }; }
-      return { ...P0, sx: 1.5, sy: 1.5, alpha: 0 }; // burst: only the bits are left
+      return { ...P0, dy: -hop + fall(p * 2), alpha: tail(p) };
     }
     case 'spiral':
-      return { ...P0, dy: air(c) * out(Math.min(1, p * 1.6)), dx: Math.sin(p * 12) * 4, rot: p * Math.PI * 4 * c.dir, alpha: tail(p) };
+      return { ...P0, dy: air(c) * out(Math.min(1, p * 1.6)), dx: Math.sin(p * 12) * 4, alpha: tail(p) };
     case 'plummet':
-      return { ...P0, dy: air(c) * Math.min(1, p * p * 4), sx: 0.7, rot: c.dir * 0.4, alpha: tail(p) };
+      return { ...P0, dy: air(c) * Math.min(1, p * p * 4), alpha: tail(p) };
     case 'rise':
-      return { ...P0, dy: -out(p) * 18, sx: 1 - p * 0.4, sy: 1 + p * 0.3, alpha: 1 - out(p) };
+      return { ...P0, dy: fall(p * 2), alpha: 1 - out(p) };
     case 'crumble':
-      // the body shows only for a blink: it breaks into its chunks (see drawCorpse)
-      return { ...P0, alpha: p < 0.08 ? 1 : 0 };
-    case 'retract':
-      return { ...P0, sx: Math.max(0.1, 1 - out(Math.min(1, p * 1.6)) * 0.85), sy: Math.max(0.3, 1 - out(p) * 0.5), dy: fall(p * 2), alpha: tail(p, 0.55) };
-    case 'wilt':
-      return { ...P0, rot: c.dir * 0.5 * out(Math.min(1, p * 2)), sy: Math.max(0.05, 1 - Math.max(0, p - 0.3) * 1.4), dy: fall(p * 2), alpha: tail(p, 0.7) };
+      // the body shows only for a blink: it breaks into its chunks (see deathsheet.ts)
+      return { ...P0, dy: fall(p * 2), alpha: p < 0.08 ? 1 : 0 };
     case 'winddown': {
-      const wob = p < 0.45 ? Math.sin(p * 40) * 0.12 * (1 - p / 0.45) : 0;
-      const tip = p < 0.45 ? 0 : -c.dir * (Math.PI / 2) * out(Math.min(1, (p - 0.45) * 3));
-      return { ...P0, rot: wob + tip, dy: fall(p * 2), alpha: tail(p, 0.7) };
+      // a juddering wind-down: whole-pixel shakes, then it falls apart
+      const wob = p < 0.45 ? Math.round(Math.sin(p * 40) * 1.5 * (1 - p / 0.45)) : 0;
+      return { ...P0, dx: wob, dy: fall(p * 2), alpha: tail(p, 0.7) };
     }
+    case 'melt': return { ...P0, dy: fall(p * 2), alpha: tail(p, 0.5) };
+    case 'retract': return { ...P0, dy: fall(p * 2), alpha: tail(p, 0.55) };
+    case 'wilt': return { ...P0, dy: fall(p * 2), alpha: tail(p, 0.7) };
+    case 'pop': return { ...P0, dy: fall(p * 2), alpha: p < 0.3 ? 1 : tail(p, 0.3) };
+    default: return { ...P0, dy: fall(p * 2), alpha: tail(p) }; // topple
+  }
+}
+
+/** Where one pixel of the body is at progress p, drawn by hand for each way
+ *  of dying (no rotation or scaling of the sprite): (u, v) is the pixel's
+ *  place from the body's bottom middle (v <= 0 up the body), h the body's
+ *  height, dir which way it faces, r1/r2 its own fixed randoms. Returns its
+ *  new place, or null once it's gone. */
+export function deathPixel(move: DeathMove, u: number, v: number, h: number, p: number, r1: number, r2: number): { x: number; y: number } | null {
+  const up = -v / Math.max(1, h); // 0 at the feet, 1 at the top
+  switch (move) {
+    case 'topple': {
+      // slumps over backwards into a heap: the higher a pixel, the later it
+      // goes and the further back it slides
+      const e = out(clamp01((p - up * 0.15 - r1 * 0.08) / 0.45));
+      return { x: u - e * (-v * 0.9 + r2 * 2), y: v * (1 - e) };
+    }
+    case 'flip': {
+      // hops (see deathPose), then splats flat on landing
+      const e = out(clamp01((p - 0.45) / 0.25));
+      return { x: u * (1 + e * 0.8) + (r1 - 0.5) * 3 * e, y: v * (1 - e * 0.85) };
+    }
+    case 'melt': {
+      // each column drips down in its own time and pools out sideways
+      const e = out(clamp01((p - r1 * 0.25) / 0.55));
+      return { x: u + Math.sign(u || r2 - 0.5) * e * (Math.abs(u) * 0.7 + r2 * 4), y: v * (1 - e) };
+    }
+    case 'pop': {
+      // trembles, then bursts out from the middle
+      if (p < 0.3) return { x: u + (r1 < 0.3 ? Math.round((r2 - 0.5) * 2 * p / 0.3) : 0), y: v };
+      const t = (p - 0.3) * 1.2, mx = u, my = v + h / 2, d = Math.hypot(mx, my) || 1, sp = 40 + r1 * 50;
+      if (r2 < (p - 0.3) * 1.4) return null;
+      return { x: u + (mx / d) * sp * t, y: v + (my / d) * sp * t + 120 * t * t };
+    }
+    case 'spiral': {
+      // pixels peel off one by one and swirl away as it spins down
+      const peel = r1 * 0.7;
+      if (p < peel) return { x: u, y: v };
+      const t = p - peel, a = r2 * Math.PI * 2 + t * 14, rad = t * 30;
+      if (t > 0.35) return null;
+      return { x: u + Math.cos(a) * rad, y: v + Math.sin(a) * rad * 0.6 - t * 10 };
+    }
+    case 'plummet': {
+      // drops like a stone (see deathPose), then splashes apart on impact
+      const t = (p - 0.5) * 1.4;
+      if (t <= 0) return { x: u, y: v };
+      const vx = (u / 4 + (r1 - 0.5) * 3) * 18, vy = -(20 + r2 * 40);
+      return { x: u + vx * t, y: Math.min(0, v * 0.3 + vy * t + 220 * t * t) };
+    }
+    case 'rise': {
+      // drifts up and away a pixel at a time, swaying as it goes
+      const e = clamp01((p - r1 * 0.35) / 0.6);
+      return { x: u + Math.sin(p * 9 + r2 * 6) * 2.5 * e, y: v - e * (16 + r2 * 16) };
+    }
+    case 'retract': {
+      // the outside pulls in to the middle, the edges first, until nothing is left
+      const edge = Math.min(1, Math.hypot(u / Math.max(1, h / 2), up - 0.4));
+      const e = out(clamp01((p - (1 - edge) * 0.3 - r1 * 0.1) / 0.45));
+      if (e >= 1) return null;
+      return { x: u * (1 - e), y: v + (-h * 0.35 - v) * e };
+    }
+    case 'wilt': {
+      // droops forward, then each column sinks into the ground at its own pace
+      const droop = out(clamp01(p * 2)) * up * up * 4;
+      const sink = clamp01((p - 0.3 - r1 * 0.2) / 0.5) * (h + 2);
+      return { x: u + droop, y: v + droop * 0.5 + sink };
+    }
+    case 'winddown': {
+      // runs down: shakes (see deathPose), then rattles apart row by row from the top
+      const e = clamp01((p - 0.45 - (1 - up) * 0.2) / 0.3);
+      const t = e * 0.35;
+      return { x: u + (r1 - 0.5) * 30 * t, y: Math.min(0, v - 30 * t + 300 * t * t) };
+    }
+    case 'crumble':
+      return { x: u, y: v };
   }
 }
 
