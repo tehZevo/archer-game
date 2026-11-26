@@ -6,7 +6,7 @@ import { clearPressed } from './input';
 import { P } from './config';
 import { update } from './update';
 import { render, resize } from './render';
-import { bindMenuClicks, buildPanel, syncPanel } from './hud';
+import { bindMenuClicks } from './hud';
 import { cv } from './canvas';
 import { buildTouch } from './touch';
 import * as net from './net';
@@ -42,12 +42,12 @@ function frame(now: number): void {
   // only consume the input latch once a physics step has acted on it, otherwise
   // key taps arriving between two 30Hz steps vanish
   if (steps) clearPressed();
-  render();
-  syncPanel();
+  // in play the picture only changes on a game step, so a frame without one
+  // would redraw the same picture (the title menu, frozen, still draws every frame)
+  if (steps || menu.open) render();
   requestAnimationFrame(frame);
 }
 
-buildPanel();
 buildTouch();
 bindMenuClicks(cv);
 resize();
@@ -72,7 +72,7 @@ initMenu(() => {
 }, resumePlace);
 bindMenu(cv);
 bindChat(cv);
-void loadLayout().then(buildPanel); // relabel the panel with this layout's letters
+void loadLayout(); // key labels follow the keyboard layout
 // the lobby only shares channel head-counts, so the menu can show them
 net.joinLobby();
 // a background tab has no frames: keep publishing our (still) position anyway
