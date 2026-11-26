@@ -10,7 +10,7 @@ A vanilla-TypeScript, canvas-based vertical platformer (classic MMO-flavoured ar
 - `npm run watch` — esbuild watch mode
 - `npm start` — static server on :8000
 - `npm run worktree -- <branch> [base]` — make a branch worktree in `../archer-game-wt/<branch>` with `node_modules` linked correctly
-- `npm run bake` — write the PNG sheets for skill effects (`assets/fx`) and enemies (`assets/mobs`), plus `src/fxbaked.ts` / `src/mobbaked.ts`, from their generators
+- `npm run bake` — write the PNG sheets for skill effects (`assets/fx`) and enemies (`assets/mobs`) and tilesets (`assets/tiles`), plus their generated `src/*baked.ts` modules, from their generators
 - `npm run fxpreview -- [name...]` — render effects' frames, scaled up, to `.tmp/fxpreview.png` for reviewing the art
 
 ## Worktrees and node_modules
@@ -19,7 +19,7 @@ Do branch work in a worktree made by `npm run worktree`, not by hand. It links t
 
 ## Baked sheets
 
-Enemies ship as PNG sheets in `assets/mobs` the same way (walk/flap frames then the hurt pose, baked from `src/sprites.ts` / `src/mobart.ts`; recoloured variants are derived from their base's sheet at runtime). Skill effects ship as PNG sprite sheets in `assets/fx` (one strip per effect, facing right, drawn additively). They are baked from the procedural generators in `src/fxsprites.ts`, which stay in the tree as the authoring source. To add or change an effect, edit its generator, run `npm run bake`, and commit the PNG along with the generated `src/fxbaked.ts`. The smoke test fails if a sheet no longer matches its generator. An effect that isn't baked still runs its generator at runtime (see `src/fxsheets.ts`).
+Tilesets ship as PNG atlases in `assets/tiles` (each distinct piece once per piece size, with `src/tilebaked.ts` indexing every autotile/slope/decoration piece to its cell; baked from `src/tilebake.ts`). Enemies ship as PNG sheets in `assets/mobs` the same way (walk/flap frames then the hurt pose, baked from `src/sprites.ts` / `src/mobart.ts`; recoloured variants are derived from their base's sheet at runtime). Skill effects ship as PNG sprite sheets in `assets/fx` (one strip per effect, facing right, drawn additively). They are baked from the procedural generators in `src/fxsprites.ts`, which stay in the tree as the authoring source. To add or change an effect, edit its generator, run `npm run bake`, and commit the PNG along with the generated `src/fxbaked.ts`. The smoke test fails if a sheet no longer matches its generator. An effect that isn't baked still runs its generator at runtime (see `src/fxsheets.ts`).
 
 ## Conventions
 

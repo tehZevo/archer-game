@@ -1,7 +1,10 @@
 // Headless smoke test. Bundled with esbuild for node and run with `npm test`.
 // No DOM required: runtime.ts falls back to stubs.
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { BAKED_TILES } from '../src/tilebaked';
+import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
+import { TILESETS } from '../src/tileset';
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
 import { BAKED } from '../src/fxbaked';
 import { FX_GEN } from '../src/fxsprites';
@@ -199,6 +202,28 @@ setKey('up', false);
     return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip([...a.frames, a.hurt].map((f) => f.g)).px)) !== 0;
   }).map(([n]) => n);
   check(`every baked enemy sheet matches its painter${staleMobs.length ? ' (stale: ' + staleMobs.join(', ') + ')' : ''}`, staleMobs.length === 0);
+  // tilesets: every piece's atlas cell matches what its painter draws now
+  const staleTiles = Object.entries(TILESETS).filter(([name, ts]) => {
+    const b = BAKED_TILES[name];
+    if (!b) return true;
+    const files = readdirSync('assets/tiles').filter((f) => f.startsWith(slug(name) + '-'));
+    const png = new Map(files.map((f) => [f.replace(/\.png$/, '').split('-').pop()!, decodePng(readFileSync(`assets/tiles/${f}`))]));
+    const ps = pieces(ts);
+    if (ps.length !== b.at.length) return true;
+    return ps.some(([, paint], j) => {
+      const s = paint(), at = b.at[j];
+      if (!s || at < 0) return !!s !== at >= 0;
+      const sh = b.sheets[Math.floor(at / CELLS)], g = png.get(`${sh.w}x${sh.h}`), i = at % CELLS;
+      if (!g || s.w !== sh.w || s.h !== sh.h) return true;
+      const x0 = (i % ATLAS_COLS) * sh.w, y0 = Math.floor(i / ATLAS_COLS) * sh.h;
+      for (let y = 0; y < sh.h; y++) {
+        const row = g.px.subarray(((y0 + y) * g.w + x0) * 4, ((y0 + y) * g.w + x0 + sh.w) * 4);
+        if (Buffer.compare(Buffer.from(row), Buffer.from(s.g.px.subarray(y * sh.w * 4, (y + 1) * sh.w * 4))) !== 0) return true;
+      }
+      return false;
+    });
+  }).map(([n]) => n);
+  check(`every tileset atlas matches its painters${staleTiles.length ? ' (stale: ' + staleTiles.join(', ') + ')' : ''}`, staleTiles.length === 0);
   check('every base enemy is baked', Object.keys(MOB_GEN).every((n) => BAKED_MOBS[n]));
   check('every enemy type has art (baked, or recoloured from a baked base)', MOB_TYPES.every((m) => mobAnim(m.n)));
 }

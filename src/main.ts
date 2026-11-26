@@ -14,6 +14,8 @@ import { bindMenu } from './menudom';
 import { bindChat } from './chatdom';
 import { loadFxSheets } from './fxsheets';
 import { loadMobSheets } from './sprites';
+import { loadTileSheets } from './tilebake';
+import { TILESETS } from './tileset';
 import { loadLayout } from './input';
 import { hasSave, load, save, startRun, tickSave } from './save';
 const { sync } = net;
@@ -72,6 +74,7 @@ void loadLayout(); // key labels follow the keyboard layout
 net.joinLobby();
 loadFxSheets(); // skill effects, baked to PNG (see fxsheets.ts)
 loadMobSheets(); // enemies, likewise (see sprites.ts)
+loadTileSheets(Object.values(TILESETS)); // and tilesets (see tilebake.ts)
 // a background tab has no frames: keep publishing our (still) position anyway
 keepAliveWhileHidden(sync);
 requestAnimationFrame(frame);

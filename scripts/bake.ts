@@ -1,7 +1,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { FX_GEN } from '../src/fxsprites';
 import { MOB_GEN } from '../src/sprites';
-import { packStrip } from '../src/grid';
+import { newGrid, packStrip, type Grid } from '../src/grid';
+import { TILESETS } from '../src/tileset';
+import { ATLAS_COLS, CELLS, pieces } from '../src/tilebake';
 import { encodePng } from './png';
 import { slug } from './slug';
 
@@ -54,4 +56,48 @@ ${lines.join('\n')}
 `);
 }
 
-console.log(`baked ${Object.keys(FX_GEN).length} effect and ${Object.keys(MOB_GEN).length} enemy sheet(s)`);
+/* ---- tilesets: every piece, deduped into one atlas per piece size ---- */
+{
+  mkdirSync('assets/tiles', { recursive: true });
+  const imports: string[] = [], lines: string[] = [];
+  let n = 0;
+  for (const [name, ts] of Object.entries(TILESETS)) {
+    const sizes: { w: number; h: number; cells: Grid[]; seen: Map<string, number> }[] = [];
+    const at = pieces(ts).map(([, paint]) => {
+      const s = paint();
+      if (!s) return -1;
+      let k = sizes.findIndex((z) => z.w === s.w && z.h === s.h);
+      if (k < 0) k = sizes.push({ w: s.w, h: s.h, cells: [], seen: new Map() }) - 1;
+      const z = sizes[k], sig = Buffer.from(s.g.px).toString('base64');
+      let i = z.seen.get(sig);
+      if (i === undefined) { i = z.cells.push(s.g) - 1; z.seen.set(sig, i); }
+      return k * CELLS + i;
+    });
+    const sheets = sizes.map((z, k) => {
+      const file = `${slug(name)}-${z.w}x${z.h}`;
+      writeFileSync(`assets/tiles/${file}.png`, encodePng(packAtlas(z.cells, z.w, z.h)));
+      imports.push(`import t${n} from '../assets/tiles/${file}.png';`);
+      return `{ src: t${n++}, w: ${z.w}, h: ${z.h} }`;
+    });
+    lines.push(`  ${JSON.stringify(name)}: { sheets: [${sheets.join(', ')}], at: [${at.join(',')}] },`);
+  }
+  writeFileSync('src/tilebaked.ts', `${header}${imports.join('\n')}
+import type { BakedTiles } from './tilebake';
+
+export const BAKED_TILES: Record<string, BakedTiles> = {
+${lines.join('\n')}
+};
+`);
+}
+
+/** Cells laid out ATLAS_COLS to a row. */
+function packAtlas(cells: Grid[], w: number, h: number): Grid {
+  const cols = Math.min(ATLAS_COLS, cells.length), o = newGrid(cols * w, Math.ceil(cells.length / ATLAS_COLS) * h);
+  cells.forEach((g, i) => {
+    const x0 = (i % ATLAS_COLS) * w, y0 = Math.floor(i / ATLAS_COLS) * h;
+    for (let y = 0; y < h; y++) o.px.set(g.px.subarray(y * w * 4, (y + 1) * w * 4), ((y0 + y) * o.w + x0) * 4);
+  });
+  return o;
+}
+
+console.log(`baked ${Object.keys(FX_GEN).length} effect, ${Object.keys(MOB_GEN).length} enemy and ${Object.keys(TILESETS).length} tileset sheet(s)`);
