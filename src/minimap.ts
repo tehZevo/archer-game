@@ -15,7 +15,7 @@ export const MINI_W = Math.ceil(WORLD.w * MINI_SCALE);
 /** Minimap position and size for the current world and view (top-right, under the skill bar). */
 export function miniRect(): { x: number; y: number; w: number; h: number } {
   const w = MINI_W, h = Math.ceil(WORLD.h * MINI_SCALE);
-  return { x: game.view.w - w - 7, y: 28, w, h };
+  return { x: game.view.w - w - 7, y: 34, w, h }; // under the two-row skill bar
 }
 
 /** A world point on the minimap (whole pixels). */
