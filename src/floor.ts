@@ -1,135 +1,17 @@
 import { MOB_TYPES, VARIANT_CHANCE, WORLD, TILE } from './config';
 import { net, roomId } from './net';
-import { areaOf, isPathEnd, isTown, lastTown, nextPlace, pathById, pathsFrom, pathsInto, placeKey, placeName, townDepth, townIndex, type LayoutMix, type Place } from './world';
-import { chance, hashStr, intIn, pick, range, seeded, type Rng } from './rng';
+import { areaOf, isPathEnd, isTown, lastTown, nextPlace, pathById, placeKey, placeName, type LayoutMix, type Place } from './world';
+import { chance, hashStr, intIn, pick, range, seeded } from './rng';
 import { surfaceYAt } from './surface';
-import { NB } from './nb';
 import { rollMods } from './floormods';
-import type { Climbable, Decor, DecorKind, Floor, MobType, Npc, Platform, Portal, Spawn } from './types';
+import { makeShape, SHAPES, type Shape } from './floorshape';
+import { GEN_H, groundSlab, trim } from './floorframe';
+import { townFloor } from './townfloor';
+import type { Climbable, Floor, MobType, Platform, Portal, Spawn } from './types';
 
-/** Snap a coordinate to the tile grid. */
-const snap = (v: number): number => Math.round(v / TILE) * TILE;
-
-// Tile builders: a flat tile, and the two halves of a 2:1 slope.
-type Top = 'flat' | 'u2lo' | 'u2hi' | 'd2hi' | 'd2lo';
-function tileFor(top: Top, x: number, y: number): Platform {
-  const t: Platform = { x, y, w: TILE, h: TILE };
-  switch (top) {
-    case 'u2lo': return { ...t, slope: true, dir: 1, part: 0 };
-    case 'u2hi': return { ...t, slope: true, dir: 1, part: 1 };
-    case 'd2hi': return { ...t, slope: true, dir: -1, part: 1 };
-    case 'd2lo': return { ...t, slope: true, dir: -1, part: 0 };
-    default: return t;
-  }
-}
-
-/** A platform shape: a solid, contiguous block of tiles described by a
- *  per-column profile. Each column is `level` solid tiles tall, plus one slope
- *  tile on top when the column is part of a slope. */
-export interface Shape { tiles: Platform[]; w: number; baseY: number; baseX: number; }
-/** One column of a shape: `level` solid tiles, topped by `top`. */
-interface Col { level: number; top: Top; }
-
-/**
- * A shape's profile, read left to right, one character per step:
- *   '2'-'4'  a flat column that many tiles tall
- *   'U'      a 2:1 slope up: two columns (lower + upper half), rising one tile
- *   'D'      a 2:1 slope down: two columns, falling one tile
- * Every slope rises from and falls into a flat column, never at an edge
- * (spec: specs/platforms). '2U3U4D3' is: 2 tall, up, 3, up, 4, down, 3.
- */
-type Profile = string;
-
-const PROFILES: Record<string, Profile> = {
-  flat:   '333333',
-  low:    '222222',
-  tall:   '444444',
-  stair:  '2U3U4',     // two rises
-  ledge:  '22U333',    // one rise
-  hill:   '2U33D2',    // up, flat top, down
-  mesa:   '3U444D3',   // taller hill
-  bump:   '33U4D33',   // small hill on a thick slab
-  valley: '4D33U4',    // down, flat dip, up
-  dip:    '33D2U33',   // small dip in a slab
-  waves:  '2U3D2U3',   // rolling: up, down, up
-  tiers:  '2U3U4D3',   // climb two, step back down
-  shelf:  '2222U3',    // long low run, then a step
-};
-export const SHAPES = Object.keys(PROFILES);
-
-/** Expand a profile into its columns. */
-function parseProfile(p: Profile): Col[] {
-  const cols: Col[] = [];
-  let level = Number(p[0]);
-  for (const ch of p) {
-    if (ch >= '0' && ch <= '9') { level = Number(ch); cols.push({ level, top: 'flat' }); }
-    else if (ch === 'U') { cols.push({ level, top: 'u2lo' }, { level, top: 'u2hi' }); level++; }
-    else if (ch === 'D') { level--; cols.push({ level, top: 'd2hi' }, { level, top: 'd2lo' }); }
-  }
-  return cols;
-}
-
-/** The same profile read right to left: rises become falls and vice versa. */
-const mirrorProfile = (p: Profile): Profile =>
-  [...p].reverse().map((c) => (c === 'U' ? 'D' : c === 'D' ? 'U' : c)).join('');
-
-/** Duplicate random flat columns until there are `width`, so slopes keep their flat landings. */
-function widen(cols: Col[], width: number, rng: Rng): void {
-  while (cols.length < width) {
-    const flats = cols.map((c, i) => (c.top === 'flat' ? i : -1)).filter((i) => i >= 0);
-    const i = pick(rng, flats);
-    cols.splice(i, 0, { ...cols[i] });
-  }
-}
-
-/** Lay the columns out as tiles from (x, baseY), the top of the bottom row. */
-function columnTiles(cols: Col[], x: number, baseY: number): Platform[] {
-  const T = TILE, tiles: Platform[] = [];
-  cols.forEach((c, i) => {
-    const cx = x + i * T;
-    // Only the column's top tile gets a grass cap; the tiles under it are dirt.
-    const cells = c.level + (c.top === 'flat' ? 0 : 1);
-    for (let t = 0; t < c.level; t++) {
-      const tile = tileFor('flat', cx, baseY - t * T);
-      if (t < cells - 1) tile.inner = true;
-      tiles.push(tile);
-    }
-    if (c.top !== 'flat') {
-      tiles.push(tileFor(c.top, cx, baseY - c.level * T));
-      if (c.top === 'u2lo' || c.top === 'd2lo') tiles[tiles.length - 2].foot = c.top === 'u2lo' ? 1 : -1;
-    }
-  });
-  return tiles;
-}
-
-/** Each NB bit and the neighbour (in tiles) it stands for. */
-const NEIGHBOURS: [bit: number, dx: number, dy: number][] = [
-  [NB.N, 0, -1], [NB.E, 1, 0], [NB.S, 0, 1], [NB.W, -1, 0],
-  [NB.NE, 1, -1], [NB.SE, 1, 1], [NB.SW, -1, 1], [NB.NW, -1, -1],
-];
-
-/** Autotile: set each flat tile's `nb` to the NB bits of its solid neighbours
- *  (slope tiles count), so tileset.ts draws borders only on exposed sides,
- *  with rounded corners. */
-function autotile(tiles: Platform[]): void {
-  const at = new Set(tiles.map((t) => `${t.x},${t.y}`));
-  for (const t of tiles) {
-    if (t.slope) continue;
-    t.nb = NEIGHBOURS.reduce((nb, [bit, dx, dy]) => (at.has(`${t.x + dx * TILE},${t.y + dy * TILE}`) ? nb | bit : nb), 0);
-  }
-}
-
-/** Build a solid block from a named profile, anchored at (x, baseY) = the top
- *  of its bottom row, `width` tiles wide (6-10; see widen), optionally
- *  mirrored. `rng` picks which flat columns widen it. */
-export function makeShape(kind: string, x: number, baseY: number, width: number, mirror: boolean, rng: Rng): Shape {
-  const prof = PROFILES[kind] ?? PROFILES.flat;
-  const cols = parseProfile(mirror ? mirrorProfile(prof) : prof);
-  widen(cols, width, rng);
-  const tiles = columnTiles(cols, x, baseY);
-  autotile(tiles);
-  return { tiles, w: cols.length * TILE, baseY, baseX: x };
-}
+/* Floor generation: the enemies a floor fields, its layout, and the seeded
+   climb of blocks, ropes and ladders (towns: townfloor.ts; block shapes:
+   floorshape.ts; the shared frame and trim: floorframe.ts). */
 
 /** The enemies an area can field: its own set, or the general pool for areas without one yet. */
 export function areaMobs(area: string): MobType[] {
@@ -170,15 +52,6 @@ export function floorMobs(place: Place, seed: () => number): [string, string] {
 /** Enemies in a platform's group, by its walkable tiles: 4 on the
  *  shortest tops (6 tiles or fewer), one more per 2 tiles, up to 8. */
 export const groupSize = (tiles: number): number => Math.max(4, Math.min(8, 4 + Math.floor((tiles - 6) / 2)));
-
-/** Floors are laid out in a world this tall, then trimmed to fit (see Floor.h). */
-export const GEN_H = 640;
-const SKY_MARGIN = 2 * TILE; // clear sky kept above the portal
-const MIN_H = 180;           // never shorter than the view
-/** Towns are a few tiles taller than the view, so the camera follows you up
- *  to the deck and loft instead of sitting still (a one-screen town left it
- *  no room to move). */
-export const TOWN_MIN_H = MIN_H + 4 * TILE;
 
 /** Floor layouts (each floor rolls one from its own seeded stream, so the
  *  classic layout of a floor doesn't shift):
@@ -333,136 +206,4 @@ export function generateFloor(place: Place): Floor {
   // its own stream, so rolling a modifier never changes the layout
   const mods = rollMods(areaOf(place), seeded(hashStr(seedId + '-mods')));
   return trim({ place, platforms, ropes, ladders, spawns, portal, portals: [portal, back], town: false, h: GEN_H, layout, ...(mods.length ? { mods } : {}) });
-}
-
-/** The full-width ground slab every floor stands on: 4 tiles, not a wall
- *  (it was 8, mostly unseen). */
-function groundSlab(): Platform {
-  const h = 4 * TILE;
-  return { x: 0, y: snap(GEN_H - h), w: WORLD.w, h, ground: true };
-}
-
-/** Town layouts, picked by the town's index in TOWNS (so each town is always the same): see townFloor. */
-export const TOWN_PLANS = ['plaza', 'loft', 'market', 'terrace'] as const;
-export type TownPlan = typeof TOWN_PLANS[number];
-export const townPlanFor = (index: number): TownPlan => TOWN_PLANS[index % TOWN_PLANS.length];
-
-/**
- * A town (the stop after each area's floors, see world.ts): a designed
- * layout, not random, and no enemies. Ways up stand at the ends of the
- * ground (left and right where the path forks, the left end alone where it
- * doesn't, none at the top of a branch); the way back down to the town below
- * stands up on the highest level (the first town has none). Players arrive on
- * the ground in the middle. The layout is one of TOWN_PLANS, by area id:
- *  - plaza: a floating deck in the middle, ladder on its left, rope on its right;
- *  - loft: the plaza, plus a loft over the deck's right side holding the way down;
- *  - market: two stall decks either side, a bridge between them up top;
- *  - terrace: two terraces stepping up to the right.
- * Every level has two tiles (32px) of headroom under the next one up. Houses,
- * lamps, benches and the like (decor) are drawn behind; they never collide.
- */
-export function townFloor(town: string, rng: Rng): Floor {
-  const ground = groundSlab(), G = ground.y, T = TILE;
-  const plan = townPlanFor(townIndex(town));
-  const P = (x: number, y: number, to: Place, label: string): Portal => ({ x, y, w: 40, h: 56, to, label });
-  // ways up at the ends of the ground (more than two paths up would share the right end)
-  const upX = [2 * T, WORLD.w - 2 * T];
-  // ...labelled with where they lead, and the level of the enemies on the first floor up there
-  const ups = pathsFrom(town).map((p, i) => {
-    const to: Place = { path: p.id, floor: 1 };
-    return { ...P(upX[Math.min(i, upX.length - 1)] - Math.max(0, i - 1) * 44, G, to, placeName(to)), lvl: p.lvl[0] };
-  });
-  const platforms: Platform[] = [ground], ladders: Climbable[] = [], ropes: Climbable[] = [];
-  const npcs: Npc[] = [], decor: Decor[] = [];
-  let blockId = 0;
-  /** A level: a 3-tile block `w` tiles wide from column `col`, on storey 1 (over the
-   *  ground) or 2 (over storey 1), each with two tiles of headroom under it. */
-  const level = (col: number, w: number, storey: 1 | 2): { x: number; top: number; w: number } => {
-    const sh = makeShape('flat', col * T, G - (3 + (storey - 1) * 5) * T, w, false, rng), id = ++blockId;
-    sh.tiles.forEach((t) => { t.block = id; });
-    platforms.push(...sh.tiles);
-    return { x: col * T, top: Math.min(...sh.tiles.map((t) => t.y)), w: w * T };
-  };
-  const at = (col: number): number => col * T + T / 2; // the middle of a column
-  const ladder = (col: number, top: number, bottom: number): void => { ladders.push({ x: at(col), y1: top, y2: bottom }); };
-  const rope = (col: number, top: number, bottom: number): void => { ropes.push({ x: at(col), y1: top, y2: bottom }); };
-  const npc = (kind: Npc['kind'], x: number, y: number): void => {
-    const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS' }[kind];
-    if (kind !== 'trainer' || townDepth(town) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
-  };
-  const deco = (kind: DecorKind, x: number, y: number, flip = false): void => { decor.push({ x, y, kind, ...(flip ? { flip } : {}) }); };
-  let downAt: { x: number; y: number };
-
-  if (plan === 'plaza' || plan === 'loft') {
-    // a deck over columns 6-13 (ladder on its left, rope on its right)...
-    const deck = level(6, 8, 1);
-    ladder(6, deck.top, G); rope(13, deck.top, G);
-    npc('shop', at(7), deck.top); npc('trainer', at(12) - T / 2, deck.top);
-    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G);
-    deco('awning', at(7), deck.top); deco('flowers', at(10) - T / 2, deck.top);
-    deco('house', at(9) + T / 2, G); deco('lamp', at(4) - T / 2, G); deco('lamp', at(15) + T / 2, G);
-    deco('bench', at(11), G); deco('crate', at(8), G);
-    if (plan === 'loft') {
-      // ...and a loft over the deck's columns 9-13, up a ladder at its left end
-      const loft = level(9, 5, 2);
-      ladder(9, loft.top, deck.top);
-      downAt = { x: 12 * T, y: loft.top };
-      deco('lamp', at(13) + 4, loft.top); deco('barrel', at(10) + 4, loft.top);
-    } else {
-      downAt = { x: WORLD.w / 2, y: deck.top };
-    }
-  } else if (plan === 'market') {
-    // two stall decks (shop left, trainer right), a bridge between them holding the way down
-    const left = level(4, 5, 1), right = level(11, 5, 1), bridge = level(7, 6, 2);
-    ladder(4, left.top, G); rope(15, right.top, G);
-    ladder(7, bridge.top, left.top); rope(12, bridge.top, right.top);
-    npc('shop', at(5) + 4, left.top); npc('trainer', at(14) - 4, right.top);
-    npc('board', at(5) + T / 2, G); npc('stylist', at(13) + T / 2, G);
-    deco('awning', at(5) + 4, left.top); deco('awning', at(14) - 4, right.top, true);
-    deco('crate', at(8) - 4, left.top); deco('barrel', at(11) + 4, right.top);
-    deco('lamp', at(8) + 4, bridge.top); deco('lamp', at(11) - 4, bridge.top);
-    deco('well', at(9) + T / 2, G); deco('house', at(5) + 4, left.top); deco('house', at(14) - 4, right.top, true);
-    deco('flowers', at(8) - 2, G); deco('flowers', at(11) + 2, G);
-    downAt = { x: at(9) + T / 2, y: bridge.top };
-  } else {
-    // terraces stepping up to the right: a low one on the left, a high one on the right
-    const low = level(4, 7, 1), high = level(9, 7, 2);
-    ladder(4, low.top, G); rope(9, high.top, low.top); rope(15, high.top, G);
-    npc('shop', at(5) + 4, low.top); npc('trainer', at(8), low.top);
-    npc('board', at(5) + 4, G); npc('stylist', at(8), G);
-    deco('awning', at(5) + 4, low.top); deco('flowers', at(14) - 2, high.top);
-    deco('tower', at(12) + T / 2, high.top); deco('house', at(7), low.top);
-    deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
-    downAt = { x: at(12) + T / 2, y: high.top };
-  }
-  // a way down to the start of every path that ends here, side by side (the
-  // start town is the bottom of the world: none)
-  const down = pathsInto(town).map((p, i) => {
-    const to: Place = { town: p.from };
-    return { ...P(downAt.x + i * 44, downAt.y, to, placeName(to)), down: true };
-  });
-  if (down.length) deco('sign', downAt.x - 30, downAt.y);
-  return {
-    place: { town }, town: true, h: GEN_H, layout: plan,
-    platforms, ladders, ropes, spawns: [],
-    portal: ups[0] ?? down[0], portals: [...ups, ...down],
-    npcs, decor,
-  };
-}
-
-/** Trim the sky: shift everything up so the highest portal sits a couple of
- *  tiles under the top of the world, and size the floor to fit (never
- *  shorter than the view). Whole tiles, so the 16px grid stays put. */
-function trim(f: Floor): Floor {
-  const { platforms, ropes, ladders, spawns, portals } = f;
-  const top = Math.min(...portals.map((p) => p.y - p.h), ...platforms.map((p) => p.y)) - SKY_MARGIN;
-  const shift = Math.max(0, Math.min(Math.floor(top / TILE) * TILE, GEN_H - (f.town ? TOWN_MIN_H : MIN_H)));
-  for (const p of platforms) p.y -= shift;
-  for (const c of [...ropes, ...ladders]) { c.y1 -= shift; c.y2 -= shift; }
-  for (const s of spawns) { s.y -= shift; s.spots?.forEach((q) => { q.y -= shift; }); }
-  for (const p of portals) p.y -= shift;
-  for (const n of f.npcs ?? []) n.y -= shift;
-  for (const d of f.decor ?? []) d.y -= shift;
-  f.h = GEN_H - shift;
-  return f;
 }
