@@ -98,9 +98,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const stops = devStops();
   check('the dev menu is a flat list of each area (1st floor) and every town',
     placeKey(stops[0].place) === 'shore-1' && stops.length === PATHS.length + TOWNS.length
-    && stops.slice(PATHS.length).every((s, i) => placeKey(s.place) === TOWNS[i].id && s.name === `${TOWNS[i].name} (town)`));
-  check('non-town areas show their level and towns are marked (town)',
-    stops[0].name === 'Sunlit Shore Lv.1' && stops[PATHS.length].name === 'Saltwick Port (town)');
+    && stops.slice(PATHS.length).every((s, i) => placeKey(s.place) === TOWNS[i].id && s.name === `T${townDepth(TOWNS[i].id) + 1} ${TOWNS[i].name} (town)`));
+  check('non-town areas show their tier and level and towns are marked (town)',
+    stops[0].name === 'T1 Sunlit Shore Lv.1' && stops[PATHS.length].name === 'T1 Saltwick Port (town)');
   dev.sel = PATHS.length; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
   check('picking a town warps there and closes the menu', samePlace(game.floor.place, stops[PATHS.length].place) && game.floor.town && !dev.open);
   dev.on = false;
