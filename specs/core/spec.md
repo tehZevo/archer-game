@@ -48,3 +48,7 @@ A typical floor is **quick** — about a minute, a few monsters to fight, then y
 ## Surviving
 
 Combat is **moderately forgiving**: you have a health bar and can take a middling number of hits before you go down — not tanky, not glass-cannon.
+
+## Moving around
+
+Your archer **runs, jumps, and climbs** ropes and ladders. The move called "Glide" is a bit of a misnomer — it's really a **double jump** (an extra mid-air jump), not a float.
