@@ -121,6 +121,8 @@ export function spawnMob(s: Spawn, type: MobType, elite = false): void {
   const t = (level - 1) / LEVEL_SPAN; // 0 at Lv.1, 1 at Lv.100
   const e = elite ? ELITE : { SCALE: 1, HP: 1, DMG: 1, EXP: 1 };
   const hp = Math.round(LV_1_HP * (LV_100_HP / LV_1_HP) ** t * (type.hp / 100) * e.HP);
+  // its damage is a random 50%-100% of this max, so two mobs of a kind don't hit alike
+  const dmgMax = Math.round(LV_1_DMG * (LV_100_DMG / LV_1_DMG) ** t * (type.dmg / 3) * e.DMG);
   const w = Math.round(type.w * e.SCALE), h = Math.round(type.h * e.SCALE);
   // appear on a random free spot of the zone; patrol within its platform
   const spot = s.spots?.length ? s.spots[Math.floor(Math.random() * s.spots.length)] : s;
@@ -129,7 +131,7 @@ export function spawnMob(s: Spawn, type: MobType, elite = false): void {
     x: spot.x, y: spot.y - h, w, h,
     vx: 0, vy: 0, home: (lo + hi) / 2, range: Math.max(4, (hi - lo) / 2), dir: Math.random() < 0.5 ? -1 : 1,
     type, name: type.n, hp, hpMax: hp, spd: Math.round(type.spd * P.MOB_SPEED),
-    dmg: Math.round(LV_1_DMG * (LV_100_DMG / LV_1_DMG) ** t * (type.dmg / 3) * e.DMG), // ...and hits you far harder per level
+    dmg: Math.round(dmgMax * (0.5 + Math.random() * 0.5)), // ...and hits you far harder per level
     fly: !!type.fly, col: type.col,
     level, exp: mobExp(level) * e.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: Math.random() * 6,
