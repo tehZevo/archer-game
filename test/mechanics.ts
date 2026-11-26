@@ -724,7 +724,9 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   const d = gearDrops[0];
   player.x = d.x; player.y = d.y - player.h; player.onGround = true;
   step(1);
-  check('walking over it equips it', gear[d.item.kind] !== null && gearDrops.length === 0);
+  check('walking over it leaves it lying', gear[d.item.kind] === null && gearDrops.length > 0);
+  tap('x');
+  check('pressing X picks it up', gear[d.item.kind] !== null && gearDrops.length === 0);
   // a piece left lying is gone once you leave the floor (like coins)
   for (let i = 0; i < 80 && gearDrops.length === 0; i++) { slain.dead = false; killMob(slain); slain.hp = 1e6; }
   const had = gearDrops.length > 0;
