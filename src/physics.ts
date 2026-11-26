@@ -3,6 +3,7 @@ import { game, player } from './state';
 import { held } from './input';
 import type { Climbable, Platform } from './types';
 import { surfaceYAt } from './surface';
+import { grabCancels } from './castrules';
 export { surfaceYAt };
 
 /** Candidate surfaces under a body at x: tiles containing x, or (only when
@@ -123,7 +124,7 @@ export function catchClimbable(): Climbable | null {
   if (left !== null && (player.onGround || Math.abs(player.x - left) > GRAB_R)) player.leftClimbX = null;
   const up = held('up'), down = held('down');
   if (!up && !down) return null;
-  if (player.casting.useT > 0) return null;    // skill use time locks movement
+  if (!grabCancels()) return null;            // an attack's use time locks movement
   const feet = player.y + player.h;
   for (const c of [...game.floor.ropes, ...game.floor.ladders]) {
     if (Math.abs(player.x - c.x) > GRAB_R) continue;

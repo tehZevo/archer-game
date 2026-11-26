@@ -97,6 +97,7 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.cd[slot] = player.cdMax[slot] = SKILLS[kind].cd;
   // Jump has no animation of its own; Glide commits you for its use time.
   if (kind !== 'C') {
+    player.casting.key = kind; // the use time belongs to this skill (see castrules)
     player.casting.useT = useTime(kind);
     player.casting.recoverT = delayTime(kind);
     player.casting.freeze = FREEZE_CAST.has(kind);

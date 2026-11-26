@@ -20,6 +20,16 @@ export const FREEZE_CAST = new Set<SkillKey>(['R']);
  *  Haste, since use/delay do. */
 export const linkWindow = (kind: SkillKey): number => useTime(kind) + delayTime(kind) + P.LINK_BUFFER;
 
+/** Movement skills a rope/ladder grab cuts short: grabbing the climb is the
+ *  next move, so it doesn't wait out the Glide's use time the way an attack's
+ *  animation would. (Jump already frees you — see move.climb.) */
+export const GRAB_THROUGH = new Set<SkillKey>(['C', 'D']);
+
+/** Whether a climbable can be grabbed right now: out of any use time, or in
+ *  one belonging to a movement skill. */
+export const grabCancels = (): boolean =>
+  player.casting.useT <= 0 || (player.casting.key !== null && GRAB_THROUGH.has(player.casting.key));
+
 /** Keys with an air form that is its own skill (its own row, rank and
  *  cooldown): Q (Air Dive), W (Midair Spin), E (Plunging Volley). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { Q: 'AD', W: 'MS', E: 'PV' };

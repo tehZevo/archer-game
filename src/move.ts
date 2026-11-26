@@ -171,6 +171,11 @@ function grabClimbable(): boolean {
   player.climb = c;
   player.dropBlock = null;
   player.liftT = 0;
+  // Grabbing the climb ends a movement skill's commitment: the rope takes
+  // over from the Glide's tumble rather than waiting it out.
+  player.casting.useT = 0;
+  player.casting.recoverT = 0;
+  player.casting.key = null;
   player.x = c.x;
   player.y = clamp(player.y, c.y1 - player.h, c.y2 - player.h);
   player.vx = 0; player.vy = 0;

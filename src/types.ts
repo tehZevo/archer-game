@@ -220,6 +220,9 @@ export type LinkKind = 'combo' | 'assault' | 'blitz' | 'glide' | 'volley' | 'spi
 export interface Casting {
   /** s left of the current skill's use time: no other skills or movement. */
   useT: number;
+  /** The skill spending that use time (null between casts). Movement skills
+   *  stay grabbable: see castrules.grabCancels. */
+  key: SkillKey | null;
   /** s of recovery after the animation: blocks new skills, not movement. Links skip it. */
   recoverT: number;
   /** True for a cast that pins you in place: gravity stops and vx/vy are
