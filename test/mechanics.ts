@@ -3331,5 +3331,17 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   const frozen = { acc: 0.05 };
   check('a frozen world runs no steps and drops the time', advance(frozen, 0.1, true) === 0 && frozen.acc === 0);
 }
+{
+  // Glide links into Meteor Dive: a Q pressed during a Glide fires as the Glide ends
+  arena(20); player.ranks.Q = 1; player.ranks.AD = 1;
+  tap('c'); step(4);
+  tap('d');
+  check('Glide links into Meteor Dive', player.linkFrom === 'D' && linkable('AD'), `from ${player.linkFrom}`);
+  tap('q');
+  check('...and a Q pressed mid-Glide is buffered', player.casting.queued === 'Q', `queued ${player.casting.queued}`);
+  let fired = -1;
+  for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'dive') fired = i; }
+  check('the Dive fires as the Glide ends, chaining the combo', fired >= 0 && fired < 16 && player.linkFrom === 'AD', `fired ${fired} from ${player.linkFrom}`);
+}
 console.log(failures === 0 ? '\nAll mechanics checks passed.' : `\n${failures} mechanics check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);
