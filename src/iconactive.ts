@@ -29,6 +29,19 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..eeE.....',
     'eeeeeE....',
   ],
+  // Gale Stream: a stream of green bolts with wind curling round them
+  'held-z': [
+    '..........',
+    '..e.......',
+    '.e.e.eeeE.',
+    'e...e.....',
+    '..eeeeeeE.',
+    'e...e.....',
+    '.e.e.eeeE.',
+    '..e.......',
+    '..........',
+    '..........',
+  ],
   // Glide: a feather with a swoosh
   d: [
     '.......xx.',

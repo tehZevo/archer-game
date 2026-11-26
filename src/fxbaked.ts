@@ -31,6 +31,9 @@ import tossTrail from '../assets/fx/tossTrail.png';
 import blitzTrail from '../assets/fx/blitzTrail.png';
 import stunHit from '../assets/fx/stunHit.png';
 import spirit from '../assets/fx/spirit.png';
+import galeMuzzle from '../assets/fx/galeMuzzle.png';
+import galeShot from '../assets/fx/galeShot.png';
+import galeHit from '../assets/fx/galeHit.png';
 import type { BakedSheet } from './fxsheets';
 
 export const BAKED: Record<string, BakedSheet> = {
@@ -66,4 +69,7 @@ export const BAKED: Record<string, BakedSheet> = {
   blitzTrail: { src: blitzTrail, w: 22, h: 14, n: 5, ox: 11, oy: 12 },
   stunHit: { src: stunHit, w: 56, h: 34, n: 6, ox: 22, oy: 17 },
   spirit: { src: spirit, w: 44, h: 34, n: 7, ox: 10, oy: 17 },
+  galeMuzzle: { src: galeMuzzle, w: 20, h: 18, n: 4, ox: 1, oy: 9 },
+  galeShot: { src: galeShot, w: 64, h: 11, n: 4, ox: 0, oy: 5.5 },
+  galeHit: { src: galeHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },
 };

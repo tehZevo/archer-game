@@ -11,6 +11,7 @@ import { clamp } from './util';
 import { barrageTargets } from './skills';
 import { landDive } from './rush';
 import { setPose } from './skillfx';
+import { streaming } from './rapid';
 
 /** Countdown to Acrobatics's next rising-streak effect. */
 let climbFxT = 0;
@@ -135,11 +136,12 @@ function walk(dt: number, locked: boolean): void {
 /** Horizontal control: accelerate toward the walk speed on the ground (ice
  *  slows the pickup and the stop); in the air, keep momentum and only brake. */
 function steer(dt: number, locked: boolean): void {
-  const slow = (player.cast === 'rush' || player.cast === 'dive' ? 0.55 : 1) * slowFactor(player); // chill slows you
+  const slow = (player.cast === 'rush' || player.cast === 'dive' ? 0.55 : streaming() ? P.GALE_SLOW : 1) * slowFactor(player); // chill slows you
   // Facing follows the held direction even during a cast's lock, so you can
   // turn around mid-combo (the buffered window) without losing your momentum.
-  if (held('left')) player.face = -1;
-  if (held('right')) player.face = 1;
+  // A Gale Stream holds its facing: walking backward keeps it firing ahead.
+  if (!streaming() && held('left')) player.face = -1;
+  if (!streaming() && held('right')) player.face = 1;
   let target = 0;
   const speed = P.WALK * nimbleSpeed();
   if (!locked && held('left'))  target = -speed * slow;
@@ -177,8 +179,8 @@ function jump(): void {
     return;
   }
   player.vy = -P.JUMP_V * nimbleJump();
-  if (held('left'))  { player.vx = -P.JUMP_H; player.face = -1; }
-  if (held('right')) { player.vx =  P.JUMP_H; player.face =  1; }
+  if (held('left'))  { player.vx = -P.JUMP_H; if (!streaming()) player.face = -1; }
+  if (held('right')) { player.vx =  P.JUMP_H; if (!streaming()) player.face =  1; }
 }
 
 /** Skills that push the player around while they play. */

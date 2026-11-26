@@ -7,6 +7,7 @@ import type { SkillKey, SkillRank } from './types';
 import { chainsZ, linkable, linkHeld, startLinks } from './links';
 import { AIR_FORM, AIR_MIN_H, FREEZE_CAST, cdSlot, delayTime, rushHolding, useTime } from './castrules';
 import { CASTS } from './skillcasts';
+import { armRapid } from './rapid';
 
 /** Airborne enemies Skyward Assault can reach: around and below the player. */
 export function barrageTargets() {
@@ -94,6 +95,7 @@ function pay(key: SkillKey, kind: SkillKey, airborne: boolean, r: SkillRank, lin
   player.liftT = 0; // any other skill ends a Piercing Leap's push (Piercing Leap starts a new one)
   player.skillPose = null; // the spin / vanish of the last cast is over
   startLinks(kind); // presses now link off this cast (so one link ends the last one's combo)
+  armRapid(kind); // a Z shot with Z still held streams on (see rapid.ts)
   if (!linked) return;
   // Fervor: each link stacks final damage. And it shaves the long cooldowns,
   // refills a Blitz, and the Cyclone Sweep's cooldown.
