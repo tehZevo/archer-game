@@ -165,9 +165,10 @@ const marked = (rows: string[], marks: [number, number, string][]): string[] => 
 };
 
 /* Beach enemies (facing right, like the others: drawMob mirrors them). */
-const crabRows = (f: number): string[] => [
-  f ? 'o....o......o....o..' : '..oo..........oo....',
-  f ? 'oR..Ro......oR..Ro..' : '.oRRo........oRRo...',
+/** Crab: 4 frames, legs scuttling every frame and claws snapping at half that. */
+const crabRows = (f: number): string[] => { const c = f === 1 || f === 2, l = f % 2; return [
+  c ? 'o....o......o....o..' : '..oo..........oo....',
+  c ? 'oR..Ro......oR..Ro..' : '.oRRo........oRRo...',
   'oRrRRo......oRRrRo..',
   'oRRoRo..wo..oRoRRo..',
   '.oo.oRo.ko.oRo.oo...',
@@ -177,14 +178,15 @@ const crabRows = (f: number): string[] => [
   '...oRRRRRRRRRRRRo...',
   '....oDDDDDDDDDDo....',
   '...oDo.oDo.oDo.oDo..',
-  ...f ? ['....oDo.oDo.oDo.oDo.', '.....o...o...o...o..'] : ['..oDo..oDo..oDo.oDo.', '..o.....o....o...o..'],
-];
+  ...l ? ['....oDo.oDo.oDo.oDo.', '.....o...o...o...o..'] : ['..oDo..oDo..oDo.oDo.', '..o.....o....o...o..'],
+]; };
 const CRAB_PAL = { o: '#3a1208', R: '#e8643c', r: '#ff9a6a', D: '#b8401f', w: '#ffffff', k: '#0d1424' };
 const crabSprite = (f: number): Sprite => grid(crabRows(f), CRAB_PAL);
 /** Hurt: claws thrown up, eye stalks squeezed to dark dashes, mouth open. */
 const crabHurt = (): Sprite => grid(marked(crabRows(1), [[8, 3, 'o'], [9, 3, 'o'], [8, 4, 'k'], [9, 4, 'k'], [9, 6, 'k'], [10, 6, 'k']]), CRAB_PAL);
 
-const hermitRows = (f: number): string[] => [
+/** Hermit crab: 4 frames, legs every frame, the eye stalk blinking on the last. */
+const hermitRows = (f: number): string[] => marked([
   '.....oooooo.......',
   '...ooSSSSSSoo.....',
   '..oSSsssssSSSo....',
@@ -199,14 +201,29 @@ const hermitRows = (f: number): string[] => [
   '..ooSSSSSSSSoRRRRo',
   '....oooooooooRRoo.',
   '.....oDo.oDo.oDo..',
-  ...f ? ['......oDo..oDo.oDo', '.......o....o....o'] : ['....oDo..oDo..oDo.', '....o.....o....o..'],
-].map((r) => r.padEnd(19, '.'));
+  ...f % 2 ? ['......oDo..oDo.oDo', '.......o....o....o'] : ['....oDo..oDo..oDo.', '....o.....o....o..'],
+].map((r) => r.padEnd(19, '.')), f === 3 ? [[16, 6, 'o']] : []);
 const HERMIT_PAL = { o: '#2a1a10', S: '#e8b48a', s: '#f4d8bc', R: '#d9563a', r: '#ff8a64', D: '#a8402a', w: '#ffffff', k: '#0d1424' };
 const hermitSprite = (f: number): Sprite => grid(hermitRows(f), HERMIT_PAL);
 /** Hurt: it ducks back toward its shell, eye squeezed shut. */
 const hermitHurt = (): Sprite => grid(marked(hermitRows(0), [[16, 6, '.'], [17, 6, '.'], [16, 7, 'o'], [17, 7, 'o'], [17, 8, 'k']]), HERMIT_PAL);
 
-const gullRows = (f: number): string[] => f ? [
+/** Gull: a 4-frame wingbeat, up → level → down → level. */
+const GULL_LEVEL = [
+  '..................',
+  '..................',
+  '..................',
+  '..................',
+  '.......oowwoo.....',
+  '.....oowwwwwwkwo..',
+  'ogggowwwwwwwwwYYo.',
+  '.gggooowwwwwoggo..',
+  '........oowwo.oggg',
+  '.........oggo.....',
+  '..........oo......',
+  '..................',
+];
+const gullRows = (f: number): string[] => f % 2 ? GULL_LEVEL : f ? [
   '..................',
   '..................',
   '........oo........',
@@ -262,9 +279,9 @@ export const MOB_GEN: Record<string, () => MobAnim> = {
   'Boar': () => anim(pigSprite, 4, 9, pigHurt),
   'Wisp': () => anim(wispSprite, 4, 8, wispHurt),
   'Iron Hog': () => anim(hogSprite, 4, 7, hogHurt),
-  'Enemy Crab': () => anim(crabSprite, 2, 7, crabHurt),
-  'Hermit Crab': () => anim(hermitSprite, 2, 5, hermitHurt),
-  'Gull': () => anim(gullSprite, 2, 5, gullHurt),
+  'Enemy Crab': () => anim(crabSprite, 4, 7, crabHurt),
+  'Hermit Crab': () => anim(hermitSprite, 4, 5, hermitHurt),
+  'Gull': () => anim(gullSprite, 4, 10, gullHurt),
   ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, () => artMob(n, MOB_ART[n].look.w > 17 ? 6 : 7)])),
 };
 
