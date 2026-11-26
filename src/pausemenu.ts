@@ -103,7 +103,7 @@ export function drawPause(): void {
   const lines = wrap(desc, 32).slice(0, 2);
   // a second line takes the help footer's place (the rows above leave no room)
   lines.forEach((ln, i) => text(ctx, ln, w / 2, h - 22 + i * 12, 1, dim, 'center'));
-  if (lines.length < 2) text(ctx, 'ARROWS MOVE  Z SPEND  ESC RESUME', w / 2, h - 10, 1, '#5d708f', 'center');
+  if (lines.length < 2) text(ctx, 'ARROWS  Z SPEND  K SKILLS  ESC RESUME', w / 2, h - 10, 1, '#5d708f', 'center');
 }
 
 /** Greedy word wrap to lines of at most n characters. */

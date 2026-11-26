@@ -152,3 +152,5 @@ function dummy(x: number, hp = 1e6): Mob {
 }
 
 export { check, release, step, tap, landLeap, ground, arena, dummy };
+export { skillScreen, skillStatus, tabLabel, tabSkills } from '../src/skillscreen';
+export { JOBS } from '../src/progress';

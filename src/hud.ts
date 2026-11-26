@@ -26,6 +26,7 @@ import { drawSettings } from './settingsdraw';
 import { achUi } from './achievements';
 import { drawAchievements } from './achdraw';
 import { drawLinkHelp, linkHelp } from './linkhelp';
+import { drawSkillScreen, skillScreen } from './skillscreen';
 import { drawSkillEditor, skillEditor } from './skilleditor';
 import { chat, logLines, wrap as wrapChat } from './chat';
 import { STATUS } from './status';
@@ -235,6 +236,8 @@ function drawStatusEffects(pad: number, y: number): number {
 function drawOverlays(w: number, h: number): void {
   if (dev.open) { drawDev(); return; }
   if (skillEditor.open) { drawSkillEditor(); return; }
+  // the skills screen can open over the Esc menu, so it draws first
+  if (skillScreen.open) { drawSkillScreen(); return; }
   if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); if (achUi.open) drawAchievements(w, h); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
