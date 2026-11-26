@@ -1,4 +1,5 @@
 import { shop, trainer } from './economy';
+import { confirmUi, drawConfirm } from './confirm';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
 import { P, SKILL_BAR } from './config';
@@ -215,13 +216,14 @@ function drawHUDItems(): void {
     }
   }
   drawChatLog(ey);
-  if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open) hudShadow(false); // full-screen panels have their own backdrops
+  if (dev.open || game.pause || shop.open || trainer.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
   if (dev.open) { drawDev(); return; }
   if (game.pause) { drawPause(); if (settingsUi.open) drawSettings(w, h); if (achUi.open) drawAchievements(w, h); return; }
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
   if (board.open) { drawBoard(); return; }
+  if (confirmUi.open) { drawConfirm(); return; }
   if (game.banner) {
     ctx.save();
     ctx.globalAlpha = clamp(game.banner.t / 1.15, 0, 1);

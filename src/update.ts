@@ -1,3 +1,4 @@
+import type { Portal } from './types';
 import { nextPlace } from './world';
 import { EMOTES } from './emotes';
 import { netEmote } from './net';
@@ -21,6 +22,7 @@ import { updatePet } from './pets';
 import { updateStatus } from './status';
 import { bufferWindowOpen, linkOpen, tickLinks } from './links';
 import { windowInput } from './windows';
+import { openConfirm } from './confirm';
 import { updateMobs } from './mobai';
 import { heldDir, movePlayer } from './move';
 
@@ -155,10 +157,17 @@ function usePortal(): boolean {
   if (talk()) return true; // (before the portals: NPCs and portals never overlap)
   if (!p || !pressed('up')) return false;
   if (!portalOpen(p)) { logMsg(`The way up is sealed. Defeat <b>${bossAlive()!.name}</b> first.`); return false; }
+  // The way back down asks first, so a stray Up press doesn't ship you to town.
+  if (p.down && !game.floor.town) { openConfirm(`Return to ${p.label}?`, () => warp(p)); return true; }
+  warp(p);
+  return true;
+}
+
+//** Travel through a portal (the return's trip runs off the confirm dialog). */
+function warp(p: Portal): void {
   if (!p.down && !game.floor.town) bump('floors'); // climbed past a combat floor
   sfx.portal();
   gotoPlace(p.to);
-  return true;
 }
 
 /** Everything else on the floor, after the player has moved. */
