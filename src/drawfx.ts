@@ -5,6 +5,8 @@ import { ctx } from './canvas';
 import { clamp } from './util';
 import { BOSS, QUAKE_T } from './boss';
 import { outlinedText } from './font';
+import { bubbleable, bubbleText, DMG_H } from './dmgfont';
+import { gridCanvas } from './grid';
 import type { DmgNum, Fx, Shot } from './types';
 
 /* Effects over the action: arrows, skill effects, damage numbers, boss quakes. */
@@ -61,16 +63,28 @@ export function drawFx(f: Fx): void {
   drawAnim(f.type, f.x, f.y, 1 - f.t / FX_DUR[f.type], f.face ?? 1, A);
 }
 
+/** Each damage number's bubble-font canvas, by text and colour (a few hundred at most). */
+const dmgCanvases = new Map<string, HTMLCanvasElement>();
+function dmgCanvas(s: string, col: string): HTMLCanvasElement {
+  const key = `${col}${s}`;
+  let c = dmgCanvases.get(key);
+  if (!c) {
+    if (dmgCanvases.size > 512) dmgCanvases.clear();
+    dmgCanvases.set(key, (c = gridCanvas(bubbleText(s, col))));
+  }
+  return c;
+}
+
 export function drawDmg(d: DmgNum): void {
   if (d.delay && d.delay > 0) return;
-  // pixel font with a black outline (d.y is the old text baseline); the 2x
-  // scale keeps damage readable at a glance
   ctx.save();
   // fully solid for the first 3/4 of the rise, then a quick fade over the last 1/4
   ctx.globalAlpha = clamp(d.t / 0.25, 0, 1);
   const s = d.txt ?? String(d.v), y = Math.round(d.y) - 10;
-  // tight tracking: digits overlap by a column (negative gap); outlinedText
-  // centers the string on d.x
-  outlinedText(ctx, s, d.x, y, 2, d.col, -1);
+  if (bubbleable(s)) {
+    // the bubble font at its natural size, centred on d.x (d.y is the old text baseline)
+    const c = dmgCanvas(s, d.col);
+    ctx.drawImage(c, Math.round(d.x - c.width / 2), y + 10 - DMG_H);
+  } else outlinedText(ctx, s, d.x, y, 2, d.col, -1);
   ctx.restore();
 }

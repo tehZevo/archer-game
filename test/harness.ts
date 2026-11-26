@@ -43,6 +43,7 @@ export { LV_1_DMG, LV_100_DMG, LEVEL_SPAN, mobHp, mobDmg } from '../src/state';
 export { confirmInput, confirmUi } from '../src/confirm';
 export { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 export { FONT_CHARS, textWidth } from '../src/font';
+export { bubbleable, bubbleText, bubbleWidth, DMG_H } from '../src/dmgfont';
 export { default as fontPng } from '../assets/font.png';
 export { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout } from '../src/input';
 export { update } from '../src/update';
