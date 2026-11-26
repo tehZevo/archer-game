@@ -54,7 +54,7 @@ function climb(dt: number, locked: boolean): void {
     if (climbFxT <= 0) { climbFxT = 0.1; game.fx.push({ type: 'climbRise', x: player.x, y: player.y + player.h, t: FX_DUR.climbRise }); }
   } else {
     climbFxT = 0;
-    if (!locked && held('up')) player.y -= P.CLIMB * (1 + passiveBonus('AC')) * dt;
+    if (!locked && held('up')) player.y -= P.CLIMB * dt;
     else if (!locked && held('down')) player.y += P.CLIMB * dt;
   }
   const top = r.y1 - player.h, bot = r.y2 - player.h;
