@@ -96,13 +96,13 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const duringDraw = near.hp === 1e6 && mid.hp === 1e6;
   step(Math.ceil(P.Z_WINDUP / P.STEP));
   const firstHit = near.hp < 1e6 && mid.hp < 1e6;
-  const one = 1e6 - near.hp;
+  const oneNear = 1e6 - near.hp, oneMid = 1e6 - mid.hp;
   step(5);
   check('Double Shot: nothing lands during the bow-draw windup', duringDraw);
   check('Double Shot: first hit lands on release', firstHit);
   check('Double Shot: the animation lasts its use time', Math.abs(player.castTotal - useTime('z')) < 1e-9,
     `pose ${player.castTotal.toFixed(2)} use ${useTime('z').toFixed(2)}`);
-  check('Double Shot: each target takes both hits', near.hp < 1e6 - one * 1.5 && mid.hp < 1e6 - one * 1.5 && far.hp < 1e6);
+  check('Double Shot: each target takes both hits', near.hp < 1e6 - oneNear * 1.5 && mid.hp < 1e6 - oneMid * 1.5 && far.hp < 1e6);
 }
 
 // --- recovery starts once the use animation ends, not in parallel ---
