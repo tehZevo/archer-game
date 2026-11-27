@@ -526,9 +526,9 @@ describe('the EXP bar', () => {
     expect(expBar().text).toBe('99.9%');
   });
 
-  it('at max level it reads LV.100, and stays full', () => {
+  it('at max level it shows no percentage, and stays full', () => {
     player.level = MAX_LEVEL;
-    expect(expBar().text).toBe(`LV.${MAX_LEVEL}`);
+    expect(expBar().text).toBe('');
     expect(expBar().pct).toBe(1);
   });
 });

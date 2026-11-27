@@ -445,11 +445,11 @@ describe('minimap', () => {
     game.view.h = 180;
   });
 
-  it('fits on screen, under the skill bar', () => {
+  it('fits on screen, in the top-right corner', () => {
     const r = miniRect();
-    expect(r.x).toBeGreaterThanOrEqual(0);
+    expect(r.x).toBeGreaterThanOrEqual(240 / 2);
     expect(r.x + r.w).toBeLessThanOrEqual(240);
-    expect(r.y).toBeGreaterThanOrEqual(24);
+    expect(r.y).toBeGreaterThanOrEqual(0);
     expect(r.y + r.h).toBeLessThan(180 - 16);
   });
 
