@@ -215,15 +215,6 @@ export const recoil = (a: MobAnim): Sprite => leansOf(a).recoil;
 /** The strike: frame 0 thrown forward, just as it bumps into you. */
 export const lunge = (a: MobAnim): Sprite => leansOf(a).lunge;
 /** A glowing warp pad. */
-function portalSprite(): Sprite {
-  const s = make(20, 28);
-  px(s, 2, 2, '#6fd3ff', 16, 24);
-  px(s, 4, 4, '#bfefff', 12, 20);
-  px(s, 6, 6, '#ffffff', 8, 16);
-  px(s, 0, 24, '#3a6ea5', 20, 4);
-  return s;
-}
-
 /** A sprite from a character grid: each character is a palette key, '.' is clear. */
 function grid(rows: string[], pal: Record<string, string>): Sprite {
   const s = make(rows[0].length, rows.length);
@@ -335,9 +326,6 @@ const artMob = (name: string, fps: number): MobAnim => {
   const bake = (f: number): Sprite => { const s = make(w, h); paintMob(name, f, (x, y, col, gw = 1, gh = 1) => px(s, x, y, col, gw, gh)); return s; };
   return anim(bake, FRAMES, fps, () => bake(HURT));
 };
-
-/** The warp pad's pixels (baked with the scenery, see artsheets.ts). */
-export const portalGrid = (): Grid => portalSprite().g;
 
 /* ---------------- enemy sheets ----------------
    Enemies ship as PNG sheets (assets/mobs/<name>.png): the walk/flap
