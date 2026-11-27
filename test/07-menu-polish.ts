@@ -109,6 +109,16 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     stops[0].name === 'T1 Saltwick Port (town)' && stops[1].name === 'T1 Sunlit Shore Lv.1');
   dev.sel = 0; setKey('enter', true); devInput(P.STEP); clearPressed(); setKey('enter', false);
   check('picking a town warps there and closes the menu', samePlace(game.floor.place, stops[0].place) && game.floor.town && !dev.open);
+  {
+    // dev mode still spends SP, but lets you allocate past zero
+    const sp0 = player.sp = 1, had = { ...player.ranks };
+    player.ranks.sa = false; player.ranks.pp = false;
+    spendSkill('sa'); spendSkill('pp');
+    check('dev mode spends SP on skills, going below zero once it runs out', player.ranks.sa && player.ranks.pp && player.sp === sp0 - 2, `sp ${player.sp}`);
+    spendSkill('pp');
+    check('...and unlearning one in dev gives its point back', !player.ranks.pp && player.sp === sp0 - 1, `sp ${player.sp}`);
+    player.ranks = had; player.sp = 0;
+  }
   dev.on = false;
   // text chat
   check('chat keeps only what the font draws, upper-cased and capped',

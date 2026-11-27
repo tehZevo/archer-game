@@ -232,10 +232,16 @@ function rivals(k: SkillKey): string {
 }
 
 /** Spend one SP on a skill row: learn, upgrade (keeping the base's rank), or rank up. */
+/** Can you spend a skill point now? (Dev mode can always: SP goes below zero.) */
+export const canSpendSp = (): boolean => player.sp > 0 || dev.on;
+
 export function spendSkill(key: SkillKey): boolean {
-  // In dev mode a skill toggles freely: no SP is spent.
+  // In dev mode a skill toggles freely (no requirements): learning it still
+  // spends a point, but you can keep going below zero, and unlearning it
+  // gives the point back.
   if (dev.on) {
     player.ranks[key] = !player.ranks[key];
+    player.sp += player.ranks[key] ? -1 : 1;
     return true;
   }
   const row = skillRows().find((r) => r.key === key);

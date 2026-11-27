@@ -3,7 +3,7 @@ import { SKILLS } from './config';
 import { game, player } from './state';
 import { text } from './font';
 import { ICON, skillIcon } from './icons';
-import { branchLocked, JOBS, skillRows, spendSkill, upgradesOf } from './progress';
+import { branchLocked, canSpendSp, JOBS, skillRows, spendSkill, upgradesOf } from './progress';
 import type { SkillKey } from './types';
 
 /* ============================================================
@@ -35,7 +35,7 @@ export const tabSkills = (i: number): SkillKey[] =>
 export function skillStatus(k: SkillKey): { label: string; col: string; action: string } {
   const s = SKILLS[k], row = skillRows().find((r) => r.key === k);
   if (player.ranks[k]) return { label: 'LEARNED', col: '#9be89b', action: '' };
-  if (row?.action) return { label: player.sp > 0 ? 'Z: LEARN (1 SP)' : 'NEEDS 1 SP', col: '#ffd166', action: row.action };
+  if (row?.action) return { label: canSpendSp() ? 'Z: LEARN (1 SP)' : 'NEEDS 1 SP', col: '#ffd166', action: row.action };
   if (upgradesOf(k).some((u) => player.ranks[u])) return { label: 'UPGRADED', col: '#9be89b', action: '' };
   if (branchLocked(k)) return { label: 'BRANCH LOCKED', col: '#e07a7a', action: '' };
   if (s.minLevel > player.level) return { label: `AT LV.${s.minLevel}`, col: '#8ea3c2', action: '' };
