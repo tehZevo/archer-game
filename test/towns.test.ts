@@ -7,7 +7,7 @@ import { net } from '../src/net';
 import { game, gotoPlace, player } from '../src/state';
 import { TOWN_PLANS } from '../src/townfloor';
 import type { Floor, Platform } from '../src/types';
-import { areaOf, isPathEnd, isTown, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, START, TOWNS, townDepth } from '../src/world';
+import { areaOf, isPathEnd, isTown, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, START, TOWNS, townDepth } from '../src/world';
 
 const DRIFTWOOD = { town: 'driftwood' };
 const here = (): string => placeKey(game.floor.place);
@@ -440,5 +440,19 @@ describe('training dummy', () => {
     expect(d.y).toBe(y);
     expect(d.aggro).toBeFalsy();
     expect(d.airTime).toBe(0);
+  });
+});
+
+describe('town portal levels', () => {
+  beforeEach(() => gotoPlace({ town: 'mossgate' }));
+
+  it('each way up shows the level of the enemies past it', () => {
+    const ups = game.floor.portals.filter((p) => !p.down);
+    expect(ups.length).toBeGreaterThan(0);
+    for (const p of ups) expect(p.lvl).toBe(mobLevel(p.to));
+  });
+
+  it('the way down shows none', () => {
+    for (const p of game.floor.portals.filter((q) => q.down)) expect(p.lvl).toBe(undefined);
   });
 });

@@ -1,5 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { keyName, normalize, setLayout } from '../src/input';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { memoryStorage } from './helpers';
+import { ACTIONS, actionFor, bindKey, binds, capture, cleanBinds, keyName, normalize, resetBinds, setLayout } from '../src/input';
+import { KEY_ROWS, keysUi } from '../src/keys';
+import { openSettings, settingsKey, settingsUi, SETTING_ROWS } from '../src/settings';
 
 /** A fake keyboard event: what the key types (key) and where it sits (code). */
 const keyEvent = (key: string, code?: string) => ({ key, code }) as unknown as Parameters<typeof normalize>[0];
@@ -35,5 +38,138 @@ describe('keyboard layouts (e.g. AZERTY)', () => {
     expect(keyName('ground-q')).toBe('A');
     expect(keyName('w')).toBe('z');
     expect(keyName('escape')).toBe('ESCAPE');
+  });
+});
+
+describe('rebinding keys', () => {
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', memoryStorage());
+    resetBinds();
+  });
+  afterEach(() => {
+    resetBinds();
+    keysUi.open = false;
+    settingsUi.open = false;
+    vi.unstubAllGlobals();
+  });
+
+  it('by default every action is on its own key', () => {
+    for (const a of ACTIONS) {
+      expect(binds[a.id]).toBe(a.id);
+      expect(actionFor(a.id)).toBe(a.id);
+    }
+  });
+
+  it('a rebound key drives its action, and the old key does nothing', () => {
+    bindKey('z', 'j');
+    expect(actionFor('j')).toBe('z');
+    expect(keyName('z')).toBe('J');
+    expect(actionFor('z')).toBe('');
+  });
+
+  it('keys that are not actions pass straight through', () => {
+    expect(actionFor('left')).toBe('left');
+    expect(actionFor('escape')).toBe('escape');
+  });
+
+  it('taking a key another action had swaps the two', () => {
+    bindKey('z', 'j');
+    bindKey('c', 'j');
+    expect(binds.c).toBe('j');
+    expect(binds.z).toBe('c');
+    expect(actionFor('c')).toBe('z');
+    expect(actionFor('j')).toBe('c');
+  });
+
+  it('arrows, Enter and Esc can\'t be bound', () => {
+    expect(bindKey('z', 'left')).toBe(false);
+    expect(bindKey('z', 'enter')).toBe(false);
+    expect(bindKey('z', 'escape')).toBe(false);
+  });
+
+  it('the layout is saved', () => {
+    bindKey('c', 'j');
+    expect(JSON.parse(localStorage.getItem('archer-game:keys')!).c).toBe('j');
+  });
+
+  it('a stored layout with a key used twice, or a bad key, falls back to the defaults', () => {
+    expect(cleanBinds({ ...binds, q: 'z' }).z).toBe('z');
+    expect(cleanBinds({ ...binds, q: 'enter' }).q).toBe('q');
+  });
+
+  it('reset puts the defaults back', () => {
+    bindKey('c', 'j');
+    resetBinds();
+    for (const a of ACTIONS) expect(binds[a.id]).toBe(a.id);
+  });
+
+  it('the HUD and menus label the bound key', () => {
+    bindKey('a', 'h');
+    expect(keyName('a')).toBe('H');
+    expect(keyName('s')).toBe('s');
+  });
+
+  describe('the keys window (settings, then KEYS)', () => {
+    /** Open the keys window and pick the second row (Jump, c). */
+    function pickJump(): void {
+      openSettings();
+      settingsUi.sel = SETTING_ROWS.indexOf('keys');
+      settingsKey('enter');
+      settingsKey('down');
+      settingsKey('enter');
+    }
+
+    it('the KEYS row opens it', () => {
+      openSettings();
+      settingsUi.sel = SETTING_ROWS.indexOf('keys');
+      settingsKey('enter');
+      expect(keysUi.open).toBe(true);
+    });
+
+    it('Enter on an action waits for a key, and arrows do nothing meanwhile', () => {
+      pickJump();
+      expect(keysUi.waiting).toBe(true);
+      expect(capture.fn).toBeTruthy();
+      settingsKey('down');
+      expect(keysUi.sel).toBe(1);
+    });
+
+    it('the next key pressed binds the action', () => {
+      pickJump();
+      capture.fn!('k');
+      expect(binds.c).toBe('k');
+      expect(keysUi.waiting).toBe(false);
+      expect(capture.fn).toBeFalsy();
+    });
+
+    it('Esc while waiting cancels', () => {
+      pickJump();
+      capture.fn!('escape');
+      expect(binds.c).toBe('c');
+      expect(keysUi.waiting).toBe(false);
+    });
+
+    it('an arrow is refused, with a note', () => {
+      pickJump();
+      capture.fn!('left');
+      expect(binds.c).toBe('c');
+      expect(keysUi.note).not.toBe('');
+    });
+
+    it('RESET restores the default layout', () => {
+      pickJump();
+      capture.fn!('k');
+      keysUi.sel = KEY_ROWS - 2;
+      settingsKey('enter');
+      expect(binds.c).toBe('c');
+    });
+
+    it('Esc closes it, back to the settings', () => {
+      pickJump();
+      capture.fn!('k');
+      settingsKey('escape');
+      expect(keysUi.open).toBe(false);
+      expect(settingsUi.open).toBe(true);
+    });
   });
 });

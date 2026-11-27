@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { arena, climb, ground, release, step, tap } from './helpers';
+import { arena, climb, dummy, ground, release, step, tap } from './helpers';
 import { TOWN_MIN_H } from '../src/floorframe';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { MOB_TYPES, P, TILE, WORLD } from '../src/config';
-import { groupSize, LAYOUTS, type Layout } from '../src/floor';
+import { generateFloor, groupSize, LAYOUTS, type Layout } from '../src/floor';
+import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
+import { coinValue, drops } from '../src/economy';
 import { isTown, mobLevel, PATHS, pathsInto, townDepth } from '../src/world';
 import { killMob } from '../src/combat';
 import { makeShape, SHAPES } from '../src/floorshape';
@@ -548,5 +550,72 @@ describe('floor size', () => {
     const low = cameraTarget().y;
     player.y = deck - player.h;
     expect(cameraTarget().y).toBeLessThan(low);
+  });
+});
+
+describe('icy floors (in cold areas, shared by everyone, pay more)', () => {
+  afterEach(() => {
+    game.floor.mods = undefined;
+    drops.length = 0;
+    game.mobs = [];
+    release();
+  });
+
+  /** How far you slide in half a second after letting go of a run. */
+  function slideDistance(): number {
+    player.x = 60;
+    player.vx = 0;
+    player.y = ground().y - player.h;
+    player.onGround = true;
+    setKey('right', true);
+    step(20);
+    release();
+    const x = player.x;
+    step(30);
+    return player.x - x;
+  }
+
+  it('only roll in cold areas', () => {
+    expect(rollMods('Sunlit Shore', () => 0)).toEqual([]);
+    expect(rollMods('Mirror Lake', () => 0)).toEqual(['icy']);
+    expect(rollMods('Mirror Lake', () => 0.99)).toEqual([]);
+  });
+
+  it('some cold floors roll icy, the same ones every time', () => {
+    const floors = [1, 2, 3, 4, 5, 6];
+    const icy = (): number[] => floors.filter((n) => generateFloor({ path: 'mirror', floor: n }).mods?.includes('icy'));
+    const first = icy();
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.length).toBeLessThan(floors.length);
+    expect(icy()).toEqual(first);
+  });
+
+  it('towns never roll a modifier', () => {
+    expect(generateFloor({ town: 'stillwater' }).mods).toBeFalsy();
+  });
+
+  it('on ice your grip drops, and you slide further after letting go', () => {
+    arena();
+    const dry = slideDistance();
+    game.floor.mods = ['icy'];
+    expect(grip()).toBe(ICE_GRIP);
+    expect(slideDistance()).toBeGreaterThan(dry * 2);
+  });
+
+  it('the HUD names it and its coin bonus', () => {
+    arena();
+    game.floor.mods = ['icy'];
+    expect(modLine()).toBe('ICY +50% COINS');
+    expect(coinMult()).toBe(FLOOR_MODS.icy.coins);
+  });
+
+  it('coins are worth more there', () => {
+    arena();
+    game.floor.mods = ['icy'];
+    drops.length = 0;
+    const m = dummy(100);
+    m.level = 10;
+    killMob(m);
+    expect(drops[0].v).toBeGreaterThanOrEqual(Math.round(coinValue(10, 0) * FLOOR_MODS.icy.coins));
   });
 });

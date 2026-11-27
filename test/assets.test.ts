@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { POSES } from '../src/ghost';
-import { BACKDROPS, particlesAt } from '../src/backdrop';
+import { BACKDROPS, meteorFade, particlesAt } from '../src/backdrop';
 import { MOB_TYPES } from '../src/config';
 import { HURT, MOB_ART, paintMob } from '../src/mobart';
 import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
@@ -217,5 +217,38 @@ describe('enemy art', () => {
       expect(m.w).toBe(MOB_ART[m.n].look.w);
       expect(m.h).toBe(MOB_ART[m.n].look.h);
     }
+  });
+});
+
+describe('backdrop and tile polish', () => {
+  it('the Mushroom Grotto loam has only a few blue glints', () => {
+    const grotto = TILESETS['Mushroom Grotto'];
+    let glints = 0;
+    for (let v = 0; v < 8; v++) {
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (['#9ff3ea', '#5ad8c8'].includes(grotto.fill(x, y, v))) glints++;
+    }
+    expect(glints).toBeGreaterThan(0);
+    expect(glints).toBeLessThanOrEqual(16);
+  });
+
+  describe('Starfall Observatory comets', () => {
+    const comets = BACKDROPS['Starfall Observatory'].particles!;
+
+    it('flare up, then fade out to nothing before they vanish', () => {
+      expect(comets.kind).toBe('meteors');
+      expect(meteorFade(0)).toBe(0);
+      expect(meteorFade(0.05)).toBe(1);
+      expect(meteorFade(0.3)).toBeLessThan(meteorFade(0.15));
+      expect(meteorFade(0.499)).toBeLessThan(0.01);
+    });
+
+    it('a comet\'s head is drawn in one of its colours, with the fade as its alpha', () => {
+      // a colour with alpha is '#rrggbbaa'; tails stay under 25%, so look for a brighter head
+      const headAlphas = (t: number): number[] => particlesAt(comets, t, 320, 240)
+        .filter((q) => q.col.length === 9 && comets.cols.includes(q.col.slice(0, 7)))
+        .map((q) => parseInt(q.col.slice(7), 16));
+      const fading = [0.3, 1.1, 2.7, 5.2].some((t) => headAlphas(t).some((a) => a > 70 && a < 255));
+      expect(fading).toBe(true);
+    });
   });
 });
