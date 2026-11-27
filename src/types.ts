@@ -314,7 +314,7 @@ export interface Player extends Body {
   /** Gale Stream (see rapid.ts): `armed` once a Z shot fires with Z held,
    *  `on` while the stream runs, `t` s to its next shot, `face` the way it
    *  fires (locked for the whole stream). */
-  rapid: { armed: boolean; on: boolean; t: number; face: 1 | -1 };
+  rapid: { armed: boolean; on: boolean; t: number; face: 1 | -1; pauseT: number };
   /** Electric Blitz charges banked (full = 2) and the timer refilling the next. */
   blitz: { charges: number; t: number };
   cast: CastName | null;

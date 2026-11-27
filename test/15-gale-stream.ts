@@ -84,3 +84,30 @@ import { P, game, player, setKey, check, step, tap, arena, dummy } from './harne
   setKey('z', false); step(1);
   check('the dodge roll deals no damage', m.hp === hp0 && !game.fx.some((f) => f.type === 'diveLand'), `hp ${hp0 - m.hp}`);
 }
+
+// --- the dodge roll's direction: the way you hold (else away from your
+// facing), and the stream fires back the opposite way to the roll; its use
+// time holds fire, which picks up as its recovery starts
+{
+  const roll = (hold: 'left' | 'right' | null): { rolled: number; fires: number; shots: number[] } => {
+    arena(60); player.ranks['held-z'] = true;
+    setKey('left', true); step(1); setKey('left', false); // face (and shoot) left
+    setKey('z', true); step(Math.ceil(0.6 / P.STEP) + 2);
+    const x0 = player.x;
+    if (hold) setKey(hold, true);
+    setKey('c', true); step(1); setKey('c', false);
+    const fires = player.rapid.face;
+    // count the stream's shots in each 1/10 s across the roll
+    const shots: number[] = [];
+    for (let i = 0; i < 9; i++) { const mp = player.mp; step(3); shots.push(mp - player.mp); }
+    if (hold) setKey(hold, false);
+    setKey('z', false); step(20);
+    return { rolled: Math.sign(player.x - x0), fires, shots };
+  };
+  const none = roll(null), left = roll('left'), right = roll('right');
+  check('facing left, holding nothing: roll right, keep shooting left', none.rolled === 1 && none.fires === -1, JSON.stringify(none));
+  check('holding left: roll left, shoot right', left.rolled === -1 && left.fires === 1, JSON.stringify(left));
+  check('holding right: roll right, keep shooting left', right.rolled === 1 && right.fires === -1, JSON.stringify(right));
+  const quiet = none.shots.slice(0, 4).every((n) => n === 0), back = none.shots.slice(5).some((n) => n > 0);
+  check('the stream holds fire through the roll\'s 0.5s use, then picks up', P.ROLL_USE === 0.5 && P.ROLL_DELAY === 0.2 && quiet && back, none.shots.join(','));
+}
