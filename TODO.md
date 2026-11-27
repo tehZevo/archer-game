@@ -1,4 +1,8 @@
 # TODOs
+- Remove the low-value tests (about 110, roughly 1 in 5). A test is low value if it only checks how something *looks*, not how the game *plays*. Examples: an effect sprite appears, an icon flashes, a banner or label shows, an idle or breathing frame cycles, art fits inside its box, the font or damage numbers draw right, a caret blinks, an aura or scuff shows. Delete the whole `it(...)` block, then delete any helper or import it leaves unused.
+  - Where they are (approximate counts): `looks.test.ts` ~20, `skills.test.ts` ~18 (the aura, scuff, effect and pose tests), `net.test.ts` ~13 (poses, tints, emotes, tracers), `assets.test.ts` ~12, `enemies.test.ts` ~10 (frames, health bar), `towns.test.ts` ~6 (labels), `combat.test.ts` ~5 (number wobble and timing, flashes), `progression.test.ts` ~5 (banners, HUD), and a few each in `chat`, `deaths`, `input`, `menus` and `pets`.
+  - Keep a test, even in those files, if it checks gameplay (damage, hits, movement, links, cooldowns), a modifier (crit, Haste, Twin Echoes, gear, jobs, boosts, status effects), saving and loading, bad or old data being cleaned up, or that an NPC or portal can be reached and doesn't overlap anything. If you're unsure, keep it.
+  - Run `npm test` after each file; it must stay green.
 - (art) Dodge roll during held-Z needs a roll animation.
 - (art) Create art for the Bubble skill.
 - (art) Give portals a more oval, swirling, rounded look and animation.
