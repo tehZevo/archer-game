@@ -38,11 +38,13 @@ import { tinyText } from './tinyfont';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
 import { drawPause } from './pausemenu';
+import { art } from './artsheets';
+import { BAR_GAP, BAR_H, BAR_W, PANEL } from './hudart';
 
 function bar(x: number, y: number, w: number, label: string, value: string, pct: number, col: string): void {
-  ctx.fillStyle = '#0a1120'; ctx.fillRect(x, y, w, 9);
-  ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(pct, 0, 1), 9);
-  ctx.strokeStyle = '#0006'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, 9);
+  ctx.fillStyle = '#0a1120'; ctx.fillRect(x, y, w, BAR_H);
+  ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(pct, 0, 1), BAR_H);
+  ctx.strokeStyle = '#0006'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, BAR_H);
   tinyText(ctx, label, x + 2, y + 2, '#eaf2ff', 'left');
   tinyText(ctx, value, x + w - 2, y + 2, '#eaf2ff', 'right');
 }
@@ -216,7 +218,9 @@ function drawSkillBar(pad: number): void {
 /** The HP | MP | EXP bars across the bottom. Returns their y. */
 function drawBottomBars(pad: number): number {
   const { h } = game.view;
-  const bw = 74, bgap = 3, y = h - 14;
+  const bw = BAR_W, bgap = BAR_GAP, y = h - 14;
+  // the baked panel behind them (crisp pixels, no canvas strokes)
+  ctx.drawImage(art('hud/panel'), pad - PANEL.margin, y - PANEL.margin);
   // HP / MP read the current value (500, 1.5K); the bar shows how full it is
   bar(pad, y, bw, 'HP', fmtNum(player.hp), player.hp / player.hpMax, '#3fbf72');
   bar(pad + bw + bgap, y, bw, 'MP', fmtNum(player.mp), player.mp / player.mpMax, '#3f8fd6');
