@@ -18,16 +18,16 @@ Attack skills have a short use time during which no other skill or movement inpu
 
 Using a skill doesn't announce its name on screen.
 
-## Unlock grouping (planned)
+## Unlock grouping
 
-All skills unlock at one of four levels, matching the job ladder: **1, 10, 30, 60**.
+Skills unlock in four job tiers, each covering a level range: **I Archer (1–10)**, **II Sky Archer (10–30)**, **III Mystic Archer (30–60)**, **IV Adele (60–100)**. A skill belongs to exactly one tier and becomes learnable at that tier's base level; you acquire it by spending SP on it in the pause menu.
 
 Reaching Lv.10, 30 or 60 only makes you eligible for the next job: you take it by visiting the **Sage** (an NPC in every town), which unlocks that job's skills and raises your max HP and MP: +5% at the 2nd job, +10% more at the 3rd, +15% more at the 4th (+30% in all). Until then the job's skills show "SEE THE SAGE".
 
-- **Lv.1:** the starter kit, available from character creation.
-- **Lv.10:** the second job's wave of skills.
-- **Lv.30:** Mystic Archer's group (with the job's SP bonus).
-- **Lv.60:** Adele's group (with the job's SP bonus).
+- **Job I — Archer (Lv.1–10):** the starter kit, available from character creation.
+- **Job II — Sky Archer (Lv.10–30):** the second job's wave of skills.
+- **Job III — Mystic Archer (Lv.30–60):** the third job's group (with the job's SP bonus).
+- **Job IV — Adele (Lv.60–100):** the fourth job's group (with the job's SP bonus).
 
 Which skills sit in each group is deliberately left open for now and will be decided as the build evolves; what's fixed is the cadence — four unlock moments, one per job tier. Skill upgrades (new forms, skills that build on another skill) are generally not unlockable in the same group as the skill they build on, so mastering a base skill and discovering its replacement are separate moments.
 
