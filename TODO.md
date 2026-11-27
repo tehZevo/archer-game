@@ -26,3 +26,5 @@
 - (design) Rename Downpour.
 - Fix Skyward Assault + Downpour: keep the chain window open through the whole hover, so Downpour fires at the end of the hover instead of cutting it short instantly.
 - Air Q (Dive) should travel a fixed diagonal-downward distance equal to Rush Toss's horizontal distance. If it hits the ground mid-travel, it continues for the remaining distance and then performs the toss; if it's still airborne at the end, the player slows toward the end and drops without tossing.
+- A dodge roll (jump during held-Z / Gale Stream) should make you start firing in the OPPOSITE direction you were firing before the roll.
+- You should not be able to Glide (`d`) out of a dodge roll.
