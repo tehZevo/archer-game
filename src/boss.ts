@@ -146,7 +146,7 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
   if (fromX !== undefined && !player.climb && player.hang.t <= 0) {
     const away = Math.sign(player.x - fromX) || -player.face;
     // added to the momentum you already had, but capped at the knockback's own
-    // speed (like Downpour's hop): already going that fast that way, it adds nothing
+    // speed (like Ember Rain's hop): already going that fast that way, it adds nothing
     player.vx = capAdd(player.vx, away * P.HIT_PUSH);
     player.vy = capAdd(player.vy, -P.HIT_HOP);
     player.onGround = false;

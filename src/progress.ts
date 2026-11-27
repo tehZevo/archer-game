@@ -206,7 +206,7 @@ export const spendSp = (key: SkillKey): boolean => spendSkill(activeSkill(key).k
    Skyward Assault), or raises a learned skill's rank. */
 export const SKILL_PICK_EVERY = 5;
 
-// The air forms of Q, W and E (Meteor Dive, Cyclone Sweep, Downpour) are
+// The air forms of Q, W and E (Meteor Dive, Cyclone Sweep, Ember Rain) are
 // their own skills, but on the list they show the key they're used on, not
 // their own abbreviation.
 const AIR_FORM_KEY: Partial<Record<SkillKey, string>> = { 'air-q': 'ground-q', 'air-w': 'ground-w', 'air-e': 'ground-e' };

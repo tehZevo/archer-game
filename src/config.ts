@@ -65,7 +65,7 @@ export const P = {
   DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's), for what's left of RUSH_DIST...
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
   DIVE_EASE: 24,       // px before the dive's travel runs out (still airborne) that it slows over
-  PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
+  PLUNGE_W: 56,        // Ember Rain: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_HOP: 121.5,   // px/s bump added to your upward velocity (10% under 135)
   PLUNGE_MAX: 160,     // ...capped so vy never exceeds -160 (upward); faster speeds are left untouched
@@ -109,7 +109,7 @@ export const TILE = 16;
 /* ---------------- skills ----------------
    Five active buttons. The main attack (Z) is available from Lv.1 and a new
    skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
-/** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Downpour, the
+/** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Ember Rain, the
  *  Meteor Dive's landing) links into: the link skills, the Q slot (Meteor
  *  Dive in the air) and W's air form, the Cyclone Sweep. */
 const LAUNCHER_LINKS: SkillKey[] = ['ground-w', 'ab', 'ground-q', 'eb', 'air-q', 'air-w'];
@@ -144,7 +144,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   'air-w': { key: 'air-w', linksInto: ['d', 'air-e', 'z', 's'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
        cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 280, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
        desc: 'Mid-air W: a 360-degree sweep around you' },
-  'air-e': { key: 'air-e', linksInto: ['air-w', 'air-q', 'r', 'air-e', 'z', 's'], name: 'Downpour', tag: 'Aerial', job: 3, minLevel: 30,
+  'air-e': { key: 'air-e', linksInto: ['air-w', 'air-q', 'r', 'air-e', 'z', 's'], name: 'Ember Rain', tag: 'Aerial', job: 3, minLevel: 30,
        cd: 0, use: 0.4, delay: 0.2, mp1: 140, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
   r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e', 'z', 's'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,

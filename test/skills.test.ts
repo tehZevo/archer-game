@@ -492,7 +492,7 @@ describe('rush carry', () => {
   });
 });
 
-describe('E: Piercing Leap on the ground, Downpour in the air', () => {
+describe('E: Piercing Leap on the ground, Ember Rain in the air', () => {
   function setup(): void {
     arena(10);
     player.ranks['ground-e'] = true;
@@ -513,7 +513,7 @@ describe('E: Piercing Leap on the ground, Downpour in the air', () => {
     expect(player.cd['ground-e']).toBeGreaterThan(4); // a long cooldown
   });
 
-  it('Downpour hops you up without freezing you, and hits only the enemy beneath', () => {
+  it('Ember Rain hops you up without freezing you, and hits only the enemy beneath', () => {
     setup();
     const under = dummy(100), beside = dummy(170);
     tap('c');
@@ -546,7 +546,7 @@ describe('E: Piercing Leap on the ground, Downpour in the air', () => {
     expect(player.cdMax['ground-e']).toBe(P.SPIKE_CD);
     expect(player.cd['ground-e.air']).toBe(0);
 
-    // still in the air from the leap: Downpour fires despite the leap's cooldown
+    // still in the air from the leap: Ember Rain fires despite the leap's cooldown
     player.casting.useT = 0;
     const y = player.y;
     tap('e');
@@ -831,7 +831,7 @@ describe('the kit\'s hits and damage', () => {
   });
 });
 
-describe('Downpour', () => {
+describe('Ember Rain', () => {
   /** In the air, 120px above the ground at x = 140. */
   function highUp(): void {
     arena(30);
