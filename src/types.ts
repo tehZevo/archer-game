@@ -43,6 +43,9 @@ export interface SkillDef {
   mp1: number;
   dmg1: number;
   hits1?: number;
+  /** Hits the rush slide lands on each scooped enemy (see rush.grab);
+   *  defaults to 1. Twin Echoes doubles it via shotCount. */
+  rushHits?: number;
   /** Passive skills have no key; their effect is `bonus` once acquired. */
   passive?: boolean;
   /** Bought with SP even though it is open from Lv.1 (otherwise Lv.1 skills come free). */
@@ -249,6 +252,9 @@ export interface RushState {
   carry: { m: Mob; off: number }[];
   /** The slide's own effect on the archer, and the scuffs it leaves (null: none, e.g. the dive). */
   look?: RushLook | null;
+  /** The skill this slide is a rush of (Rush Toss / Electric Blitz): its
+   *  `rushHits` sets how many hits the scoop lands (see rush.grab). */
+  key?: SkillKey;
   /** px slid since the last ground scuff. */
   scuff?: number;
 }

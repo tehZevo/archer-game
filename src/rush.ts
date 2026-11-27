@@ -1,4 +1,4 @@
-import { FX_DUR, P } from './config';
+import { FX_DUR, P, SKILLS } from './config';
 import type { FxKind, RushLook, SkillKey } from './types';
 import { game, mobBounds, player } from './state';
 import { damage, hitbox } from './combat';
@@ -16,13 +16,14 @@ export function clearRushStrike(): void {
 }
 
 /** Start a slide (or the Meteor Dive's plunge) that scoops up enemies for `t` seconds. */
-export function startSlide(t: number, goal = 0, look: RushLook | null = null): void {
+export function startSlide(t: number, goal = 0, look: RushLook | null = null, key: SkillKey = 'ground-q'): void {
   player.rush.t = t;
   player.rush.dist = 0;
   player.rush.goal = goal;
   player.rush.carry = [];
   player.rush.look = look;
   player.rush.scuff = 0;
+  player.rush.key = key;
 }
 
 /** px between the scuffs a ground rush leaves on the floor. */
@@ -50,16 +51,18 @@ export function updateRush(dt: number): void {
   player.rush.dist += Math.abs(player.vx) * dt;
   scuff(Math.abs(player.vx) * dt);
   const face = Math.sign(player.vx) || player.face;
-  grab(face);
+  grab(face, player.rush.key ?? 'ground-q');
   push(face);
   // the slide covers its fixed distance: contact with an enemy slows you, but
   // the slide keeps going until the distance (or the ground, or the clock) ends
   if (player.rush.dist >= player.rush.goal || player.rush.t <= 0 || Math.abs(player.vx) < 30 || !player.onGround) endRush();
 }
 
-/** Scoop up the enemies the slide runs into; the charge itself hits each once. */
-function grab(face: number): void {
-  const r = rank('ground-q');
+/** Scoop up the enemies the slide runs into; the charge hits each one for its
+ *  per-skill rush count (Rush Toss once, Electric Blitz twice) at RUSH_HIT's
+ *  share of the skill's damage, routed through shotCount so Twin Echoes doubles it. */
+function grab(face: number, key: SkillKey): void {
+  const r = rank(key);
   // the grab reaches a little behind you too, so an enemy you just passed is still scooped up
   const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
   for (const m of hitbox(grabX, player.y + player.h / 2, P.RUSH_GRAB + P.RUSH_GRAB_BACK, 40)) {
@@ -67,7 +70,8 @@ function grab(face: number): void {
     if (player.rush.carry.some((c) => c.m === m) || m.training) continue; // (the dummy's bolted down)
     player.rush.carry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
     // a carried enemy can't die mid-carry: its death waits for the strike (see mobai)
-    damage(m, r.dmg * P.RUSH_HIT, { more: true });
+    // the scoop lands the skill's own rush hits (Blitz twice), doubled by Twin Echoes
+    damage(m, r.dmg * P.RUSH_HIT * shotCount({ ...r, hits: SKILLS[key].rushHits ?? 1 }), { more: true });
   }
 }
 
@@ -124,7 +128,7 @@ function armStrike(inPlace: boolean, key: SkillKey, fx: FxKind = 'rush'): () => 
 function slide(v: number, t: number, dist: number, key: SkillKey, fx: FxKind = 'rush', look: RushLook | null = null): void {
   armStrike(false, key, fx);
   player.vx = player.face * v;
-  startSlide(t, dist, look);
+  startSlide(t, dist, look, key);
 }
 
 /** The rush's strike: the carried enemies, then the nearest ones ahead. `fx`
