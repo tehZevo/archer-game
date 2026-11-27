@@ -21,3 +21,5 @@
 - HUD meters: show the EXP meter as a percentage (%) instead of A/B, and show HP/MP as the current value (e.g. 500, 1.5k) instead of A/B.
 - (design) Rename Glide.
 - (art) The comets in the background of the Observatory and Thistledown should fade out.
+- Dev skill editor (bug): can't move "down" to select Delay with Enter. The flow should be: navigate the left menu with up/down to highlight a skill; press Enter to select it, moving the cursor to the right side of the screen highlighted on "Use"; left/right on Use adjusts the value; up/down navigates between Use / Delay / Links Into; Enter/Space on Links Into toggles an option on/off.
+- Piercing Leap (`ground-e`) should link into Glide (`d`) — add `d` to its `linksInto` (config.ts:134).
