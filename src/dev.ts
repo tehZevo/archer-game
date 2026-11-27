@@ -12,12 +12,15 @@ import type { SkillKey } from './types';
    `  dev menu: warp to the start or any town
    [  level up
    ]  warp to the next place (the next floor, or the path's town)
+   /  toggle 1 damage mode (every hit you deal does exactly 1)
    ============================================================ */
 export const dev = {
   on: typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev'),
   /** the dev menu is open, and its selected row */
   open: false,
   sel: 0,
+  /** / toggles 1 damage mode: every hit you deal does exactly 1 damage */
+  oneDamage: false,
 };
 
 /** The dev menu's rows: a single flat list of every town (marked "(town)") and

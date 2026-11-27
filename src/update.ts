@@ -105,6 +105,7 @@ function keyInput(): boolean {
   if (pressed('[')) gainExp(player.expNext - player.exp);
   if (pressed(']')) { gotoPlace(nextPlace(game.floor.place)); return true; }
   if (pressed('\\')) maxOut();
+  if (pressed('/')) dev.oneDamage = !dev.oneDamage;
   return false;
 }
 

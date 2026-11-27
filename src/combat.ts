@@ -2,6 +2,7 @@ import { expMult } from './cheer';
 import { bump } from './achievements';
 import { sfx } from './audio';
 import { ELITE, P } from './config';
+import { dev } from './dev';
 import { localKill } from './boost';
 import { dropGear, gearDmg } from './gear';
 import { dropCoins } from './economy';
@@ -84,7 +85,8 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   const crit = Math.random() < critChance();
   if (crit) dmg *= critMult();
   if (opts.airborne && target.airTime > 0) dmg *= 1.30;  // Rush Toss airborne bonus
-  dmg = Math.round(dmg);
+  // dev 1 damage mode (/): every hit collapses to a single point
+  dmg = dev.oneDamage ? 1 : Math.round(dmg);
   target.hp -= dmg;
   target.hitFlash = 0.14;
   target.barT = BAR_SHOW;
