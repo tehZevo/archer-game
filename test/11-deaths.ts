@@ -218,6 +218,19 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
 }
 {
+  // Off a Skyward Assault hover, Downpour waits out the whole hover and fires
+  // as it ends (it doesn't cut the hover short); she's hidden while it hovers
+  arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-e'] = true;
+  dummy(130);
+  tap('q'); step(14); tap('w'); step(3);
+  tap('e');
+  const held = player.hang.t > 0 && player.casting.queued !== null;
+  let f = 0; while (player.hang.t > 0 && f < 60) { step(1); f++; }
+  step(1);
+  check('Downpour off the hover waits for it to end, then fires', held && f > 10 && player.cast === 'barrage' && player.linkFrom === 'air-e',
+    `held ${held} hover left ${f} frames, cast ${player.cast} from ${player.linkFrom}`);
+}
+{
   // Off a Skyward Assault hover: the Q slot (Meteor Dive) is a link off the
   // assault, so a press during the hover is buffered and fires as it ends.
   arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-q'] = true;

@@ -17,7 +17,7 @@ import type { SkillKey } from './types';
      Rush Toss / Electric Blitz   the slide's strike landing (rushHolding)
      Meteor Dive                  the landing roll's strike (rushHolding)
      Skyward Assault              the leap's peak for the Cyclone Sweep,
-                                  the hover's end for Tempest
+                                  the hover's end for Tempest and Downpour
    ============================================================ */
 
 /** The rushes: Double Shot chains off them (see skills.gate). */
@@ -30,12 +30,16 @@ export const linkable = (kind: SkillKey): boolean =>
 /** Whether Double Shot pressed now chains off a rush (skipping its ending lag once). */
 export const chainsZ = (): boolean => player.linkFrom !== null && RUSHES.has(player.linkFrom);
 
+/** Links off Skyward Assault that wait out the whole hover, firing as it ends
+ *  (the rest fire once the opening leap is done, cutting the hover short). */
+const HOVER_THROUGH = new Set<SkillKey>(['r', 'air-e']);
+
 /** Whether a link into `kind` still waits for the current cast's recovery to begin. */
 export function linkHeld(kind: SkillKey): boolean {
   const from = player.linkFrom;
   if (from === null) return false;
   if (RUSHES.has(from)) return rushHolding();
-  if (from === 'ab') return kind === 'r' ? player.hang.t > 0 : assaultLeaping();
+  if (from === 'ab') return HOVER_THROUGH.has(kind) ? player.hang.t > 0 : assaultLeaping();
   return player.casting.useT > 0;
 }
 

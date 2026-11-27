@@ -228,6 +228,9 @@ function skyfallVolley(r: SkillRank): void {
   }));
 }
 
+/** How far ahead of its origin the assaultRise sheet's visible middle sits. */
+const ASSAULT_RISE_LEAD = 16;
+
 /** Skyward Assault: knock the enemies ahead into the air and warp straight up
  *  with them (no horizontal movement), hovering to strike every airborne
  *  enemy in reach for a moment before dropping with normal gravity. The
@@ -243,7 +246,8 @@ function skyAssault(r: SkillRank): void {
   player.y = Math.max(0, player.y - P.BARRAGE_UP);
   player.vx = 0; player.vy = 0; player.onGround = false;
   // a tall blue slash carving up from where she left to where she hangs
-  game.fx.push({ type: 'assaultRise', x: player.x, y: from, t: FX_DUR.assaultRise, face: player.face });
+  // (the sheet's crescent sits ~16px ahead of its origin: centre it on her)
+  game.fx.push({ type: 'assaultRise', x: player.x - player.face * ASSAULT_RISE_LEAD, y: from, t: FX_DUR.assaultRise, face: player.face });
   // hold in the air for a fixed hover (its use/delay timings set the cast lock)
   player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
