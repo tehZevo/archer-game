@@ -82,7 +82,7 @@ export const DEFAULT_LOOK: Look = { body: 0, style: 0, hair: 0, skin: 0, outfit:
 export function cleanLook(v: unknown): Look {
   const o = (v ?? {}) as Record<string, unknown>;
   const out = { ...DEFAULT_LOOK };
-  for (const k of LOOK_KEYS) {
+  for (const k of ['body', ...LOOK_KEYS] as const) {
     const n = Math.floor(Number(o[k]));
     out[k] = Number.isFinite(n) && n >= 0 && n < LOOK_COUNTS[k] ? n : 0;
   }

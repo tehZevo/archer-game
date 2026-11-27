@@ -69,7 +69,7 @@ export { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, t
 export { fmtNum } from '../src/util';
 export { BOSS, bossAlive, bossName, bossType, capAdd, hurtPlayer, quakes } from '../src/boss';
 export { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
-export { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP } from '../src/stylist';
+export { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP, shownLook, styleChanged, STYLE_FEE, stylistRows } from '../src/stylist';
 export { styled } from '../src/archer';
 export { DECOR_FRAMES, paintDecor, paintSmoke, SMOKE, TOWN_PALS } from '../src/towndecor';
 export type { DecorKind } from '../src/types';
@@ -78,7 +78,7 @@ export { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests
 export { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 export { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
 export { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
-export { activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
+export { activate, disabled, lookLocked, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X } from '../src/menu';
 export { BLOCK_VARIANTS, hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt } from '../src/tileset';
 export { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
 export { BACKDROPS, particlesAt } from '../src/backdrop';

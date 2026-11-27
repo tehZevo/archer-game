@@ -1,6 +1,4 @@
 # TODOs
-- Allow changing your gender when you first create your character on the main menu; after creation it should be locked.
-- Lock character customization after creation in the main menu; all other changes must be done through the stylist for a 1000 gold fee.
 - (art) Increase the detail of the blue snail (Garden Snail) while keeping its silhouette rectangular/square-ish.
 - (art) Add or update the green snail's art, making him the smallest mob and triangle-shaped.
 - Remove the `Classic` tileset/props/backdrop and use `Harbor` as the fallback for areas without their own set (update `backdropFor`, `propsFor`, `floorlayer.ts`, `backdropdraw.ts`, and the tileset map).
