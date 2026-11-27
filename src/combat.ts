@@ -94,7 +94,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   // A launcher pops the enemy straight up: cancel its horizontal drift so it
   // rises in place (and is there for the aerial follow-up).
-  if (opts.launch) { target.airTime = 1.1; target.vx = 0; target.vy = -430; target.y -= 4; }
+  if (opts.launch) { target.airTime = 1.1; target.vx = 0; target.vy = -304; target.y -= 4; }
   if (target.hp <= 0) {
     // overkill from a multi-hit attack: the rest of its hits still land (and
     // show their numbers) before it dies
