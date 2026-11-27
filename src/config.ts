@@ -91,7 +91,7 @@ export const P = {
 /* ---------------- world / map ----------------
    The tower is taller than it is wide: a vertical climb of floors.
    All geometry snaps to a TILE-pixel grid so the world is tile based. */
-export const WORLD = { w: 320, h: 640 };
+export const WORLD = { w: 640, h: 640 };
 
 /* ---------------- areas ---------------- */
 /* The tower is divided into named regions, one per town block: floors 1-9
