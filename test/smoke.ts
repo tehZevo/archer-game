@@ -6,7 +6,7 @@ import { BAKED_TILES } from '../src/tilebaked';
 import { ATLAS_COLS, CELLS, pieces, SWAY_ROWS, topDeco } from '../src/tilebake';
 import { TILESETS, TOP_W, TOP_Y } from '../src/tileset';
 import { ART_GEN } from '../src/artsheets';
-import { archerShape, DIVE_PITCH, GRIDS, lookColours, PAL, pitch, recolourFrame, sheetRows, styled, type ArcherPose } from '../src/archer';
+import { archerShape, GRIDS, lookColours, PAL, recolourFrame, sheetRows, styled, type ArcherPose } from '../src/archer';
 import { BAKED_ARCHER } from '../src/archerbaked';
 import { DEFAULT_LOOK, LOOK_COUNTS, lookPalette, type Look } from '../src/look';
 import { hexRgb } from '../src/grid';
@@ -272,8 +272,7 @@ setKey('up', false);
   const wrong = looks.filter((look) => {
     const shape = archerShape(look.style, look.body), pal = { ...PAL, ...lookPalette(look) }, cols = lookColours(look);
     return (Object.keys(GRIDS) as ArcherPose[]).some((p) => GRIDS[p].some((rows0, f) => {
-      let rows = styled(rows0, p, look.style, look.body);
-      if (p === 'dive') rows = pitch(rows, DIVE_PITCH);
+      const rows = styled(rows0, p, look.style, look.body);
       const got = recolourFrame(shape[p][f], cols);
       return rows.some((r, y) => [...r].some((ch, x) => {
         const i = (y * got.w + x) * 4, want = pal[ch];
