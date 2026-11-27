@@ -39,3 +39,4 @@
 - (bug) Piercing Leap (`ground-e`) no longer makes you leap.
 - (bug) The upgraded W's (Skyward Assault, `ab`) effect is off-center. Make the player disappear while it casts, as Downpour (`air-e`) does, and shift the effect toward the player by half its width from where it sits now.
 - (design) Consider renaming all jobs.
+- Increase Tempest's (`r`) damage to 300% (`dmg1: 200` → `300`, config.ts:149).
