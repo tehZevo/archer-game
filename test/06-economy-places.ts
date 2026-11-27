@@ -103,7 +103,7 @@ import { JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage, seeded, 
     && new Set(TOWNS.map((t) => t.name)).size === TOWNS.length);
   check('paths are climbed one way: a town\'s ways up all lead to deeper towns', PATHS.every((p) => townDepth(p.to) > townDepth(p.from)));
   check('a fork leads into two different areas', TOWNS.every((t) => { const up = pathsFrom(t.id); return up.length < 2 || up[0].name !== up[1].name; }));
-  check('branches can end (a town with no way up)', TOWNS.some((t) => pathsFrom(t.id).length === 0 && townDepth(t.id) < 6));
+  check('branches can end short of the top tier (a town with no way up)', TOWNS.some((t) => pathsFrom(t.id).length === 0 && townDepth(t.id) < Math.max(...TOWNS.map((u) => townDepth(u.id)))));
   check('the last floor of a path is its end (the boss floor)', isPathEnd({ path: 'shore', floor: 3 }) && isPathEnd({ path: 'woods', floor: 5 }) && !isPathEnd({ path: 'woods', floor: 4 }) && !isPathEnd(START));
   check('a path ends in its town; a town leads up its leftmost path', placeKey(nextPlace({ path: 'shore', floor: 3 })) === 'driftwood'
     && placeKey(nextPlace({ path: 'shore', floor: 1 })) === 'shore-2' && placeKey(nextPlace({ town: 'driftwood' })) === 'woods-1');
@@ -114,10 +114,10 @@ import { JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage, seeded, 
   gotoPlace({ path: 'meadows', floor: 5 });
   check('the way into a town is labelled with its own name', game.floor.portal.label === 'Lanternhollow Town');
   check('the HUD place follows your path', placeName(game.floor.place) === 'Sunny Meadows');
-  gotoPlace({ town: 'sporehollow' });
+  gotoPlace({ town: 'gearholm' });
   check('a town at the end of a branch has only its way down', game.floor.portals.length === 1 && game.floor.portals[0].down === true);
   gotoPlace(nextPlace(game.floor.place));
-  check('nothing lies above the end of a branch (a warp past it stays in its town)', game.floor.town && placeName(game.floor.place) === 'Sporehollow Camp');
+  check('nothing lies above the end of a branch (a warp past it stays in its town)', game.floor.town && placeName(game.floor.place) === 'Gearholm City');
   release();
 }
 
