@@ -1,6 +1,5 @@
 # TODOs
 - (art) Dodge roll during held-Z needs a roll animation.
-- Bug: the C (copy JSON) action in the skill editor doesn't seem to work.
 - (art) Create art for the Bubble skill.
 - Bug: Tempest (R) only hits once — `tempest()` (skillcasts.ts:188) fires a single `damage()` per target and ignores `hits1: 8`. Wrap the hit in `eachShot(shotCount(r), …)` like Cyclone Sweep / Downpour so all 8 hits (×2 with Twin Echoes) land.
 - Increase the time Z must be held before rapid fire (Gale Stream) kicks in — it should wait for the full use time before starting.
