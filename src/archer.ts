@@ -164,6 +164,30 @@ const DIVE = [
 ];
 const DIVE_FLUTTER: [number, number, string][] = [[0, 0, '.ooo'], [1, 0, '.obbbbo'], [2, 0, '.obbbbbo'], [3, 0, '..obllo']];
 
+// Dodge roll (a Jump mid-Gale Stream): tucked into a ball, knees to chest
+// and head down, the cape wrapped round. A 16x16 frame, centred on the
+// body's middle like every frame; it turns a quarter turn per frame.
+const ROLL = [
+  '................',
+  '.....oooooo.....',
+  '....ohhhhhhoo...',
+  '...ohhgggghhho..',
+  '..ohhhhhhhHsso..',
+  '..ohhhhhhHsseo..',
+  '.oCchhhhHsssso..',
+  '.oCcohhoSSSoo...',
+  '.oCcctttttssoo..',
+  '.oCcTttgggsslo..',
+  '.oCcTtttlllllbo.',
+  '..oCcTtlllllbbo.',
+  '..oCcoollllbbbo.',
+  '...oCCooooooooo.',
+  '....ooo.........',
+  '................',
+];
+/** A square grid turned a quarter turn anticlockwise (whole pixels, nothing lost). */
+const quarterTurn = (g: string[]): string[] => g.map((_, y) => g.map((r) => r[r.length - 1 - y]).join(''));
+
 /** Every other pixel gone: the Tempest's shimmer as you blink out. */
 const dither = (g: string[], odd: number): string[] =>
   g.map((r, y) => [...r].map((ch, x) => ((x + y + odd) % 2 ? '.' : ch)).join(''));
@@ -217,7 +241,7 @@ const PRONE = [
   '..ooo.ooooooooooooooooo.',
 ];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish' | 'fall';
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish' | 'fall' | 'roll';
 
 const RUSH = ['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY];
 // walk: the body sinks a pixel on the long stride and the cape's hem swings
@@ -244,11 +268,13 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   // the release frame breaking up into a shimmer (render.ts fades it out)
   vanish: [dither(withRows(IDLE, 12, SHOOT_BODY), 0), dither(withRows(IDLE, 12, SHOOT_BODY), 1)],
   fall: [poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE), poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE2)],
+  // rolling backward (away from your facing): the ball turns anticlockwise
+  roll: [ROLL, quarterTurn(ROLL), quarterTurn(quarterTurn(ROLL)), quarterTurn(quarterTurn(quarterTurn(ROLL)))],
 };
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, barrage: 1, prone: 1, spin: 1, dive: 10, vanish: 20, fall: 7,
+  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, barrage: 1, prone: 1, spin: 1, dive: 10, vanish: 20, fall: 7, roll: 12,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;
@@ -327,8 +353,8 @@ const SWEPT_CLIMB: Cell[][] = [
 
 /** A frame's grid with a hair style and body type applied. */
 export function styled(grid: string[], pose: ArcherPose, style: number, body = 0): string[] {
-  // lying flat or diving head-first: the head's drawn turned, so the side-view styles don't map onto it
-  if (pose === 'prone' || pose === 'dive') return grid;
+  // lying flat, diving or rolling: the head's drawn turned, so the side-view styles don't map onto it
+  if (pose === 'prone' || pose === 'dive' || pose === 'roll') return grid;
   const g = grid.slice();
   const put = (row: number, col: number, s: string, only: string): void => {
     if (!g[row]) return;
