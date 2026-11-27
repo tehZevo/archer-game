@@ -254,14 +254,14 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
 }
 {
-  // Off a Skyward Assault hover: the Q slot (Meteor Dive) isn't a link off the
-  // assault (only the ground Q is), so a press during the hover is dropped.
+  // Off a Skyward Assault hover: the Q slot (Meteor Dive) is a link off the
+  // assault, so a press during the hover is buffered and fires as it ends.
   arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-q'] = true;
   dummy(130);
   tap('q'); step(14); tap('w'); step(3);
+  check('the assault links into the Dive', linkable('air-q') && !linkHeld('air-q') && player.hang.t > 0, `hangT ${player.hang.t.toFixed(2)}`);
   tap('q'); // Q's air form (Meteor Dive) pressed during the hover
-  check('Meteor Dive pressed during the hover is dropped (not a link off it)', player.casting.queued === null && player.hang.t > 0,
-    `queued ${player.casting.queued} hangT ${player.hang.t.toFixed(2)}`);
+  check('...the Dive fires out of the hover', player.cast === 'dive' && player.linkFrom === 'air-q', `cast ${player.cast} from ${player.linkFrom}`);
 }
 
 {
