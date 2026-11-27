@@ -422,6 +422,9 @@ export interface DamageOpts {
   /** More hits of the same attack are still to land on this target: if this
    *  one kills it, its death waits for them (see Mob.dying). */
   more?: boolean;
+  /** The first hit of a cast: its number starts a fresh stack at the bottom
+   *  (each cast owns its stack, so skills don't merge into one column). */
+  first?: boolean;
 }
 
 /** A warp pad that sends the player to the next floor (or home on a town). */

@@ -81,7 +81,7 @@ export function updateStatus(b: Bearer, dt: number, mob?: Mob): void {
         const d = Math.min(Math.max(0, player.hp - 1), Math.max(1, Math.round(player.hpMax * rate.player * s.stacks)));
         if (d > 0) {
           player.hp -= d;
-          game.dmgNums.push({ x: player.x, y: player.y - 14, v: d, t: 0.8, crit: false, vy: -40, col: DOT_COL[s.kind]! });
+          game.dmgNums.push({ x: player.x, y: player.y - 14, v: d, t: 0.8, crit: false, vy: -12, col: DOT_COL[s.kind]! });
         }
       }
     }
