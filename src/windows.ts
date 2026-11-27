@@ -9,6 +9,7 @@ import { dev, devStops } from './dev';
 import { stylist, stylistKey } from './stylist';
 import { board, boardInput } from './quests';
 import { confirmInput, confirmUi } from './confirm';
+import { deathInput, deathUi } from './deathui';
 import { openSettings, settingsKey, settingsUi } from './settings';
 import { closeLinkHelp, linkHelp, linkHelpKey, openLinkHelp } from './linkhelp';
 import { openSkillEditor, skillEditor, skillEditorInput } from './skilleditor';
@@ -28,6 +29,7 @@ export function windowInput(dt: number): boolean {
   if (stylist.open) { stylistInput(); return true; }
   if (board.open) { boardInput(); return true; }
   if (confirmUi.open) { confirmInput(); return true; }
+  if (deathUi.open) { deathInput(); return true; }
   // the settings window (from the Esc menu) sits over the paused game
   if (settingsUi.open) { settingsInput(); return true; }
   if (achUi.open) { achInput(); return true; }
@@ -52,7 +54,7 @@ export function windowInput(dt: number): boolean {
 /** True while any of those windows is open (so Enter belongs to it, not the chat line). */
 export function windowOpen(): boolean {
   return shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open
-    || settingsUi.open || achUi.open || linkHelp.open || skillScreen.open || dev.open || skillEditor.open || !!game.pause;
+    || deathUi.open || settingsUi.open || achUi.open || linkHelp.open || skillScreen.open || dev.open || skillEditor.open || !!game.pause;
 }
 
 /** Z, Enter or Space: confirm in any window. */

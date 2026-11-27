@@ -5,7 +5,6 @@
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
 - (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
-- When you die, show a dialog to return to the previous town; in dev mode, also allow reviving in place.
 - The upgraded ground W (Skyward Assault, `ab`) should chain into Dive (`air-q`) — add `air-q` to its `linksInto` (config.ts:154).
 - Increase the miss chance both ways (player→mob and mob→player) to 10% per level.
 - Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
