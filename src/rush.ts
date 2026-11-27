@@ -109,7 +109,7 @@ export function groundRush(inPlace: boolean, blitz: boolean): void {
 
 /** Set up the strike that lands when the slide ends (see endRush), and return it. */
 function armStrike(inPlace: boolean, key: SkillKey, fx: FxKind = 'rush'): () => void {
-  if (fx === 'blitzRush') sfx.blitz(); else sfx.rushToss();
+  if (key === 'eb') sfx.blitz(); else sfx.rushToss();
   const face = player.face;
   rushStrike = (): void => {
     rushStrike = null;

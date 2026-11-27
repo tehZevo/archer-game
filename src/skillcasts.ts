@@ -7,7 +7,7 @@ import { netShot } from './net';
 import { shotCount } from './progress';
 import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
-import { delayTime, useTime } from './castrules';
+import { useTime } from './castrules';
 import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
 
 import type { SkillKey, SkillRank } from './types';
@@ -222,9 +222,9 @@ function skyfallVolley(r: SkillRank): void {
   const tg = hitbox(player.x + face * 30, player.y - 60, 110, 200).slice(0, r.targets);
   // the volley rains onto each target, or onto the ground just ahead if there are none
   fxUnder('rain', tg, player.x + face * 40, player.y + player.h, 0.4);
-  // the first arrow pops the enemy airborne, the rest of the volley rains on it
-  tg.forEach((m) => eachShot(shotCount(r), 0, (more, h) => {
-    if (game.mobs.includes(m)) damage(m, r.dmg, { launch: h === 0, more, fx: 'rainHit' });
+  // the volley rains on each target where it stands (only the Q tosses)
+  tg.forEach((m) => eachShot(shotCount(r), 0, (more) => {
+    if (game.mobs.includes(m)) damage(m, r.dmg, { more, fx: 'rainHit' });
   }));
 }
 
@@ -236,7 +236,7 @@ function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
   sfx.assaultRise();
   hitbox(player.x + player.face * 30, player.y - 60, 110, 200)
-    .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
+    .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'skyHit' }));
   const from = player.y + player.h / 2;
   // always the same rise (scaling it with the launched enemies' height sent
   // you ~3x higher off the top of their arc)
@@ -244,8 +244,8 @@ function skyAssault(r: SkillRank): void {
   player.vx = 0; player.vy = 0; player.onGround = false;
   // a tall blue slash carving up from where she left to where she hangs
   game.fx.push({ type: 'assaultRise', x: player.x, y: from, t: FX_DUR.assaultRise, face: player.face });
-  // hold in the air for the cast's recovery, not a fixed barrage duration
-  player.hang.t = delayTime('ab') * 2; player.hang.hits = r.hits; player.hang.hitT = 0;
+  // hold in the air for a fixed hover (its use/delay timings set the cast lock)
+  player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
   player.hang.dmg = r.dmg; player.hang.targets = r.targets;
 }
 

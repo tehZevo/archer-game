@@ -174,7 +174,7 @@ import { capAdd, NUM_GAP, P, seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_M
 {
   arena(25); player.ranks.r = true;
   const a = dummy(130), b = dummy(170);
-  tap('r'); step(Math.ceil((0.7 + 8 * NUM_GAP) / P.STEP)); // the storm's 8 hits all land
+  tap('r'); step(Math.ceil((0.7 + 6 * NUM_GAP) / P.STEP)); // the storm's 6 hits all land
   check('Tempest hits every enemy caught in the sweep', a.hp < 1e6 && b.hp < 1e6);
   const hp = a.hp; player.casting.useT = 0; tap('r'); step(5);
   check('Tempest is on a long cooldown', a.hp === hp && player.cd.r > 4);
@@ -294,7 +294,7 @@ check('new poses go on the end of the networked list (older clients read them as
   arena(60); player.ranks.r = true;
   const a = dummy(130);
   tap('r');
-  step(Math.ceil((0.7 + 8 * NUM_GAP) / P.STEP)); // the whole storm plays out
-  // 8 hits at 200% base damage each; one hit would be ~1/8 of this
-  check('the storm lands all 8 hits on a swept enemy', a.hp < 1e6 - 8 * 0.9, `${1e6 - a.hp}`);
+  step(Math.ceil((0.7 + 6 * NUM_GAP) / P.STEP)); // the whole storm plays out
+  // 6 hits at 300% base damage each; one hit would be ~1/6 of this
+  check('the storm lands all 6 hits on a swept enemy', a.hp < 1e6 - 6 * 0.9, `${1e6 - a.hp}`);
 }
