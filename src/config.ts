@@ -69,6 +69,10 @@ export const P = {
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_HOP: 121.5,   // px/s bump added to your upward velocity (10% under 135)
   PLUNGE_MAX: 160,     // ...capped so vy never exceeds -160 (upward); faster speeds are left untouched
+  EMBER_RING: 32,      // Ember Rain: how far above your feet its ring hangs (its bolts fire from there), px
+  EMBER_BURN_DUR: 4,   // Ember Rain: seconds the burn it lights lasts (each cast restarts it)
+  EMBER_BURN_DOT: 0.4, // ...damage per second per stack, as a fraction of your attack
+  EMBER_BURN_STACKS: 1, // ...stacks each cast adds (capped at the status MAX_STACKS)
   // Piercing Leap: E's ground form. Spikes erupt around you and throw you up.
   SPIKE_CD: 8,         // s (a long cooldown, shortened by linked skills)
   SPIKE_DMG: 200,      // dmg driven into each enemy caught in the burst
@@ -146,7 +150,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        desc: 'Mid-air W: a 360-degree sweep around you' },
   'air-e': { key: 'air-e', linksInto: ['air-w', 'air-q', 'r', 'air-e', 'z', 's'], name: 'Ember Rain', tag: 'Aerial', job: 3, minLevel: 30,
        cd: 0, use: 0.4, delay: 0.2, mp1: 140, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
-       desc: 'Mid-air E: rain arrows straight down onto enemies beneath you' },
+       desc: 'Mid-air E: rain burning bolts down onto enemies beneath you, setting them alight' },
   r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e', 'z', 's'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,
        cd: 10.0, use: 0.7, mp1: 400, dmg1: 300, hits1: 6, targets1: 8,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
@@ -317,7 +321,7 @@ export const FX_DUR: Record<Fx['type'], number> = {
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
-  volleyFlare: 0.25, tornado: 0.4, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
+  emberHalo: 0.4, emberFan: 0.4, emberFlare: 0.3, burning: 0.5, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
   tossTrail: 0.3, blitzTrail: 0.35,
   galeMuzzle: 0.15, galeShot: 0.12, galeHit: 0.24,
   assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.4, assaultHit: 0.24,

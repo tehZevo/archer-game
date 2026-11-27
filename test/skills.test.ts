@@ -10,6 +10,7 @@ import { localPose } from '../src/net';
 import { cast } from '../src/skills';
 import { game, gotoPlace, player, READY_FLASH, USE_FLASH } from '../src/state';
 import { surfaceYAt } from '../src/surface';
+import { stacksOf } from '../src/status';
 
 /** Rush Toss with Down held: the slide that opens the W links. */
 function rushToss(): void {
@@ -536,6 +537,29 @@ describe('E: Piercing Leap on the ground, Ember Rain in the air', () => {
 
     step(30);
     expect(player.onGround).toBe(true);
+  });
+
+  it('Ember Rain sets the enemy beneath it burning, not the one beside it', () => {
+    setup();
+    const under = dummy(100), beside = dummy(170);
+    tap('c');
+    step(8);
+    tap('e');
+    step(1);
+    expect(stacksOf(under, 'burn')).toBe(P.EMBER_BURN_STACKS);
+    expect(stacksOf(beside, 'burn')).toBe(0);
+  });
+
+  it("Ember Rain's burn lasts its own time and ticks at its own rate", () => {
+    setup();
+    const under = dummy(100);
+    tap('c');
+    step(8);
+    tap('e');
+    step(1);
+    const burn = under.effects!.find((e) => e.kind === 'burn')!;
+    expect(burn.t).toBeGreaterThan(P.EMBER_BURN_DUR - 0.1);
+    expect(burn.dot).toBe(P.EMBER_BURN_DOT);
   });
 
   it('the two forms cool down separately, and the bar shows the form you are in', () => {

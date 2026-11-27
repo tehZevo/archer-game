@@ -9,6 +9,9 @@ export interface Status {
   stacks: number;
   /** Seconds left (each new stack restarts it). */
   t: number;
+  /** Damage per second per stack on an enemy, as a fraction of your attack,
+   *  when it isn't the kind's usual rate (Ember Rain's burn). */
+  dot?: number;
   /** Seconds to the next damage tick. */
   tick: number;
 }
@@ -382,7 +385,7 @@ export interface Shot {
 /** Effects are all baked animations (see fxsprites.ts). */
 export type FxKind = 'tracer' | 'spikes' | 'tempest' | 'spin' | 'levelUp' | 'muzzle' | 'hit' | 'crit' | 'rush' | 'swoosh' | 'rain' | 'rainHit' | 'stunHit' | 'spirit'
   | 'skySwoosh' | 'diveHit' | 'spikeHit' | 'tempestHit' | 'skyHit' | 'spinHit'
-  | 'volleyFlare' | 'tornado' | 'climbRise' | 'diveWindup' | 'diveLand' | 'tossTrail' | 'blitzTrail'
+  | 'emberHalo' | 'emberFan' | 'emberFlare' | 'burning' | 'climbRise' | 'diveWindup' | 'diveLand' | 'tossTrail' | 'blitzTrail'
   | 'galeMuzzle' | 'galeShot' | 'galeHit' | 'assaultRise' | 'assaultBang' | 'assaultDrop' | 'assaultHit';
 /** The looping effect on the archer for a ground rush's slide (see drawRushAura). */
 export type RushLook = 'tossRush' | 'blitzRush';

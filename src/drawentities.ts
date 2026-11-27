@@ -20,7 +20,7 @@ import { clamp } from './util';
 import { BOSS, windingUp } from './boss';
 import { text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
-import { STATUS } from './status';
+import { STATUS, stacksOf } from './status';
 import type { Mob } from './types';
 
 /* Everyone in the world: enemies (and their corpses), the archer sprite,
@@ -143,6 +143,8 @@ export function drawMob(m: Mob): void {
     ctx.fillStyle = pct > 0.5 ? '#6ee86e' : pct > 0.25 ? '#ffd166' : '#ff6b6b';
     ctx.fillRect(bx + 1, by + 1, fill, 2);
   }
+  // a burning enemy has little flames licking up over it while it lasts
+  if (stacksOf(m, 'burn')) drawLoop('burning', m.x, m.y + m.h / 2, performance.now() / 1000, 8);
   // status effects: a coloured pip per effect (one per stack) over its head
   if (m.effects?.length) {
     let px = Math.round(m.x) - 1 - (m.effects.reduce((n, e) => n + e.stacks, 0) - 1) * 2;

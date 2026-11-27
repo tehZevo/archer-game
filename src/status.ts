@@ -42,12 +42,21 @@ export const areaStatus = (): StatusKind | undefined =>
 
 type Bearer = { effects?: Status[] };
 
-/** Add a stack of an effect (or start it), restarting its timer. */
-export function applyStatus(b: Bearer, kind: StatusKind): void {
+/** A dose that isn't the kind's usual one (Ember Rain's burn): its stacks,
+ *  how long it lasts, and its damage rate (see Status.dot). */
+export interface Dose { stacks?: number; dur?: number; dot?: number }
+
+/** Add a stack of an effect (or start it), restarting its timer. A longer
+ *  dose already running keeps its time, and a custom rate sticks. */
+export function applyStatus(b: Bearer, kind: StatusKind, dose: Dose = {}): void {
   const list = (b.effects ??= []);
+  const add = dose.stacks ?? 1, dur = dose.dur ?? STATUS[kind].dur;
   const s = list.find((e) => e.kind === kind);
-  if (s) { s.stacks = Math.min(MAX_STACKS, s.stacks + 1); s.t = STATUS[kind].dur; }
-  else list.push({ kind, stacks: 1, t: STATUS[kind].dur, tick: 1 });
+  if (s) {
+    s.stacks = Math.min(MAX_STACKS, s.stacks + add);
+    s.t = Math.max(s.t, dur);
+    if (dose.dot !== undefined) s.dot = dose.dot;
+  } else list.push({ kind, stacks: Math.min(MAX_STACKS, add), t: dur, tick: 1, dot: dose.dot });
 }
 
 /** Roll the area's element onto someone who was just hit. */
@@ -73,7 +82,7 @@ export function updateStatus(b: Bearer, dt: number, mob?: Mob): void {
       s.tick += 1;
       const rate = DOT[s.kind];
       if (mob) {
-        const d = Math.max(1, Math.round(player.war * rate.mob * s.stacks));
+        const d = Math.max(1, Math.round(player.war * (s.dot ?? rate.mob) * s.stacks));
         mob.hp -= d; mob.barT = Math.max(mob.barT, 1);
         game.dmgNums.push({ x: mob.x, y: mob.y - 8, v: d, t: 0.8, crit: false, vy: -12, col: DOT_COL[s.kind]! });
         if (mob.hp <= 0) { killMob(mob); return; }
