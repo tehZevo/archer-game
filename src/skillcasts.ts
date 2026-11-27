@@ -134,7 +134,10 @@ function spikeLift(r: SkillRank): void {
   hitbox(x0 + face * P.SPIKE_REACH / 2, player.y + player.h / 2, P.SPIKE_REACH, 64)
     .slice(0, r.targets)
     .forEach((m) => later(spikeLands(Math.abs(m.x - x0)), () => {
-      if (game.mobs.includes(m)) damage(m, P.SPIKE_DMG, { fx: 'spikeHit' });
+      // each spike drives in the skill's full hit count (2, doubled by Twin Echoes)
+      if (game.mobs.includes(m)) eachShot(shotCount(r), 0, (more) => {
+        if (game.mobs.includes(m)) damage(m, r.dmg, { more, fx: 'spikeHit' });
+      });
     }));
   // The launch is a fixed lift off the floor, not a stack on top of a jump:
   // cast on the way up, you keep whatever the jump has already given you.
@@ -217,7 +220,10 @@ function skyfallVolley(r: SkillRank): void {
   const tg = hitbox(player.x + face * 30, player.y + player.h / 2, 110, 80).slice(0, r.targets);
   // the volley rains onto each target, or onto the ground just ahead if there are none
   fxUnder('rain', tg, player.x + face * 40, player.y + player.h, 0.4);
-  tg.forEach((m) => damage(m, r.dmg, { launch: true, fx: 'rainHit' }));
+  // the first arrow pops the enemy airborne, the rest of the volley rains on it
+  tg.forEach((m) => eachShot(shotCount(r), 0, (more, h) => {
+    if (game.mobs.includes(m)) damage(m, r.dmg, { launch: h === 0, more, fx: 'rainHit' });
+  }));
 }
 
 /** Skyward Assault: knock the enemies ahead into the air and warp straight up
