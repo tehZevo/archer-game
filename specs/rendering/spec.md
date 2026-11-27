@@ -13,6 +13,7 @@ In-game objects, effects, and decor sprites are drawn at their natural size and 
 ## Sprites
 
 - All sprites are authored on a 16×16 grid (the tile unit), built procedurally once at boot as tiny canvases with 1px blocks and drawn with `drawImage`.
+- **Every animation is fully sprited.** Each animation — walk, idle, hurt, death, and every other pose — is a set of dedicated authored frames baked to a sheet, not a body assembled from parts (head/torso/limbs) composed at runtime. A new animation means authoring its frames, not writing a part-drawing routine.
 - Tiles (grass/dirt, slope tops) are 16×16; each slope tile is one half of a 2:1 ramp, a full 16×16 cell whose surface rises half a tile.
 - Ropes and ladders are 16×16 sprites tiled vertically between their endpoints; the sprite is centred on its tile (x at the tile centre, snapped to the 16px grid).
 - Skill icons have one canonical size (`ICON`, 10×10: the glyph itself over a dark tile, no frame) and are never scaled: every screen (skill bar, skills screen, link help, menus) draws them 1:1 at that size, and layouts are built around it.
