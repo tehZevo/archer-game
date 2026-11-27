@@ -6,6 +6,7 @@ import { PORTAL_FRAMES, portalGrid } from './portalart';
 import { boardGrid, NPC_FRAMES, npcGrid, type NpcLook } from './npcart';
 import { PET_FRAMES, PET_LIST, petGrid } from './petart';
 import { BAKED_ART } from './artbaked';
+import { panelGrid } from './hudart';
 import type { DecorKind } from './types';
 
 /* ============================================================
@@ -17,6 +18,7 @@ import type { DecorKind } from './types';
      portal/<frame>           the warp pad (portalart.ts)
      npc/<kind>/<frame>       town NPCs (npcart.ts), and npc/board
      pet/<kind>/<frame>       the pets (petart.ts)
+     hud/panel                the panel behind the bottom bars (hudart.ts)
    baked from those painters by `npm run bake`. art(key) is the loaded
    PNG, or the painter's output until it has loaded.
    ============================================================ */
@@ -34,6 +36,7 @@ function paint(w: number, h: number, draw: (p: (x: number, y: number, col: strin
 export const ART_GEN: Record<string, () => Grid> = {
   ...Object.fromEntries(Array.from({ length: PORTAL_FRAMES }, (_, f) => [`portal/${f}`, () => portalGrid(f)])),
   'npc/board': boardGrid,
+  'hud/panel': panelGrid,
   ...Object.fromEntries((['shop', 'stylist', 'trainer', 'pets', 'sage'] as NpcLook[]).flatMap((k) =>
     Array.from({ length: NPC_FRAMES }, (_, f) => [`npc/${k}/${f}`, () => npcGrid(k, f)]))),
   ...Object.fromEntries(PET_LIST.flatMap((k) =>
