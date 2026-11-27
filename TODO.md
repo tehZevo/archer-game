@@ -8,4 +8,9 @@
 - Replace the skills list in the ESC (pause) menu with a button that opens the skills menu.
 - Move some maps up from tiers 4 and 5 to thin them out, creating new tiers 6 and 7. The purpose is to add more levels to the game: the new tiers extend the level curve past where tier 5 ends now (each tier higher-level than the last), so mobs and level ranges keep climbing rather than tiers 4-5 being split across their current range.
 - In the K (skills) screen, only show the skill tabs you currently have access to (hide locked tiers).
+- Bug: the tombstone effect doesn't show on player death — you instantly respawn at the current floor (the tombstone/ghost animation is skipped).
 - (art) Make skill icons a single canonical 10x10 (the current 10x10 glyph art drawn 1:1, no 12x12 frame) and use it everywhere (HUD skill bar, skills screen, link help, menus). Remove the 12x12 icon size entirely, and update `specs/rendering/spec.md` (it currently says `ICON` is 12x12).
+- Spec: never rotate or scale in-game objects, effects, or decor sprites (exceptions: non-skill-icon HUD elements).
+- Dodge roll during held-Z should not have a rush effect.
+- (art) Dodge roll during held-Z needs a roll animation.
+- Character should properly turn around after a dodge roll from held-Z.
