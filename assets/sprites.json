@@ -6,6 +6,7 @@
     "arrow": {"file":"fx/arrow.png","w":26,"h":7,"frames":1,"x":24,"y":3.5},
     "spikes": {"file":"fx/spikes.png","w":88,"h":96,"frames":10,"x":4,"y":92},
     "tempest": {"file":"fx/tempest.png","w":171,"h":96,"frames":13,"x":50,"y":93},
+    "tempestAir": {"file":"fx/tempestAir.png","w":171,"h":120,"frames":13,"x":50,"y":105},
     "spin": {"file":"fx/spin.png","w":98,"h":78,"frames":8,"x":49,"y":51},
     "cyclone": {"file":"fx/cyclone.png","w":36,"h":40,"frames":8,"x":18,"y":20},
     "levelUp": {"file":"fx/levelUp.png","w":44,"h":70,"frames":10,"x":22,"y":66},

@@ -141,15 +141,21 @@ function spikesAnim(): FxSheet {
 /** Tempest: a white-hot whip of energy lashes out of you and ties a
  *  trefoil knot across the whole area: it leaps forward and up, curls over
  *  the top lobe and drops back through its own first leg, swings round the
- *  low lobe far ahead (striking the ground), cuts back across the middle
- *  and loops round the lobe behind you, home. Every lobe turns the same way.
- *  The line itself stays thin and bright; behind its head it bursts into a
- *  ragged pink flame fringe, and long red needles stab down from it to the
- *  ground, filling the space beneath. A lavender burst splashes up where it
- *  strikes. Faces right (each lobe turning counterclockwise; clockwise once
- *  mirrored to face left); origin at your feet. */
-function tempestAnim(): FxSheet {
-  const W = 171, H = 96, OX = 50, by = H - 3, n = 13; // 16px clear at each side for the fringe
+ *  low lobe far ahead, cuts back across the middle and loops round the lobe
+ *  behind you, home. Every lobe turns the same way. The line itself stays
+ *  thin and bright; behind its head it bursts into a ragged pink flame
+ *  fringe, and red needles shoot down out of it. On the ground (air false)
+ *  the needles stab all the way down to the floor and the low lobe strikes
+ *  it in a lavender splash; in midair (air true) they are short shards
+ *  falling free, the splash is a full ring in the air, and the sheet has
+ *  clear room on every side so nothing is cut off. Faces right (each lobe
+ *  turning counterclockwise; clockwise once mirrored to face left); origin
+ *  at your feet. */
+function tempestAnim(air: boolean): FxSheet {
+  // in midair the knot sits DY down a taller sheet, with clear room on every
+  // side, and your feet just under its start; on the ground your feet (and
+  // the floor) are at the sheet's bottom
+  const W = 171, H = air ? 120 : 96, OX = 50, DY = air ? 12 : 0, FEET = air ? 83 + DY + 10 : H - 3, n = 13;
   // the knot, as points a Catmull-Rom spline runs through: the leap (0-4),
   // the top lobe (4-10), the low lobe far ahead (10-15), back across the
   // middle (15-18), the lobe behind you (18-22)
@@ -157,7 +163,7 @@ function tempestAnim(): FxSheet {
     [OX, 83], [73, 73], [96, 54], [110, 31], [118, 13], [110, 7], [94, 8], [88, 23],
     [92, 39], [99, 56], [110, 72], [129, 86], [147, 77], [155, 59], [148, 42], [131, 34],
     [105, 27], [78, 25], [45, 28], [23, 39], [16, 56], [24, 73], [40, 83],
-  ];
+  ].map(([x, y]) => [x, y + DY] as [number, number]);
   const END = P.length - 1;
   const path = (u: number): [number, number] => {
     const i = Math.max(0, Math.min(END - 1, Math.floor(u))), t = Math.max(0, Math.min(1, u - i));
@@ -171,26 +177,40 @@ function tempestAnim(): FxSheet {
   const HEAD = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, END, END, END];
   const TAIL = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 13, 16, 19.5];
   const frameAt = (u: number): number => HEAD.findIndex((h) => h >= u);
-  // the needles, stabbed down from the whip as its head passes
-  const R0 = rng(61), needles: { u: number; dx: number; reach: number; ramp: RampName }[] = [];
+  // the needles, shot down out of the whip as its head passes: on the
+  // ground they stab down to the floor (reaching part of the way up from
+  // it); in midair they are shards falling free (len long, falling v a frame)
+  const R0 = rng(61), needles: { u: number; dx: number; reach: number; len: number; v: number; ramp: RampName }[] = [];
   const stab = (u0: number, u1: number, count: number): void => {
     for (let i = 0; i < count; i++) needles.push({
       u: u0 + (u1 - u0) * ((i + R0()) / count), dx: -(0.04 + R0() * 0.18), // all leaning forward at the top
       reach: 0.55 + R0() * 0.45, ramp: (['red', 'red', 'orange', 'pink'] as RampName[])[Math.floor(R0() * 4)],
+      len: air ? 9 + R0() * 10 : 0, v: air ? 4 + R0() * 3 : 0, // (drawn only in midair; the ground look keeps its own random draws)
     });
   };
   stab(1, 21, 72);
-  const burst = (L: Light, x: number, age: number, R: () => number): void => {
+  // the lavender burst where the low lobe whips round: a full ring in the
+  // air, or a splash up off the floor
+  const burst = (L: Light, x: number, y: number, age: number, R: () => number): void => {
     if (age < 0 || age > 4) return;
     const g = age / 4, I = 1.4 * (1 - g * 0.6);
-    L.ring('purple', x, by, 7 + g * 14, 3 + g * 6, 1.8 - g * 0.6, I, -Math.PI, 0);
-    for (let i = 0; i < 9; i++) {
-      const a = -Math.PI * (0.08 + 0.84 * R()), d = 6 + g * 10 + R() * 8;
-      L.line('purple', x, by - 1, x + Math.cos(a) * d, by - 1 + Math.sin(a) * d * 1.3, 1.8, 0.2, I);
+    if (!air) {
+      L.ring('purple', x, FEET, 7 + g * 14, 3 + g * 6, 1.8 - g * 0.6, I, -Math.PI, 0);
+      for (let i = 0; i < 9; i++) {
+        const a = -Math.PI * (0.08 + 0.84 * R()), d = 6 + g * 10 + R() * 8;
+        L.line('purple', x, FEET - 1, x + Math.cos(a) * d, FEET - 1 + Math.sin(a) * d * 1.3, 1.8, 0.2, I);
+      }
+      if (age < 2) L.disc('purple', x, FEET - 2, 5 - age * 2, 1.5);
+      return;
     }
-    if (age < 2) L.disc('purple', x, by - 2, 5 - age * 2, 1.5);
+    L.ring('purple', x, y, 6 + g * 10, 4 + g * 7, 1.8 - g * 0.6, I);
+    for (let i = 0; i < 10; i++) {
+      const a = Math.PI * 2 * (i + R()) / 10, d = 5 + g * 8 + R() * 6;
+      L.line('purple', x, y, x + Math.cos(a) * d, y + Math.sin(a) * d * 0.8, 1.6, 0.2, I);
+    }
+    if (age < 2) L.disc('purple', x, y, 4 - age * 1.5, 1.5);
   };
-  return anim(W, H, OX, by, n, (L, f) => {
+  return anim(W, H, OX, FEET, n, (L, f) => {
     const R = rng(611 + f), head = HEAD[f], tail = TAIL[f];
     const STEPS = Math.ceil((head - tail) * 12);
     for (let k = 0; k < STEPS; k++) {
@@ -222,17 +242,28 @@ function tempestAnim(): FxSheet {
       L.disc('pink', hx, hy, 2.2, 1.8);
       L.spark('pink', hx, hy, 1.1, true);
     }
-    // the needles: stabbed down to the ground in the frame the head passes,
-    // lingering a few frames as they fade
+    // the needles: each shot down from where the head passed, lingering a
+    // few frames as they fade
     for (const nd of needles) {
       const at = frameAt(nd.u), age = f - at;
       if (at < 0 || age < 0 || age > 4) continue;
-      const [sx, sy] = path(nd.u), span = by - sy - 4;
-      if (span < 6) continue;
-      const len = span * nd.reach * (age === 0 ? 0.6 : 1), top = by - len, I = age < 2 ? 1.3 : 1.3 * (1 - (age - 1) / 4);
-      L.line(nd.ramp, sx + (top - sy) * nd.dx, top, sx + (by - sy) * nd.dx, by, 0.2, 0.9, I);
+      if (!air) {
+        // stabbed down to the floor
+        const [sx, sy] = path(nd.u), span = FEET - sy - 4;
+        if (span < 6) continue;
+        const len = span * nd.reach * (age === 0 ? 0.6 : 1), top = FEET - len, I = age < 2 ? 1.3 : 1.3 * (1 - (age - 1) / 4);
+        L.line(nd.ramp, sx + (top - sy) * nd.dx, top, sx + (FEET - sy) * nd.dx, FEET, 0.2, 0.9, I);
+        continue;
+      }
+      // falling free, tapered to a point at both ends
+      const [sx, sy] = path(nd.u), top = sy + 2 + age * nd.v;
+      const tip = Math.min(H - 5, top + nd.len * (age === 0 ? 0.6 : 1)), mid = (top + tip) / 2;
+      if (tip - top < 3) continue;
+      const I = age < 2 ? 1.3 : 1.3 * (1 - (age - 1) / 4), xAt = (y: number): number => sx + (y - sy) * nd.dx;
+      L.line(nd.ramp, xAt(top), top, xAt(mid), mid, 0.2, 0.8, I);
+      L.line(nd.ramp, xAt(mid), mid, xAt(tip), tip, 0.8, 0.2, I);
     }
-    burst(L, P[11][0], f - frameAt(11), R);
+    burst(L, P[11][0], P[11][1], f - frameAt(11), R);
   });
 }
 
@@ -796,7 +827,8 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   muzzle: () => muzzleAnim(),
   arrow: () => arrowAnim(),
   spikes: () => spikesAnim(),
-  tempest: () => tempestAnim(),
+  tempest: () => tempestAnim(false),
+  tempestAir: () => tempestAnim(true),
   spin: () => spinAnim(),
   cyclone: () => cycloneAnim(),
   levelUp: () => levelUpAnim(),
