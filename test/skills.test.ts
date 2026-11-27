@@ -1,13 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { arena, dummy, ground, landLeap, step, tap } from './helpers';
-import { FX_DUR, P } from '../src/config';
+import { afterEach, describe, expect, it } from 'vitest';
+import { arena, climb, dummy, ground, landLeap, release, step, tap } from './helpers';
+import { FX_DUR, P, SKILLS, startsLearned } from '../src/config';
 import { setKey } from '../src/input';
 import { linkable, linkHeld } from '../src/links';
 import { NUM_GAP } from '../src/combat';
 import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
-import { activeSkill } from '../src/progress';
+import { activeSkill, skillRows, spendSkill } from '../src/progress';
 import { cast } from '../src/skills';
-import { game, player, READY_FLASH } from '../src/state';
+import { game, gotoPlace, player, READY_FLASH } from '../src/state';
+import { surfaceYAt } from '../src/surface';
 
 /** Rush Toss with Down held: the slide that opens the W links. */
 function rushToss(): void {
@@ -806,5 +807,140 @@ describe('skill effects', () => {
       }
     }
     expect([...bad]).toEqual([]);
+  });
+});
+
+describe('Rush Toss carrying enemies', () => {
+  it('hits 6 enemies at most', () => {
+    arena(1);
+    player.ranks['ground-q'] = true;
+    const mobs = Array.from({ length: 9 }, (_, i) => dummy(120 + i * 6));
+    tap('q');
+    step(14);
+    expect(mobs.filter((m) => m.hp < 1e6).length).toBe(6);
+  });
+
+  it('scoops up an enemy just behind you', () => {
+    arena(1);
+    const behind = dummy(95);
+    player.x = 100;
+    tap('q');
+    step(14);
+    expect(behind.hp).toBeLessThan(1e6);
+    expect(behind.x).toBeGreaterThan(100);
+  });
+
+  it('a carried enemy is always left standing on its own platform', () => {
+    let runs = 0;
+    const bad: string[] = [];
+    for (const n of [1, 2, 3, 4]) {
+      for (let k = 0; k < 10; k++) {
+        for (const face of [1, -1] as const) {
+          release();
+          gotoPlace(climb(n));
+          const m = game.mobs.filter((x) => !x.fly && !x.training)[k];
+          if (!m) continue;
+          player.invuln = 1e9;
+          player.mp = 999;
+          player.ranks['ground-q'] = true;
+          player.cd['ground-q'] = 0;
+          player.casting.useT = 0;
+          // stand just beside the enemy, facing it
+          player.x = m.x - face * 14;
+          player.y = m.y + m.h - player.h;
+          player.vy = 0;
+          player.face = face;
+          player.onGround = true;
+          player.climb = null;
+          step(1);
+          if (!player.onGround) continue;
+
+          runs++;
+          tap('q');
+          step(60);
+          if (!game.mobs.includes(m)) continue; // killed
+          const home = game.floor.platforms.filter((p) => !p.inner && p.block === m.spawn?.block && m.x >= p.x && m.x < p.x + p.w);
+          const standing = home.some((p) => Math.abs(surfaceYAt(p, m.x) - (m.y + m.h)) < 3);
+          if (!standing) bad.push(`floor ${n}, enemy ${k}, facing ${face}`);
+        }
+      }
+    }
+    expect(runs).toBeGreaterThan(10);
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('Glide and Acrobatics (bought with SP, not given)', () => {
+  /** Hang on the first rope or ladder, just above its foot. */
+  function hangOnRope(): void {
+    const c = [...game.floor.ropes, ...game.floor.ladders][0];
+    player.climb = c;
+    player.x = c.x;
+    player.y = c.y2 - player.h - 1;
+    player.onGround = false;
+    player.vx = 0;
+    player.vy = 0;
+  }
+  afterEach(() => release());
+
+  it('a new archer has Double Shot for free, but not Glide', () => {
+    expect(SKILLS.d.learn).toBe(true);
+    expect(startsLearned('z')).toBe(true);
+    expect(startsLearned('d')).toBe(false);
+  });
+
+  it('Glide can take SP from Lv.1', () => {
+    arena(1);
+    player.ranks.d = false;
+    player.sp = 1;
+    const row = skillRows().find((r) => r.key === 'd')!;
+    expect(row.learned).toBe(false);
+    expect(row.action).toBeTruthy();
+    expect(spendSkill('d')).toBe(true);
+    expect(player.ranks.d).toBe(true);
+  });
+
+  it('Glide is a quick 0.2s tumble with a 0.1s recovery', () => {
+    expect(SKILLS.d.use).toBe(0.2);
+    expect(SKILLS.d.delay).toBe(0.1);
+  });
+
+  it('Acrobatics opens at Lv.10', () => {
+    arena(1);
+    expect(SKILLS.ac.minLevel).toBe(10);
+    expect(skillRows().some((r) => r.key === 'ac')).toBe(false);
+  });
+
+  it('without Acrobatics, Up + Jump on a rope does not rush', () => {
+    arena(10);
+    player.ranks.ac = false;
+    hangOnRope();
+    setKey('up', true);
+    tap('c');
+    expect(player.climbRush).toBeFalsy();
+  });
+
+  it('with it, Up + Jump rushes up the rope, trailing green rising streaks', () => {
+    arena(10);
+    player.ranks.ac = true;
+    hangOnRope();
+    setKey('up', true);
+    tap('c');
+    expect(player.climbRush).toBeTruthy();
+    expect(game.fx.some((f) => f.type === 'climbRise')).toBe(true);
+  });
+
+  it('Acrobatics does not speed up a plain climb (it only gives the rush)', () => {
+    const climbOneFrame = (acrobatics: boolean): number => {
+      arena(10);
+      player.ranks.ac = acrobatics;
+      hangOnRope();
+      const y = player.y;
+      setKey('up', true);
+      step(1);
+      setKey('up', false);
+      return y - player.y;
+    };
+    expect(climbOneFrame(true)).toBeCloseTo(climbOneFrame(false), 2);
   });
 });

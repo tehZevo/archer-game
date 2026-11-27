@@ -3,9 +3,10 @@ import { arena, dummy, step, tap } from './helpers';
 import { MOB_TYPES, P } from '../src/config';
 import { capAdd, hurtPlayer } from '../src/boss';
 import { clearGear } from '../src/gear';
-import { damage, missChance } from '../src/combat';
+import { damage, missChance, NUM_GAP, NUM_LINE } from '../src/combat';
 import { cast } from '../src/skills';
 import { game, player } from '../src/state';
+import type { Mob } from '../src/types';
 
 describe('balance', () => {
   it('a Lv.1 Garden Snail takes 4-11 Double Shots on average', () => {
@@ -181,5 +182,78 @@ describe('Bubble (passive)', () => {
     expect(damageTaken()).toBe(100);
     player.ranks.bu = true;
     expect(damageTaken()).toBe(70);
+  });
+});
+
+describe('damage numbers', () => {
+  // multi-hit damage numbers stack, one every NUM_GAP (1/8 s)
+  function hitFourTimes(): Mob {
+    arena(10);
+    const m = dummy(150);
+    game.dmgNums.length = 0;
+    for (let i = 0; i < 4; i++) damage(m, 1, { more: i < 3 });
+    return m;
+  }
+
+  it('hits landing at once: each number waits 1/8 s after the last', () => {
+    hitFourTimes();
+    expect(NUM_GAP).toBe(0.125);
+    const delays = game.dmgNums.map((d) => d.delay ?? 0);
+    for (let i = 0; i < 4; i++) expect(delays[i]).toBeCloseTo(i * NUM_GAP, 3);
+  });
+
+  it('...and sits one line above the last', () => {
+    hitFourTimes();
+    const nums = game.dmgNums;
+    for (let i = 0; i < 4; i++) expect(nums[0].y - nums[i].y).toBeCloseTo(i * NUM_LINE, 9);
+  });
+
+  it('the second number shows after about 1/8 s, while the later ones still wait', () => {
+    hitFourTimes();
+    step(Math.ceil(0.15 / P.STEP));
+    expect(game.dmgNums[1].delay ?? 0).toBeLessThanOrEqual(0);
+    expect(game.dmgNums[2].delay ?? 0).toBeGreaterThan(0);
+  });
+
+  it('after a pause, a new stack starts at the bottom, right away', () => {
+    const m = hitFourTimes();
+    step(Math.ceil(0.15 / P.STEP) + 120);
+    game.dmgNums.length = 0;
+    damage(m, 1);
+    expect(game.dmgNums[0].delay).toBe(0);
+    expect(game.dmgNums[0].y).toBe(m.y - 8);
+  });
+
+  describe('a long stack', () => {
+    // each cast owns its stack, and stacks have no height cap
+    function twelveHitsThenANewCast(): Mob {
+      arena(10);
+      const m = dummy(150);
+      game.dmgNums.length = 0;
+      player.face = 1;
+      for (let i = 0; i < 12; i++) damage(m, 1, { more: true, first: i === 0 });
+      damage(m, 1, { more: true, first: true });
+      return m;
+    }
+
+    it('climbs past 8 lines', () => {
+      const m = twelveHitsThenANewCast();
+      const top = game.dmgNums[11];
+      expect(m.y - 8 - top.y).toBeCloseTo(11 * NUM_LINE, 9);
+    });
+
+    it('a new cast starts its own stack at the bottom, right away, while the last is still open', () => {
+      const m = twelveHitsThenANewCast();
+      const fresh = game.dmgNums[12];
+      expect(fresh.y).toBe(m.y - 8);
+      expect(fresh.delay).toBe(0);
+    });
+
+    it('numbers wobble within 4px, and lean 2px a line the way you face', () => {
+      const m = twelveHitsThenANewCast();
+      const wobble = game.dmgNums.slice(0, 12).map((d, line) => d.x - m.x - line * 2);
+      for (const w of wobble) expect(Math.abs(w)).toBeLessThanOrEqual(4);
+      expect(new Set(wobble.map((w) => w.toFixed(2))).size).toBeGreaterThan(1);
+    });
   });
 });

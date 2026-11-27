@@ -1,10 +1,13 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, climb, dummy, ground, step } from './helpers';
 import { P } from '../src/config';
 import { killMob } from '../src/combat';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
-import { net, newCode, parseCode, roomId } from '../src/net';
+import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
 import { game, gotoPlace, player, SPAWN_SPREAD } from '../src/state';
+import { SELF } from '../src/chat';
+import { cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, emoteFor, EMOTES, setEmote } from '../src/emotes';
+import { setKey } from '../src/input';
 import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 
@@ -211,5 +214,83 @@ describe('ghost shots', () => {
     queueShot(track, { t: NaN, x: 0, y: 0, f: 1, l: 1 } as never, 0);
     for (let i = 0; i < 100; i++) queueShot(undefined, { t: 0, x: 0, y: 0, f: 1, l: 1 }, 0);
     expect(dueShots(1e9).length).toBeLessThanOrEqual(80);
+  });
+});
+
+describe('when multiplayer is unavailable', () => {
+  const fakePeerConnection = function () {};
+
+  beforeEach(() => {
+    vi.stubGlobal('RTCPeerConnection', fakePeerConnection);
+    net.offline = '';
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    net.offline = '';
+  });
+
+  it('with WebCrypto and WebRTC, multiplayer can connect', () => {
+    expect(canConnect()).toBe(true);
+    expect(net.offline).toBe('');
+  });
+
+  it('without WebCrypto (a plain HTTP page) it stays off, and says why', () => {
+    vi.stubGlobal('crypto', {});
+    expect(canConnect()).toBe(false);
+    expect(net.offline).toContain('HTTPS');
+  });
+
+  it('WebRTC under its Firefox name (mozRTCPeerConnection) counts', () => {
+    vi.stubGlobal('RTCPeerConnection', undefined);
+    vi.stubGlobal('mozRTCPeerConnection', fakePeerConnection);
+    expect(canConnect()).toBe(true);
+    expect(net.offline).toBe('');
+  });
+
+  it('without WebRTC (e.g. turned off in Firefox) you play alone, without a crash', () => {
+    vi.stubGlobal('RTCPeerConnection', undefined);
+    expect(canConnect()).toBe(false);
+    expect(net.offline).toContain('WEBRTC');
+  });
+});
+
+describe('emotes (F1-F7 pop a face over your head, and your ghost\'s)', () => {
+  beforeEach(() => {
+    arena(1);
+    clearEmotes();
+  });
+  afterEach(() => clearEmotes());
+
+  it('F2 shows the sad face over you, for a few seconds', () => {
+    setKey('f2', true);
+    step(1);
+    setKey('f2', false);
+    const now = performance.now();
+    expect(emoteFor(SELF, now)).toBe('sad');
+    expect(emoteFor(SELF, now + EMOTE_MS + 1)).toBe(null);
+  });
+
+  it('there are seven, each a 9x9 face in the emote palette', () => {
+    expect(EMOTES.length).toBe(7);
+    for (const e of EMOTES) {
+      expect(EMOTE_ART[e].length).toBe(9);
+      for (const row of EMOTE_ART[e]) {
+        expect(row.length).toBe(9);
+        for (const c of row) expect(c === '.' || !!EMOTE_PAL[c]).toBe(true);
+      }
+    }
+  });
+
+  it('emotes from the network are checked', () => {
+    expect(cleanEmote(5)).toBe('love');
+    expect(cleanEmote(7)).toBe(null);
+    expect(cleanEmote('1')).toBe(null);
+    expect(cleanEmote(-1)).toBe(null);
+  });
+
+  it('a player leaving clears their emote', () => {
+    setEmote('peer', 'love', 0);
+    clearEmotes('peer');
+    expect(emoteFor('peer', 0)).toBe(null);
   });
 });
