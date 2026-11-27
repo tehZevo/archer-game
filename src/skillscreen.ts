@@ -39,6 +39,7 @@ export function skillStatus(k: SkillKey): { label: string; col: string; action: 
   if (upgradesOf(k).some((u) => player.ranks[u])) return { label: 'UPGRADED', col: '#9be89b', action: '' };
   if (branchLocked(k)) return { label: 'BRANCH LOCKED', col: '#e07a7a', action: '' };
   if (s.minLevel > player.level) return { label: `AT LV.${s.minLevel}`, col: '#8ea3c2', action: '' };
+  if (s.job > player.job.job) return { label: 'SEE THE SAGE', col: '#8ea3c2', action: '' };
   const needs = s.requires ?? s.upgrades;
   return { label: needs ? `NEEDS ${SKILLS[needs].name}` : 'LOCKED', col: '#8ea3c2', action: '' };
 }

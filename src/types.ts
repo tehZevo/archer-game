@@ -81,6 +81,8 @@ export interface JobDef {
   name: string;
   title: string;
   sp: number;
+  /** HP/MP bonus the Sage's advancements add up to by this job (0.3 = +30%) */
+  hpmp: number;
 }
 
 export interface Platform {
@@ -440,7 +442,7 @@ export interface Portal {
 export interface Decor { x: number; y: number; kind: DecorKind; flip?: boolean }
 export type DecorKind = 'house' | 'tower' | 'lamp' | 'bench' | 'crate' | 'barrel' | 'flowers' | 'well' | 'sign' | 'awning' | 'fence';
 
-export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board' | 'pets'; name: string }
+export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board' | 'pets' | 'sage'; name: string }
 
 /** A floor modifier (see floormods.ts). */
 export type FloorMod = 'icy';

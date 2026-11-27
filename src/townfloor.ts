@@ -47,10 +47,10 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
     const deck = level(6, 8, 1);
     ladder(6, deck.top, G); rope(13, deck.top, G);
     npc('shop', at(7), deck.top); npc('trainer', at(12) - T / 2, deck.top);
-    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G); npc('pets', at(10), G);
+    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G); npc('pets', at(10), G); npc('sage', at(7) + 4, G);
     deco('awning', at(7), deck.top); deco('flowers', at(10) - T / 2, deck.top);
     deco('house', at(9) + T / 2, G); deco('lamp', at(4) - T / 2, G); deco('lamp', at(15) + T / 2, G);
-    deco('bench', at(11), G); deco('crate', at(8), G);
+    deco('bench', at(11), G); deco('crate', at(12) + 4, G);
     if (plan === 'loft') {
       // ...and a loft over the deck's columns 9-13, up a ladder at its left end
       const loft = level(9, 5, 2);
@@ -66,7 +66,7 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
     ladder(4, left.top, G); rope(15, right.top, G);
     ladder(7, bridge.top, left.top); rope(12, bridge.top, right.top);
     npc('shop', at(5) + 4, left.top); npc('trainer', at(14) - 4, right.top);
-    npc('board', at(5) + T / 2, G); npc('stylist', at(13) + T / 2, G); npc('pets', at(9) + 4, G);
+    npc('board', at(5) + T / 2, G); npc('stylist', at(14), G); npc('pets', at(11) + 2, G); npc('sage', at(8) + 4, G);
     deco('awning', at(5) + 4, left.top); deco('awning', at(14) - 4, right.top, true);
     deco('crate', at(8) - 4, left.top); deco('barrel', at(11) + 4, right.top);
     deco('lamp', at(8) + 4, bridge.top); deco('lamp', at(11) - 4, bridge.top);
@@ -78,7 +78,7 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
   const low = level(4, 7, 1), high = level(9, 7, 2);
   ladder(4, low.top, G); rope(9, high.top, low.top); rope(15, high.top, G);
   npc('shop', at(5) + 4, low.top); npc('trainer', at(8), low.top);
-  npc('board', at(5) + 4, G); npc('stylist', at(8), G); npc('pets', at(12) + 4, G);
+  npc('board', at(5) + 4, G); npc('stylist', at(8), G); npc('pets', at(12) + 4, G); npc('sage', at(10) - 4, high.top);
   deco('awning', at(5) + 4, low.top); deco('flowers', at(14) - 2, high.top);
   deco('tower', at(12) + T / 2, high.top); deco('house', at(7), low.top);
   deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
@@ -111,7 +111,7 @@ export function townFloor(town: string, rng: Rng): Floor {
   const ladder = (col: number, top: number, bottom: number): void => { ladders.push({ x: at(col), y1: top, y2: bottom }); };
   const rope = (col: number, top: number, bottom: number): void => { ropes.push({ x: at(col), y1: top, y2: bottom }); };
   const npc = (kind: Npc['kind'], x: number, y: number): void => {
-    const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS', pets: 'PETS' }[kind];
+    const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS', pets: 'PETS', sage: 'SAGE' }[kind];
     if (kind !== 'trainer' || townDepth(town) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
   };
   const deco = (kind: DecorKind, x: number, y: number, flip = false): void => { decor.push({ x, y, kind, ...(flip ? { flip } : {}) }); };

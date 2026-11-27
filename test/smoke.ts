@@ -25,7 +25,7 @@ import { setKey } from '../src/input';
 import { tick } from '../src/loop';
 import { GLYPH, ICON_GLYPHS } from '../src/icons';
 import { SKILLS } from '../src/config';
-import { rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
+import { advanceJob, canAdvance, rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
 
 let failures = 0;
 function check(name: string, cond: boolean): void {
@@ -127,6 +127,13 @@ check('level up grants 1 AP and no menu', player.ap === 1 && !game.pause);
 reset();
 for (let i = 0; i < 9; i++) gainExp(player.expNext - player.exp);
 check('Lv.10 has 9 AP and 2 SP to spend', player.level === 10 && player.ap === 9 && player.sp === 2);
+check('Lv.10 makes you eligible, but 2nd job skills wait for the Sage', canAdvance() && player.job.job === 1 && !skillRows().some((r) => r.key === 'ground-w'));
+{
+  const hp = player.hpMax;
+  check('the Sage advances you to the 2nd job, +5% HP', advanceJob() && player.job.job === 2 && player.hpMax === Math.round(hp * 1.05) && skillRows().some((r) => r.key === 'ground-w'),
+    `job ${player.job.job} hp ${hp} -> ${player.hpMax}`);
+  check('...and not again until Lv.30', !canAdvance() && !advanceJob());
+}
 const tap = (k: string): void => { setKey(k, false); setKey(k, true); step(1); setKey(k, false); step(1); };
 tap('escape');
 const wave0 = game.waveT, regen0 = player.regenT;

@@ -10,7 +10,7 @@ import { fillRect, newGrid, type Grid } from './grid';
    rest of the scenery (artsheets.ts: npc/<kind>/<frame>).
    ============================================================ */
 
-export type NpcLook = 'shop' | 'stylist' | 'trainer' | 'pets';
+export type NpcLook = 'shop' | 'stylist' | 'trainer' | 'pets' | 'sage';
 export const NPC_W = 16, NPC_H = 24;
 /** Frames: 0 standing, 1 breathing in, 2 blinking, 3 waving. */
 export const NPC_FRAMES = 4;
@@ -173,11 +173,50 @@ const PETS_WAVE: [number, number, string][] = [
   [14, 12, 'v'], [15, 12, 'o'], [14, 13, 'o'], [14, 15, 'o'], [15, 15, '.'], [13, 16, 'o'], [14, 16, '.'],
 ];
 
+/* The Sage: an old man in a deep blue hooded robe with a gold-trimmed front
+   and hem, a long white beard, leaning on a gnarled staff topped with a
+   glowing crystal. */
+const SAGE = [
+  '.oo.............',
+  'oaao.....oo.....',
+  'oaAo....occo....',
+  '.oo....occcco...',
+  '.oWo..occcccco..',
+  '.oWo.occcccccco.',
+  '.oWo.ocssssssco.',
+  '.oWo.ocesssesco.',
+  '.oWo.ocssSsssco.',
+  '.oWo.ocwwwwwwco.',
+  '.oWo.oowwwwwwoo.',
+  'osWsocCowwwwoCco',
+  'osWsocCcowwocCco',
+  '.oWo.oCccgccCco.',
+  '.oWo.oCccgccCco.',
+  '.oWo.oCccgcccCo.',
+  '.oWo.oCccgcccCo.',
+  '.oWooCcccgcccCo.',
+  '.oWooCcccgccccCo',
+  '.oWoCccccgccccCo',
+  '.oWoCccccgccccCo',
+  '.oWoCccccgccccCo',
+  '.oWoGGGGGGGGGGGo',
+  '.ooo.ooooooooooo',
+];
+const SAGE_PAL: Record<string, string> = {
+  a: '#bff4ff', A: '#5ac8ff', W: '#8a5f2a', c: '#3a4aa8', C: '#24307a', s: '#f2d0a9', S: '#d9a47c',
+  e: OUT, w: '#f4f4f0', g: '#ffd166', G: '#c9952f',
+};
+/** The Sage lifts his free hand in greeting. */
+const SAGE_WAVE: [number, number, string][] = [
+  [14, 7, 'o'], [15, 7, 'o'], [14, 8, 's'], [15, 8, 'o'], [14, 9, 'C'], [15, 9, 'o'], [14, 10, 'C'], [15, 10, 'o'],
+];
+
 const ART: Record<NpcLook, { rows: string[]; pal: Record<string, string>; wave: [number, number, string][]; eyes: number }> = {
   shop: { rows: SHOP, pal: SHOP_PAL, wave: SHOP_WAVE, eyes: 8 },
   stylist: { rows: STYLIST, pal: STYLIST_PAL, wave: STYLIST_WAVE, eyes: 7 },
   trainer: { rows: TRAINER, pal: TRAINER_PAL, wave: TRAINER_WAVE, eyes: 5 },
   pets: { rows: PETS, pal: PETS_PAL, wave: PETS_WAVE, eyes: 8 },
+  sage: { rows: SAGE, pal: SAGE_PAL, wave: SAGE_WAVE, eyes: 7 },
 };
 
 /** The rows of an NPC's frame (see NPC_FRAMES). */
