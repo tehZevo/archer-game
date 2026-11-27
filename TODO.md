@@ -16,3 +16,4 @@
 - Move the town name to the top-left of the HUD, to the right of the connection/wrench icon.
 - (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
 - When you die, show a dialog to return to the previous town; in dev mode, also allow reviving in place.
+- The upgraded ground W (Skyward Assault, `ab`) should chain into Dive (`air-q`) — add `air-q` to its `linksInto` (config.ts:154).
