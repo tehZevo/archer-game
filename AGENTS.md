@@ -39,6 +39,8 @@ Work is tracked in GitHub issues (https://github.com/tehZevo/archer-game/issues)
 
 Check the labels before picking up an item; plain issues are straight-ahead engineering.
 
+When an issue is picked up, link the PR to it (`Fixes #<n>` / `Closes #<n>` in the PR body, or `gh pr create --closes-issue <n>`) so the issue closes automatically when the PR merges. One PR per issue; if a PR only covers part of an issue, say so in the PR body and leave the issue open.
+
 ## Conventions
 
 - All game state lives in the `game` / `player` singletons in `src/state.ts`; systems (`update`, `physics`, `combat`, …) mutate them.
