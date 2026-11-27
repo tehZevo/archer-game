@@ -16,3 +16,4 @@
 - Increase the miss chance both ways (player→mob and mob→player) to 10% per level.
 - Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
 - Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
+- Allow switching direction midair after a Glide, even during the skill's use/recovery.
