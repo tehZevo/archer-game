@@ -1,6 +1,6 @@
 import { SKILLS } from './config';
 import { player } from './state';
-import { assaultLeaping, rushHolding } from './castrules';
+import { rushHolding } from './castrules';
 import type { SkillKey } from './types';
 
 /* ============================================================
@@ -31,7 +31,7 @@ export const linkable = (kind: SkillKey): boolean =>
 export const chainsZ = (): boolean => player.linkFrom !== null && RUSHES.has(player.linkFrom);
 
 /** Whether a link into `kind` still waits for the current cast's recovery to begin. */
-export function linkHeld(kind: SkillKey): boolean {
+export function linkHeld(_kind: SkillKey): boolean {
   const from = player.linkFrom;
   if (from === null) return false;
   if (RUSHES.has(from)) return rushHolding();
