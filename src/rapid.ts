@@ -36,8 +36,9 @@ export function updateRapid(dt: number): void {
   if (!rp.armed) return;
   if (!held('z') || player.climb || player.hp <= 0) return stop();
   if (!rp.on) {
-    // the Z shot plays out first; the stream starts the moment it's done
-    if (player.casting.useT > 0) return;
+    // the Z shot plays out first; the stream starts once its full cast (the use
+    // animation and the recovery that follows it) is done, not just the use
+    if (player.casting.useT > 0 || player.casting.recoverT > 0) return;
     rp.on = true; rp.t = 0; rp.face = player.face;
   }
   rp.t -= dt;
