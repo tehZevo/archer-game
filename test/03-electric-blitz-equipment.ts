@@ -108,18 +108,6 @@ import { capAdd, NUM_GAP, P, seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_M
   step(40);
 }
 {
-  // The spike lift links into Downpour: E pressed during the rise fires as it ends
-  arena(60); player.ranks['ground-e'] = true; player.ranks['air-e'] = true;
-  dummy(130);
-  tap('e'); step(12); // rise to the top of the lift (the air form needs ~2/3 a jump's height)
-  check('Piercing Leap lifts you (setup)', !player.onGround && player.liftT > 0, `liftT ${player.liftT.toFixed(2)}`);
-  tap('e'); // Downpour (E's air form) pressed during the lift links off it
-  check('the spike lift links into Downpour', player.linkFrom === 'ground-e' && linkable('air-e'), `from ${player.linkFrom}`);
-  let fired = -1;
-  for (let i = 0; i < 24 && fired < 0; i++) { step(1); if (player.casting.key === 'air-e') fired = i; }
-  check('...and it fires as the lift ends', fired >= 0 && player.casting.key === 'air-e', `fired ${fired}`);
-}
-{
   // A linked skill refunds 1s off Piercing Leap's cooldown (as it does Tempest's)
   arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks['ground-e'] = true;
   dummy(150);
@@ -156,10 +144,10 @@ import { capAdd, NUM_GAP, P, seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_M
   // Q and Meteor Dive: both paced by the use time alone, no cooldowns
   arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
   tap('q');
-  check('the ground rush has a 3s cooldown, on top of its use time', SKILLS['ground-q'].cd === 3 && SKILLS['ground-q'].use === 0.6 && player.cdMax['ground-q'] === 3 && player.casting.useT > 0);
+  check('the ground rush has a cooldown on top of its use time', player.cdMax['ground-q'] === 3 && player.casting.useT > 0);
   step(40); player.cd['ground-q'] = 0;
   tap('c'); step(6); tap('q');
-  check('the Meteor Dive has no cooldown, only a use time', SKILLS['air-q'].cd === 0 && player.cd['ground-q.air'] === 0 && player.casting.useT > 0 && player.casting.recoverT > 0,
+  check('the Meteor Dive has no cooldown, only a use time', player.cd['ground-q.air'] === 0 && player.casting.useT > 0 && player.casting.recoverT > 0,
     `cd ${player.cd['ground-q.air'].toFixed(2)} use ${player.casting.useT.toFixed(2)}`);
   step(40);
 }
@@ -181,18 +169,6 @@ import { capAdd, NUM_GAP, P, seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_M
   }
   check('...and fires once the landing roll\'s strike lands, not during it', rolled && !firedRolling && player.cast === 'shoot',
     `rolled ${rolled} firedRolling ${firedRolling} cast ${player.cast}`);
-}
-{
-  // The Meteor Dive links into the grounded kit: pressed as the dive lands,
-  // the next skill fires without the use-time wait
-  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true; player.ranks['ground-w'] = true;
-  dummy(150);
-  tap('c'); step(8);
-  tap('q'); step(15); // the windup, the plunge, and the landing rush
-  check('the dive has landed, its links released', linkable('ground-w') && !linkHeld('ground-w'), `from ${player.linkFrom}`);
-  const mp0 = player.mp;
-  tap('w');
-  check('Rising Arrows links out of the dive', player.mp < mp0 && player.linkFrom === 'ground-w', `mp ${player.mp} from ${player.linkFrom}`);
 }
 {
   arena(25); player.ranks.r = true;

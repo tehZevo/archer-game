@@ -164,15 +164,6 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Z during the Rush Toss casts Double Shot', m.hp < hp0 && player.linkFrom === 'z', `from ${player.linkFrom}`);
 }
 {
-  arena(12); player.ranks['ground-w'] = true;
-  dummy(125);
-  setKey('down', true); tap('q'); setKey('down', false);
-  tap('w'); // pressed mid Rush Toss
-  let fired = -1;
-  for (let i = 0; i < 30 && fired < 0; i++) { const c = player.cast; step(); if (player.cast === 'shoot' && c !== 'shoot') fired = i; }
-  check('a link pressed during Rush Toss fires when it ends', fired > 0 && fired < 20, `frame ${fired}`);
-}
-{
   arena(20); player.ranks['ground-w'] = true; player.ranks.ab = true;
   const m = dummy(125);
   setKey('down', true); tap('q'); setKey('down', false); step(12);

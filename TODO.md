@@ -16,7 +16,6 @@
 - Dev skill editor (bug): can't move "down" to select Delay with Enter. The flow should be: navigate the left menu with up/down to highlight a skill; press Enter to select it, moving the cursor to the right side of the screen highlighted on "Use"; left/right on Use adjusts the value; up/down navigates between Use / Delay / Links Into; Enter/Space on Links Into toggles an option on/off.
 - Piercing Leap (`ground-e`) should link into Glide (`d`) — add `d` to its `linksInto` (config.ts:134).
 - Reduce the test suite (~960 checks → ~450–550) by consolidating repetitive tests (phases, in order):
-  - Phase 1: Table-drive the skill matrix — a single config "golden" check (authored `use/delay/cd/hits1/dmg1/linksInto` for every skill) plus a link-pair driver (`[[from, to, expectBuffered]]` run through one helper). Collapses the ~40 "fires as it ends" link blocks, ~15 config tautologies, and the 3 aerial-height blocks.
   - Phase 2: Dedupe cross-file mechanics (cast-lock/buffer, air/ground `cdSlot` split, Fervor link refund, damage-number stacking, Twin Echoes) — keep the richest instance, trim the rest.
   - Phase 3: Trim the UI walkthroughs (file 07, 137 checks) to the happy path, and collapse per-area repetitions.
   - Keep as-is: `smoke.ts` (baked sheets match generators), asset-integrity checks (paint-in-bounds), and core physics (slope/ledge, Rush Toss carry).
