@@ -198,9 +198,11 @@ function jump(): void {
   if (held('right')) { player.vx =  P.JUMP_H; if (!streaming()) player.face =  1; }
 }
 
-/** The dive roll a Jump makes mid-Gale Stream: a short hop and a roll in the
+/** The dodge roll a Jump makes mid-Gale Stream: a short hop and a roll in the
  *  direction you're heading (your facing if you're not), invulnerable for its
- *  length. The stream keeps running and now fires the opposite way you rolled. */
+ *  length. The stream keeps running, turned round: it now fires the opposite
+ *  way it was firing before the roll. The roll lands on its own (see
+ *  rush.landDive): no rush slide, no strike, no damage. */
 function jumpRoll(): void {
   const dir = held('left') ? -1 : held('right') ? 1 : player.face;
   setPose('jump', JUMP_POSE);
@@ -209,11 +211,12 @@ function jumpRoll(): void {
   player.onGround = false;
   player.vy = -P.ROLL_HOP_V;
   player.vx = dir * P.ROLL_VX;
-  player.face = dir; // turn to face the way you rolled, and keep facing it
-  player.diving = true; // the roll's pose and landing (no speed trail: see rolling)
+  player.diving = true; // the roll's pose (no speed trail: see rolling)
   player.rolling = true;
   player.invuln = P.ROLL_INVULN;
-  player.rapid.face = dir; // fire the way you rolled
+  // turn the stream round, and face the way it now fires
+  player.rapid.face = player.rapid.face === 1 ? -1 : 1;
+  player.face = player.rapid.face;
 }
 
 /** Skills that push the player around while they play. */

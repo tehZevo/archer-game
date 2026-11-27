@@ -1,4 +1,4 @@
-import { P, player, setKey, check, step, arena, dummy } from './harness';
+import { P, game, player, setKey, check, step, tap, arena, dummy } from './harness';
 // --- Gale Stream: holding Z after a shot streams arrows into the closest enemy
 {
   const hold = (k: string, on: boolean): void => setKey(k, on);
@@ -57,15 +57,30 @@ import { P, player, setKey, check, step, arena, dummy } from './harness';
   dummy(150);
   hold('z', true); step(Math.ceil(0.6 / P.STEP) + 2); // arm and start the stream
   check('the stream is running', player.rapid.on);
-  const face = player.face;
+  const face = player.rapid.face, x0 = player.x;
   hold('right', true);
   hold('c', true); step(1); hold('c', false); // Jump -> the dive roll
-  check('the roll turns you to face the way you rolled', player.face === 1 && face === 1, `${player.face}`);
-  check('the roll is invulnerable', player.invuln > 0 && player.invuln <= P.ROLL_INVULN);
-  check('the roll keeps its dive pose', player.diving && player.rolling);
-  check('the stream now fires the way you rolled', player.rapid.face === player.face);
-  step(30); // the hop lands and the roll's slide runs out
-  check('the roll ends and you keep facing the way you rolled', !player.rolling && !player.diving && player.face === 1);
+  check('the roll is invulnerable, in its dive pose', player.invuln > 0 && player.invuln <= P.ROLL_INVULN && player.diving && player.rolling);
+  check('the stream turns round: it fires the opposite way it was, and you face it', face === 1 && player.rapid.face === -1 && player.face === -1, `${face} -> ${player.rapid.face} face ${player.face}`);
+  const ranks = player.ranks.d; player.ranks.d = true; const mp = player.mp;
+  tap('d');
+  check('you can\'t Glide out of the roll', player.cast !== 'jump' || player.mp === mp, `cast ${player.cast}`);
+  player.ranks.d = ranks;
+  hold('right', false);
+  step(30); // the hop lands and the roll ends
+  check('the roll ends on its own: no rush slide or strike', !player.rolling && !player.diving && player.rush.t <= 0 && player.x > x0 && player.face === -1);
   check('...and the stream is still going', player.rapid.on);
-  hold('right', false); hold('z', false); step(1);
+  hold('z', false); step(1);
+}
+{
+  // the roll deals no damage, even rolling onto an enemy
+  arena(60); player.ranks['held-z'] = true; player.ranks['ground-q'] = true;
+  // start a stream on an empty floor, then hold its next shot off (so only the roll could hurt)
+  setKey('z', true); step(Math.ceil(0.6 / P.STEP) + 2); player.rapid.t = 99;
+  const m = dummy(player.x + 20), hp0 = m.hp;
+  setKey('right', true); setKey('c', true); step(1); setKey('c', false); setKey('right', false);
+  check('(the jump made the dodge roll)', player.rolling);
+  step(30);
+  setKey('z', false); step(1);
+  check('the dodge roll deals no damage', m.hp === hp0 && !game.fx.some((f) => f.type === 'diveLand'), `hp ${hp0 - m.hp}`);
 }

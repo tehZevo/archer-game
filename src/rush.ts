@@ -153,10 +153,16 @@ function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void
  *  own (DIVE_ROLL_*, tuned apart from Rush Toss's) that scoops up and strikes
  *  like the rush. Its links fire off the landing roll's strike, not off
  *  the coil. */
+/** A Gale Stream dodge roll touched down: it just ends, keeping the roll's
+ *  sideways momentum to skid out on (no rush slide, no spike, no damage). */
+function landRoll(): void {
+  player.rolling = false;
+}
+
 export function landDive(): void {
   if (!player.diving || !player.onGround) return;
   player.diving = false;
-  player.rolling = false;
+  if (player.rolling) { landRoll(); return; }
   setPose('dive', P.DIVE_ROLL_MAX); // the roll is the tail of the dive's own animation
   slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'ground-q', 'diveLand');
 }
