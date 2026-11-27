@@ -311,6 +311,8 @@ export interface Player extends Body {
   /** True for the duration of a Gale Stream dive roll (see move.jumpRoll). The
    *  roll keeps the dive pose and its landing slide, but shows no speed trail. */
   rolling: boolean;
+  /** px the Meteor Dive has travelled so far (plunge plus landing roll: P.RUSH_DIST in all). */
+  diveDist: number;
   /** Gale Stream (see rapid.ts): `armed` once a Z shot fires with Z held,
    *  `on` while the stream runs, `t` s to its next shot, `face` the way it
    *  fires (locked for the whole stream). */

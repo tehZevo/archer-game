@@ -9,7 +9,7 @@ import { grip } from './floormods';
 import { slowFactor } from './status';
 import { clamp } from './util';
 import { barrageTargets } from './skills';
-import { landDive } from './rush';
+import { landDive, travelDive } from './rush';
 import { setPose } from './skillfx';
 import { streaming } from './rapid';
 import { DROP_BACK } from './fxsprites';
@@ -136,7 +136,9 @@ function walk(dt: number, locked: boolean): void {
   player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2);
   player.y = clamp(player.y, 0, WORLD.h - player.h);
   collideGround(player, prevFeet, prevX);
-  landDive(); // a Meteor Dive touching down rolls into the rush this same frame
+  // a Meteor Dive counts its diagonal travel; touching down rolls into the rush this same frame
+  if (player.diving && !player.rolling) travelDive(Math.hypot(player.x - prevX, player.y + player.h - prevFeet));
+  landDive();
   // grab a rope/ladder first, so a rope hanging from the platform you're
   // standing on is caught before the drop-through consumes the Down press
   if (grabClimbable()) return;

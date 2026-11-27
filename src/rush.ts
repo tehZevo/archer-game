@@ -66,7 +66,8 @@ function grab(face: number): void {
     if (player.rush.carry.length >= r.targets) break; // carry only as many as it hits
     if (player.rush.carry.some((c) => c.m === m)) continue;
     player.rush.carry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
-    damage(m, r.dmg * P.RUSH_HIT); // (this can kill it)
+    // a carried enemy can't die mid-carry: its death waits for the strike (see mobai)
+    damage(m, r.dmg * P.RUSH_HIT, { more: true });
   }
 }
 
@@ -149,10 +150,26 @@ function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void
   });
 }
 
+/** The Meteor Dive's plunge moved `d` px (on the fixed step, after the move).
+ *  The dive covers P.RUSH_DIST in all, Rush Toss's own distance: still in
+ *  the air as it runs out, it eases off over the last P.DIVE_EASE px, then
+ *  the plunge ends and you just drop, with no roll and no toss. */
+export function travelDive(d: number): void {
+  player.diveDist += d;
+  if (player.onGround) return; // landed: the roll covers what's left (landDive)
+  const left = P.RUSH_DIST - player.diveDist;
+  if (left <= 0) {
+    player.diving = false;
+    player.vx *= 0.3; player.vy = Math.min(player.vy, 60); // the plunge spent: fall from here
+    return;
+  }
+  if (left < P.DIVE_EASE) { player.vx *= 0.8; player.vy *= 0.8; }
+}
+
 /** The Meteor Dive touched down: roll out of it with no pause, a slide of its
  *  own (DIVE_ROLL_*, tuned apart from Rush Toss's) that scoops up and strikes
- *  like the rush. Its links fire off the landing roll's strike, not off
- *  the coil. */
+ *  like the rush, for whatever's left of the dive's P.RUSH_DIST. Its links
+ *  fire off the landing roll's strike, not off the coil. */
 /** A Gale Stream dodge roll touched down: it just ends, keeping the roll's
  *  sideways momentum to skid out on (no rush slide, no spike, no damage). */
 function landRoll(): void {
@@ -164,5 +181,5 @@ export function landDive(): void {
   player.diving = false;
   if (player.rolling) { landRoll(); return; }
   setPose('dive', P.DIVE_ROLL_MAX); // the roll is the tail of the dive's own animation
-  slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'ground-q', 'diveLand');
+  slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, Math.max(0, P.RUSH_DIST - player.diveDist), 'ground-q', 'diveLand');
 }

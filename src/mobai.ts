@@ -27,6 +27,8 @@ export function updateMobs(dt: number): void {
     if (m.hurt) m.hurt = Math.max(0, m.hurt - dt);
     if (m.dying !== undefined) {
       // dead, waiting on its attacker's last hits: frozen where it was struck
+      // (one a rush is carrying stays alive, travelling with you, until the carry ends)
+      if (player.rush.t > 0 && player.rush.carry.some((c) => c.m === m)) continue;
       m.dying -= dt; m.vx = 0; m.vy = 0;
       if (m.dying <= 0) killMob(m);
       continue;

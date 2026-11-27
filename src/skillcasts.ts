@@ -102,6 +102,7 @@ function airDive(r: SkillRank): void {
     player.vy = P.DIVE_VY;
     startSlide(P.DIVE_TIME);
     player.diving = true;
+    player.diveDist = 0; // it travels P.RUSH_DIST in all (see rush.travelDive)
     hitbox(player.x + player.face * 20, player.y + player.h / 2, 96, 140)
       .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'diveHit' }));
   });
