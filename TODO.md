@@ -1,7 +1,6 @@
 # TODOs
 - (art) Dodge roll during held-Z needs a roll animation.
 - (art) Create art for the Bubble skill.
-- Remove the 1–2–3–4 tab menu for pets; make it one scrollable list navigated with up/down, where each item is selectable.
 - Bug: Rising Arrows (`ground-w`) advertises `hits1: 4` but `skyfallVolley` (skillcasts.ts:218) fires one `damage()` per target — loop the hits with `eachShot(shotCount(r), …)`.
 - Bug: Piercing Leap (`ground-e`) advertises `hits1: 2` / `dmg1: 400` but `spikeLift` (skillcasts.ts:136) fires one `damage()` per target using `P.SPIKE_DMG` — loop the hits and use `r.dmg`.
 - Bug: Electric Blitz (`eb`) advertises `hits1: 2` / `dmg1: 460` but `groundRush` → `strike()` (rush.ts:132) always uses `rank('ground-q')`, so it fires Rush Toss's 1 hit / 400 dmg — use the active skill's rank (and fix the "strikes twice" comment at rush.ts:140).

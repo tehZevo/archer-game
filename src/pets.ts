@@ -51,12 +51,12 @@ export const PET_KINDS: Record<PetKind, PetDef> = {
   puff: { name: 'STAR PUFF', price: 5000, speed: 150, range: 130, customs: { coins: true, items: false, range: false, potions: true }, desc: 'FETCHES COINS, DRINKS HP POTIONS FOR YOU' },
 };
 
-/** The four customizations, in the order the keeper lists them (keys 1-4). */
-export const PET_CUSTOMS: { key: keyof PetCustoms; label: string }[] = [
-  { key: 'coins', label: 'COINS' },
-  { key: 'items', label: 'ITEMS' },
-  { key: 'range', label: 'RANGE' },
-  { key: 'potions', label: 'POTIONS' },
+/** The four customizations, in the order the keeper lists them. */
+export const PET_CUSTOMS: { key: keyof PetCustoms; label: string; desc: string }[] = [
+  { key: 'coins', label: 'COINS', desc: 'FETCH LANDED COIN PILES' },
+  { key: 'items', label: 'ITEMS', desc: 'FETCH DROPPED GEAR' },
+  { key: 'range', label: 'RANGE', desc: 'REACH FARTHER FOR WHAT IT FETCHES' },
+  { key: 'potions', label: 'POTIONS', desc: 'DRINK AN HP / MP POTION FOR YOU' },
 ];
 
 /** The customizations every pet starts switched on (global, shared by all pets). */
@@ -193,31 +193,41 @@ export function loadPets(owned: unknown, kind: unknown, customs: unknown): void 
 }
 
 /* ---------------- the pet keeper's window ----------------
-   Every pet, cheapest first: Z buys one you don't have, or calls one you
-   own to follow you (or sends the one following you home). The customizations
-   are global (shared by every pet) and always shown as a scrollable list. */
+   One scrollable list, navigated with up/down: every pet (cheapest first) on
+   top, then the global customizations (shared by every pet) below. Z acts on
+   the highlighted row — buy/call/send home a pet, or flip a customization. */
 
-export const petShop = { open: false, sel: 0, cSel: 0 };
+export const petShop = { open: false, sel: 0 };
 
-/** How many customizations fit in the shop's list at once (it scrolls to keep
- *  the selected one in view). */
-export const PET_SHOP_ROWS = 3;
+/** One row of the keeper's list: a pet you can buy/call, or a customization. */
+export type ShopRow =
+  | { type: 'pet'; kind: PetKind }
+  | { type: 'custom'; key: keyof PetCustoms; label: string; desc: string };
 
-/** The scroll offset (top visible row) that keeps the selected customization in view. */
+/** The list: every pet (in PET_LIST's cheapest-first order), then the customs. */
+export const SHOP_ROWS: ShopRow[] = [
+  ...PET_LIST.map((kind): ShopRow => ({ type: 'pet', kind })),
+  ...PET_CUSTOMS.map((c): ShopRow => ({ type: 'custom', key: c.key, label: c.label, desc: c.desc })),
+];
+
+/** How many rows show at once (the list scrolls to keep the selection in view). */
+export const PET_SHOP_ROWS = 5;
+
+/** The scroll offset (top visible row) that keeps the selected row in view. */
 export const petShopScroll = (): number =>
-  Math.max(0, Math.min(petShop.cSel - (PET_SHOP_ROWS >> 1), PET_CUSTOMS.length - PET_SHOP_ROWS));
+  Math.max(0, Math.min(petShop.sel - (PET_SHOP_ROWS >> 1), SHOP_ROWS.length - PET_SHOP_ROWS));
 
-export function openPetShop(): void { petShop.open = true; petShop.sel = 0; petShop.cSel = 0; }
+export function openPetShop(): void { petShop.open = true; petShop.sel = 0; }
 
-/** Z on a row: buy it, swap to it, or (on the one following you) send it home. */
+/** Z on a pet row: buy it, swap to it, or (on the one following you) send it home. */
 export function choosePet(kind: PetKind): boolean {
   if (!pet.owned.includes(kind)) return buyPet(kind);
   if (pet.kind === kind) pet.kind = null; else summon(kind);
   return true;
 }
 
-/** Flip one of the (global) customizations on/off (the keeper's 1-4 keys).
- *  The `kind` argument is kept for call sites that name the pet. */
+/** Flip one of the (global) customizations on/off. The `kind` argument is kept
+ *  for call sites that name the pet; customizations are shared by every pet. */
 export function toggleCustom(kind: PetKind, key: keyof PetCustoms): boolean {
   void kind; // customizations are global: any owned pet's toggle changes the shared set
   const c = petCustoms();
@@ -225,16 +235,16 @@ export function toggleCustom(kind: PetKind, key: keyof PetCustoms): boolean {
   return true;
 }
 
-/** Up/Down pick a pet, Z/Enter buys or summons, 1-4 (or Left/Right + Z) pick and
- *  toggle a customization from the always-shown list, Esc or X closes. */
+/** Z on a row: buy/call/send home a pet, or flip a customization. */
+export function chooseRow(row: ShopRow): boolean {
+  return row.type === 'pet' ? choosePet(row.kind) : toggleCustom(pet.kind ?? PET_LIST[0], row.key);
+}
+
+/** Up/Down move through the list, Z/Enter acts on the highlighted row, Esc/X closes. */
 export function petShopInput(): void {
-  const n = PET_LIST.length;
+  const n = SHOP_ROWS.length;
   if (pressed('up')) petShop.sel = (petShop.sel + n - 1) % n;
   if (pressed('down')) petShop.sel = (petShop.sel + 1) % n;
-  if (pressed('z') || pressed('enter') || pressed(' ')) choosePet(PET_LIST[petShop.sel]);
-  // the customization list is global and always visible: number keys pick + flip
-  PET_CUSTOMS.forEach((c, i) => { if (pressed(String(i + 1))) { petShop.cSel = i; toggleCustom(PET_LIST[petShop.sel], c.key); } });
-  if (pressed('left')) petShop.cSel = (petShop.cSel + PET_CUSTOMS.length - 1) % PET_CUSTOMS.length;
-  if (pressed('right')) petShop.cSel = (petShop.cSel + 1) % PET_CUSTOMS.length;
+  if (pressed('z') || pressed('enter') || pressed(' ')) chooseRow(SHOP_ROWS[petShop.sel]);
   if (pressed('escape') || pressed('x')) petShop.open = false;
 }
