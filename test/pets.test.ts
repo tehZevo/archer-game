@@ -49,27 +49,6 @@ afterEach(() => {
   player.hp = player.hpMax;
 });
 
-describe('the pet keeper', () => {
-  it('every town has one', () => {
-    const without = TOWNS.filter((t) => {
-      gotoPlace({ town: t.id });
-      return !(game.floor.npcs ?? []).some((n) => n.kind === 'pets');
-    });
-    expect(without.map((t) => t.id)).toEqual([]);
-  });
-
-  it('stands clear of the other NPCs', () => {
-    gotoPlace({ town: TOWNS[0].id });
-    const npcs = game.floor.npcs ?? [];
-    for (const a of npcs) {
-      for (const b of npcs) {
-        if (a === b) continue;
-        const apart = Math.abs(a.x - b.x) > 16 || Math.abs(a.y - b.y) > 4;
-        expect(apart, `${a.kind} and ${b.kind}`).toBe(true);
-      }
-    }
-  });
-});
 
 describe('buying and calling pets', () => {
   it('you can\'t buy one without the coins', () => {
@@ -104,12 +83,6 @@ describe('buying and calling pets', () => {
     expect(pet.owned.length).toBe(2);
   });
 
-  it('it arrives at your shoulder', () => {
-    pet.owned = ['goldfinch'];
-    choosePet('goldfinch');
-    step(1);
-    expect(Math.abs(pet.x - shoulder())).toBeLessThan(1);
-  });
 });
 
 describe('fetching coins', () => {

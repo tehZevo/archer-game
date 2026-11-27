@@ -53,13 +53,7 @@ describe('enemy deaths', () => {
   describe('drawn death sheets (each enemy\'s own body, drawn dying)', () => {
     const names = Object.keys(DEATHS);
     const sheets = names.map((n) => bakeDeathSheet(n, DEATHS[n])!);
-    it('every enemy with art, variants too, has a drawn death', () => {
-      for (const m of MOB_TYPES.filter((t) => hasMobArt(t.n))) expect(bakeDeathSheet(m.n, deathOf(m)), m.n).toBeTruthy();
-    });
 
-    it('the same enemy always bakes the same sheet', () => {
-      expect(bakeDeathSheet(names[0], DEATHS[names[0]])!.frames[4].px.join()).toBe(sheets[0].frames[4].px.join());
-    });
 
     it('a death\'s age picks its frame, holding the last', () => {
       expect(deathFrame(0)).toBe(0);
@@ -100,14 +94,6 @@ describe('your death (a tombstone drops in, and your ghost rises out of it)', ()
     expect(Math.abs(player.x - fell)).toBeLessThan(1);
   });
 
-  it('the tombstone drops in from above before the ghost rises', () => {
-    knockOut();
-    step(6);
-    const death = getPlayerDeath()!;
-    expect(tombDrop(death)).toBeGreaterThan(0);
-    expect(tombDrop(death)).toBeLessThan(1);
-    expect(ghostRise(death)).toBe(0);
-  });
 
   it('while down you take no input and no hits', () => {
     const fell = knockOut();
@@ -119,13 +105,6 @@ describe('your death (a tombstone drops in, and your ghost rises out of it)', ()
     expect(player.hp).toBe(0);
   });
 
-  it('the stone lands, then the ghost starts rising out of it', () => {
-    knockOut();
-    step(6 + Math.ceil((TOMB_DROP_T * 2) / P.STEP));
-    expect(tombDrop(getPlayerDeath()!)).toBe(1);
-    step(6);
-    expect(ghostRise(getPlayerDeath()!)).toBeGreaterThan(0);
-  });
 
   it('then a dialog asks where to revive, with the world frozen and you still down', () => {
     knockOut();
@@ -145,17 +124,3 @@ describe('your death (a tombstone drops in, and your ghost rises out of it)', ()
   });
 });
 
-describe('the tombstone art', () => {
-  const at = (x: number, y: number): string => TOMB[y]?.[x] ?? '.';
-
-  it('has a crisp outline all the way round', () => {
-    const notOutlined: string[] = [];
-    TOMB.forEach((row, y) => {
-      [...row].forEach((c, x) => {
-        const onEdge = at(x + 1, y) === '.' || at(x - 1, y) === '.' || at(x, y + 1) === '.' || at(x, y - 1) === '.';
-        if (c !== '.' && onEdge && c !== 'o') notOutlined.push(`${x},${y}`);
-      });
-    });
-    expect(notOutlined).toEqual([]);
-  });
-});

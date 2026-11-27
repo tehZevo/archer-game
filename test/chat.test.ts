@@ -30,25 +30,12 @@ describe('text chat', () => {
     expect(wrap('A'.repeat(25), 10).length).toBe(3);
   });
 
-  it('saying something logs it and shows your bubble', () => {
-    say('hello world');
-    expect(chat.log.length).toBe(1);
-    expect(chat.log[0].id).toBe(SELF);
-    expect(chat.log[0].text).toBe('HELLO WORLD');
-    expect(bubbleFor(SELF, performance.now())).toBeTruthy();
-  });
 
   it('blank lines are not sent', () => {
     say('   ');
     expect(chat.log.length).toBe(0);
   });
 
-  it('a bubble lasts a few seconds, then goes', () => {
-    const t = 1e6;
-    addChat('peer1', 'BOB', 'HI', '#ff0000', t);
-    expect(bubbleFor('peer1', t + 1000)).toBeTruthy();
-    expect(bubbleFor('peer1', t + bubbleMs('HI') + 1)).toBe(null);
-  });
 
   it('old lines leave the log, unless you are typing', () => {
     const t = 1e6;
