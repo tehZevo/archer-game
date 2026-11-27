@@ -92,6 +92,9 @@ export const capAdd = (v: number, add: number): number => {
   return v * d >= max ? v : d * Math.min(v * d + max, max);
 };
 
+/** s of i-frames after an enemy attack on you, hit or miss. */
+export const HIT_IFRAMES = 1.0;
+
 /** Hurt the player (unless they're still flashing from the last hit). True if it landed.
  *  Hit by something at `fromX`, they're bumped a little up and back, away from it (on top of their own momentum)
  *  (not while climbing or hovering in Skyward Assault). The attacker's level sets
@@ -101,6 +104,11 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
   if (Math.random() < missChance(attackerLvl, player.level)) {
     // a missed attack shows "MISS" over the player, like the player's own misses
     game.dmgNums.push({ x: player.x, y: player.y - 14, v: 0, t: 1, crit: false, vy: -12, txt: 'MISS', col: '#ffffff' });
+    // and it starts the same i-frame cooldown a hit would, so an enemy pressed
+    // against you doesn't re-roll (and spam MISS) every frame; it's quiet,
+    // though: no invulnerable flashing for an attack that never landed
+    player.invuln = HIT_IFRAMES;
+    player.invulnQuiet = true;
     return false;
   }
   if (fromX !== undefined && !player.climb && player.hang.t <= 0) {
@@ -115,7 +123,8 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
   dmg = Math.max(1, Math.round(dmg * (1 - gearSoak()) * (1 - passiveBonus('bu'))));
   player.hp = Math.max(0, player.hp - dmg);
   player.combatT = P.COMBAT_TIME;
-  player.invuln = 1.0;
+  player.invuln = HIT_IFRAMES;
+  player.invulnQuiet = false; // a real hit flashes
   sfx.hit();
   game.dmgNums.push({ x: player.x, y: player.y - 14, v: dmg, t: 1, crit: false, vy: -12, col: '#b06cff' });
   return true;

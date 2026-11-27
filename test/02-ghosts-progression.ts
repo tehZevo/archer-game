@@ -154,10 +154,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('a second Z right after is a fresh shot, not a free extra', player.cast === 'shoot' && cast1 === 'shoot');
 }
 {
-  // Level-based miss rate: 5% per level the target is above the attacker,
+  // Level-based miss rate: 10% per level the target is above the attacker,
   // the same in reverse; applies to shots and to contact hits alike.
   check('an even match never misses', missChance(10, 10) === 0);
-  check('each level above adds 5%', missChance(10, 12) === 0.1 && missChance(10, 11) === 0.05);
+  check('each level above adds 10%', missChance(10, 12) === 0.2 && missChance(10, 11) === 0.1);
   check('being above the target misses nothing', missChance(10, 8) === 0);
   check('the rate caps at 75%', missChance(1, 100) === 0.75);
   arena(10);
@@ -168,8 +168,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   };
   m.level = 10;
   check('a shot at an even-levelled enemy lands on any roll', roll(0.99));
-  m.level = 12; // two above: 10% miss
-  check('a 10% roll at two levels above misses', !roll(0.05) && roll(0.15));
+  m.level = 12; // two above: 20% miss
+  check('a 20% roll at two levels above misses', !roll(0.15) && roll(0.25));
   m.level = 40;
   check('the cap bites at thirty levels up', !roll(0.7) && roll(0.8));
   check('a miss still wakes the enemy', (m.hp = 1e6, roll(0.01), m.aggro === true));
@@ -179,10 +179,12 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   arena(20);
   player.invuln = 0;
   const saved = Math.random; Math.random = () => 0.05;
-  check('a mob two levels below the archer misses on a 10% roll', !hurtPlayer(10, 0, 18) && player.hp === player.hpMax);
+  check('a mob two levels below the archer misses on a 20% roll', !hurtPlayer(10, 0, 18) && player.hp === player.hpMax);
   Math.random = saved;
+  check('...and the miss starts the i-frame cooldown, quietly (no flashing)', player.invuln > 0.9 && player.invulnQuiet && !hurtPlayer(10, 0, 18),
+    `invuln ${player.invuln.toFixed(2)} quiet ${player.invulnQuiet}`);
   player.invuln = 0;
-  check('...and lands when the roll clears', hurtPlayer(10, 0, 18) && player.hp === player.hpMax - 10);
+  check('...and lands when the roll clears, flashing', hurtPlayer(10, 0, 18) && player.hp === player.hpMax - 10 && !player.invulnQuiet);
   player.hp = player.hpMax; player.invuln = 0;
   check('a mob two levels above lands on any roll', hurtPlayer(10, 0, 22) && player.hp === player.hpMax - 10);
   // Twin Echoes (passive): the shadow archer fires alongside you, doubling the

@@ -5,7 +5,6 @@
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
 - (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
-- Increase the miss chance both ways (player→mob and mob→player) to 10% per level.
 - Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
 - Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
 - HUD meters: show the EXP meter as a percentage (%) instead of A/B, and show HP/MP as the current value (e.g. 500, 1.5k) instead of A/B.
@@ -19,7 +18,6 @@
   - Keep as-is: `smoke.ts` (baked sheets match generators), asset-integrity checks (paint-in-bounds), and core physics (slope/ledge, Rush Toss carry).
 - Move the suite to vitest. Per-test `beforeEach` replaces the repeated `arena(20); player.ranks.x = true; dummy(150);` setup that accounts for most of the ~3,140 non-check lines, and `it()` naming makes the run readable. Biggest structural win (~1,000 LOC), and it removes the bundle's dependence on module import order for the RNG seed (see the `harness.ts` header comment).
 - (design) Assess the suite and determine which tests are low value. Roughly 900 checks cover ~15,000 LOC of behavioural code; decide which of them earn their keep and which are tautologies that pass no matter what the game does. Output: a short list of checks to drop outright, distinct from the consolidation work above.
-- (bug) MISS is spammed; a miss should trigger the same invulnerability cooldown as taking damage (without actually showing the player as invulnerable).
 - Harder bosses should summon enemies, and even harder bosses should summon elites.
 - (design) Rename Downpour.
 - Air Q (Dive) should travel a fixed diagonal-downward distance equal to Rush Toss's horizontal distance. If it hits the ground mid-travel, it continues for the remaining distance and then performs the toss; if it's still airborne at the end, the player slows toward the end and drops without tossing.

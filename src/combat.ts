@@ -53,7 +53,7 @@ export const appliedDamage = (mult: number): number => baseAttack() * damageModi
  *  adds 5% to the chance of missing it (capped), and the same in reverse.
  *  Applies to the archer's shots and to the mobs' contact hits alike. */
 export const missChance = (attackerLvl: number, targetLvl: number): number =>
-  Math.max(0, Math.min(0.75, 0.05 * (targetLvl - attackerLvl)));
+  Math.max(0, Math.min(0.75, 0.1 * (targetLvl - attackerLvl)));
 
 /** Seconds the enemy HP bar stays up after a hit. */
 export const BAR_SHOW = 4;
