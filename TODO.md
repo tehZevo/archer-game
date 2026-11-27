@@ -40,3 +40,5 @@
 - (bug) The upgraded W's (Skyward Assault, `ab`) effect is off-center. Make the player disappear while it casts, as Downpour (`air-e`) does, and shift the effect toward the player by half its width from where it sits now.
 - (design) Consider renaming all jobs.
 - Increase Tempest's (`r`) damage to 300% (`dmg1: 200` → `300`, config.ts:149).
+- Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
+- (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.
