@@ -245,23 +245,39 @@ function spinAnim(rp: RampName = 'red', wind: RampName = 'orange'): FxSheet {
   });
 }
 
+/** One arm of a spiral from the core outward: `turn` radians of sweep from
+ *  angle a0, its radius growing from r0 to r1 (squashed to the body's
+ *  height by `tall`), thick and bright at the core, thinning to its tip. */
+function spiralArm(L: Light, rp: RampName, cx: number, cy: number, a0: number, turn: number, r0: number, r1: number, tall: number): void {
+  const steps = 18;
+  const at = (t: number): [number, number] => {
+    const a = a0 + t * turn, r = r0 + t * (r1 - r0);
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r * tall];
+  };
+  for (let k = 0; k < steps; k++) {
+    const t0 = k / steps, t1 = (k + 1) / steps, [x0, y0] = at(t0), [x1, y1] = at(t1);
+    L.line(rp, x0, y0, x1, y1, 1.7 - t0 * 1.1, 1.7 - t1 * 1.1, 1.25 - t0 * 0.5);
+  }
+}
+
 /** Cyclone Sweep's whirl, drawn in place of the archer while the sweep
- *  plays: a body-sized vortex of red bands wound round a white-hot core,
- *  the bands advancing round it frame by frame so the turn is in the art.
- *  Origin at the middle (the archer's body middle). */
+ *  plays: a body-sized vortex of three spiral arms wound out of a white-hot
+ *  core, trailing as they turn round it frame by frame so the spin is in the
+ *  art. Origin at the middle (the archer's body middle). */
 export const CYCLONE_FRAMES = 8;
 function cycloneAnim(): FxSheet {
-  const W = 36, H = 40, c = W / 2, m = H / 2;
+  const W = 36, H = 40, c = W / 2, m = H / 2, ARMS = 3, TURN = -Math.PI * 1.3, TALL = 1.15;
   return anim(W, H, c, m, CYCLONE_FRAMES, (L, f) => {
-    const R = rng(131 + f), spin = (f / CYCLONE_FRAMES) * Math.PI * 2;
-    L.disc('red', c, m, 6, 1.3);                       // the white-hot core
-    L.line('red', c, m - 11, c, m + 11, 1.2, 1.2, 1.1); // the body's axis, a bright streak
-    // three bands wound at different radii, each sweeping its own arc
-    for (let b = 0; b < 3; b++) {
-      const a0 = spin + b * (Math.PI * 2 / 3), rx = 8 + b * 2.5, ry = 13 + b * 2;
-      arc(L, b === 2 ? 'orange' : 'red', c, m, rx, ry, 1.6 - b * 0.3, 1.15 - b * 0.15, a0, a0 + 2.2);
+    const R = rng(131 + f), spin = (f / CYCLONE_FRAMES) * (Math.PI * 2 / ARMS);
+    L.disc('red', c, m, 4.5, 1.3); // the white-hot core
+    for (let b = 0; b < ARMS; b++) {
+      const a0 = spin + b * (Math.PI * 2 / ARMS);
+      spiralArm(L, 'red', c, m, a0, TURN, 2, 15, TALL);
+      // the arm's tip flung off as an orange spark
+      const tip = a0 + TURN;
+      L.spark('orange', c + Math.cos(tip) * 16, m + Math.sin(tip) * 16 * TALL, 0.9, b === 0);
     }
-    for (let i = 0; i < 3; i++) { const a = spin + R() * 6.28; L.spark('orange', c + Math.cos(a) * 15, m + Math.sin(a) * 18, 0.9, i === 0); }
+    for (let i = 0; i < 2; i++) { const a = R() * 6.28, d = 6 + R() * 8; L.spark('orange', c + Math.cos(a) * d, m + Math.sin(a) * d * TALL, 0.7); }
   });
 }
 
