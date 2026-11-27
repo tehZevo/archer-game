@@ -8,3 +8,4 @@
 - Bug: Electric Blitz (`eb`) advertises `hits1: 2` / `dmg1: 460` but `groundRush` → `strike()` (rush.ts:132) always uses `rank('ground-q')`, so it fires Rush Toss's 1 hit / 400 dmg — use the active skill's rank (and fix the "strikes twice" comment at rush.ts:140).
 - (art) Give portals a more oval, swirling, rounded look and animation.
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
+- (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
