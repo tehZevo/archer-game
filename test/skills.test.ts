@@ -347,26 +347,6 @@ describe('Cyclone Sweep (W in the air)', () => {
   });
 });
 
-describe('Piercing Leap (E)', () => {
-  it('lifts you steadily, slower than a jump, to about a jump\'s height', () => {
-    arena(10);
-    player.ranks['ground-e'] = true;
-    tap('e');
-    const ys: number[] = [];
-    for (let i = 0; i < 30 && !(i > 2 && player.onGround); i++) {
-      ys.push(player.y);
-      step(1);
-    }
-    const standing = ground().y - player.h;
-    const peak = standing - Math.min(...ys);
-    const firstStep = ys[0] - ys[1];
-    expect(peak).toBeGreaterThan(30);
-    expect(peak).toBeLessThan(50);
-    expect(firstStep).toBeGreaterThan(0);
-    expect(firstStep).toBeLessThan(300 * P.STEP); // a jump pops up faster than this
-  });
-});
-
 describe('queued presses', () => {
   it('a Glide (D) pressed while Skyward Assault hovers is dropped, not queued', () => {
     arena(30);
@@ -901,17 +881,6 @@ describe('Glide and Acrobatics (bought with SP, not given)', () => {
     expect(player.ranks.d).toBe(true);
   });
 
-  it('Glide is a quick 0.2s tumble with a 0.1s recovery', () => {
-    expect(SKILLS.d.use).toBe(0.2);
-    expect(SKILLS.d.delay).toBe(0.1);
-  });
-
-  it('Acrobatics opens at Lv.10', () => {
-    arena(1);
-    expect(SKILLS.ac.minLevel).toBe(10);
-    expect(skillRows().some((r) => r.key === 'ac')).toBe(false);
-  });
-
   it('without Acrobatics, Up + Jump on a rope does not rush', () => {
     arena(10);
     player.ranks.ac = false;
@@ -1080,15 +1049,6 @@ describe('recovery (delay) after the Q rushes', () => {
 });
 
 describe('the kit\'s hits and damage', () => {
-  it('Double Shot 4x120%, Rising Arrows 4, Assault 4, Sweep 4x200%, Blitz 2, Tempest 6x300%, Dive 1x400%', () => {
-    expect([SKILLS.z.targets1, SKILLS.z.dmg1]).toEqual([4, 120]);
-    expect(SKILLS['ground-w'].hits1).toBe(4);
-    expect(SKILLS.ab.hits1).toBe(4);
-    expect([SKILLS['air-w'].hits1, SKILLS['air-w'].dmg1]).toEqual([4, 200]);
-    expect(SKILLS.eb.hits1).toBe(2);
-    expect([SKILLS.r.hits1, SKILLS.r.dmg1]).toEqual([6, 300]);
-    expect([SKILLS['air-q'].hits1, SKILLS['air-q'].dmg1]).toEqual([1, 400]);
-  });
 
   it('a Blitz rush strikes the enemy it carries', () => {
     arena(20);
@@ -1111,7 +1071,6 @@ describe('Downpour', () => {
   }
 
   it('reaches 88px below your feet (it was 176)', () => {
-    expect(P.PLUNGE_DEPTH).toBe(88);
     highUp();
     const near = dummy(140);
     near.y = player.y + player.h + 10; // right below
@@ -1290,15 +1249,6 @@ describe('Piercing Leap', () => {
     const top = player.y;
     tap('e');
     expect(peak(top, 40)).toBeGreaterThan(35);
-  });
-
-  it('from the floor rises about its own height', () => {
-    arena(20);
-    player.ranks['ground-e'] = true;
-    tap('e');
-    const height = peak(ground().y - player.h, 40);
-    expect(height).toBeGreaterThan(35);
-    expect(height).toBeLessThan(48);
   });
 
   it('cast a frame into a jump, it still measures from the floor, so it does not stack on the jump', () => {

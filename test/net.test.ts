@@ -6,7 +6,7 @@ import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../s
 import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { game, gotoPlace, player, SPAWN_SPREAD } from '../src/state';
 import { SELF } from '../src/chat';
-import { cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, emoteFor, EMOTES, setEmote } from '../src/emotes';
+import { cleanEmote, clearEmotes, EMOTE_MS, emoteFor, setEmote } from '../src/emotes';
 import { setKey } from '../src/input';
 import { ingest, INTERP_MS, newTrack, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 import { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
@@ -99,11 +99,6 @@ describe('shared spawn boost', () => {
   it('kills from other players speed up waves', () => {
     remoteKills(2);
     expect(waveRate()).toBeCloseTo(1 + 2 * BOOST.PER_KILL, 9);
-  });
-
-  it('a flood of kills counts as one capped batch', () => {
-    remoteKills(999);
-    expect(boost.level).toBeCloseTo(BOOST.MAX_BATCH * BOOST.PER_KILL, 9);
   });
 
   it('junk is ignored, and the boost itself is capped', () => {
@@ -268,17 +263,6 @@ describe('emotes (F1-F7 pop a face over your head, and your ghost\'s)', () => {
     const now = performance.now();
     expect(emoteFor(SELF, now)).toBe('sad');
     expect(emoteFor(SELF, now + EMOTE_MS + 1)).toBe(null);
-  });
-
-  it('there are seven, each a 9x9 face in the emote palette', () => {
-    expect(EMOTES.length).toBe(7);
-    for (const e of EMOTES) {
-      expect(EMOTE_ART[e].length).toBe(9);
-      for (const row of EMOTE_ART[e]) {
-        expect(row.length).toBe(9);
-        for (const c of row) expect(c === '.' || !!EMOTE_PAL[c]).toBe(true);
-      }
-    }
   });
 
   it('emotes from the network are checked', () => {

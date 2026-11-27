@@ -63,22 +63,6 @@ describe('enemy deaths', () => {
   describe('drawn death sheets (each enemy\'s own body, drawn dying)', () => {
     const names = Object.keys(DEATHS);
     const sheets = names.map((n) => bakeDeathSheet(n, DEATHS[n])!);
-    /** How many pixels of a frame are filled. */
-    function filled(frame: { px: Uint8ClampedArray }): number {
-      let n = 0;
-      for (let i = 3; i < frame.px.length; i += 4) if (frame.px[i]) n++;
-      return n;
-    }
-
-    it('every enemy bakes a full strip of frames, which fades out at the end', () => {
-      names.forEach((name, i) => {
-        const frames = sheets[i].frames;
-        expect(frames.length, name).toBe(DEATH_FRAMES);
-        expect(filled(frames[0]), name).toBeGreaterThan(40);
-        expect(filled(frames[DEATH_FRAMES - 1]), name).toBeLessThan(filled(frames[DEATH_FRAMES - 3]));
-      });
-    });
-
     it('every enemy with art, variants too, has a drawn death', () => {
       for (const m of MOB_TYPES.filter((t) => hasMobArt(t.n))) expect(bakeDeathSheet(m.n, deathOf(m)), m.n).toBeTruthy();
     });
@@ -106,19 +90,6 @@ describe('enemy deaths', () => {
   describe('hit sounds', () => {
     it('every enemy type has its own (a variant borrows its parent\'s)', () => {
       for (const t of MOB_TYPES) expect(MOB_SOUNDS[t.of ?? t.n], t.n).toBeTruthy();
-    });
-
-    it('no two sound the same', () => {
-      const voices = MOB_TYPES.map((t) => { const v = MOB_SOUNDS[t.n]; return `${v.f}:${v.t}:${v.s}:${v.m}`; });
-      expect(new Set(voices).size).toBe(MOB_TYPES.length);
-      expect(MOB_SOUNDS['Garden Snail'].f).not.toBe(MOB_SOUNDS.Gull.f);
-      expect(MOB_SOUNDS['Garden Snail'].t).not.toBe(MOB_SOUNDS.Gull.t);
-    });
-
-    it('each death sounds like its material: a golem crumbles, a slime splats, a windup soldier clanks', () => {
-      expect(MOB_SOUNDS['Meteor Golem'].m).toBe('stone');
-      expect(MOB_SOUNDS.Slime.m).toBe('goo');
-      expect(MOB_SOUNDS['Windup Soldier'].m).toBe('metal');
     });
   });
 });

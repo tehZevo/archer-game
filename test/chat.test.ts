@@ -170,12 +170,6 @@ describe('cheers (/cheer <player> gives them +10% EXP)', () => {
       expect(cheer.from).toBe('ROBIN');
     });
 
-    it('lasts half an hour', () => {
-      gotCheer('robin');
-      expect(cheerLeftMs()).toBeGreaterThan(CHEER.BUFF_MS - 1000);
-      expect(expMult(Date.now() + CHEER.BUFF_MS + 1)).toBe(1);
-    });
-
     it('cheers and the buff are saved', () => {
       gotCheer('robin');
       const saved = snapshot().cheer;

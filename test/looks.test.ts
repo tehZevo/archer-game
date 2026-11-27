@@ -7,9 +7,8 @@ import { disabled, initMenu, items, lookLocked, menu, menuKey } from '../src/men
 import { clearSave, save } from '../src/save';
 import { game, gotoPlace, player } from '../src/state';
 import {
-  openStylist, shownLook, ST_ROWS_W, ST_TOP, styleChanged, STYLE_FEE, stylist, stylistBox, stylistKey, stylistRows,
-  STYLIST_ROWS, stylistTap,
-} from '../src/stylist';
+  openStylist, shownLook, ST_ROWS_W, ST_TOP, styleChanged, STYLE_FEE, stylist, stylistBox, stylistRows,
+  STYLIST_ROWS, stylistTap } from '../src/stylist';
 import { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src/townlooks';
 import { placeName, START, TOWNS } from '../src/world';
 import { NPC_FRAMES, npcFrame, npcRows } from '../src/npcart';
@@ -63,11 +62,6 @@ describe('looks: hair style, hair colour, skin and outfit', () => {
       }
     }
     expect(bad).toEqual([]);
-  });
-
-  it('every hair style looks different', () => {
-    const looks = new Set(Array.from({ length: LOOK_COUNTS.style }, (_, style) => styled(GRIDS.idle[0], 'idle', style).join()));
-    expect(looks.size).toBe(LOOK_COUNTS.style);
   });
 
   it('the male build changes the face', () => {

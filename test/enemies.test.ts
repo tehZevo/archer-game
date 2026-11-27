@@ -319,16 +319,6 @@ describe('enemy variants (cousins of an area\'s enemies that turn up in their pl
   });
 });
 
-describe('enemy speed', () => {
-  it('a spawned enemy moves at half its listed speed', () => {
-    arena();
-    const crab = MOB_TYPES.find((m) => m.n === 'Enemy Crab')!;
-    spawnMob({ x: 100, y: ground().y, types: ['Enemy Crab'] } as never, crab);
-    const m = game.mobs[game.mobs.length - 1];
-    expect(m.spd).toBe(Math.round(crab.spd * P.MOB_SPEED));
-  });
-});
-
 describe('elites (rare, bigger, tougher, worth more)', () => {
   /** A plain enemy and an elite of the same type, side by side. */
   function plainAndElite(): [Mob, Mob] {

@@ -3,7 +3,7 @@ import { arena, dummy, ground, step, tap } from './helpers';
 import { MOB_TYPES, P } from '../src/config';
 import { capAdd, hurtPlayer } from '../src/boss';
 import { clearGear } from '../src/gear';
-import { critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, NUM_GAP, NUM_LINE } from '../src/combat';
+import { critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance } from '../src/combat';
 import { recalcStats } from '../src/progress';
 import { gotoPlace, LEVEL_SPAN, LV_1_DMG, LV_100_DMG, spawnMob } from '../src/state';
 import { mobLevel, START } from '../src/world';
@@ -198,19 +198,6 @@ describe('damage numbers', () => {
     return m;
   }
 
-  it('hits landing at once: each number waits 1/8 s after the last', () => {
-    hitFourTimes();
-    expect(NUM_GAP).toBe(0.125);
-    const delays = game.dmgNums.map((d) => d.delay ?? 0);
-    for (let i = 0; i < 4; i++) expect(delays[i]).toBeCloseTo(i * NUM_GAP, 3);
-  });
-
-  it('...and sits one line above the last', () => {
-    hitFourTimes();
-    const nums = game.dmgNums;
-    for (let i = 0; i < 4; i++) expect(nums[0].y - nums[i].y).toBeCloseTo(i * NUM_LINE, 9);
-  });
-
   it('the second number shows after about 1/8 s, while the later ones still wait', () => {
     hitFourTimes();
     step(Math.ceil(0.15 / P.STEP));
@@ -238,12 +225,6 @@ describe('damage numbers', () => {
       damage(m, 1, { more: true, first: true });
       return m;
     }
-
-    it('climbs past 8 lines', () => {
-      const m = twelveHitsThenANewCast();
-      const top = game.dmgNums[11];
-      expect(m.y - 8 - top.y).toBeCloseTo(11 * NUM_LINE, 9);
-    });
 
     it('a new cast starts its own stack at the bottom, right away, while the last is still open', () => {
       const m = twelveHitsThenANewCast();

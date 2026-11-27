@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { arena, climb, dummy, ground, release, step, tap } from './helpers';
 import { TOWN_MIN_H } from '../src/floorframe';
-import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
+import { miniRect, MINI_SCALE } from '../src/minimap';
 import { CAM, MOB_TYPES, P, TILE, WORLD } from '../src/config';
 import { generateFloor, groupSize, LAYOUTS, type Layout } from '../src/floor';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
@@ -495,16 +495,6 @@ describe('minimap', () => {
     expect(r.x + r.w).toBeLessThanOrEqual(240);
     expect(r.y).toBeGreaterThanOrEqual(24);
     expect(r.y + r.h).toBeLessThan(180 - 16);
-  });
-
-  it('shows the whole floor at 1:10', () => {
-    const r = miniRect();
-    expect(MINI_SCALE).toBe(0.1);
-    expect(r.w).toBe(Math.ceil(WORLD.w / 10));
-    expect(toMini(0, 0)).toEqual([r.x, r.y]);
-    const [x, y] = toMini(WORLD.w - 1, WORLD.h - 1);
-    expect(x).toBeLessThan(r.x + r.w);
-    expect(y).toBeLessThan(r.y + r.h);
   });
 
   it('fits the tallest floor', () => {

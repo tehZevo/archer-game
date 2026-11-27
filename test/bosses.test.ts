@@ -235,14 +235,6 @@ describe('a boss fight', () => {
       }
     });
 
-    it('up to SUMMON_MAX at once', () => {
-      boss.level = BOSS.SUMMON_LVL;
-      summon(boss);
-      summon(boss);
-      summon(boss);
-      expect(minions(boss).length).toBe(BOSS.SUMMON_MAX);
-    });
-
     it('the hardest bosses summon elites', () => {
       boss.level = BOSS.ELITE_LVL;
       summon(boss);

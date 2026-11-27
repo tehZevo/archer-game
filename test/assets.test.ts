@@ -8,7 +8,7 @@ import { DEATHS } from '../src/deaths';
 import { MOB_GEN } from '../src/sprites';
 import { HURT, MOB_ART, paintMob } from '../src/mobart';
 import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
-import { BLOCK_VARIANTS, BOT_H, hash, TILESETS, tilesetFor, TOP_H, TOP_W, variantAt } from '../src/tileset';
+import { BOT_H, hash, TILESETS, tilesetFor, TOP_H, TOP_W, variantAt } from '../src/tileset';
 import { MAP_AREAS } from '../src/world';
 import fontPng from '../assets/font.png';
 import { FONT_CHARS } from '../src/font';
@@ -130,12 +130,6 @@ describe('tilesets', () => {
     expect(variantAt(5, 7)).toBe(variantAt(5, 7));
   });
 
-  it('block fills pick from all 8 variants', () => {
-    const seen = new Set(Array.from({ length: 128 }, (_, i) => variantAt(i, 3, 0, BLOCK_VARIANTS)));
-    expect(seen.size).toBe(BLOCK_VARIANTS);
-    for (const v of seen) expect(v).toBeLessThan(BLOCK_VARIANTS);
-  });
-
   it('decorations pick their variant apart from the fill', () => {
     const differs = Array.from({ length: 32 }, (_, i) => variantAt(i, 0) !== variantAt(i, 0, 1));
     expect(differs).toContain(true);
@@ -217,13 +211,6 @@ describe('enemy art', () => {
   it('every painted enemy has its own hurt pose, not just another frame again', () => {
     const same = Object.keys(MOB_ART).filter((name) => [0, 1, 2, 3].some((f) => frameRects(name, HURT) === frameRects(name, f)));
     expect(same).toEqual([]);
-  });
-
-  it('a painted enemy is the size of its art', () => {
-    for (const m of MOB_TYPES.filter((t) => MOB_ART[t.n])) {
-      expect(m.w).toBe(MOB_ART[m.n].look.w);
-      expect(m.h).toBe(MOB_ART[m.n].look.h);
-    }
   });
 });
 

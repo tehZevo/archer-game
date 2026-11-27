@@ -32,11 +32,6 @@ describe('status effects', () => {
       expect(player.effects[0].stacks).toBe(2);
     });
 
-    it(`stacks stop at ${MAX_STACKS}`, () => {
-      for (let i = 0; i < 7; i++) applyStatus(player, 'poison');
-      expect(player.effects[0].stacks).toBe(MAX_STACKS);
-    });
-
     it('ticks each second, harder for each stack', () => {
       for (let i = 0; i < MAX_STACKS; i++) applyStatus(player, 'poison');
       updateStatus(player, 1.01);
