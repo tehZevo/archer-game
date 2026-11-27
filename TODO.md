@@ -10,3 +10,6 @@
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
 - Reduce the launch height of enemies (when knocked airborne) by 50%.
+- Q-chain effects (implement together):
+  - If you buffer a ground Q from an air Q or another ground Q, do not show the upward spike effect on the source skill.
+  - Add the toss effect back to Dive and ground Q, but only when they're unchained out of (i.e. linking cancels the toss).
