@@ -1,7 +1,7 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { text } from './font';
-import { autoChannel, disabled, items, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
+import { autoChannel, disabled, items, lookLocked, menu, MENU_ROW, MENU_TOP, MENU_W, MENU_X, type ItemId } from './menu';
 import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
 import { placeKey, placeName } from './world';
@@ -86,7 +86,7 @@ export function drawMenu(): void {
         // a small you on the right of the row
         const f = archerFrame(archerFrames(myLook()), 'idle', 0);
         ctx.drawImage(f, 0, 0, ARCHER_W, 12, R - ARCHER_W, y - 3, ARCHER_W, 12);
-        text(ctx, 'EDIT', R - ARCHER_W - 4, y, 1, HI, 'right');
+        text(ctx, lookLocked() ? 'SEE A STYLIST' : 'EDIT', R - ARCHER_W - 4, y, 1, HI, 'right');
         break;
       }
       case 'settings':

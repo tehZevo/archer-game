@@ -45,7 +45,10 @@ export function items(): ItemId[] {
   return it;
 }
 /** Rows that can't be picked right now: no private codes without multiplayer. */
-export const disabled = (it: ItemId): boolean => !!net.offline && (it === 'code' || it === 'create');
+/** Your look is set when you create your character; after that only a town stylist changes it. */
+export const lookLocked = (): boolean => hasSave();
+
+export const disabled = (it: ItemId): boolean => (!!net.offline && (it === 'code' || it === 'create')) || (it === 'look' && lookLocked());
 const cur = (): ItemId => items()[menu.sel];
 
 /** Channels on offer: auto, then 1..N, always one beyond the highest busy one (up to 9). */

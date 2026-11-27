@@ -63,6 +63,7 @@ addEventListener('pagehide', () => { if (!menu.open) save(); });
 initMenu(() => {
   // generate the saved floor from the chosen instance's seed, then go online
   gotoPlace(resumePlace);
+  save(); // your character now exists: the look locks (town stylists change it from here)
   net.net.started = true;
   logMsg(net.net.code
     ? `Private instance <b>${net.net.code}</b>. Share the code to play together.`
