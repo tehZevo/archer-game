@@ -41,6 +41,8 @@ export function updateRapid(dt: number): void {
     if (player.casting.useT > 0 || player.casting.recoverT > 0) return;
     rp.on = true; rp.t = 0; rp.face = player.face;
   }
+  // a dodge roll's use time holds fire; it picks up as the roll's recovery starts
+  if (rp.pauseT > 0) { rp.pauseT -= dt; return; }
   rp.t -= dt;
   while (rp.t <= 0) {
     const r = rank('held-z');

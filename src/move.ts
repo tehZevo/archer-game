@@ -201,13 +201,14 @@ function jump(): void {
   if (held('right')) { player.vx =  P.JUMP_H; if (!streaming()) player.face =  1; }
 }
 
-/** The dodge roll a Jump makes mid-Gale Stream: a short hop and a roll in the
- *  direction you're heading (your facing if you're not), invulnerable for its
- *  length. The stream keeps running, turned round: it now fires the opposite
- *  way it was firing before the roll. The roll lands on its own (see
+/** The dodge roll a Jump makes mid-Gale Stream: a short hop and a roll the
+ *  way you're holding (away from your facing if you hold nothing),
+ *  invulnerable for its length. The stream fires the opposite way to the
+ *  roll, holding fire through the roll's use time (P.ROLL_USE) and picking
+ *  up as its recovery (P.ROLL_DELAY) starts. The roll lands on its own (see
  *  rush.landDive): no rush slide, no strike, no damage. */
 function jumpRoll(): void {
-  const dir = held('left') ? -1 : held('right') ? 1 : player.face;
+  const dir: 1 | -1 = held('left') ? -1 : held('right') ? 1 : player.face === 1 ? -1 : 1;
   setPose('jump', JUMP_POSE);
   sfx.jump();
   player.skillPose = null;
@@ -217,9 +218,14 @@ function jumpRoll(): void {
   player.diving = true; // the roll's pose (no speed trail: see rolling)
   player.rolling = true;
   player.invuln = P.ROLL_INVULN;
-  // turn the stream round, and face the way it now fires
-  player.rapid.face = player.rapid.face === 1 ? -1 : 1;
+  // the stream fires back the other way from the roll, and you face it
+  player.rapid.face = dir === 1 ? -1 : 1;
   player.face = player.rapid.face;
+  player.rapid.pauseT = P.ROLL_USE;
+  // the roll's own commitment: its use time, then a short recovery
+  player.casting.key = null;
+  player.casting.useT = P.ROLL_USE;
+  player.casting.recoverT = P.ROLL_DELAY;
 }
 
 /** Skills that push the player around while they play. */
