@@ -619,3 +619,23 @@ describe('icy floors (in cold areas, shared by everyone, pay more)', () => {
     expect(drops[0].v).toBeGreaterThanOrEqual(Math.round(coinValue(10, 0) * FLOOR_MODS.icy.coins));
   });
 });
+
+describe('the world\'s top and bottom', () => {
+  it('stop a big (or stacked) hop at the top', () => {
+    arena(20);
+    player.y = -40;
+    player.vy = -100;
+    player.onGround = false;
+    step(1);
+    expect(player.y).toBeGreaterThanOrEqual(0);
+  });
+
+  it('and hold you in from below', () => {
+    arena(20);
+    player.y = WORLD.h;
+    player.vy = 0;
+    player.onGround = false;
+    step(1);
+    expect(player.y).toBeLessThanOrEqual(WORLD.h - player.h);
+  });
+});

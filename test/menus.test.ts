@@ -8,7 +8,7 @@ import { P, SKILLS } from '../src/config';
 import { clearPressed, REPEAT_DELAY, REPEAT_RATE, setKey } from '../src/input';
 import { textWidth } from '../src/font';
 import { tick } from '../src/loop';
-import { isLearned, JOBS } from '../src/progress';
+import { expBar, isLearned, JOBS, MAX_LEVEL } from '../src/progress';
 import {
   cleanSettings, DEFAULT_SETTINGS, openSettings, SET_ROW, SET_TOP, SET_W, settings, settingsBox, settingsKey,
   settingsTap, settingsUi, SETTING_ROWS, VOLUME_MAX,
@@ -533,5 +533,29 @@ describe('the big on-screen banner', () => {
     expect(game.banner).not.toBe(null);
     step(Math.ceil(P.BANNER_T / 2 / P.STEP));
     expect(game.banner).toBe(null);
+  });
+});
+
+describe('the EXP bar', () => {
+  beforeEach(() => {
+    arena(20);
+    player.level = 99;
+    player.expNext = 1000;
+  });
+
+  it('below max level it shows a percentage', () => {
+    player.exp = 500;
+    expect(expBar().text).toBe('50.0%');
+  });
+
+  it('rounded down, so it never reads 100% short of the level', () => {
+    player.exp = 999;
+    expect(expBar().text).toBe('99.9%');
+  });
+
+  it('at max level it reads LV.100, and stays full', () => {
+    player.level = MAX_LEVEL;
+    expect(expBar().text).toBe(`LV.${MAX_LEVEL}`);
+    expect(expBar().pct).toBe(1);
   });
 });

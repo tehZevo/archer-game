@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { arena, climb, dummy, ground, landLeap, release, step, tap } from './helpers';
 import { FX_DUR, P, SKILLS, startsLearned } from '../src/config';
 import { setKey } from '../src/input';
 import { linkable, linkHeld } from '../src/links';
 import { NUM_GAP } from '../src/combat';
 import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
-import { activeSkill, rank, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, rank, shotCount, skillRows, spendSkill } from '../src/progress';
 import { localPose } from '../src/net';
 import { cast } from '../src/skills';
 import { game, gotoPlace, player, READY_FLASH } from '../src/state';
@@ -1008,5 +1008,213 @@ describe('skill looks', () => {
     step(4); // past the windup
     expect(player.diving).toBeTruthy();
     expect(localPose()).toBe('dive');
+  });
+});
+
+describe('Tempest is a committed cast', () => {
+  it('locks you in place, invulnerable for the whole cast', () => {
+    arena(20);
+    player.ranks.r = true;
+    dummy(140);
+    tap('r');
+    expect(player.cast).toBe('shoot');
+    expect(player.casting.useT).toBeGreaterThan(0);
+    expect(player.invuln).toBeGreaterThan(0);
+    expect(player.invuln).toBeGreaterThanOrEqual(player.castT - 1e-9);
+  });
+
+  it('the invulnerability ends with the storm, and a long cooldown runs on', () => {
+    arena(20);
+    player.ranks.r = true;
+    dummy(140);
+    player.invuln = 0;
+    tap('r');
+    step(43); // the 1.4s storm plays out
+    expect(player.invuln).toBeLessThanOrEqual(0);
+    expect(player.cd.r).toBeGreaterThan(8);
+  });
+
+  it('in midair it pins you completely (no falling, no drift), then you fall', () => {
+    arena(20);
+    player.ranks.r = true;
+    tap('c');
+    step(7); // near the jump's top
+    tap('r');
+    expect(player.casting.freeze).toBeTruthy();
+    expect(player.vy).toBe(0);
+    const y = player.y;
+    step(10); // half the storm
+    expect(player.y).toBe(y);
+    expect(player.vy).toBe(0);
+    step(11); // the rest of the 0.7s cast
+    expect(player.casting.freeze).toBeFalsy();
+    expect(player.y).toBeGreaterThan(y);
+  });
+});
+
+describe('recovery (delay) after the Q rushes', () => {
+  it('Rush Toss ends in its own recovery, which outlasts the slide', () => {
+    arena(20);
+    dummy(150);
+    const recovery = delayTime('ground-q');
+    expect(recovery).toBeLessThanOrEqual(0.35 + 1e-9);
+    cast('ground-q');
+    expect(player.casting.recoverT).toBe(recovery);
+    expect(player.casting.useT).toBeGreaterThan(0);
+  });
+
+  it('Electric Blitz carries the same recovery', () => {
+    arena(20);
+    const recovery = delayTime('ground-q');
+    player.ranks['ground-q'] = false;
+    player.ranks.eb = true;
+    expect(delayTime('eb')).toBe(recovery);
+  });
+
+  it('Haste (rank 3) makes it 20% shorter', () => {
+    arena(20);
+    player.ranks.eb = true;
+    player.ranks.ha = true;
+    expect(delayTime('eb')).toBeCloseTo(0.35 / 1.2, 6);
+  });
+});
+
+describe('the kit\'s hits and damage', () => {
+  it('Double Shot 4x120%, Rising Arrows 4, Assault 4, Sweep 4x200%, Blitz 2, Tempest 6x300%, Dive 1x400%', () => {
+    expect([SKILLS.z.targets1, SKILLS.z.dmg1]).toEqual([4, 120]);
+    expect(SKILLS['ground-w'].hits1).toBe(4);
+    expect(SKILLS.ab.hits1).toBe(4);
+    expect([SKILLS['air-w'].hits1, SKILLS['air-w'].dmg1]).toEqual([4, 200]);
+    expect(SKILLS.eb.hits1).toBe(2);
+    expect([SKILLS.r.hits1, SKILLS.r.dmg1]).toEqual([6, 300]);
+    expect([SKILLS['air-q'].hits1, SKILLS['air-q'].dmg1]).toEqual([1, 400]);
+  });
+
+  it('a Blitz rush strikes the enemy it carries', () => {
+    arena(20);
+    player.ranks.eb = true;
+    const m = dummy(140);
+    tap('q');
+    step(24); // the slide ends and both strikes land
+    expect(m.hp).toBeLessThan(1e6);
+  });
+});
+
+describe('Downpour', () => {
+  /** In the air, 120px above the ground at x = 140. */
+  function highUp(): void {
+    arena(30);
+    player.ranks['air-e'] = true;
+    player.y = ground().y - player.h - 120;
+    player.onGround = false;
+    player.x = 140;
+  }
+
+  it('reaches 88px below your feet (it was 176)', () => {
+    expect(P.PLUNGE_DEPTH).toBe(88);
+    highUp();
+    const near = dummy(140);
+    near.y = player.y + player.h + 10; // right below
+    const far = dummy(140); // on the ground, about 100px down
+    player.x = 140;
+    tap('e');
+    step(2);
+    expect(near.hp).toBeLessThan(1e6);
+    expect(far.hp).toBe(1e6);
+  });
+
+  it('flares on the archer and blasts one tornado below, with no rain or hit sparks', () => {
+    highUp();
+    const m = dummy(140);
+    m.y = player.y + player.h + 10;
+    game.fx.length = 0;
+    tap('e');
+    step(6);
+    const types = game.fx.map((f) => f.type);
+    expect(types).toContain('volleyFlare');
+    expect(types).toContain('tornado');
+    for (const t of ['rain', 'rainHit', 'hit', 'crit']) expect(types).not.toContain(t);
+    expect(m.hp).toBeLessThan(1e6);
+  });
+});
+
+describe('Twin Echoes\' shadow arrows', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  /** Fire a full Double Shot (with the shadow) at one enemy; returns its damage numbers. */
+  function volley() {
+    arena(20);
+    player.ranks.es = true;
+    const m = dummy(140);
+    player.x = m.x - 40;
+    game.dmgNums.length = 0;
+    vi.spyOn(Math, 'random').mockReturnValue(0.99); // no crits or misses
+    tap('z');
+    step(Math.ceil((P.Z_WINDUP + 0.4) / P.STEP));
+    return game.dmgNums.filter((d) => d.txt !== 'MISS');
+  }
+
+  it('every arrow shows its own number', () => {
+    expect(volley().length).toBe(shotCount(rank('z')));
+  });
+
+  it('the numbers stack a line apart, not in a pile', () => {
+    const nums = volley();
+    expect(new Set(nums.map((d) => Math.round(d.y))).size).toBe(nums.length);
+  });
+
+  it('the shadow hits as hard as the base arrow', () => {
+    const nums = volley();
+    for (const d of nums) expect(Math.abs(d.v - nums[0].v)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('Bolt Flurry', () => {
+  /** Every damage number shown over the next second. */
+  function numbersOverASecond(): Set<{ x: number }> {
+    const seen = new Set<{ x: number }>();
+    for (let i = 0; i < 60; i++) {
+      step(1);
+      for (const d of game.dmgNums) seen.add(d);
+    }
+    return seen;
+  }
+
+  it('flies as one 4-bolt volley sprite, even on a whiff', () => {
+    arena(30);
+    player.ranks.s = true;
+    game.shots.length = 0;
+    tap('z');
+    expect(game.shots.length).toBe(1);
+    expect(game.shots[0].sprite).toBe('flurry');
+  });
+
+  it('lands its 4 hits on every target, not split between them', () => {
+    arena(70);
+    player.ranks.s = true;
+    const a = dummy(150), b = dummy(170);
+    game.dmgNums.length = 0;
+    tap('z');
+    const seen = [...numbersOverASecond()];
+    // numbers fan out sideways, so count each by the enemy it's nearest
+    const nearA = seen.filter((d) => Math.abs(d.x - a.x) < Math.abs(d.x - b.x)).length;
+    expect(nearA).toBe(4);
+    expect(seen.length - nearA).toBe(4);
+  });
+
+  it('with Twin Echoes, flies two volleys a little apart (so both show), and lands all 8 hits', () => {
+    arena(70);
+    player.ranks.s = true;
+    player.ranks.es = true;
+    const m = dummy(160);
+    game.shots.length = 0;
+    game.dmgNums.length = 0;
+    tap('z');
+    expect(game.shots.length).toBe(2);
+    for (const s of game.shots) expect(s.sprite).toBe('flurry');
+    expect(new Set(game.shots.map((s) => Math.round(s.y))).size).toBe(2);
+    expect(shotCount(rank('z'))).toBe(8);
+    expect(numbersOverASecond().size).toBe(8);
+    expect(m.hp).toBeLessThan(1e6);
   });
 });
