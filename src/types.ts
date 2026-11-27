@@ -435,6 +435,10 @@ export interface DamageOpts {
   /** The first hit of a cast: its number starts a fresh stack at the bottom
    *  (each cast owns its stack, so skills don't merge into one column). */
   first?: boolean;
+  /** Which line of this cast's stack the hit sits on (0 is the bottom). Name it
+   *  when the cast's hits are staggered by less than the stack's own cadence, so
+   *  a cast already under way keeps its lines when the next one starts. */
+  line?: number;
 }
 
 /** A warp pad that sends the player to the next floor (or home on a town). */

@@ -66,7 +66,10 @@ function galeShot(r: SkillRank): void {
   netShot(mx, my, face, len, 1);
   if (!m) return;
   const shots = shotCount(r);
-  eachShot(shots, 0, (more, h) => { if (alive([m]).length) damage(m, r.dmg, { more, first: h === 0, fx: 'galeHit' }); });
+  // Each arrow takes its own line of this cast's stack, so the stream reads as
+  // a stack of the skill's hits (Twin Echoes doubles it) rather than a stack
+  // whose height depends on where the 30Hz step lands the 8-shots-a-second.
+  eachShot(shots, 0, (more, h) => { if (alive([m]).length) damage(m, r.dmg, { more, first: h === 0, line: h, fx: 'galeHit' }); });
 }
 
 /** Glide: acrobatic forward tumble; usable repeatedly in the air. Off a Sky

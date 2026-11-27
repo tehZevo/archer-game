@@ -73,7 +73,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   else target.aggro = true;
   if (Math.random() < missChance(game.player.level, target.level)) {
     // the MISS rides the same floating-number treatment as a hit
-    game.dmgNums.push(stackedNum(target, 0, false, 'MISS', opts.more, opts.first));
+    game.dmgNums.push(stackedNum(target, 0, false, 'MISS', opts.more, opts.first, opts.line));
     // and it buys a moment of safety: the same i-frames a hit would grant,
     // without the flashing sprite (the shot is spent, you're not re-hit)
     game.player.invuln = Math.max(game.player.invuln, MISS_IFRAMES);
@@ -95,7 +95,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
     target.hp = target.hpMax; target.hurt = HITSTUN;
     if (!opts.noFx) game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: target.x, y: target.y + target.h / 2, t: 0.24, face: -game.player.face });
     sfx.mobHit(target.name);
-    game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more, opts.first));
+    game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more, opts.first, opts.line));
     return;
   }
   target.aggro = true;
@@ -103,7 +103,7 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);
   if (!opts.noFx) game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: hx, y: hy, t: opts.fx === 'stunHit' ? 0.3 : crit && !opts.fx ? 0.28 : 0.24, face: -game.player.face }); // streaks point back at the shooter
   sfx.mobHit(target.name); // every line of a multi-hit stack sounds like this enemy
-  game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more, opts.first));
+  game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more, opts.first, opts.line));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   // A launcher pops the enemy straight up: cancel its horizontal drift so it
   // rises in place (and is there for the aerial follow-up).
@@ -127,10 +127,11 @@ export const NUM_GAP = 0.125, NUM_LINE = 11;
 /** Each line wobbles up to NUM_JITTER px sideways, and leans NUM_LEAN px per
  *  line toward the way the hit was thrown, so a volley fans out. */
 export const NUM_JITTER = 4, NUM_LEAN = 2;
-export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string, more = false, first = false): DmgNum {
+export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string, more = false, first = false, line?: number): DmgNum {
   const now = game.time;
   const fresh = first || m.numK === undefined;
-  const k = fresh ? 0 : m.numK!;
+  // the line the cast names for this hit, else the one the mob's last hit left open
+  const k = line ?? (fresh ? 0 : m.numK!);
   const at = fresh ? now : Math.max(now, (m.numAt ?? now) + NUM_GAP);
   m.numAt = at;
   m.numK = more ? k + 1 : undefined;
