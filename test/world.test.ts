@@ -350,6 +350,8 @@ describe('floor layouts', () => {
     const bad: string[] = [];
     for (const n of [1, 2, 3, 4]) {
       gotoPlace(climb(n));
+      // towns are designed, with decks side by side (see towns.test's headroom check)
+      if (game.floor.town) continue;
       // a town's training-dummy perch and its step stand apart, against the right wall
       const byWall = (b: number): boolean => !!game.floor.town
         && game.floor.platforms.every((p) => p.block !== b || p.x >= WORLD.w - 48);
