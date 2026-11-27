@@ -8,3 +8,4 @@
 - Keep big on-screen text (e.g. Sage prompts and similar banners) visible longer.
 - (art) Create art for the Bubble skill.
 - Set Glide to 0.2 use / 0.1 delay.
+- When you reach Lv.10, 30, and 60, show on-screen text prompting you to visit the Sage to advance to the next job.
