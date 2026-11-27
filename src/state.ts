@@ -276,11 +276,16 @@ function levelUp(): void {
   if (pick) player.sp += 1;
   game.fx.push({ type: 'levelUp', x: player.x, y: player.y + player.h, t: 0.9, follow: true });
   sfx.levelUp();
-  bannerMsg(`LEVEL ${player.level}`, `+1 AP${pick ? ' +1 SP' : ''} - ESC TO SPEND`);
-  logMsg(`Reached <b>Level ${player.level}</b>`);
-  // a new job opens at this level: the Sage (in any town) advances you
+  // a new job opens at this level: the Sage (in any town) advances you. That
+  // prompt is the headline here, so it takes over the banner from the level-up.
   const j = jobForLevel(player.level);
-  if (j.level === player.level && j.job > player.job.job) logMsg(`You can become a <b>${j.name}</b>: visit the Sage in town`);
+  if (j.level === player.level && j.job > player.job.job) {
+    bannerMsg(`BECOME A ${j.name.toUpperCase()}`, 'VISIT THE SAGE IN TOWN');
+    logMsg(`You can become a <b>${j.name}</b>: visit the Sage in town`);
+  } else {
+    bannerMsg(`LEVEL ${player.level}`, `+1 AP${pick ? ' +1 SP' : ''} - ESC TO SPEND`);
+  }
+  logMsg(`Reached <b>Level ${player.level}</b>`);
 }
 
 export function logMsg(html: string): void {

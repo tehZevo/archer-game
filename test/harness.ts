@@ -39,7 +39,7 @@ import { closeLinks } from '../src/links';
 import { clearPlayerDeath } from '../src/deaths';
 
 export { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/config';
-export { bannerMsg, game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH } from '../src/state';
+export { bannerMsg, gainExp, game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH } from '../src/state';
 export { LV_1_DMG, LV_100_DMG, LEVEL_SPAN, mobHp, mobDmg } from '../src/state';
 export { confirmInput, confirmUi } from '../src/confirm';
 export { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
