@@ -429,7 +429,7 @@ function assaultBangAnim(): FxSheet {
  *  from her into the ground, a star where they leave her, and a spray of
  *  streaks and dust thrown up where they land, settling. Faces right;
  *  origin on the ground where they land; she is `up` px above, `back` px behind. */
-export const DROP_UP = 60, DROP_BACK = 30;
+export const DROP_UP = 60, DROP_BACK = 16;
 function assaultDropAnim(): FxSheet {
   const W = 84, H = DROP_UP + 32, ox = DROP_BACK + 14, oy = H - 10, N = 8;
   const sx = ox - DROP_BACK, sy = oy - DROP_UP;

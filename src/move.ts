@@ -102,7 +102,7 @@ function hover(dt: number): void {
     const tg = barrageTargets().slice(0, player.hang.targets);
     // each strike bangs on the enemies in the air (or the air in front of
     // her); the last one slashes back down through them
-    const at = tg.length ? tg.map((m) => [m.x, m.y + m.h / 2]) : [[player.x + player.face * 24, player.y + player.h / 2]];
+    const at = tg.length ? tg.map((m) => [m.x, m.y + m.h / 2]) : [[player.x, player.y + player.h / 2]];
     for (const [x, y] of at) game.fx.push({ type: 'assaultBang', x, y, t: FX_DUR.assaultBang });
     if (more) sfx.assaultBang();
     else {

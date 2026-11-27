@@ -233,7 +233,7 @@ function skyfallVolley(r: SkillRank): void {
 }
 
 /** How far ahead of its origin the assaultRise sheet's visible middle sits. */
-const ASSAULT_RISE_LEAD = -32;
+const ASSAULT_RISE_LEAD = 16;
 
 /** Skyward Assault: knock the enemies ahead into the air and warp straight up
  *  with them (no horizontal movement), hovering to strike every airborne
