@@ -62,7 +62,7 @@ When an issue is picked up, link the PR to it (`Fixes #<n>` / `Closes #<n>` in t
 
 ## Specs
 
-Design specs live in [`specs/`](specs/). Agents must not update the specs except by explicit user request. Organize them as follows:
+Design specs live in [`specs/`](specs/). Agents must not update the specs except by explicit user request. Before starting work on a feature, read the spec for it (and any related spec) and keep referring back to it during the work so the implementation matches the intended behavior. Organize them as follows:
 
 - **Group by feature or concept** — each spec is one directory under `specs/` named for the feature it describes (e.g. `specs/platforms/`, `specs/skills/`).
 - **One `spec.md` per directory** describing the *target behavior* — what the feature should do from the player's perspective, not how the code is structured.
