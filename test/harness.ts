@@ -42,6 +42,7 @@ export { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/conf
 export { bannerMsg, gainExp, game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH } from '../src/state';
 export { LV_1_DMG, LV_100_DMG, LEVEL_SPAN, mobHp, mobDmg } from '../src/state';
 export { confirmInput, confirmUi } from '../src/confirm';
+export { deathInput, deathUi } from '../src/deathui';
 export { cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor } from '../src/presence';
 export { FONT_CHARS, textWidth } from '../src/font';
 export { bubbleable, bubbleText, bubbleWidth, DMG_H } from '../src/dmgfont';

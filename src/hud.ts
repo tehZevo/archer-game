@@ -2,6 +2,7 @@ import { shop, trainer } from './economy';
 import { petShop } from './pets';
 import { drawPetShop } from './petdraw';
 import { confirmUi, drawConfirm } from './confirm';
+import { deathUi, drawDeath } from './deathui';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
 import { P, SKILL_BAR } from './config';
@@ -245,6 +246,7 @@ function drawOverlays(w: number, h: number): void {
   if (board.open) { drawBoard(); return; }
   if (linkHelp.open) { drawLinkHelp(); return; }
   if (confirmUi.open) { drawConfirm(); return; }
+  if (deathUi.open) { drawDeath(); return; }
   if (game.banner) {
     ctx.save();
     ctx.globalAlpha = clamp(game.banner.t / P.BANNER_FADE, 0, 1);

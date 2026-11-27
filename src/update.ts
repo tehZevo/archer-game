@@ -6,7 +6,7 @@ import { bump } from './achievements';
 import { CAM, P, SKILL_ORDER, slotOf } from './config';
 import { cameraTarget, gainExp, game, gotoPlace, logMsg, player, READY_FLASH, spawnWave } from './state';
 import { pressed } from './input';
-import { revive } from './combat';
+import { openDeath } from './deathui';
 import { getPlayerDeath, setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
 import { updateRush } from './rush';
@@ -60,7 +60,7 @@ function knockedOut(dt: number): boolean {
   tickWaves(dt);
   tickWorld(dt);
   tickEffects(dt);
-  if (!getPlayerDeath()) revive();
+  if (!getPlayerDeath()) openDeath();
   updateCamera(dt);
   return true;
 }

@@ -173,17 +173,28 @@ export function spawnArrow(
   game.fx.push({ type: 'muzzle', x, y, t: 0.18, face: Math.sign(dx) || 1 });
 }
 
-export function revive(): void {
+/** Refill her bars and clear the cast/status state a knockout leaves behind. */
+function reviveCommon(): void {
   game.player.hp = game.player.hpMax;
   game.player.mp = game.player.mpMax;
-  const ground = game.floor.platforms[0];
-  game.player.x = ground.x + ground.w / 2;
-  game.player.y = ground.y - game.player.h;
   game.player.vx = game.player.vy = 0;
-  game.player.onGround = true; game.player.plat = ground;
   game.player.climb = null; game.player.climbRush = false;
   game.player.fervor = 0;
   closeLinks(); // a respawn starts with no cast to link off
   clearStatus(game.player);
+}
+
+export function revive(): void {
+  reviveCommon();
+  const ground = game.floor.platforms[0];
+  game.player.x = ground.x + ground.w / 2;
+  game.player.y = ground.y - game.player.h;
+  game.player.onGround = true; game.player.plat = ground;
   logMsg('You were knocked out. <b>Revived at the village gate.</b>');
+}
+
+/** Refill her bars where she fell, leaving her on the spot (dev mode only). */
+export function reviveInPlace(): void {
+  reviveCommon();
+  logMsg('You were knocked out. <b>Revived in place.</b>');
 }
