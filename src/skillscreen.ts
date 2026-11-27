@@ -81,7 +81,8 @@ function wrap(s: string, n: number): string[] {
 /** The selected skill's numbers, one short line each (passives show only their bonus). */
 export function statLines(k: SkillKey, cols = 99): string[] {
   const s = SKILLS[k];
-  if (s.passive) return s.bonus1 ? [`BONUS +${Math.round(s.bonus1 * 100)}%`] : [];
+  // Twin Echoes' bonus1 is the arrow count (2), not a percentage; its desc says it all
+  if (s.passive) return s.bonus1 && k !== 'es' ? [`BONUS +${Math.round(s.bonus1 * 100)}%`] : [];
   const lines = [`MP ${s.mp1}`];
   if (s.dmg1) lines.push(`DMG ${s.dmg1}%${s.hits1 && s.hits1 > 1 ? ` X${s.hits1}` : ''}${s.targets1 ? ` / ${s.targets1} FOES` : ''}`);
   lines.push(`USE ${(s.use ?? 0).toFixed(1)}S${s.cd ? `  CD ${s.cd}S` : ''}`);
