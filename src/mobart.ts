@@ -152,10 +152,10 @@ const flier = (feat: { beak?: boolean; stripes?: boolean; antennae?: boolean; ge
 
 /** A round floating or oozing body. Features: tentacles, drips, sparkle, hood. */
 const blob = (feat: { tentacles?: boolean; drip?: boolean; sparkle?: boolean; hood?: boolean; spots?: boolean }): Plan => plan('blob', feat, (p, f0, L) => {
-  // hurt: squashed down a pixel, eyes screwed shut, mouth open
+  // hurt: eyes screwed shut, mouth open (the body keeps its natural height)
   // drips and tentacles at half the rate of the sparkle
   const hurt = f0 === HURT, f = hurt ? 1 : f0 >> 1, tw = hurt ? 1 : f0;
-  const { w, h } = L, bh = h - (feat.tentacles ? 5 : 2), squash = hurt ? 1 : feat.drip ? f : 0;
+  const { w, h } = L, bh = h - (feat.tentacles ? 5 : 2), squash = !hurt && feat.drip ? f : 0;
   oval(p, 0, squash, w, bh - squash, L.c);
   p(3, 2 + squash, L.l, 3, 2); p(7, 2 + squash, L.l); // a shine, and a glint beside it
   if (feat.spots) { p(w - 6, 3, L.a, 2, 2); p(4, bh - 5, L.a, 2, 1); }
