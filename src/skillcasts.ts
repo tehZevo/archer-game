@@ -37,14 +37,14 @@ function twinShot(r: SkillRank): void {
     const shots = shotCount(r);
     netShot(mx, my, face, near ? Math.abs(near.x - mx) : 96, shots);
     // every arrow fires a tracer, so a miss shows as many arrows as a hit
-    const hit = (more: boolean): void => {
+    const hit = (more: boolean, first = false): void => {
       const live = alive(tg);
       tracers(live, mx, my, face);
-      live.forEach((m) => damage(m, r.dmg, { more }));
+      live.forEach((m) => damage(m, r.dmg, { more, first }));
     };
     // the first arrow lands on release; the rest follow at the number stack's
     // cadence, so the shadow's shot lands above the base hit's, not on top of it
-    hit(shots > 1);
+    hit(shots > 1, true);
     eachShot(shots - 1, NUM_GAP, (more) => hit(more));
   });
 }
@@ -64,7 +64,7 @@ function galeShot(r: SkillRank): void {
   netShot(mx, my, face, len, 1);
   if (!m) return;
   const shots = shotCount(r);
-  eachShot(shots, 0, (more) => { if (alive([m]).length) damage(m, r.dmg, { more, fx: 'galeHit' }); });
+  eachShot(shots, 0, (more, h) => { if (alive([m]).length) damage(m, r.dmg, { more, first: h === 0, fx: 'galeHit' }); });
 }
 
 /** Glide: acrobatic forward tumble; usable repeatedly in the air. Off a Sky
@@ -135,8 +135,8 @@ function spikeLift(r: SkillRank): void {
     .slice(0, r.targets)
     .forEach((m) => later(spikeLands(Math.abs(m.x - x0)), () => {
       // each spike drives in the skill's full hit count (2, doubled by Twin Echoes)
-      if (game.mobs.includes(m)) eachShot(shotCount(r), 0, (more) => {
-        if (game.mobs.includes(m)) damage(m, r.dmg, { more, fx: 'spikeHit' });
+      if (game.mobs.includes(m)) eachShot(shotCount(r), 0, (more, h) => {
+        if (game.mobs.includes(m)) damage(m, r.dmg, { more, first: h === 0, fx: 'spikeHit' });
       });
     }));
   // The launch is a fixed lift off the floor, not a stack on top of a jump:
@@ -172,8 +172,8 @@ function plungingVolley(r: SkillRank): void {
   // per-enemy rain: the blast is the hit effect)
   game.fx.push({ type: 'volleyFlare', x: player.x, y: player.y + player.h / 2, t: FX_DUR.volleyFlare });
   game.fx.push({ type: 'tornado', x: player.x, y: feet, t: FX_DUR.tornado });
-  eachShot(shotCount(r), 0.08, (more) => {
-    alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more }));
+  eachShot(shotCount(r), 0.08, (more, h) => {
+    alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more, first: h === 0 }));
   });
 }
 
@@ -190,8 +190,8 @@ function tempest(r: SkillRank): void {
   netShot(mx, my, player.face, P.TEMPEST_R);
   // each enemy the storm passes takes the full hit count (8, doubled by Twin
   // Echoes), not one: the first lands as the bolt reaches it, the rest follow
-  tg.forEach((m) => eachShot(shotCount(r), Math.abs(m.x - mx) / P.ARROW_V, (more) => {
-    if (game.mobs.includes(m)) damage(m, r.dmg, { fx: 'tempestHit', more });
+  tg.forEach((m) => eachShot(shotCount(r), Math.abs(m.x - mx) / P.ARROW_V, (more, h) => {
+    if (game.mobs.includes(m)) damage(m, r.dmg, { fx: 'tempestHit', more, first: h === 0 });
   }));
 }
 
@@ -205,8 +205,8 @@ function midairSpin(r: SkillRank): void {
   sfx.cyclone();
   game.fx.push({ type: 'spin', x: player.x, y: player.y + player.h, t: FX_DUR.spin, follow: true });
   const tg = hitbox(player.x, player.y + player.h / 2, P.SPIN_R * 2, P.SPIN_R * 2).slice(0, r.targets);
-  eachShot(shotCount(r), 0, (more) => {
-    alive(tg).forEach((m) => damage(m, r.dmg, { fx: 'spinHit', more }));
+  eachShot(shotCount(r), 0, (more, h) => {
+    alive(tg).forEach((m) => damage(m, r.dmg, { fx: 'spinHit', more, first: h === 0 }));
   });
 }
 
@@ -223,8 +223,8 @@ function skyfallVolley(r: SkillRank): void {
   // the volley rains onto each target, or onto the ground just ahead if there are none
   fxUnder('rain', tg, player.x + face * 40, player.y + player.h, 0.4);
   // the volley rains on each target where it stands (only the Q tosses)
-  tg.forEach((m) => eachShot(shotCount(r), 0, (more) => {
-    if (game.mobs.includes(m)) damage(m, r.dmg, { more, fx: 'rainHit' });
+  tg.forEach((m) => eachShot(shotCount(r), 0, (more, h) => {
+    if (game.mobs.includes(m)) damage(m, r.dmg, { more, first: h === 0, fx: 'rainHit' });
   }));
 }
 
@@ -236,7 +236,7 @@ function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
   sfx.assaultRise();
   hitbox(player.x + player.face * 30, player.y - 60, 110, 200)
-    .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'skyHit' }));
+    .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'skyHit', first: true }));
   const from = player.y + player.h / 2;
   // always the same rise (scaling it with the launched enemies' height sent
   // you ~3x higher off the top of their arc)
@@ -264,7 +264,7 @@ function shellBarrage(r: SkillRank): void {
     const onHit = tg.length ? (): void => {
       for (let h = v * perVolley; h < Math.min(shots, (v + 1) * perVolley); h++) {
         later((h - v * perVolley) * NUM_GAP, () => {
-          for (const t of alive(tg)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h < shots - 1 });
+          for (const t of alive(tg)) damage(t, r.dmg, { stun: true, fx: 'stunHit', more: h < shots - 1, first: h === 0 });
         });
       }
     } : undefined;

@@ -457,7 +457,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const seen = new Set<{ x: number }>();
   tap('z');
   for (let i = 0; i < 60; i++) { step(1); game.dmgNums.forEach((d) => seen.add(d)); }
-  const hits = (m: { x: number }): number => [...seen].filter((d) => Math.abs(d.x - m.x) < 6).length;
+  // numbers fan out sideways, so count each by the enemy it's closest to
+  const hits = (m: { x: number }): number => [...seen].filter((d) => Math.abs(d.x - m.x) < Math.abs(d.x - (m === a ? b : a).x)).length;
   check('Bolt Flurry hits each of two enemies 4 times', hits(a) === 4 && hits(b) === 4, `a ${hits(a)} b ${hits(b)}`);
 }
 

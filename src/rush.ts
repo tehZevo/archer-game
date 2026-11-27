@@ -143,7 +143,7 @@ function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void
   // the toss short (the next cast picks the enemy up where it lies)
   eachShot(shotCount(r), 0, (more, h) => {
     alive(tg).forEach((m) => {
-      damage(m, r.dmg, { more, launch: true });
+      damage(m, r.dmg, { more, launch: true, first: h === 0 });
       if (!inPlace && h === 0) m.vx = face * 80; // a little follow-through drift
     });
   });

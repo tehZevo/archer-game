@@ -202,6 +202,17 @@ import { gainExp, JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage,
   step(Math.ceil(2 / P.STEP));
   game.dmgNums.length = 0; damage(m, 1);
   check('after a pause a new stack starts at the bottom, right away', game.dmgNums[0].delay === 0 && game.dmgNums[0].y === m.y - 8);
+  // each cast owns its stack: a new cast's first hit starts at the bottom even
+  // while the last cast's stack is still open, and stacks have no height cap
+  game.dmgNums.length = 0; player.face = 1;
+  for (let i = 0; i < 12; i++) damage(m, 1, { more: true, first: i === 0 });
+  damage(m, 1, { more: true, first: true });
+  const top = game.dmgNums[11], fresh = game.dmgNums[12];
+  check('a stack climbs past 8 lines, and a new cast starts its own at the bottom, right away',
+    Math.abs(m.y - 8 - top.y - 11 * NUM_LINE) < 1e-9 && fresh.y === m.y - 8 && fresh.delay === 0, `top ${top.y} fresh ${fresh.y} delay ${fresh.delay}`);
+  const off = game.dmgNums.slice(0, 12).map((d, k) => d.x - m.x - k * 2);
+  check('numbers wobble within 4px and lean 2px a line the way you face', off.every((o) => Math.abs(o) <= 4) && new Set(off.map((o) => o.toFixed(2))).size > 1, off.map((o) => o.toFixed(1)).join(','));
+  damage(m, 1);
 }
 
 {
