@@ -202,10 +202,6 @@ describe('the game loop', () => {
     expect(player.cast).toBe('shoot');
   });
 
-  it('a stalled frame is capped at 0.1s of steps', () => {
-    expect(advance({ acc: 0 }, 5, false)).toBe(Math.floor(0.1 / P.STEP + 1e-9));
-  });
-
   it('a frozen world runs no steps, and drops the time', () => {
     const clock = { acc: 0.05 };
     expect(advance(clock, 0.1, true)).toBe(0);

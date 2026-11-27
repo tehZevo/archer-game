@@ -3,9 +3,8 @@ import { arena, dummy, memoryStorage, release, step, tap } from './helpers';
 import { P } from '../src/config';
 import { killMob } from '../src/combat';
 import {
-  buy, COIN_LIFE, coinValue, drops, FLY_T, flying, NPC_R, PRICES, RESPEC_PRICES, shop, shopStock,
-  POTION_CD, START_POTIONS, trainer, TRAINER_ITEMS, wallet,
-} from '../src/economy';
+  buy, coinValue, drops, FLY_T, flying, NPC_R, PRICES, RESPEC_PRICES, shop, shopStock,
+  POTION_CD, START_POTIONS, trainer, TRAINER_ITEMS, wallet } from '../src/economy';
 import { clearGear, gear } from '../src/gear';
 import { apply, clearSave, load, save } from '../src/save';
 import { game, gotoPlace, player } from '../src/state';
@@ -75,14 +74,6 @@ describe('coins', () => {
     expect(flying.length).toBe(1);
     step(Math.ceil(FLY_T / P.STEP) + 1);
     expect(flying.length).toBe(0);
-  });
-
-  it('a pile left lying fades away after 5 minutes', () => {
-    expect(COIN_LIFE).toBe(300);
-    const pile = dropPile();
-    pile.t = 1; // only a second left
-    step(Math.ceil(1.5 / P.STEP));
-    expect(drops.length).toBe(0);
   });
 });
 

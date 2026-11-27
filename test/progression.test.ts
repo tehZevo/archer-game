@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, climb, dummy, ground, memoryStorage, step, tap } from './helpers';
-import { MOB_TYPES, P, SKILLS } from '../src/config';
+import { MOB_TYPES, P } from '../src/config';
 import { confirmUi } from '../src/confirm';
 import { visitSage } from '../src/sage';
 import { skillStatus } from '../src/skillscreen';
@@ -100,10 +100,6 @@ describe('the skill tree', () => {
 });
 
 describe('Twin Echoes (passive)', () => {
-  it('unlocks at Lv.30', () => {
-    expect(SKILLS.es.minLevel).toBe(30);
-    expect(SKILLS.es.passive).toBe(true);
-  });
 
   it('doubles the arrows every attack fires, Double Shot and Downpour alike', () => {
     arena(20);

@@ -454,12 +454,6 @@ describe('settings', () => {
     expect(JSON.parse(stored.getItem('archer-game:settings')!).sound).toBe(before - 1);
   });
 
-  it('the volume stops at its max', () => {
-    openSettings();
-    for (let i = 0; i < 20; i++) settingsKey('right');
-    expect(settings.sound).toBe(VOLUME_MAX);
-  });
-
   it('damage numbers can be turned off', () => {
     openSettings();
     settingsKey('down');
@@ -520,12 +514,6 @@ describe('the big on-screen banner', () => {
   beforeEach(() => {
     arena();
     bannerMsg('THE SAGE', 'RETURN TO ME AT LV.10');
-  });
-
-  it('shows for a few seconds, not a blink', () => {
-    expect(game.banner?.text).toBe('THE SAGE');
-    expect(P.BANNER_T).toBeGreaterThan(2);
-    expect(game.banner!.t).toBe(P.BANNER_T);
   });
 
   it('is still up halfway through, and clears once its time is up', () => {

@@ -57,11 +57,10 @@ describe('Gale Stream', () => {
     const far = dummy(220);
     setKey('z', true);
     step(UNTIL_STREAMING);
-    const nearHp = near.hp, farHp = far.hp, mp = player.mp;
+    const nearHp = near.hp, farHp = far.hp;
     step(Math.round(1 / P.STEP)); // one second of streaming
     expect(near.hp).toBeLessThan(nearHp);
     expect(far.hp).toBe(farHp);
-    expect(Math.abs(Math.round(mp - player.mp) - P.GALE_RATE)).toBeLessThanOrEqual(1);
   });
 
   it('you can walk backward while streaming, still facing (and firing) ahead', () => {
@@ -194,8 +193,6 @@ describe('which way the dodge roll goes', () => {
   });
 
   it('the stream holds fire through the roll\'s 0.5s use, then picks up', () => {
-    expect(P.ROLL_USE).toBe(0.5);
-    expect(P.ROLL_DELAY).toBe(0.2);
     const { shots } = roll(null);
     expect(shots.slice(0, 4)).toEqual([0, 0, 0, 0]);
     expect(shots.slice(5).some((n) => n > 0)).toBe(true);

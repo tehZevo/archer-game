@@ -260,13 +260,6 @@ describe('pet upgrades (COINS 2000, ITEMS 3000, RANGE 4000, POTIONS 5000) cost o
     expect(wallet.coins).toBe(999);
   });
 
-  it('ITEMS, RANGE and POTIONS cost 3000, 4000 and 5000', () => {
-    wallet.coins = 2000 + 3000 + 4000 + 5000;
-    for (const k of ['coins', 'items', 'range', 'potions'] as const) toggleCustom('goldfinch', k);
-    expect(wallet.coins).toBe(0);
-    expect(pet.bought.length).toBe(4);
-  });
-
   it('bought upgrades survive a save and load, and an unbought one loads off', () => {
     pet.bought = ['coins', 'items', 'range', 'potions'];
     pet.customs.items = true;

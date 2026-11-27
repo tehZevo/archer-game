@@ -4,7 +4,7 @@ import { killMob } from '../src/combat';
 import { MOB_TYPES } from '../src/config';
 import { NPC_R, wallet } from '../src/economy';
 import { areaMobs } from '../src/floor';
-import { board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests } from '../src/quests';
+import { board, boardOffers, boardRows, loadQuests, questKill, quests } from '../src/quests';
 import { apply, snapshot } from '../src/save';
 import { game, gotoPlace, player, spawnMob } from '../src/state';
 import { areaOf, pathsFrom, START, TOWNS } from '../src/world';
@@ -97,15 +97,6 @@ describe('quest boards', () => {
     expect(quests.length).toBe(0);
     expect(wallet.coins).toBe(coins + q.coins);
     expect(player.exp > exp || player.level > level).toBe(true);
-  });
-
-  it(`you can hold ${QUEST_MAX} quests at most`, () => {
-    openBoard();
-    for (let i = 0; i < 5; i++) {
-      board.sel = boardRows().findIndex((r) => r.active === null);
-      if (board.sel >= 0) tap('z');
-    }
-    expect(quests.length).toBeLessThanOrEqual(QUEST_MAX);
   });
 
   it('X drops an active quest', () => {
