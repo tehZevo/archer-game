@@ -59,8 +59,11 @@ export const PET_CUSTOMS: { key: keyof PetCustoms; label: string; desc: string }
   { key: 'potions', label: 'POTIONS', desc: 'DRINK AN HP / MP POTION FOR YOU' },
 ];
 
-/** The customizations every pet starts switched on (global, shared by all pets). */
-export const DEFAULT_CUSTOMS: PetCustoms = { coins: true, items: false, range: false, potions: false };
+/** The customizations every pet starts with: none (each is an upgrade you buy). */
+export const DEFAULT_CUSTOMS: PetCustoms = { coins: false, items: false, range: false, potions: false };
+
+/** What each upgrade costs, once: after that it toggles on/off for free. */
+export const CUSTOM_PRICE: Record<keyof PetCustoms, number> = { coins: 2000, items: 3000, range: 4000, potions: 5000 };
 
 export const PET = {
   /** where it hovers: behind you and up by your head */
@@ -81,6 +84,8 @@ export const pet = {
   target: null as Target | null,
   /** the customizations you've bought, shared by every pet (global, not per-pet) */
   customs: { ...DEFAULT_CUSTOMS } as PetCustoms,
+  /** the upgrades you've paid for (only these can be switched on) */
+  bought: [] as (keyof PetCustoms)[],
 };
 
 let onFloor: Floor | null = null;
@@ -174,16 +179,18 @@ export function buyPet(kind: PetKind): boolean {
 
 /** Forget every pet (a fresh start). */
 export function clearPets(): void {
-  pet.owned = []; pet.kind = null; pet.target = null; pet.customs = { ...DEFAULT_CUSTOMS };
+  pet.owned = []; pet.kind = null; pet.target = null; pet.customs = { ...DEFAULT_CUSTOMS }; pet.bought = [];
 }
 
 /** Restore saved pets, dropping anything that isn't one. */
-export function loadPets(owned: unknown, kind: unknown, customs: unknown): void {
+export function loadPets(owned: unknown, kind: unknown, customs: unknown, bought?: unknown): void {
   clearPets();
-  // customizations are global now: a saved set (an object with keys) replaces
-  // the defaults; an empty/absent one (a pre-global save) keeps the defaults.
-  if (customs && typeof customs === 'object' && Object.keys(customs).length) {
-    pet.customs = { ...DEFAULT_CUSTOMS, ...(customs as Partial<PetCustoms>) };
+  if (Array.isArray(bought)) for (const k of bought) {
+    if (k in CUSTOM_PRICE && !pet.bought.includes(k)) pet.bought.push(k);
+  }
+  // customizations are global: only the upgrades you've bought can be on
+  if (customs && typeof customs === 'object') {
+    for (const k of pet.bought) pet.customs[k] = (customs as Partial<PetCustoms>)[k] === true;
   }
   if (Array.isArray(owned)) for (const k of owned) {
     if (!PET_LIST.includes(k) || pet.owned.includes(k)) continue;
@@ -226,11 +233,20 @@ export function choosePet(kind: PetKind): boolean {
   return true;
 }
 
-/** Flip one of the (global) customizations on/off. The `kind` argument is kept
- *  for call sites that name the pet; customizations are shared by every pet. */
+/** Buy an upgrade (it switches on), or flip one you own on/off. False if
+ *  you can't afford it. The `kind` argument is kept for call sites that name
+ *  the pet; customizations are shared by every pet. */
 export function toggleCustom(kind: PetKind, key: keyof PetCustoms): boolean {
   void kind; // customizations are global: any owned pet's toggle changes the shared set
   const c = petCustoms();
+  if (!pet.bought.includes(key)) {
+    if (wallet.coins < CUSTOM_PRICE[key]) return false;
+    wallet.coins -= CUSTOM_PRICE[key];
+    pet.bought.push(key);
+    c[key] = true;
+    sfx.coin();
+    return true;
+  }
   c[key] = !c[key];
   return true;
 }

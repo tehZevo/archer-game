@@ -6,7 +6,6 @@
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
 - (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
 - Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
-- Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
 - HUD meters: show the EXP meter as a percentage (%) instead of A/B, and show HP/MP as the current value (e.g. 500, 1.5k) instead of A/B.
 - (design) Rename Glide.
 - (art) The comets in the background of the Observatory and Thistledown should fade out.

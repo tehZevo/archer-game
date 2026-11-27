@@ -7,6 +7,9 @@ const pile = (dx: number, v: number) => {
   return c;
 };
 
+/** Every pet upgrade bought, with only COINS switched on (for the perk tests). */
+const ownUpgrades = (): void => { pet.bought = ['coins', 'items', 'range', 'potions']; pet.customs.coins = true; };
+
 // --- the pet keeper: a separate shop in every town, selling several pets ---
 {
   const keepers = TOWNS.filter((t) => { gotoPlace({ town: t.id }); return (game.floor.npcs ?? []).some((n) => n.kind === 'pets'); });
@@ -21,7 +24,7 @@ const pile = (dx: number, v: number) => {
 
 // --- buying, owning several, calling one to follow you ---
 {
-  arena(); drops.length = 0; flying.length = 0; clearPets();
+  arena(); drops.length = 0; flying.length = 0; clearPets(); ownUpgrades();
   wallet.coins = PET_KINDS.goldfinch.price - 1;
   check("can't buy a pet without the coins", !choosePet('goldfinch') && pet.owned.length === 0);
   wallet.coins = PET_KINDS.goldfinch.price + PET_KINDS.owl.price + 5;
@@ -50,7 +53,7 @@ const pile = (dx: number, v: number) => {
 
 // --- perks: a gear pet fetches gear, a potion pet drinks for you ---
 {
-  arena(); step(1); drops.length = 0; flying.length = 0; gearDrops.length = 0; clearPets(); // (a step first: a new floor clears the drops)
+  arena(); step(1); drops.length = 0; flying.length = 0; gearDrops.length = 0; clearPets(); ownUpgrades(); // (a step first: a new floor clears the drops)
   pet.owned = ['goldfinch', 'sprite', 'puff'];
   const lying = () => ({ item: gearFor('weapon', 1), x: player.x + 50, y: ground().y, t: COIN_LIFE });
   choosePet('goldfinch'); gearDrops.push(lying()); step(Math.ceil(1 / P.STEP));
@@ -69,12 +72,12 @@ const pile = (dx: number, v: number) => {
 
 // --- customizations: each pet's toggles change what it does, and persist ---
 {
-  arena(); step(1); drops.length = 0; flying.length = 0; gearDrops.length = 0; clearPets();
+  arena(); step(1); drops.length = 0; flying.length = 0; gearDrops.length = 0; clearPets(); ownUpgrades();
   pet.owned = ['goldfinch']; choosePet('goldfinch'); step(1);
   const lying = () => ({ item: gearFor('weapon', 1), x: player.x + 50, y: ground().y, t: COIN_LIFE });
 
   gearDrops.push(lying()); step(Math.ceil(1 / P.STEP));
-  check('a goldfinch starts with only coins on',
+  check('with every upgrade bought and only coins on, a goldfinch leaves gear',
     petCustoms('goldfinch').coins && !petCustoms('goldfinch').items && gearDrops.length === 1);
 
   toggleCustom('goldfinch', 'items'); step(Math.ceil(1 / P.STEP));
@@ -92,6 +95,23 @@ const pile = (dx: number, v: number) => {
   const snap = snapshot(); clearPets(); apply(snap);
   check('customizations survive a save and load', petCustoms('goldfinch').items && !petCustoms('goldfinch').range);
   drops.length = 0; flying.length = 0; gearDrops.length = 0; wallet.coins = 0;
+}
+
+// --- the upgrades cost coins once (coins 2000, items 3000, range 4000, potions 5000), then toggle free ---
+{
+  clearPets(); pet.owned = ['goldfinch']; wallet.coins = 2999;
+  check('no upgrades to start with', !petCustoms().coins && pet.bought.length === 0);
+  check("can't buy ITEMS (3000) on 2999", !toggleCustom('goldfinch', 'items') && wallet.coins === 2999 && !petCustoms().items);
+  check('buying COINS takes 2000 and switches it on', toggleCustom('goldfinch', 'coins') && wallet.coins === 999 && petCustoms().coins);
+  check('...after that it toggles off and on for free', toggleCustom('goldfinch', 'coins') && !petCustoms().coins && toggleCustom('goldfinch', 'coins') && petCustoms().coins && wallet.coins === 999);
+  wallet.coins = 12000;
+  toggleCustom('goldfinch', 'items'); toggleCustom('goldfinch', 'range'); toggleCustom('goldfinch', 'potions');
+  check('ITEMS, RANGE and POTIONS cost 3000, 4000 and 5000', wallet.coins === 0 && pet.bought.length === 4);
+  const snap = snapshot(); clearPets(); apply(snap);
+  check('bought upgrades survive a save and load', pet.bought.length === 4 && petCustoms().items);
+  apply({ ...snap, petBought: undefined });
+  check("a saved upgrade that wasn't bought loads off", pet.bought.length === 0 && !petCustoms().coins);
+  clearPets(); wallet.coins = 0;
 }
 
 // --- saved with you; a fresh start clears them ---

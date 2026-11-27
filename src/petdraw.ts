@@ -3,7 +3,7 @@ import { game } from './state';
 import { text } from './font';
 import { art } from './artsheets';
 import { wallet } from './economy';
-import { PET_SHOP_ROWS, pet, PET_KINDS, petCustoms, petShop, petShopScroll, SHOP_ROWS, type PetKind, type ShopRow } from './pets';
+import { CUSTOM_PRICE, PET_SHOP_ROWS, pet, PET_KINDS, petCustoms, petShop, petShopScroll, SHOP_ROWS, type PetKind, type ShopRow } from './pets';
 
 /* The pet following you, and the pet keeper's window (drawing only; see pets.ts). */
 
@@ -29,7 +29,7 @@ function status(kind: PetKind): [string, string] {
 
 /** What Z does on the selected row. */
 function action(row: ShopRow): string {
-  if (row.type === 'custom') return 'Z TOGGLE';
+  if (row.type === 'custom') return pet.bought.includes(row.key) ? 'Z TOGGLE' : 'Z BUY';
   if (pet.kind === row.kind) return 'Z SEND HOME';
   return pet.owned.includes(row.kind) ? 'Z CALL' : 'Z BUY';
 }
@@ -65,9 +65,10 @@ export function drawPetShop(): void {
       const [label, col] = status(r.kind);
       text(ctx, label, bx + bw - 9, y + 4, 1, col, 'right');
     } else {
-      const on = c[r.key];
+      const on = c[r.key], price = CUSTOM_PRICE[r.key];
       text(ctx, r.label, bx + 14, y + 4, 1, on ? MINE : DIM, 'left');
-      text(ctx, on ? 'ON' : 'OFF', bx + bw - 12, y + 4, 1, on ? MINE : POOR, 'right');
+      if (pet.bought.includes(r.key)) text(ctx, on ? 'ON' : 'OFF', bx + bw - 12, y + 4, 1, on ? MINE : POOR, 'right');
+      else text(ctx, `${price}G`, bx + bw - 12, y + 4, 1, wallet.coins >= price ? GOLD : POOR, 'right');
     }
   });
   // little arrows show there are more rows above / below the list
