@@ -48,3 +48,24 @@ import { P, player, setKey, check, step, arena, dummy } from './harness';
   check('running out of MP ends the stream', !player.rapid.on);
   hold('z', false); step(1);
 }
+
+// --- the dive roll a Jump makes mid-stream: no speed trail, and you turn ---
+{
+  const hold = (k: string, on: boolean): void => setKey(k, on);
+  arena(60);
+  player.ranks['held-z'] = true;
+  dummy(150);
+  hold('z', true); step(Math.ceil(0.6 / P.STEP) + 1); // arm and start the stream
+  check('the stream is running', player.rapid.on);
+  const face = player.face;
+  hold('right', true);
+  hold('c', true); step(1); hold('c', false); // Jump -> the dive roll
+  check('the roll turns you to face the way you rolled', player.face === 1 && face === 1, `${player.face}`);
+  check('the roll is invulnerable', player.invuln > 0 && player.invuln <= P.ROLL_INVULN);
+  check('the roll keeps its dive pose', player.diving && player.rolling);
+  check('the stream now fires the way you rolled', player.rapid.face === player.face);
+  step(30); // the hop lands and the roll's slide runs out
+  check('the roll ends and you keep facing the way you rolled', !player.rolling && !player.diving && player.face === 1);
+  check('...and the stream is still going', player.rapid.on);
+  hold('right', false); hold('z', false); step(1);
+}

@@ -308,6 +308,9 @@ export interface Player extends Body {
   usedT: Record<string, number>;
   /** True while a Meteor Dive is in flight; the landing rolls into the rush. */
   diving: boolean;
+  /** True for the duration of a Gale Stream dive roll (see move.jumpRoll). The
+   *  roll keeps the dive pose and its landing slide, but shows no speed trail. */
+  rolling: boolean;
   /** Gale Stream (see rapid.ts): `armed` once a Z shot fires with Z held,
    *  `on` while the stream runs, `t` s to its next shot, `face` the way it
    *  fires (locked for the whole stream). */

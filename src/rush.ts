@@ -153,6 +153,7 @@ function strike(inPlace: boolean, face: number, fx: FxKind): void {
 export function landDive(): void {
   if (!player.diving || !player.onGround) return;
   player.diving = false;
+  player.rolling = false;
   setPose('dive', P.DIVE_ROLL_MAX); // the roll is the tail of the dive's own animation
   slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'diveLand');
 }

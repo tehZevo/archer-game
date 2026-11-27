@@ -1,8 +1,6 @@
 # TODOs
 - Spec: never rotate or scale in-game objects, effects, or decor sprites (exceptions: non-skill-icon HUD elements).
-- Dodge roll during held-Z should not have a rush effect.
 - (art) Dodge roll during held-Z needs a roll animation.
-- Character should properly turn around after a dodge roll from held-Z.
 - Gray out the icons in the skills screen's link list for skills you haven't acquired yet.
 - Bug: the C (copy JSON) action in the skill editor doesn't seem to work.
 - (art) Create art for the Bubble skill.
