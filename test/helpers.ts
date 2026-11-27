@@ -80,7 +80,7 @@ export function arena(level = 1, x = 100): void {
   player.blitz.charges = P.BLITZ_MAX;
   player.blitz.t = 0;
 
-  player.mp = 999;
+  player.mp = 9999;
   player.hp = player.hpMax;
   player.invuln = 999;
   player.face = 1;
