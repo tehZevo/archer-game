@@ -9,3 +9,4 @@
 - (art) Give portals a more oval, swirling, rounded look and animation.
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
+- Reduce the launch height of enemies (when knocked airborne) by 50%.
