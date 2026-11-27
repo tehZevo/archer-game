@@ -15,8 +15,7 @@
 - (art) The comets in the background of the Observatory and Thistledown should fade out.
 - Dev skill editor (bug): can't move "down" to select Delay with Enter. The flow should be: navigate the left menu with up/down to highlight a skill; press Enter to select it, moving the cursor to the right side of the screen highlighted on "Use"; left/right on Use adjusts the value; up/down navigates between Use / Delay / Links Into; Enter/Space on Links Into toggles an option on/off.
 - Piercing Leap (`ground-e`) should link into Glide (`d`) — add `d` to its `linksInto` (config.ts:134).
-- Reduce the test suite (~960 checks → ~450–550) by consolidating repetitive tests (phases, in order):
-  - Phase 3: Trim the UI walkthroughs (file 07, 137 checks) to the happy path, and collapse per-area repetitions.
+- Reduce the test suite (~960 checks → ~450–550) by consolidating repetitive tests:
   - Keep as-is: `smoke.ts` (baked sheets match generators), asset-integrity checks (paint-in-bounds), and core physics (slope/ledge, Rush Toss carry).
 - (bug) Player damage numbers move upward too fast — they should rise at the same speed as enemy damage numbers.
 - (bug) MISS is spammed; a miss should trigger the same invulnerability cooldown as taking damage (without actually showing the player as invulnerable).
