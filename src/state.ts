@@ -270,7 +270,6 @@ function levelUp(): void {
   recalcStats();
   player.hp = player.hpMax; player.mp = player.mpMax;
   player.expNext = expToNext(player.level);
-  player.job = jobForLevel(player.level);
   player.ap += 1;
   const pick = player.level % SKILL_PICK_EVERY === 0;
   if (pick) player.sp += 1;
@@ -278,6 +277,9 @@ function levelUp(): void {
   sfx.levelUp();
   bannerMsg(`LEVEL ${player.level}`, `+1 AP${pick ? ' +1 SP' : ''} - ESC TO SPEND`);
   logMsg(`Reached <b>Level ${player.level}</b>`);
+  // a new job opens at this level: the Sage (in any town) advances you
+  const j = jobForLevel(player.level);
+  if (j.level === player.level && j.job > player.job.job) logMsg(`You can become a <b>${j.name}</b>: visit the Sage in town`);
 }
 
 export function logMsg(html: string): void {

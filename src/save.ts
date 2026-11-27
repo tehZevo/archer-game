@@ -8,7 +8,7 @@ import type { GearItem, GearKind } from './gear';
 import { runBonus } from './achievements';
 import { LEGACY_KEYS, SKILL_ORDER, SKILLS } from './config';
 import { game, player } from './state';
-import { expToNext, jobForLevel, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
+import { expToNext, jobOf, MAX_LEVEL, recalcStats, STAT_KEYS, upgradesOf } from './progress';
 import type { SkillKey } from './types';
 
 /* ============================================================
@@ -33,6 +33,8 @@ export interface SaveData {
   sp: number;
   stats: Record<string, number>;
   ranks: Record<string, boolean>;
+  /** The job the Sage has advanced you to (absent: the 1st). */
+  job?: number;
   /** The town you resume in (its id, see world.ts): the latest one you passed. */
   town: string;
   /** Coins and potions (absent in older saves: start empty). */
@@ -60,7 +62,7 @@ export function snapshot(): SaveData {
   return {
     v: VERSION,
     level: player.level, exp: Math.floor(player.exp), ap: player.ap, sp: player.sp,
-    stats: { ...player.stats }, ranks: { ...player.ranks },
+    stats: { ...player.stats }, ranks: { ...player.ranks }, job: player.job.job,
     town: lastTown(game.floor.place),
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
@@ -119,7 +121,7 @@ export function apply(d: unknown): Place | null {
     const taken = upgradesOf(base).filter((u) => player.ranks[u]);
     taken.slice(1).forEach((u) => { player.ranks[u] = false; });
   }
-  player.job = jobForLevel(player.level);
+  player.job = jobOf(s.job, player.level);
   recalcStats();
   player.hp = player.hpMax; player.mp = player.mpMax;
   wallet.coins = int(s.coins, 0, 1e9, 0);

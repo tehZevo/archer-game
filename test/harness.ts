@@ -33,7 +33,7 @@ export const climb = (n: number): Place => { let p: Place = START; for (let i = 
 import { game, gotoPlace, player, spawnMob } from '../src/state';
 import { clearPressed, setKey } from '../src/input';
 import { tick } from '../src/loop';
-import { recalcStats } from '../src/progress';
+import { jobForLevel, recalcStats } from '../src/progress';
 import { MOB_TYPES } from '../src/config';
 import { closeLinks } from '../src/links';
 
@@ -135,7 +135,7 @@ const ground = (): Platform => game.floor.platforms[0];
 function arena(level = 1, x = 100): void {
   release();
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
-  player.level = level; player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats();
+  player.level = level; player.job = jobForLevel(level); player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats(); // as if the Sage had advanced you
   for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['z', 'd', 'ground-q', 'ground-w', 'sa'].includes(k);
   player.mp = 999; player.hp = player.hpMax; player.face = 1; player.x = x; player.y = ground().y - player.h;
   player.vx = player.vy = 0; player.onGround = true; player.climb = null; player.dropBlock = null;
@@ -154,4 +154,5 @@ function dummy(x: number, hp = 1e6): Mob {
 
 export { check, release, step, tap, landLeap, ground, arena, dummy };
 export { skillScreen, skillStatus, tabLabel, tabSkills } from '../src/skillscreen';
-export { JOBS } from '../src/progress';
+export { JOBS, advanceJob, canAdvance, nextJob } from '../src/progress';
+export { visitSage } from '../src/sage';

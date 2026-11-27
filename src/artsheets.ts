@@ -34,7 +34,7 @@ function paint(w: number, h: number, draw: (p: (x: number, y: number, col: strin
 export const ART_GEN: Record<string, () => Grid> = {
   portal: portalGrid,
   'npc/board': boardGrid,
-  ...Object.fromEntries((['shop', 'stylist', 'trainer', 'pets'] as NpcLook[]).flatMap((k) =>
+  ...Object.fromEntries((['shop', 'stylist', 'trainer', 'pets', 'sage'] as NpcLook[]).flatMap((k) =>
     Array.from({ length: NPC_FRAMES }, (_, f) => [`npc/${k}/${f}`, () => npcGrid(k, f)]))),
   ...Object.fromEntries(PET_LIST.flatMap((k) =>
     Array.from({ length: PET_FRAMES }, (_, f) => [`pet/${k}/${f}`, () => petGrid(k, f)]))),
