@@ -18,3 +18,4 @@
 - Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
 - Allow switching direction midair after a Glide, even during the skill's use/recovery.
 - Increase Skyward Assault's (`ab`) use time to 0.4 and decrease its delay to 0.2 (config.ts:155).
+- HUD meters: show the EXP meter as a percentage (%) instead of A/B, and show HP/MP as the current value (e.g. 500, 1.5k) instead of A/B.
