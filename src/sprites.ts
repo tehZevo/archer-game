@@ -27,27 +27,50 @@ export function px(s: Sprite, gx: number, gy: number, col: string, gw = 1, gh = 
    mob's hit1. */
 const SHUT = '#1a1010';
 
-function snailSprite(f: number): Sprite {
-  // glides: the head and stalks reach forward a pixel and pull back
-  const s = make(17, 14), r = f === 1 || f === 2 ? 1 : 0;
-  px(s, 2, 4, '#5fb8f0', 13 + r, 9);
-  px(s, 5, 5, '#3f86c4', 6, 6);
-  px(s, 11 + r, 1, '#5fb8f0', 2, 4);
-  px(s, 12 + r, f === 2 ? 1 : 0, '#ffffff', 2, 2);
-  px(s, 3, 12, '#3f86c4', 11 + r, 2);
-  return s;
-}
-/** Hurt: the eye stalk snaps back down and the eye screws shut. */
-function snailHurt(): Sprite {
-  const s = make(17, 14);
-  px(s, 2, 5, '#5fb8f0', 13, 8);
-  px(s, 5, 6, '#3f86c4', 6, 6);
-  px(s, 10, 3, '#5fb8f0', 2, 3);
-  px(s, 10, 2, SHUT, 3, 1); px(s, 12, 1, SHUT);
-  px(s, 13, 8, SHUT, 2, 2);
-  px(s, 3, 12, '#3f86c4', 11, 2);
-  return s;
-}
+/* Garden Snail: a boxy shell with a squared spiral groove, on a soft blue
+   foot; eyes up on stalks. It glides: the stalks sway and the foot ripples. */
+const SNAIL_SHELL = [
+  '.ooooooooo.',
+  'ossssssssSo',
+  'osdddddddSo',
+  'osSSSSSSdSo',
+  'osdddddSdSo',
+  'osdSSSdSdSo',
+  'osdSdddSdSo',
+  'osdSSSSSdSo',
+  'osdddddddSo',
+  '.ooooooooo.',
+];
+const SNAIL_HEAD = [
+  '..b.b.',
+  '..b.b.',
+  '.oBBBo',
+  'oBwBBo',
+  'BBBBBo',
+  'BBBBmo',
+  'bBBBBo',
+  'bBBBo.',
+  'bBBBo.',
+  'bBBBo.',
+];
+const snailRows = (f: number): string[] => {
+  const sway = f === 1 ? 1 : f === 3 ? -1 : 0, ripple = f % 2;
+  const eyes = [...'.'.repeat(17)]; eyes[13 + sway] = 'k'; eyes[15 + sway] = 'k';
+  return [
+    eyes.join(''),
+    ...SNAIL_SHELL.map((r, y) => r + SNAIL_HEAD[y]),
+    'oBwBwBwBwBwBBBBBo',
+    'o' + Array.from({ length: 15 }, (_, x) => (x % 2 === ripple ? 'b' : 'B')).join('') + 'o',
+    '.ooooooooooooooo.',
+  ];
+};
+const SNAIL_PAL = { o: '#14304a', S: '#3f86c4', s: '#7fcaf8', d: '#24568a', B: '#5fb8f0', b: '#3a8ccc', w: '#a8dcfa', k: '#0d1424', m: '#24568a' };
+const snailSprite = (f: number): Sprite => grid(snailRows(f), SNAIL_PAL);
+/** Hurt: the stalks snap down into the head and the eyes screw shut. */
+const snailHurt = (): Sprite => grid(marked(snailRows(0), [
+  [13, 0, '.'], [15, 0, '.'], [13, 1, '.'], [15, 1, '.'], [13, 2, '.'], [15, 2, '.'],
+  [13, 4, 'k'], [14, 4, 'k'], [15, 4, 'k'], [15, 6, 'k'], [15, 7, 'k'],
+]), SNAIL_PAL);
 
 /** A four-legged trotter: on a stride the body lifts 1px and the legs splay. */
 function quadruped(s: Sprite, f: number, legs: [number, number], legY: number, legW: number, col: string): number {
