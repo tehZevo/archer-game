@@ -24,11 +24,15 @@ const GLYPHS: Record<string, string[]> = {
   M: ['##...##', '###.###', '#######', '##.#.##', '##...##', '##...##', '##...##', '##...##'],
   I: ['####', '.##.', '.##.', '.##.', '.##.', '.##.', '.##.', '####'],
   S: ['.####.', '##..##', '##....', '.####.', '....##', '....##', '##..##', '.####.'],
+  '!': ['##', '##', '##', '##', '##', '..', '##', '##'], // the bang ahead of a crit
 };
 
 /** Glyph height (fill), and the whole number's height with its outline. */
 export const DMG_GLYPH_H = 8, DMG_H = DMG_GLYPH_H + 2;
 const OUTLINE: [number, number, number] = [0x14, 0x10, 0x18];
+
+/** A damage number's text: a crit leads with a bang (!1234). */
+export const dmgLabel = (v: number, crit: boolean): string => (crit ? '!' : '') + v;
 
 /** Can this string be drawn in the bubble font? */
 export const bubbleable = (s: string): boolean => [...s].every((ch) => GLYPHS[ch]);

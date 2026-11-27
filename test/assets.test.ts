@@ -9,7 +9,7 @@ import { BOT_H, hash, TILESETS, tilesetFor, TOP_H, TOP_W, variantAt } from '../s
 import { MAP_AREAS } from '../src/world';
 import fontPng from '../assets/font.png';
 import { FONT_CHARS } from '../src/font';
-import { bubbleable, bubbleText, bubbleWidth, DMG_H } from '../src/dmgfont';
+import { bubbleable, bubbleText, bubbleWidth, dmgLabel, DMG_H } from '../src/dmgfont';
 import { NUM_LINE } from '../src/combat';
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
@@ -134,6 +134,18 @@ describe('damage numbers (a bubble font)', () => {
     expect(bubbleable('0123456789')).toBe(true);
     expect(bubbleable('MISS')).toBe(true);
     expect(bubbleable('?')).toBe(false);
+  });
+
+  it('a crit leads with a bang', () => {
+    expect(dmgLabel(1234, true)).toBe('!1234');
+  });
+
+  it('a normal hit has no bang', () => {
+    expect(dmgLabel(1234, false)).toBe('1234');
+  });
+
+  it('the bang has a glyph', () => {
+    expect(bubbleable('!')).toBe(true);
   });
 
 });
