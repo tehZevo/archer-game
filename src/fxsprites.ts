@@ -165,40 +165,58 @@ function spikesAnim(): FxSheet {
   }, 0.4);
 }
 
-/** Tempest: a large oval slash cuts all the way round you, then shots fire
- *  from the oval inward at you, one after another round the ring. Origin at
- *  your feet (the oval is centred on your middle). */
-function tempestAnim(front: RampName = 'pink', tail: RampName = 'purple'): FxSheet {
-  const RX = 78, RY = 30, W = RX * 2 + 12, H = RY * 2 + 12, cx = W / 2, cy = H / 2, by = cy + 12;
-  const n = 10, SHOTS = 12, oval = (a: number, k = 1): [number, number] => [cx + Math.cos(a) * RX * k, cy + Math.sin(a) * RY * k];
-  return anim(W, H, cx, by, n, (L, f) => {
-    const R = rng(61 + f);
-    // the slash: one fast turn round the oval (frames 0-2), a bright leading
-    // edge with the cut it leaves behind, which lingers as a ring and fades
-    const start = -Math.PI / 2, head = start + Math.min(1, (f + 1) / 3) * Math.PI * 2;
-    if (f < 3) {
-      arc(L, tail, cx, cy, RX, RY, 2, 0.9, start, head - 0.05);
-      arc(L, front, cx, cy, RX, RY, 3.4, 1.3, head - 1.1, head);
-      arc(L, front, cx, cy, RX * 0.94, RY * 0.9, 1.4, 0.8, head - 0.8, head - 0.1);
+/** Tempest: one huge energy arrow sweeps up out of you and arcs over to
+ *  strike ahead. Its trail is a broad pink crescent with a white-hot core
+ *  that fades to a pale mist; a rain of thin red spikes falls behind it,
+ *  white and gold stars glint along the arc, and a gold ring bursts where
+ *  it lands. Faces right; origin at your feet. */
+function tempestAnim(): FxSheet {
+  const BACK = 16, RX = 46, RY = 36, MID = 12, W = BACK + RX * 2 + 20, H = RY + MID + 22, by = H - 4, n = 10;
+  const cx = BACK + RX, cy = by - MID, FLY = 4; // the arc's centre; frames the arrow takes to land
+  // the arrow's path: half an oval from your middle, over the top, down ahead
+  const path = (t: number): [number, number] => {
+    const a = Math.PI + t * Math.PI;
+    return [cx + Math.cos(a) * RX, cy + Math.sin(a) * RY];
+  };
+  return anim(W, H, BACK, by, n, (L, f) => {
+    const R = rng(61 + f), head = Math.min(1, (f + 1) / FLY);
+    const fade = f < FLY ? 1 : 1 - (f - FLY + 1) / (n - FLY + 1);
+    // the crescent: thick and white-hot behind the head, thinning back
+    // along the arc to a pale mist at its tail
+    const tail = Math.max(0, head - 0.75), STEPS = 24;
+    for (let k = 0; k < STEPS; k++) {
+      const t0 = tail + (head - tail) * (k / STEPS), t1 = tail + (head - tail) * ((k + 1) / STEPS), s = k / STEPS;
+      const [x0, y0] = path(t0), [x1, y1] = path(t1);
+      if (s < 0.3) L.line('dust', x0, y0, x1, y1, 1 + s * 12, 1 + s * 12, 0.45 * fade);
+      else {
+        L.line('pink', x0, y0, x1, y1, 1 + s * 8, 1 + s * 8, (0.6 + s * 0.5) * fade);
+        L.line('pink', x0, y0, x1, y1, 0.5 + s * 2.2, 0.5 + s * 2.2, (1.0 + s * 0.6) * fade);
+      }
     }
-    const ring = f < 3 ? 0 : 1 - (f - 3) / (n - 3);
-    if (ring > 0) L.ring(tail, cx, cy, RX, RY, 2, 1.0 * ring);
-    // the shots: each leaves its own point on the oval in turn and streaks
-    // inward toward you over three frames, a pink head on a purple tail
-    for (let i = 0; i < SHOTS; i++) {
-      const born = 2 + (i % 6), t = (f - born) / 3;
-      if (t < 0 || t > 1) continue;
-      const a = -Math.PI / 2 + (i / SHOTS) * Math.PI * 2;
-      const [hx, hy] = oval(a, 1 - t * 0.8), [mx, my] = oval(a, 1.1 - t * 0.8), [sx, sy] = oval(a, Math.min(1, 1.35 - t * 0.8));
-      L.line(tail, sx, sy, mx, my, 0.4, 1.3, 0.95);
-      L.line(front, mx, my, hx, hy, 1.3, 1.6, 1.2);
-      L.spark(front, hx, hy, 1.1, true);
+    // the arrowhead, while it flies: a white-hot point down the line of flight
+    if (f < FLY) {
+      const [hx, hy] = path(head), [px, py] = path(head - 0.04), d = Math.hypot(hx - px, hy - py) || 1;
+      const ux = (hx - px) / d, uy = (hy - py) / d;
+      L.line('pink', hx - ux * 8 - uy * 7, hy - uy * 8 + ux * 7, hx + ux * 5, hy + uy * 5, 2, 0.6, 1.4);
+      L.line('pink', hx - ux * 8 + uy * 7, hy - uy * 8 - ux * 7, hx + ux * 5, hy + uy * 5, 2, 0.6, 1.4);
+      L.disc('pink', hx, hy, 3.5, 1.6);
     }
-    // where the shots meet: a pulse at your middle
-    if (f >= 5) L.disc(front, cx, cy, 8 - (f - 5), 1.1 - (f - 5) * 0.15);
-    for (let i = 0; i < 4; i++) {
-      const [sx, sy] = oval(head - R() * 3);
-      L.spark(i % 2 ? tail : front, sx + R() * 4 - 2, sy + R() * 4 - 2, 0.85 * (f < 3 ? 1 : ring), i === 0);
+    // the rain of thin red spikes falling under the arc behind the arrow
+    for (let i = 0; i < 12; i++) {
+      const t = head * (0.1 + 0.9 * R()), [sx, sy] = path(t), drop = 8 + R() * 12 + f * 2;
+      if (sy + drop > by) continue;
+      L.line('red', sx, sy + drop - 10, sx, sy + drop, 0.3, 0.9, 1.0 * fade);
+    }
+    // where it lands: a gold ring bursting out
+    if (f >= FLY - 1) {
+      const g = (f - FLY + 1) / (n - FLY), [ix, iy] = path(1);
+      L.ring('gold', ix, iy, 5 + g * 15, 4 + g * 11, 1.6 - g * 0.8, 1.2 * (1 - g * 0.7));
+      if (f === FLY - 1 || f === FLY) L.disc('gold', ix, iy, 4, 1.2);
+    }
+    // stars glinting along the arc
+    for (let i = 0; i < 5; i++) {
+      const [sx, sy] = path(head * R());
+      L.spark(i % 2 ? 'gold' : 'dust', sx + R() * 6 - 3, sy + R() * 6 - 3, 1.0 * fade, i < 2);
     }
   });
 }
