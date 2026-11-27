@@ -279,7 +279,11 @@ describe('main menu', () => {
 
 describe('HUD numbers', () => {
   it('are plain below 1000, then shortened to K and M', () => {
-    expect([999, 1000, 1299, 12345, 1234567].map(fmtNum)).toEqual(['999', '1K', '1.2K', '12.3K', '1.2M']);
+    expect([999, 1000, 1299, 12345, 1234567].map(fmtNum)).toEqual(['999', '1.0K', '1.2K', '12.3K', '1.2M']);
+  });
+
+  it('a whole thousand still shows its decimal', () => {
+    expect(fmtNum(7000)).toBe('7.0K');
   });
 
   it('the tiny font draws the bar labels', () => {
