@@ -30,6 +30,15 @@ Keep the suite minimal and high-value; aim to shrink it as the game stabilizes.
 - **Representative over exhaustive.** Cover each source of a family (one launcher, one aerial, one finisher) rather than every pair in a matrix: the `SKILLS` table is the spec, the tests spot-check its rows.
 - **Group tests logically.** Each numbered file in `test/` is one feature group: keep every check of that feature in its file (no `-2` sequels), group related checks into blocks that read like the feature's rules, and merge files whose features belong together.
 
+## Planning
+
+Work is tracked in GitHub issues (https://github.com/tehZevo/archer-game/issues), not a TODO file. Two labels call out items that need a human touch:
+
+- **art** — best done by an art-capable model or a human eye (sprite, effect, animation work).
+- **design** — needs human validation of a naming/feel call before implementation.
+
+Check the labels before picking up an item; plain issues are straight-ahead engineering.
+
 ## Conventions
 
 - All game state lives in the `game` / `player` singletons in `src/state.ts`; systems (`update`, `physics`, `combat`, …) mutate them.
