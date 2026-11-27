@@ -9,3 +9,4 @@
 - Bug: the C (copy JSON) action in the skill editor doesn't seem to work.
 - Remove the left/right tune control in the skill editor; make fields navigable with left/right/up/down to select the field to edit, Enter to start modifying, left/right to adjust the value, and Enter again to set it.
 - Allow the skill editor to set a 0.0 use/delay (cooldown) value.
+- Keep big on-screen text (e.g. Sage prompts and similar banners) visible longer.
