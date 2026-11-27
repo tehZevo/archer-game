@@ -155,7 +155,8 @@ function dummy(x: number, hp = 1e6): Mob {
 }
 
 export { check, release, step, tap, landLeap, ground, arena, dummy };
-export { skillScreen, skillStatus, tabLabel, tabSkills, visibleTabs } from '../src/skillscreen';
+export { closeSkillScreen, openSkillScreen, skillScreen, skillStatus, statLines, tabLabel, tabSkills, visibleTabs } from '../src/skillscreen';
+export { isLearned } from '../src/progress';
 export { JOBS, advanceJob, canAdvance, nextJob } from '../src/progress';
 export { visitSage } from '../src/sage';
 

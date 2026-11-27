@@ -4,7 +4,7 @@ import { game, player } from './state';
 import { text } from './font';
 import { dev } from './dev';
 import { ICON, skillIcon } from './icons';
-import { branchLocked, canSpendSp, JOBS, skillRows, spendSkill, upgradesOf } from './progress';
+import { branchLocked, canSpendSp, isLearned, JOBS, skillRows, spendSkill, upgradesOf } from './progress';
 import type { SkillKey } from './types';
 
 /* ============================================================
@@ -79,13 +79,14 @@ function wrap(s: string, n: number): string[] {
 }
 
 /** The selected skill's numbers, one short line each (passives show only their bonus). */
-function statLines(k: SkillKey): string[] {
+export function statLines(k: SkillKey, cols = 99): string[] {
   const s = SKILLS[k];
   if (s.passive) return s.bonus1 ? [`BONUS +${Math.round(s.bonus1 * 100)}%`] : [];
   const lines = [`MP ${s.mp1}`];
   if (s.dmg1) lines.push(`DMG ${s.dmg1}%${s.hits1 && s.hits1 > 1 ? ` X${s.hits1}` : ''}${s.targets1 ? ` / ${s.targets1} FOES` : ''}`);
   lines.push(`USE ${(s.use ?? 0).toFixed(1)}S${s.cd ? `  CD ${s.cd}S` : ''}`);
-  return lines;
+  // each line is wrapped to the panel width so the trailing "FOES" never spills
+  return lines.flatMap((l) => wrap(l, cols));
 }
 
 /** Draw the skills screen over the frozen game. */
@@ -125,7 +126,7 @@ export function drawSkillScreen(): void {
     line(`${s.tag}  LV.${s.minLevel}`, DIM);
     for (const l of wrap(st.label, cols)) line(l, st.col);
     y += 2;
-    for (const l of statLines(k)) line(l, HI);
+    for (const l of statLines(k, cols)) line(l, HI);
     y += 2;
     for (const l of wrap(s.desc.replace(/[^A-Za-z0-9 .\/:+%,-]/g, ' ').replace(/ +/g, ' ').trim(), cols).slice(0, 4)) line(l, DIM);
     // what it links into, as icons
@@ -133,7 +134,15 @@ export function drawSkillScreen(): void {
     if (links.length) {
       y += 2;
       text(ctx, 'LINKS', dx, y + 1, 1, FAINT, 'left');
-      links.forEach((t, i) => ctx.drawImage(skillIcon(t), dx + 34 + i * (ICON + 1), y - 1));
+      // the icons sit to the right of the label, wrapping to rows that stay
+      // inside the panel's right border
+      const ix = dx + 34, perRow = Math.max(1, Math.floor((w - 6 - ix) / (ICON + 1)));
+      links.forEach((t, i) => {
+        const x = ix + (i % perRow) * (ICON + 1), ry = y - 1 + Math.floor(i / perRow) * (ICON + 2);
+        ctx.globalAlpha = isLearned(t) ? 1 : 0.4; // dimmed = not yet acquired
+        ctx.drawImage(skillIcon(t), x, ry);
+        ctx.globalAlpha = 1;
+      });
     }
   }
   text(ctx, 'LEFT/RIGHT TIER  Z LEARN  K ESC CLOSE', w / 2, h - 8, 1, FAINT, 'center');
