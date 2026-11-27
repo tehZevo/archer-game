@@ -4,7 +4,7 @@ The game renders pixel perfect: every visible element is a 16×16 (or 16-multipl
 
 ## Transformations
 
-In-game objects, effects, and decor sprites are drawn at their natural size and orientation: never rotated, never scaled. Each sprite is authored at the size and angle it is shown at, so a 16×16 sprite occupies 16×16 device pixels on the base canvas.
+In-game objects, effects, and decor sprites are drawn at their natural size and orientation: never rotated, never scaled. Aside from the boss/elite size scale, foreground sprites (the player, decor, enemies, effects, and everything else in the world) are never squashed, stretched, or rotated; animations that need these looks are sprited — authored as dedicated frames at the shape they are shown in. Each sprite is authored at the size and angle it is shown at, so a 16×16 sprite occupies 16×16 device pixels on the base canvas.
 
 - **Scale** is baked into the art, not applied at draw time: a bigger mob is a bigger authored sprite, not `drawImage(img, x, y, w * 1.5, h * 1.5)`.
 - **Rotation** is baked in too: a diagonal arrow is a sprite drawn diagonally, not a horizontal sprite passed through `ctx.rotate`.
