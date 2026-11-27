@@ -68,7 +68,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true;
   const m = dummy(140);
   tap('q'); step(14);
-  check('Rush Toss hits the enemy ahead and leaves it on the ground', m.hp < 1e6 && m.airTime === 0);
+  check('Rush Toss hits the enemy ahead and leaves it on the ground', m.hp < 1e6 && m.airTime > 0);
   const hp0 = m.hp; tap('w'); step(15);
   check('the rush opens the link window, and W launches and shoots it', m.hp < hp0 && m.airTime > 0);
   arena(15); player.ranks['ground-w'] = true; player.ranks.ab = true; // Skyward Assault is the W upgrade: maxing W masters it

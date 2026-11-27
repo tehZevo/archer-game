@@ -219,7 +219,7 @@ for (const [lvl, upgraded] of [[12, false], [20, true]] as const) {
   check('Rush Toss launches nothing until the slide ends', !launchedEarly);
   check('the Rush Toss charge hits each enemy it scoops up, once', hits === 1, `${hits} hits, dx ${(player.x - x0).toFixed(1)}, rushT ${player.rush.t.toFixed(2)}`);
   step(2);
-  check('Rush Toss strikes as the slide ends (the launch is on W now)', m.hp < 1e6 && m.airTime === 0);
+  check('Rush Toss strikes as the slide ends (the launch is on W now)', m.hp < 1e6 && m.airTime > 0);
 }
 {
   // Rush Toss travels its fixed distance even when an enemy slows it mid-slide

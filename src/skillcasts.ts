@@ -27,7 +27,7 @@ function twinShot(r: SkillRank): void {
   endHover();
   pose('shoot', 'z');
   const face = player.face;
-  const tg = nearest(player.x + face * 64, player.y + player.h / 2, 128, 56, r.targets);
+  const tg = nearest(player.x + face * 64, player.y - 60, 128, 200, r.targets);
   later(P.Z_WINDUP, () => {
     sfx.shoot();
     const mx = player.x + face * 8, my = player.y + 13;
@@ -217,7 +217,9 @@ function skyfallVolley(r: SkillRank): void {
   pose('shoot', 'ground-w');
   sfx.risingArrows();
   const face = player.face;
-  const tg = hitbox(player.x + face * 30, player.y + player.h / 2, 110, 80).slice(0, r.targets);
+  // tall box: the Rush Toss launches the enemy ~130px up, and this volley
+  // rains onto it mid-air, so the box reaches from the ground up over the head
+  const tg = hitbox(player.x + face * 30, player.y - 60, 110, 200).slice(0, r.targets);
   // the volley rains onto each target, or onto the ground just ahead if there are none
   fxUnder('rain', tg, player.x + face * 40, player.y + player.h, 0.4);
   // the first arrow pops the enemy airborne, the rest of the volley rains on it
@@ -233,7 +235,7 @@ function skyfallVolley(r: SkillRank): void {
 function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
   sfx.assaultRise();
-  hitbox(player.x + player.face * 30, player.y + player.h / 2, 110, 80)
+  hitbox(player.x + player.face * 30, player.y - 60, 110, 200)
     .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { launch: true, fx: 'skyHit' }));
   const from = player.y + player.h / 2;
   // always the same rise (scaling it with the launched enemies' height sent
