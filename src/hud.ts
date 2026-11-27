@@ -34,6 +34,7 @@ import { chat, logLines, wrap as wrapChat } from './chat';
 import { STATUS } from './status';
 import { modLine } from './floormods';
 import { text, textWidth } from './font';
+import { tinyText } from './tinyfont';
 import { clamp, fmtNum } from './util';
 import type { SkillKey } from './types';
 import { drawPause } from './pausemenu';
@@ -42,8 +43,8 @@ function bar(x: number, y: number, w: number, label: string, value: string, pct:
   ctx.fillStyle = '#0a1120'; ctx.fillRect(x, y, w, 9);
   ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(pct, 0, 1), 9);
   ctx.strokeStyle = '#0006'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, 9);
-  text(ctx, label, x + 2, y + 1, 1, '#eaf2ff', 'left');
-  text(ctx, value, x + w - 2, y + 1, 1, '#eaf2ff', 'right');
+  tinyText(ctx, label, x + 2, y + 2, '#eaf2ff', 'left');
+  tinyText(ctx, value, x + w - 2, y + 2, '#eaf2ff', 'right');
 }
 
 /** Connection icon: three rising signal bars on a dark chip, struck through in red when offline. */
@@ -213,7 +214,7 @@ function drawSkillBar(pad: number): void {
 function drawBottomBars(pad: number): number {
   const { h } = game.view;
   const bw = 74, bgap = 3, y = h - 14;
-  text(ctx, `Lv.${player.level}`, pad, y - 9, 1, '#dbe6f5', 'left');
+  tinyText(ctx, `Lv.${player.level}`, pad, y - 7, '#dbe6f5', 'left');
   // HP / MP read the current value (500, 1.5K); the bar shows how full it is
   bar(pad, y, bw, 'HP', fmtNum(player.hp), player.hp / player.hpMax, '#3fbf72');
   bar(pad + bw + bgap, y, bw, 'MP', fmtNum(player.mp), player.mp / player.mpMax, '#3f8fd6');
