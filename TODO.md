@@ -13,3 +13,4 @@
 - Q-chain effects (implement together):
   - If you buffer a ground Q from an air Q or another ground Q, do not show the upward spike effect on the source skill.
   - Add the toss effect back to Dive and ground Q, but only when they're unchained out of (i.e. linking cancels the toss).
+- Move the player's Lv. (level) text from the top-left of the HUD to the bottom-left, right above the HP bar.
