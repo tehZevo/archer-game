@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, climb, dummy, ground, memoryStorage, step, tap } from './helpers';
-import { MOB_TYPES, SKILLS } from '../src/config';
+import { MOB_TYPES, P, SKILLS } from '../src/config';
+import { confirmUi } from '../src/confirm';
+import { visitSage } from '../src/sage';
+import { skillStatus } from '../src/skillscreen';
+import { TOWNS } from '../src/world';
 import { hurtPlayer } from '../src/boss';
 import { killMob } from '../src/combat';
 import { bag, BAG_SIZE, clearGear, equip, gear, gearDmg, gearDrops, gearFor, gearSoak, unequip, wear } from '../src/gear';
 import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
-import { game, gotoPlace, player, spawnMob } from '../src/state';
+import { gainExp, game, gotoPlace, player, spawnMob } from '../src/state';
 import { lastTown, samePlace, START } from '../src/world';
 import type { Mob } from '../src/types';
-import { activeSkill, expToNext, killsToLevel, mobExp, rank, shotCount, skillRows, spendSkill, STAT_KEYS } from '../src/progress';
+import { activeSkill, advanceJob, canAdvance, expToNext, JOBS, nextJob, recalcStats, STAT_GAIN, killsToLevel, mobExp, rank, shotCount, skillRows, spendSkill, STAT_KEYS } from '../src/progress';
 
 describe('skill upgrades', () => {
   it('are offered only once their base skill is learned', () => {
@@ -420,5 +424,130 @@ describe('enemy levels and EXP', () => {
     const before = game.dmgNums.length;
     killMob(m);
     expect(game.dmgNums.length).toBe(before);
+  });
+});
+
+describe('stats', () => {
+  it('attack grows with level', () => {
+    arena(1);
+    const lv1 = player.war;
+    arena(40);
+    expect(player.war).toBeGreaterThan(lv1 * 3);
+  });
+
+  it('each DEX point is +3% attack, at any level', () => {
+    arena(40);
+    const base = player.war;
+    player.stats.dex = 10;
+    recalcStats();
+    expect(STAT_GAIN.dex).toBe(0.03);
+    expect(player.war / base).toBeCloseTo(1 + 10 * 0.03, 9);
+  });
+
+  it('each VIT point is +5% max HP', () => {
+    arena(1);
+    const base = player.hpMax;
+    player.stats.vit = 1;
+    recalcStats();
+    expect(player.hpMax).toBe(Math.round(base * 1.05));
+  });
+});
+
+describe('jobs and the Sage', () => {
+  /** A 1st-job archer at the given level. */
+  function archerAt(level: number): void {
+    arena(level);
+    player.job = JOBS[0];
+    recalcStats();
+  }
+
+  it('every town has a Sage', () => {
+    for (const t of TOWNS) {
+      gotoPlace({ town: t.id });
+      expect(game.floor.npcs!.map((n) => n.kind)).toContain('sage');
+    }
+  });
+
+  it('below Lv.10 the Sage sends you away, and 2nd job skills wait for the level', () => {
+    archerAt(9);
+    visitSage();
+    expect(confirmUi.open).toBe(false);
+    expect(player.job.job).toBe(1);
+    player.ranks.ni = false;
+    expect(skillStatus('ni').label).toBe('AT LV.10');
+  });
+
+  it('at Lv.10, 2nd job skills say to see the Sage, and he offers the 2nd job', () => {
+    archerAt(10);
+    player.ranks.ni = false;
+    expect(skillStatus('ni').label).toBe('SEE THE SAGE');
+    visitSage();
+    expect(confirmUi.open).toBe(true);
+    expect(confirmUi.yes).toBe(true);
+  });
+
+  it('taking the 2nd job unlocks its skills and adds 5% HP and MP', () => {
+    archerAt(10);
+    player.ranks.ni = false;
+    const hp = player.hpMax, mp = player.mpMax;
+    visitSage();
+    confirmUi.open = false;
+    confirmUi.onYes();
+    expect(player.job.job).toBe(2);
+    expect(player.hpMax).toBe(Math.round(hp * 1.05));
+    expect(player.mpMax).toBe(Math.round(mp * 1.05));
+    expect(skillStatus('ni').label).not.toBe('SEE THE SAGE');
+  });
+
+  it('reaching Lv.10 puts the Sage prompt on screen, for the full banner time', () => {
+    archerAt(9);
+    gainExp(player.expNext);
+    expect(game.banner?.text).toBe('BECOME A SKY ARCHER');
+    expect(game.banner?.sub).toBe('VISIT THE SAGE IN TOWN');
+    expect(game.banner?.t).toBe(P.BANNER_T);
+  });
+
+  it('a plain level-up still shows the level banner', () => {
+    arena(10);
+    gainExp(player.expNext);
+    expect(game.banner?.text).toBe('LEVEL 11');
+  });
+
+  it('by the 4th job the bonus is +30% in all, and there is no job after it', () => {
+    archerAt(60);
+    advanceJob();
+    advanceJob();
+    advanceJob();
+    expect(player.job.job).toBe(4);
+    expect(player.job.hpmp).toBe(0.3);
+    expect(nextJob()).toBeFalsy();
+    expect(canAdvance()).toBe(false);
+  });
+
+  describe('saved jobs', () => {
+    function fourthJobSave(): ReturnType<typeof snapshot> {
+      archerAt(60);
+      advanceJob();
+      advanceJob();
+      advanceJob();
+      const saved = snapshot();
+      archerAt(60);
+      return saved;
+    }
+
+    it('your job is saved', () => {
+      apply(fourthJobSave());
+      expect(player.job.job).toBe(4);
+    });
+
+    it('a saved job never runs ahead of its level', () => {
+      apply({ ...fourthJobSave(), job: 4, level: 20 });
+      expect(player.job.job).toBe(2);
+    });
+
+    it('a save without a job starts at the 1st', () => {
+      apply({ ...fourthJobSave(), job: undefined });
+      expect(player.job.job).toBe(1);
+    });
   });
 });

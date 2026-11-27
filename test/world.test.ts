@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { arena, climb, ground, release, step, tap } from './helpers';
+import { TOWN_MIN_H } from '../src/floorframe';
+import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
 import { MOB_TYPES, P, TILE, WORLD } from '../src/config';
 import { groupSize, LAYOUTS, type Layout } from '../src/floor';
 import { isTown, mobLevel, PATHS, pathsInto, townDepth } from '../src/world';
@@ -7,7 +9,7 @@ import { killMob } from '../src/combat';
 import { makeShape, SHAPES } from '../src/floorshape';
 import { setKey } from '../src/input';
 import { seeded } from '../src/rng';
-import { game, gotoPlace, player, spawnMob, spawnWave } from '../src/state';
+import { cameraTarget, game, gotoPlace, player, spawnMob, spawnWave } from '../src/state';
 import { surfaceYAt } from '../src/surface';
 import type { Platform } from '../src/types';
 
@@ -474,5 +476,77 @@ describe('the map', () => {
     it('tier 7 tops out above Lv.40', () => {
       expect(highest(pathsByTier().get(7)!)).toBeGreaterThan(40);
     });
+  });
+});
+
+describe('minimap', () => {
+  beforeEach(() => {
+    game.view.w = 240;
+    game.view.h = 180;
+  });
+
+  it('fits on screen, under the skill bar', () => {
+    const r = miniRect();
+    expect(r.x).toBeGreaterThanOrEqual(0);
+    expect(r.x + r.w).toBeLessThanOrEqual(240);
+    expect(r.y).toBeGreaterThanOrEqual(24);
+    expect(r.y + r.h).toBeLessThan(180 - 16);
+  });
+
+  it('shows the whole floor at 1:10', () => {
+    const r = miniRect();
+    expect(MINI_SCALE).toBe(0.1);
+    expect(r.w).toBe(Math.ceil(WORLD.w / 10));
+    expect(toMini(0, 0)).toEqual([r.x, r.y]);
+    const [x, y] = toMini(WORLD.w - 1, WORLD.h - 1);
+    expect(x).toBeLessThan(r.x + r.w);
+    expect(y).toBeLessThan(r.y + r.h);
+  });
+
+  it('fits the tallest floor', () => {
+    let tallest = 0;
+    for (let n = 1; n <= 20; n++) {
+      gotoPlace(climb(n));
+      tallest = Math.max(tallest, game.floor.h);
+    }
+    expect(tallest * MINI_SCALE + miniRect().y).toBeLessThan(180 - 16);
+  });
+});
+
+describe('floor size', () => {
+  // floors are trimmed to their content: a thin ground, a little sky
+  it('each floor is ground (4 tiles) up to its portals plus 2-3 tiles of sky', () => {
+    const bad: string[] = [];
+    for (let n = 1; n <= 20; n++) {
+      release();
+      gotoPlace(climb(n));
+      const f = game.floor, base = f.platforms[0];
+      const top = Math.min(...f.portals.map((p) => p.y - p.h));
+      if (WORLD.h !== f.h) bad.push(`floor ${n}: WORLD.h is not the floor height`);
+      if (base.h !== 4 * TILE || base.y + base.h !== f.h) bad.push(`floor ${n}: ground is not 4 tiles at the bottom`);
+      if (top < 2 * TILE) bad.push(`floor ${n}: under 2 tiles of sky`);
+      // towns get extra sky (see TOWN_MIN_H), and so may floors at the minimum height
+      if (top > 3 * TILE && !f.town && f.h > 180) bad.push(`floor ${n}: over 3 tiles of sky`);
+      if (f.h < (f.town ? TOWN_MIN_H : 180)) bad.push(`floor ${n}: too short (${f.h})`);
+      if (f.platforms.some((p) => p.y < 0) || f.ropes.some((r) => r.y1 < 0)) bad.push(`floor ${n}: something above the top`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('towns are taller than the view, so climbing to the deck moves the camera up', () => {
+    release();
+    gotoPlace(climb(1)); // the Harbor: one level, the shortest town
+    game.view.w = 240;
+    game.view.h = 180;
+    expect(game.floor.h).toBeGreaterThanOrEqual(TOWN_MIN_H);
+
+    const deck = Math.min(...game.floor.platforms.filter((p) => p.block === 1).map((p) => p.y));
+    player.x = 40;
+    player.y = ground().y - player.h;
+    player.onGround = true;
+    player.climb = null;
+    const low = cameraTarget().y;
+    player.y = deck - player.h;
+    expect(cameraTarget().y).toBeLessThan(low);
   });
 });
