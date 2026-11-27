@@ -328,6 +328,21 @@ describe('Meteor Dive (Q in the air)', () => {
     expect(m.hp).toBe(1e6);
     expect(m.airTime).toBeLessThanOrEqual(0);
   });
+
+  it('measures its height from the platform under you, not the ground slab', () => {
+    setup();
+    const deck = { x: player.x - 40, y: ground().y - 140, w: 80, h: 16 };
+    game.floor.platforms.push(deck);
+    // just off the deck's surface: airborne, but only ~6px above it
+    player.y = deck.y - player.h - 6;
+    player.onGround = false;
+    player.vy = 0;
+    tap('q');
+    expect(player.cast).not.toBe('dive'); // too low over the deck to dive
+    player.y = deck.y - player.h - 24; // a jump's peak above the deck
+    tap('q');
+    expect(player.cast).toBe('dive');
+  });
 });
 
 describe('Cyclone Sweep (W in the air)', () => {
