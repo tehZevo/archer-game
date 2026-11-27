@@ -43,46 +43,51 @@ interface TownKit {
 function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
   const { G, T, level, at, ladder, rope, npc, deco } = k;
   if (plan === 'plaza' || plan === 'loft') {
-    // a deck over columns 6-13 (ladder on its left, rope on its right)...
-    const deck = level(6, 8, 1);
-    ladder(6, deck.top, G); rope(13, deck.top, G);
-    npc('shop', at(7), deck.top); npc('trainer', at(12) - T / 2, deck.top);
-    npc('board', at(4) + T / 2, G); npc('stylist', at(15) - T / 2, G); npc('pets', at(10), G); npc('sage', at(7) + 4, G);
-    deco('awning', at(7), deck.top); deco('flowers', at(10) - T / 2, deck.top);
-    deco('house', at(9) + T / 2, G); deco('lamp', at(4) - T / 2, G); deco('lamp', at(15) + T / 2, G);
-    deco('bench', at(11), G); deco('crate', at(12) + 4, G);
+    // a deck over columns 14-25 (ladder on its left, rope on its right),
+    // spread across the town's full 40-column width
+    const deck = level(14, 12, 1);
+    ladder(14, deck.top, G); rope(25, deck.top, G);
+    npc('shop', at(16), deck.top); npc('trainer', at(24) - T / 2, deck.top);
+    npc('board', at(6) + T / 2, G); npc('stylist', at(30) - T / 2, G); npc('pets', at(20), G); npc('sage', at(17) + 4, G);
+    deco('awning', at(16), deck.top); deco('flowers', at(20) - T / 2, deck.top);
+    deco('house', at(22) + T / 2, G); deco('lamp', at(6) - T / 2, G); deco('lamp', at(30) + T / 2, G);
+    deco('bench', at(23), G); deco('crate', at(24) + 4, G);
     if (plan === 'loft') {
-      // ...and a loft over the deck's columns 9-13, up a ladder at its left end
-      const loft = level(9, 5, 2);
-      ladder(9, loft.top, deck.top);
-      deco('lamp', at(13) + 4, loft.top); deco('barrel', at(10) + 4, loft.top);
-      return { x: 12 * T, y: loft.top };
+      // ...and a loft over the deck's columns 20-25, up a ladder at its left end
+      const loft = level(20, 6, 2);
+      ladder(20, loft.top, deck.top);
+      deco('lamp', at(25) + 4, loft.top); deco('barrel', at(21) + 4, loft.top);
+      return { x: 24 * T, y: loft.top };
     }
+    // the plaza's own 2nd storey: a balcony over the deck's left columns
+    const balcony = level(14, 6, 2);
+    ladder(14, balcony.top, deck.top);
+    deco('lamp', at(19) - 4, balcony.top); deco('flowers', at(15) + 4, balcony.top);
     return { x: WORLD.w / 2, y: deck.top };
   }
   if (plan === 'market') {
     // two stall decks (shop left, trainer right), a bridge between them holding the way down
-    const left = level(4, 5, 1), right = level(11, 5, 1), bridge = level(7, 6, 2);
-    ladder(4, left.top, G); rope(15, right.top, G);
-    ladder(7, bridge.top, left.top); rope(12, bridge.top, right.top);
-    npc('shop', at(5) + 4, left.top); npc('trainer', at(14) - 4, right.top);
-    npc('board', at(5) + T / 2, G); npc('stylist', at(14), G); npc('pets', at(11) + 2, G); npc('sage', at(8) + 4, G);
-    deco('awning', at(5) + 4, left.top); deco('awning', at(14) - 4, right.top, true);
-    deco('crate', at(8) - 4, left.top); deco('barrel', at(11) + 4, right.top);
-    deco('lamp', at(8) + 4, bridge.top); deco('lamp', at(11) - 4, bridge.top);
-    deco('well', at(9) + T / 2, G); deco('house', at(5) + 4, left.top); deco('house', at(14) - 4, right.top, true);
-    deco('flowers', at(8) - 2, G); deco('flowers', at(11) + 2, G);
-    return { x: at(9) + T / 2, y: bridge.top };
+    const left = level(8, 8, 1), right = level(24, 8, 1), bridge = level(15, 10, 2);
+    ladder(8, left.top, G); rope(31, right.top, G);
+    ladder(15, bridge.top, left.top); rope(24, bridge.top, right.top);
+    npc('shop', at(10) + 4, left.top); npc('trainer', at(30) - 4, right.top);
+    npc('board', at(10) + T / 2, G); npc('stylist', at(30), G); npc('pets', at(24) + 2, G); npc('sage', at(17) + 4, G);
+    deco('awning', at(10) + 4, left.top); deco('awning', at(30) - 4, right.top, true);
+    deco('crate', at(13) - 4, left.top); deco('barrel', at(27) + 4, right.top);
+    deco('lamp', at(17) + 4, bridge.top); deco('lamp', at(23) - 4, bridge.top);
+    deco('well', at(19) + T / 2, G); deco('house', at(10) + 4, left.top); deco('house', at(30) - 4, right.top, true);
+    deco('flowers', at(16) - 2, G); deco('flowers', at(26) + 2, G);
+    return { x: at(19) + T / 2, y: bridge.top };
   }
   // terraces stepping up to the right: a low one on the left, a high one on the right
-  const low = level(4, 7, 1), high = level(9, 7, 2);
-  ladder(4, low.top, G); rope(9, high.top, low.top); rope(15, high.top, G);
-  npc('shop', at(5) + 4, low.top); npc('trainer', at(8), low.top);
-  npc('board', at(5) + 4, G); npc('stylist', at(8), G); npc('pets', at(12) + 4, G); npc('sage', at(10) - 4, high.top);
-  deco('awning', at(5) + 4, low.top); deco('flowers', at(14) - 2, high.top);
-  deco('tower', at(12) + T / 2, high.top); deco('house', at(7), low.top);
-  deco('lamp', at(10), G); deco('bench', at(11) + 4, G); deco('fence', at(14) - 4, G); deco('flowers', at(10) - 4, low.top);
-  return { x: at(12) + T / 2, y: high.top };
+  const low = level(6, 12, 1), high = level(14, 12, 2);
+  ladder(6, low.top, G); rope(15, high.top, low.top); rope(25, high.top, G);
+  npc('shop', at(7) + 4, low.top); npc('trainer', at(13), low.top);
+  npc('board', at(7) + 4, G); npc('stylist', at(13), G); npc('pets', at(24) + 4, G); npc('sage', at(22) - 4, high.top);
+  deco('awning', at(7) + 4, low.top); deco('flowers', at(24) - 2, high.top);
+  deco('tower', at(22) + T / 2, high.top); deco('house', at(10), low.top);
+  deco('lamp', at(20), G); deco('bench', at(24) + 4, G); deco('fence', at(30) - 4, G); deco('flowers', at(12) - 4, low.top);
+  return { x: at(22), y: high.top };
 }
 
 
@@ -138,7 +143,8 @@ export function townFloor(town: string, rng: Rng): Floor {
     platforms.push(...sh.tiles);
     return Math.min(...sh.tiles.map((t) => t.y));
   };
-  const perchTop = block('perch', PERCH_W, G - 6 * T), stepTop = block('step', 1, G - T);
+  // the dummy stands on a low ledge against the right wall, one storey up
+  const perchTop = block('perch', PERCH_W, G - 5 * T), stepTop = block('step', 1, G - T);
   ladder(COLS - 1, perchTop, stepTop);
   return {
     dummy: { x: (COLS - PERCH_W) * T + 4, y: perchTop },
