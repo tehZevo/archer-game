@@ -151,7 +151,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   eb: { key: 'eb', linksInto: [...LAUNCHER_LINKS, 'z', 's'], upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
        cd: 0, use: 0.6, delay: 0.35, mp1: 0, dmg1: 460, hits1: 2, targets1: 10,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
-  ab: { key: 'ab', linksInto: ['air-w', 'r', 'z', 's', 'ground-q', 'air-e'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
+  ab: { key: 'ab', linksInto: ['air-w', 'air-q', 'r', 'z', 's', 'ground-q', 'air-e'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
        cd: 0, use: 0.2, delay: 0.4, mp1: 6, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
        desc: 'After Rush Toss: leap up to launched enemies' },
   // Fired by holding Z: after a Double Shot / Bolt Flurry, keep Z held to stream
