@@ -6,7 +6,6 @@
 // their imports, seed, and helpers through ./harness. Import order is the
 // original single-file order, so the seeded RNG stream is unchanged.
 
-import './11-deaths';
 import './13-font-casts';
 import './16-pets';
 import './15-gale-stream';

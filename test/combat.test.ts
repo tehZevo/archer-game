@@ -1,9 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, dummy, ground, step, tap } from './helpers';
 import { MOB_TYPES, P } from '../src/config';
 import { capAdd, hurtPlayer } from '../src/boss';
 import { clearGear } from '../src/gear';
-import { damage, missChance, NUM_GAP, NUM_LINE } from '../src/combat';
+import { critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, NUM_GAP, NUM_LINE } from '../src/combat';
+import { recalcStats } from '../src/progress';
+import { gotoPlace, LEVEL_SPAN, LV_1_DMG, LV_100_DMG, spawnMob } from '../src/state';
+import { mobLevel, START } from '../src/world';
 import { cast } from '../src/skills';
 import { game, player } from '../src/state';
 import type { Mob } from '../src/types';
@@ -310,5 +313,119 @@ describe('getting hit (bumps you up and back, away from the enemy)', () => {
     hurtPlayer(1);
     expect(player.vx).toBe(0);
     expect(player.onGround).toBe(true);
+  });
+});
+
+describe('damage growth (both sides scale 1.5x faster per level than they did)', () => {
+  /** A Garden Snail spawned where you are; returns its damage. */
+  function snailDamage(): number {
+    game.mobs.length = 0;
+    spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
+    return game.mobs[0].dmg;
+  }
+  afterEach(() => gotoPlace(START));
+
+  it('a Lv.1 archer starts at 14 attack, and gains 2.55 a level', () => {
+    arena(1);
+    expect(player.war).toBeCloseTo(14, 9);
+    arena(21);
+    expect(player.war).toBeCloseTo(14 + 20 * 2.55, 9);
+  });
+
+  it('a Lv.1 enemy hits for 50-100% of its base damage', () => {
+    arena(1);
+    const max = LV_1_DMG * (MOB_TYPES[0].dmg / 3);
+    const dmg = snailDamage();
+    expect(dmg).toBeGreaterThanOrEqual(Math.round(max * 0.5));
+    expect(dmg).toBeLessThanOrEqual(Math.round(max));
+  });
+
+  it('a high-floor enemy hits for 50-100% of its level\'s damage', () => {
+    arena(1);
+    gotoPlace({ path: 'meadows', floor: 11 });
+    const growth = (LV_100_DMG / LV_1_DMG) ** ((mobLevel(game.floor.place) - 1) / LEVEL_SPAN);
+    const max = LV_1_DMG * growth * (MOB_TYPES[0].dmg / 3);
+    const dmg = snailDamage();
+    expect(dmg).toBeGreaterThanOrEqual(Math.round(max * 0.5));
+    expect(dmg).toBeLessThanOrEqual(Math.round(max));
+  });
+});
+
+describe('LUK (2% crit chance a point, capped at 100%, the rest goes to crit damage)', () => {
+  beforeEach(() => {
+    arena(20);
+    player.ranks.sa = false; // no Precision: the 15% base alone
+    player.stats.luk = 0;
+    recalcStats();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    player.stats.luk = 0;
+    recalcStats();
+  });
+
+  it('crits start at 15%, and each point adds 2%', () => {
+    expect(critChance()).toBeCloseTo(0.15, 9);
+    player.stats.luk = 10;
+    expect(critChance()).toBeCloseTo(0.35, 9);
+  });
+
+  it('the base 15% counts toward the cap, so 43 points fills it', () => {
+    player.stats.luk = 43;
+    expect(critChance()).toBe(1);
+  });
+
+  it('points past the cap add 2% crit damage each', () => {
+    player.stats.luk = 48;
+    expect(critOverflowPoints()).toBe(5);
+    expect(critMult()).toBeCloseTo(1.5 + 5 * 0.02, 9);
+  });
+
+  it('a crit lands that multiplier: 60 LUK is 17 past the cap, so 1.5 + 17 x 2% = 1.84', () => {
+    const m = dummy(140);
+    m.level = 20;
+    // the same roll for both hits: under 15% it is no crit at 0 LUK; at 60 LUK every hit crits
+    vi.spyOn(Math, 'random').mockReturnValue(0.2);
+    player.stats.luk = 0;
+    damage(m, 1);
+    const plain = 1e6 - m.hp;
+    player.stats.luk = 60;
+    m.hp = 1e6;
+    damage(m, 1);
+    const crit = 1e6 - m.hp;
+    expect(crit / plain).toBeGreaterThan(1.84 * 0.99);
+    expect(crit / plain).toBeLessThan(1.84 * 1.01);
+  });
+});
+
+describe('a miss against you', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  function missAHighLevelEnemy(): void {
+    arena(20);
+    player.invuln = 0;
+    player.invulnQuiet = false;
+    game.dmgNums.length = 0;
+    const m = dummy(140);
+    m.level = 35; // 15 levels above you: a sure miss
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    damage(m, 1);
+  }
+
+  it('shows a floating MISS, as a stacked damage number', () => {
+    missAHighLevelEnemy();
+    expect(game.dmgNums.length).toBe(1);
+    expect(game.dmgNums[0].txt).toBe('MISS');
+    expect(game.dmgNums[0].col).toBe('#ffb347');
+    expect(game.dmgNums[0].vy).toBe(-12);
+  });
+
+  it('grants a few i-frames without the flashing sprite, ticking down like a hit\'s', () => {
+    missAHighLevelEnemy();
+    expect(player.invuln).toBeGreaterThan(0);
+    expect(player.invuln).toBeLessThanOrEqual(MISS_IFRAMES);
+    expect(player.invulnQuiet).toBe(true);
+    step(1);
+    expect(player.invuln).toBeLessThan(MISS_IFRAMES);
   });
 });
