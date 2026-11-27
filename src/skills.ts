@@ -2,6 +2,7 @@ import { LINKED_SKILLS, P, SKILLS } from './config';
 import { game, player, USE_FLASH } from './state';
 import { held } from './input';
 import { airborneInBox } from './combat';
+import { surfaceBetween, surfaceYAt } from './physics';
 import { activeSkill, isLearned, rank } from './progress';
 import type { SkillKey, SkillRank } from './types';
 import { chainsZ, linkable, linkHeld, startLinks } from './links';
@@ -13,6 +14,14 @@ import { heldDir } from './move';
 /** Airborne enemies Skyward Assault can reach: around and below the player. */
 export function barrageTargets() {
   return airborneInBox(player.x, player.y + player.h, 120, 140);
+}
+
+/** How far the player's feet are above the platform directly beneath them
+ *  (0 when standing; the ground slab when airborne over nothing else). */
+function heightBelow(): number {
+  const under = surfaceBetween(player.x, player.w, player.y + player.h, Infinity);
+  const floorY = under ? surfaceYAt(under, player.x) : game.floor.platforms[0].y;
+  return floorY - (player.y + player.h);
 }
 
 /** How a cast that got through fires: as a link (skips the last cast's
@@ -34,8 +43,9 @@ export function cast(key: SkillKey, chained = false): void {
   // no Glide out of a dodge roll: the roll is its own evasive move
   if (kind === 'd' && player.rolling) return;
   // Meteor Dive, Cyclone Sweep and Downpour want you properly airborne:
-  // at least ~2/3 of a full jump's peak above the floor.
-  if (airKey && game.floor.platforms[0].y - (player.y + player.h) < AIR_MIN_H) return;
+  // at least ~2/3 of a full jump's peak above the platform under your feet,
+  // not the map's ground slab (a high deck is as good a launch pad).
+  if (airKey && heightBelow() < AIR_MIN_H) return;
   const r = rank(kind);
   const fire = gate(key, kind, airborne, chained, r);
   if (!fire) return;
