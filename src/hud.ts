@@ -9,7 +9,7 @@ import { board } from './quests';
 import { P, SKILLS, SKILL_BAR } from './config';
 import { AIR_FORM } from './castrules';
 import { READY_FLASH, USE_FLASH } from './state';
-import { placeName } from './world';
+import { placeWithFloor } from './world';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { net, playerCount } from './net';
@@ -169,7 +169,7 @@ function drawTopLeft(pad: number): number {
   const online = !net.offline && net.joined;
   wifi(ix, ly, online);
   ix += WIFI_W + 4;
-  text(ctx, placeName(game.floor.place), ix, ly, 1, '#8ea3c2', 'left');
+  text(ctx, placeWithFloor(game.floor.place), ix, ly, 1, '#8ea3c2', 'left');
   ly += 9;
   if (online) {
     const n = playerCount();
