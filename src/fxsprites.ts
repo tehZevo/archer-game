@@ -319,7 +319,8 @@ function levelUpAnim(): FxSheet {
 /** Bubble (passive): a glossy shield bubble around the archer that gently
  *  wobbles, a gloss arc and glint up on its left. Loops; origin at her feet. */
 function bubbleAnim(): FxSheet {
-  const W = 30, H = 34, cx = W / 2, by = H - 3, cy = by - 12;
+  // room on every side for the rim at its widest wobble (it dips a few px below her feet)
+  const W = 34, H = 40, cx = W / 2, by = H - 7, cy = by - 12;
   return anim(W, H, cx, by, 8, (L, f, n) => {
     const w = Math.sin((f / n) * Math.PI * 2) * 0.7;
     const rx = 12.5 + w, ry = 15 - w;
