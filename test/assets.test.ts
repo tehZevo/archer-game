@@ -35,9 +35,9 @@ describe('archer sprite sheet', () => {
 
   it('new poses go on the end of the networked list (older clients show them as idle)', () => {
     expect(POSES[0]).toBe('idle');
-    expect(POSES.indexOf('prone')).toBe(7);
-    expect(POSES.indexOf('vanish')).toBe(10);
-    expect(POSES.indexOf('fall')).toBe(11);
+    expect(POSES.indexOf('prone')).toBe(6);
+    expect(POSES.indexOf('vanish')).toBe(9);
+    expect(POSES.indexOf('fall')).toBe(10);
     expect(POSES.indexOf('roll')).toBe(POSES.length - 1);
   });
 });
