@@ -30,3 +30,7 @@
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.
 - Add a cheer mechanic: `/cheer <player>` on another player in the channel grants them a 10% EXP buff. You can store 3 cheers at a time, and one recharges per hour.
 - The dodge roll during held-Z (Gale Stream) should have 0.5s use time and 0.2s recovery time. The use time pauses the rapid fire, which resumes as soon as the recovery starts.
+- The dodge roll should fire the stream in the direction OPPOSITE the roll. The roll's direction is the direction you're holding; if you're holding nothing, it's away from your current facing. Examples, starting out facing and shooting left:
+  - Holding nothing: jumps RIGHT, keeps shooting LEFT.
+  - Holding left: jumps LEFT, switches to shooting RIGHT.
+  - Holding right: jumps RIGHT, keeps shooting LEFT.
