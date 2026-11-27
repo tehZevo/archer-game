@@ -14,7 +14,6 @@
   - Keep as-is: `smoke.ts` (baked sheets match generators), asset-integrity checks (paint-in-bounds), and core physics (slope/ledge, Rush Toss carry).
 - Move the suite to vitest. Per-test `beforeEach` replaces the repeated `arena(20); player.ranks.x = true; dummy(150);` setup that accounts for most of the ~3,140 non-check lines, and `it()` naming makes the run readable. Biggest structural win (~1,000 LOC), and it removes the bundle's dependence on module import order for the RNG seed (see the `harness.ts` header comment).
 - (design) Assess the suite and determine which tests are low value. Roughly 900 checks cover ~15,000 LOC of behavioural code; decide which of them earn their keep and which are tautologies that pass no matter what the game does. Output: a short list of checks to drop outright, distinct from the consolidation work above.
-- Harder bosses should summon enemies, and even harder bosses should summon elites.
 - (design) Rename Downpour.
 - (design) Consider renaming all jobs.
 - Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
