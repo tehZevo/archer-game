@@ -75,6 +75,21 @@ export const skillEditorJson = (): string => {
   return JSON.stringify(out, null, 2);
 };
 
+/** Copy the tuned kit to the clipboard. navigator.clipboard is the modern
+ *  path; it returns a Promise (so it's fire-and-forget here) and is missing
+ *  on non-secure origins, so fall back to a hidden textarea + execCommand. */
+function copyJson(): void {
+  const json = skillEditorJson();
+  if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(json); return; }
+  const ta = document.createElement('textarea');
+  ta.value = json;
+  ta.style.position = 'fixed'; ta.style.top = '-9999px'; // off-screen, so it doesn't flash
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
 /** Up/Down/Left/Right pick a field, Enter starts modifying it, Left/Right
  *  then adjust the value, and Enter again sets it. Tab also steps the field,
  *  C copies the kit, R resets the whole kit, T/Esc closes. */
@@ -85,7 +100,7 @@ export function skillEditorInput(dt: number): void {
   const cur = skills[e.sel];
 
   if (pressed('escape') || pressed('t')) { closeSkillEditor(); return; }
-  if (pressed('c')) { navigator.clipboard?.writeText(skillEditorJson()); return; }
+  if (pressed('c')) { copyJson(); return; }
   if (pressed('r')) { resetSkill(); return; }
 
   if (e.field === 3) {

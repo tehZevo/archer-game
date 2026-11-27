@@ -77,3 +77,18 @@ import { P } from '../src/config';
   step(1);
   check('a fresh arena still has its skills', SKILLS.z.use !== undefined);
 }
+
+// --- C copies the tuned kit as JSON (the clipboard call must actually fire) ---
+{
+  arena(1);
+  openSkillEditor();
+  let copied = '';
+  (globalThis as unknown as { navigator: { clipboard: { writeText: (s: string) => void } } }).navigator.clipboard = { writeText: (s: string) => { copied = s; } };
+  skillEditor.sel = 0; skillEditor.field = 1;
+  SKILLS[editableSkills()[0]].use = 0.3;
+  setKey('c', true); skillEditorInput(P.STEP); setKey('c', false);
+  const parsed = JSON.parse(copied) as Record<string, { use: number }>;
+  check('C copies the whole kit as JSON, including the tuned use time',
+    copied.startsWith('{') && parsed[editableSkills()[0]].use === 0.3, copied.slice(0, 40));
+  (globalThis as unknown as { navigator: { clipboard?: unknown } }).navigator.clipboard = undefined;
+}
