@@ -115,3 +115,14 @@ export function dummy(x: number, hp = 1e6): Mob {
   mob.spd = 0;
   return mob;
 }
+
+/** A localStorage that keeps everything in memory, for testing saves.
+ *  Use with vi.stubGlobal('localStorage', memoryStorage()). */
+export function memoryStorage(): Storage {
+  const data: Record<string, string> = {};
+  return {
+    getItem: (key: string) => data[key] ?? null,
+    setItem: (key: string, value: string) => { data[key] = value; },
+    removeItem: (key: string) => { delete data[key]; },
+  } as Storage;
+}

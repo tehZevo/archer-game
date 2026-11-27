@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { arena, dummy, step, tap } from './helpers';
 import { MOB_TYPES, P } from '../src/config';
-import { hurtPlayer } from '../src/boss';
+import { capAdd, hurtPlayer } from '../src/boss';
+import { clearGear } from '../src/gear';
 import { damage, missChance } from '../src/combat';
 import { cast } from '../src/skills';
 import { game, player } from '../src/state';
@@ -135,5 +136,50 @@ describe('misses', () => {
     rollsAre(0.01);
     expect(hurtPlayer(10, 0, 22)).toBe(true);
     expect(player.hp).toBe(player.hpMax - 10);
+  });
+});
+
+describe('knockback', () => {
+  it('tops your speed up to its own, no further', () => {
+    expect(capAdd(50, P.HIT_PUSH)).toBe(P.HIT_PUSH);
+    expect(capAdd(0, P.HIT_PUSH)).toBe(P.HIT_PUSH);
+  });
+
+  it('adds nothing if you are already going faster that way', () => {
+    expect(capAdd(200, P.HIT_PUSH)).toBe(200);
+    expect(capAdd(-200, -P.HIT_HOP)).toBe(-200);
+  });
+
+  it('still pushes against your momentum', () => {
+    expect(capAdd(-50, P.HIT_PUSH)).toBe(P.HIT_PUSH - 50);
+  });
+
+  it('a hit from behind while running fast keeps your run speed', () => {
+    arena(30);
+    clearGear();
+    player.invuln = 0;
+    player.vx = 300;
+    player.vy = 0;
+    hurtPlayer(1, player.x - 20, 200);
+    expect(player.vx).toBe(300);
+    expect(player.vy).toBe(-P.HIT_HOP);
+  });
+});
+
+describe('Bubble (passive)', () => {
+  function damageTaken(): number {
+    player.invuln = 0;
+    player.hp = player.hpMax;
+    hurtPlayer(100, undefined, 200);
+    return player.hpMax - player.hp;
+  }
+
+  it('takes a flat 30% off each hit', () => {
+    arena(30);
+    clearGear();
+    player.ranks.bu = false;
+    expect(damageTaken()).toBe(100);
+    player.ranks.bu = true;
+    expect(damageTaken()).toBe(70);
   });
 });
