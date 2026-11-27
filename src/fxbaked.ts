@@ -49,7 +49,7 @@ export const BAKED: Record<string, BakedSheet> = {
   spin: { src: spin, w: 98, h: 78, n: 8, ox: 49, oy: 51 },
   cyclone: { src: cyclone, w: 36, h: 40, n: 8, ox: 18, oy: 20 },
   levelUp: { src: levelUp, w: 44, h: 70, n: 10, ox: 22, oy: 66 },
-  bubble: { src: bubble, w: 30, h: 34, n: 8, ox: 15, oy: 31 },
+  bubble: { src: bubble, w: 34, h: 40, n: 8, ox: 17, oy: 33 },
   rush: { src: rush, w: 30, h: 52, n: 8, ox: 15, oy: 48 },
   diveLand: { src: diveLand, w: 30, h: 52, n: 8, ox: 15, oy: 48 },
   swoosh: { src: swoosh, w: 30, h: 30, n: 4, ox: 15, oy: 15 },
