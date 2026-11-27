@@ -1,9 +1,9 @@
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { roster } from './net';
+import { net, roster } from './net';
 import { view } from './ghost';
 import { tintFor } from './presence';
-import { MINI_SCALE, miniRect, toMini } from './minimap';
+import { MINI_SCALE, miniMapH, miniMapW, miniRect, miniScroll, toMini } from './minimap';
 import type { Floor } from './types';
 
 /* Drawing for the minimap (layout lives in minimap.ts). */
@@ -13,11 +13,13 @@ const dot = (x: number, y: number, col: string, s = 1): void => {
   ctx.fillStyle = col; ctx.fillRect(mx - (s >> 1), my - (s >> 1), s, s);
 };
 
-/** The floor's layout on the minimap (platform tops, the ground as a solid
- *  band, ropes and ladders), baked once per floor and minimap size. */
-let baked: { floor: Floor; w: number; h: number; c: HTMLCanvasElement } | null = null;
-function miniLayer(w: number, h: number): HTMLCanvasElement {
-  if (baked && baked.floor === game.floor && baked.w === w && baked.h === h) return baked.c;
+/** The whole floor's layout (platform tops, the ground as a solid band,
+ *  ropes and ladders), baked once per floor at 1:16; the 32×32 window
+ *  scrolls over it. */
+let baked: { floor: Floor; c: HTMLCanvasElement } | null = null;
+function miniLayer(): HTMLCanvasElement {
+  const w = miniMapW(), h = miniMapH();
+  if (baked && baked.floor === game.floor) return baked.c;
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const g = c.getContext('2d') as CanvasRenderingContext2D;
@@ -33,18 +35,20 @@ function miniLayer(w: number, h: number): HTMLCanvasElement {
     const [x, y1] = at(cl.x, cl.y1), [, y2] = at(cl.x, cl.y2);
     g.fillRect(x, y1, 1, Math.max(1, y2 - y1));
   }
-  baked = { floor: game.floor, w, h, c };
+  baked = { floor: game.floor, c };
   return c;
 }
 
 export function drawMinimap(): void {
-  const r = miniRect();
+  const r = miniRect(), s = miniScroll();
   ctx.save();
-  ctx.fillStyle = '#070c16b0'; ctx.fillRect(r.x - 1, r.y - 1, r.w + 2, r.h + 2);
+  // a lighter backdrop than the old b0; local play goes one step further
+  ctx.fillStyle = net.offline ? '#070c1670' : '#070c1690';
+  ctx.fillRect(r.x - 1, r.y - 1, r.w + 2, r.h + 2);
   ctx.strokeStyle = '#3c5478'; ctx.lineWidth = 1; ctx.strokeRect(r.x - 1.5, r.y - 1.5, r.w + 3, r.h + 3);
   ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
 
-  ctx.drawImage(miniLayer(r.w, r.h), r.x, r.y); // the floor's layout, baked once
+  ctx.drawImage(miniLayer(), r.x - s.x, r.y - s.y); // the floor's layout, baked once
   // the screen's view of the floor
   const [vx, vy] = toMini(game.cam.x, game.cam.y);
   ctx.strokeStyle = '#ffffff40';

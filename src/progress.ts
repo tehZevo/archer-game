@@ -35,7 +35,7 @@ export const expToNext = (l: number): number => Math.round(killsToLevel(l) * mob
  *  the bar stays full, since there is no next level to progress toward. */
 export const expBar = (): { text: string; pct: number } =>
   player.level >= MAX_LEVEL
-    ? { text: `LV.${player.level}`, pct: 1 }
+    ? { text: '', pct: 1 }
     // a percentage, floored to a tenth (so it never reads 100.0% short of a level)
     : { text: `${(Math.floor(1000 * player.exp / player.expNext) / 10).toFixed(1)}%`, pct: player.exp / player.expNext };
 

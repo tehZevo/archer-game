@@ -6,7 +6,7 @@ import { confirmUi, drawConfirm } from './confirm';
 import { deathUi, drawDeath } from './deathui';
 import { drawBoard, drawShop, drawTrainer, questLines, walletLine } from './economydraw';
 import { board } from './quests';
-import { P, SKILL_BAR } from './config';
+import { P, SKILLS, SKILL_BAR } from './config';
 import { AIR_FORM } from './castrules';
 import { READY_FLASH, USE_FLASH } from './state';
 import { placeName } from './world';
@@ -160,7 +160,7 @@ function drawBossBar(w: number, h: number): void {
 
 /** The top-left stack: connection + level line, floor name, modifiers, coins,
  *  quests and unspent points. Returns the y below the last line. */
-function drawTopLeft(pad: number): void {
+function drawTopLeft(pad: number): number {
   let ly = pad;
   let ix = pad;
   if (dev.on) { wrench(ix, ly); ix += WRENCH_W + 4; }
@@ -190,23 +190,26 @@ function drawTopLeft(pad: number): void {
   if (player.ap || player.sp) {
     const pts = [player.ap ? `AP ${player.ap}` : '', player.sp ? `SP ${player.sp}` : ''].filter(Boolean).join(' ');
     text(ctx, `${pts} - ESC`, pad, ly, 1, '#ffd166', 'left');
+    ly += 9;
   }
+  return ly;
 }
 
-/** The top-right skill bar: a column per key (Z, Q, W, E, R), the air form
- *  (Meteor Dive, Cyclone Sweep, Downpour) stacked over the ground form. */
+/** The skill icons down the right side, in the order they're acquired (by
+ *  level), equally spaced with a 2px gap. The air form of a key stacks over
+ *  its ground form; unlearned skills show dimmed. */
 function drawSkillBar(pad: number): void {
-  const { w } = game.view;
-  const colGap = 3, rowGap = 1;
-  const bx = w - SKILL_BAR.length * (ICON + colGap) + colGap - pad, by = pad;
+  const slots = [...SKILL_BAR].sort((a, b) => SKILLS[a.skill].minLevel - SKILLS[b.skill].minLevel);
+  const gap = 2;
+  const x = game.view.w - ICON - pad;
+  let y = 42;
   ctx.save();
-  SKILL_BAR.forEach((slot, i) => {
-    if (!slot.skill) return;
-    const x = bx + i * (ICON + colGap);
+  for (const slot of slots) {
     const air = AIR_FORM[slot.skill];
-    if (air) skillSlot(air, `${slot.skill}.air`, x, by);
-    skillSlot(slot.skill, slot.skill, x, by + ICON + rowGap);
-  });
+    if (air) { skillSlot(air, `${slot.skill}.air`, x, y); y += ICON + gap; }
+    skillSlot(slot.skill, slot.skill, x, y);
+    y += ICON + gap;
+  }
   ctx.restore();
 }
 
@@ -214,11 +217,12 @@ function drawSkillBar(pad: number): void {
 function drawBottomBars(pad: number): number {
   const { h } = game.view;
   const bw = 74, bgap = 3, y = h - 14;
-  tinyText(ctx, `Lv.${player.level}`, pad, y - 7, '#dbe6f5', 'left');
   // HP / MP read the current value (500, 1.5K); the bar shows how full it is
   bar(pad, y, bw, 'HP', fmtNum(player.hp), player.hp / player.hpMax, '#3fbf72');
   bar(pad + bw + bgap, y, bw, 'MP', fmtNum(player.mp), player.mp / player.mpMax, '#3f8fd6');
-  bar(pad + 2 * (bw + bgap), y, bw, 'EXP', expBar().text, expBar().pct, '#ffd166');
+  // the EXP bar carries the current level as its label; at the cap it's full
+  // and shows no percentage
+  bar(pad + 2 * (bw + bgap), y, bw, `LV.${player.level}`, expBar().text, expBar().pct, '#ffd166');
   return y;
 }
 
