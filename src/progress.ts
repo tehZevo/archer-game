@@ -88,8 +88,8 @@ export const NOVICE: JobDef = JOBS[0];
 export function statsForLevel(level: number): { hpMax: number; mpMax: number; dex: number; war: number } {
   const n = level - 1;
   return {
-    hpMax: Math.round(100 * 1.05 ** n), // ~100 HP / 500 MP at Lv.1, +5% per level
-    mpMax: Math.round(500 * 1.05 ** n), // pool scaled ~10x with the new MP costs
+    hpMax: Math.round(100 * 1.05 ** n), // ~100 HP / 50 MP at Lv.1, +5% per level
+    mpMax: Math.round(50 * 1.05 ** n),
     dex: 24 + n * 4,
     war: 14 + n * 2.55, // steeper per-level growth (was 1.7): damage dealt climbs 1.5x as fast
   };
