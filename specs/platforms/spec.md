@@ -25,3 +25,7 @@ A slope must always rise from, and fall into, a flat horizontal tile:
 In profile terms: every slope has at least one flat column on both sides, and slopes never sit at a block's edge (e.g. stair: 2, up, 3, up, 4; hill: 2, up, 3, 3, down, 2).
 
 The rope/ladder between platforms is centred on a flat summit tile of the upper platform (x at the tile centre, snapped to the 16px grid) and hangs down from that tile's surface, through its own platform, to the first walkable surface beneath it on another platform or the ground.
+
+## Connectors
+
+Different ladders and ropes never touch each other directly, vertically or horizontally: two connectors on the same floor are always separated by at least one tile of gap where their columns meet or where one hangs into the top of the other.
