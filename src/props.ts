@@ -53,7 +53,6 @@ function shroom(p: PropPaint, cx: number, h: number, r: number, stem: string, ca
 
 /* ---------------- per area ---------------- */
 export const PROPS: Record<string, Prop[]> = {
-  Classic: [(p) => lanternPost(p, '#4a3a2a', '#ffd070', '#fff4c0')],
   Harbor: [
     (p) => { p(5, B - 10, '#8e6442', 14, 10); p(5, B - 10, '#b08a5e', 14, 1); p(5, B - 6, '#6e4a30', 14, 1); p(5, B - 10, '#5a3e28', 1, 10); p(18, B - 10, '#5a3e28', 1, 10); p(9, B - 8, '#3a3a40', 6, 1); }, // a cargo crate
     (p) => { for (let y = 0; y < 12; y++) p(7 - (y % 11 ? 1 : 0), B - 12 + y, y === 2 || y === 9 ? '#3a3e48' : '#9a6e4a', 11 + (y % 11 ? 2 : 0), 1); p(9, B - 12, '#7a5638', 7, 1); }, // a barrel
@@ -161,8 +160,8 @@ export const PROPS: Record<string, Prop[]> = {
   ],
 };
 
-/** An area's props (areas without their own use Classic's). */
-export const propsFor = (area: string): Prop[] => PROPS[area] ?? PROPS.Classic;
+/** An area's props (areas without their own use the Harbor's). */
+export const propsFor = (area: string): Prop[] => PROPS[area] ?? PROPS.Harbor;
 
 /** Which prop (if any) stands on the exposed top tile at grid cell (tx, ty). */
 export function propAt(area: string, tx: number, ty: number): number | null {

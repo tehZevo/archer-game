@@ -154,7 +154,6 @@ const starfallMid = (p: BgPaint): void => {
 };
 
 export const BACKDROPS: Record<string, Backdrop> = {
-  Classic: { far: CLOUDS('#ffffff14', 5, 6, 1), mid: CLOUDS('#ffffff20', 3, 10, 2) },
   Harbor: { // a calm sea: long swell lines, far sails, and moored boats' masts
     far: harborFar,
     mid: harborMid,
@@ -285,7 +284,7 @@ export const BACKDROPS: Record<string, Backdrop> = {
   },
 };
 
-export const backdropFor = (name: string): Backdrop => BACKDROPS[name] ?? BACKDROPS.Classic;
+export const backdropFor = (name: string): Backdrop => BACKDROPS[name] ?? BACKDROPS.Harbor;
 
 /* ---------------- particles ----------------
    Stateless: each particle's position is a function of time and its
