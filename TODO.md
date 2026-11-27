@@ -9,3 +9,4 @@
 - (art) Dodge roll during held-Z needs a roll animation.
 - Character should properly turn around after a dodge roll from held-Z.
 - Gray out the icons in the skills screen's link list for skills you haven't acquired yet.
+- Bug: the C (copy JSON) action in the skill editor doesn't seem to work.
