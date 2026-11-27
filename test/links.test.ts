@@ -118,7 +118,7 @@ describe('Electric Blitz', () => {
   it('Meteor Dive links into it once the landing rush\'s use time ends', () => {
     jump();
     tap('q');
-    step(15); // the windup, the plunge, and the landing rush
+    step(10); // the windup and the plunge, as the landing rush starts
     expect(linkable('eb')).toBe(true);
     expect(linkHeld('eb')).toBe(true);
     linksOpen();
