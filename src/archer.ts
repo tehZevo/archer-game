@@ -326,17 +326,36 @@ const STYLES: Style[] = [
     climb: [[10, 6, 'HhhH'], [11, 7, 'hh'], [12, 7, 'hH']] },
 ];
 
-/** The male build: a squarer jaw and brows (cells of the side-view head, only
- *  over the face, so every hair style keeps them). The female build is the
- *  grids as drawn, with a lash over the eye. */
-const MALE_FACE: [number, number, string, string][] = [[5, 10, 'HH', 's'], [8, 12, 'so', 'o.'], [9, 10, 'SSo', 'o.']];
-const FEMALE_FACE: [number, number, string, string][] = [[5, 12, 'e', 's']];
+/** Cells of a frame changed where they hold one of the `only` letters:
+ *  [row, first column, letters, only]. */
+type Cell = [number, number, string, string];
+
+/** The body types (by BODY_NAMES index), drawn over the side-view head
+ *  whatever the hair style. The female build has a lash over the eye and a
+ *  blush on the cheek; the male build a squarer jaw, heavier brows and a shoulder a pixel broader. */
+const BODY_CELLS: Cell[][] = [
+  [[5, 12, 'e', 's'], [7, 10, 'S', 's']],
+  [[5, 10, 'HH', 's'], [8, 12, 'so', 'o.'], [9, 10, 'SSo', 'o.'], [11, 12, 'tgo', 'go.']],
+];
+
+/** The default (SWEPT) hair per body type: hers falls over the cape down
+ *  her back; his is cut short at the nape, so only the female build has
+ *  long hair unless a long style is picked. Side view, then from behind. */
+const SWEPT_CELLS: Cell[][] = [
+  [[11, 5, 'h', 'c'], [12, 4, 'hH', 'cC'], [13, 5, 'H', 'c']],
+  [[9, 4, 'hoo', 'h'], [10, 5, 'cc', 'h'], [11, 6, 'c', 'h']],
+];
+const SWEPT_CLIMB: Cell[][] = [
+  [[10, 6, 'hhhh', 'cC'], [11, 6, 'H', 'c'], [11, 11, 'H', 'c']],
+  [[8, 6, 'HHHHH', 'hH'], [9, 7, 'SSS', 'hH']],
+];
 
 /** A frame's grid with a hair style and body type applied. */
 export function styled(grid: string[], pose: ArcherPose, style: number, body = 0): string[] {
   if (pose === 'prone') return grid; // lying flat: the head's drawn shifted, so the side-view styles don't map onto it
   const g = grid.slice();
   const put = (row: number, col: number, s: string, only: string): void => {
+    if (!g[row]) return;
     const r = [...g[row]];
     [...s].forEach((ch, i) => { if (only.includes(r[col + i])) r[col + i] = ch; });
     g[row] = r.join('');
@@ -345,6 +364,7 @@ export function styled(grid: string[], pose: ArcherPose, style: number, body = 0
   if (pose === 'climb') {
     for (const [row, r] of Object.entries(st.climbRows ?? {})) g[+row] = r;
     for (const [row, col, s] of st.climb ?? []) put(row, col, s, 'cC');
+    if (style === 0) for (const [row, col, s, only] of SWEPT_CLIMB[body]) put(row, col, s, only);
     return g;
   }
   // crouched low (the head drawn 2 rows down): the hair's out of sight, but the face shows
@@ -354,7 +374,8 @@ export function styled(grid: string[], pose: ArcherPose, style: number, body = 0
     for (const [row, r] of Object.entries(st.head ?? {})) if (+row + top < 12) g[+row + top] = r;
     for (const [row, col, s] of st.back ?? []) put(row + top, col, s, 'cCo.');
   }
-  for (const [row, col, s, only] of body ? MALE_FACE : FEMALE_FACE) put(row + top, col, s, only);
+  if (style === 0 && top < 2) for (const [row, col, s, only] of SWEPT_CELLS[body]) put(row + top, col, s, only);
+  for (const [row, col, s, only] of BODY_CELLS[body]) put(row + top, col, s, only);
   return g;
 }
 
