@@ -310,6 +310,8 @@ export function drawPlayer(): void {
   }
   drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
     invulnAlpha(), player.castTotal - player.castT);
+  // Bubble: the shield bubble surrounds her for as long as the passive is learned
+  if (isLearned('bu')) drawLoop('bubble', player.x, player.y + player.h, performance.now() / 1000, 6);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
   drawEmote(SELF, player.x, player.y + player.h - ARCHER_H, player.face, performance.now());
 }

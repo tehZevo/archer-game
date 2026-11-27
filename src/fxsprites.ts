@@ -316,6 +316,19 @@ function levelUpAnim(): FxSheet {
   });
 }
 
+/** Bubble (passive): a glossy shield bubble around the archer that gently
+ *  wobbles, a gloss arc and glint up on its left. Loops; origin at her feet. */
+function bubbleAnim(): FxSheet {
+  const W = 30, H = 34, cx = W / 2, by = H - 3, cy = by - 12;
+  return anim(W, H, cx, by, 8, (L, f, n) => {
+    const w = Math.sin((f / n) * Math.PI * 2) * 0.7;
+    const rx = 12.5 + w, ry = 15 - w;
+    L.ring('sky', cx, cy, rx, ry, 1.4, 0.6);
+    arc(L, 'cyan', cx, cy, rx - 3, ry - 3, 1.2, 0.8, -2.7, -1.9);
+    L.spark('cyan', cx - rx * 0.45, cy - ry * 0.62, 0.9);
+  }, 0.25);
+}
+
 /** Rush Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base.
  *  `hue`/`rim` colour the horn and its wings (the Meteor Dive's landing is yellow). */
 function rushAnim(hue: RampName = 'cyan', rim: RampName = 'teal'): FxSheet {
@@ -785,6 +798,7 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   spin: () => spinAnim(),
   cyclone: () => cycloneAnim(),
   levelUp: () => levelUpAnim(),
+  bubble: () => bubbleAnim(),
   rush: () => rushAnim(),
   diveLand: () => rushAnim('yellow', 'gold'),
   swoosh: () => swooshAnim(),
