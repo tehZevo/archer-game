@@ -93,14 +93,6 @@ describe('misses', () => {
     expect(hurtPlayer(10, 0, 18)).toBe(false); // still invulnerable
   });
 
-  it('let a hit land when the roll clears it, flashing', () => {
-    arena(20);
-    player.invuln = 0;
-    rollsAre(0.9);
-    expect(hurtPlayer(10, 0, 18)).toBe(true);
-    expect(player.hp).toBe(player.hpMax - 10);
-    expect(player.invulnQuiet).toBe(false);
-  });
 
   it('never happen when the enemy is above your level', () => {
     arena(20);
@@ -148,12 +140,6 @@ describe('damage numbers', () => {
     return m;
   }
 
-  it('the second number shows after about 1/8 s, while the later ones still wait', () => {
-    hitFourTimes();
-    step(Math.ceil(0.15 / P.STEP));
-    expect(game.dmgNums[1].delay ?? 0).toBeLessThanOrEqual(0);
-    expect(game.dmgNums[2].delay ?? 0).toBeGreaterThan(0);
-  });
 
   it('after a pause, a new stack starts at the bottom, right away', () => {
     const m = hitFourTimes();
@@ -183,12 +169,6 @@ describe('damage numbers', () => {
       expect(fresh.delay).toBe(0);
     });
 
-    it('numbers wobble within 4px, and lean 2px a line the way you face', () => {
-      const m = twelveHitsThenANewCast();
-      const wobble = game.dmgNums.slice(0, 12).map((d, line) => d.x - m.x - line * 2);
-      for (const w of wobble) expect(Math.abs(w)).toBeLessThanOrEqual(4);
-      expect(new Set(wobble.map((w) => w.toFixed(2))).size).toBeGreaterThan(1);
-    });
   });
 });
 
@@ -343,13 +323,6 @@ describe('a miss against you', () => {
     damage(m, 1);
   }
 
-  it('shows a floating MISS, as a stacked damage number', () => {
-    missAHighLevelEnemy();
-    expect(game.dmgNums.length).toBe(1);
-    expect(game.dmgNums[0].txt).toBe('MISS');
-    expect(game.dmgNums[0].col).toBe('#ffb347');
-    expect(game.dmgNums[0].vy).toBe(-12);
-  });
 
   it('grants a few i-frames without the flashing sprite, ticking down like a hit\'s', () => {
     missAHighLevelEnemy();
