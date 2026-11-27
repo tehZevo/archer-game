@@ -8,5 +8,5 @@ export function fmtNum(v: number): string {
   const [d, unit] = n < 1e6 ? [1e3, 'K'] : [1e6, 'M'];
   const x = n / d;
   const s = x < 100 ? (Math.floor(x * 10) / 10).toFixed(1) : String(Math.floor(x));
-  return s.replace(/\.0$/, '') + unit;
+  return s + unit; // always one decimal under 100 (7.0K, not 7K), so the format stays steady
 }
