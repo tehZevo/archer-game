@@ -138,59 +138,101 @@ function spikesAnim(): FxSheet {
   }, 0.4);
 }
 
-/** Tempest: one huge energy arrow sweeps up out of you and arcs over to
- *  strike ahead. Its trail is a broad pink crescent with a white-hot core
- *  that fades to a pale mist; a rain of thin red spikes falls behind it,
- *  white and gold stars glint along the arc, and a gold ring bursts where
- *  it lands. Faces right; origin at your feet. */
+/** Tempest: a white-hot whip of energy lashes out of you and ties a
+ *  trefoil knot across the whole area: it leaps forward and up, curls over
+ *  the top lobe and drops back through its own first leg, swings round the
+ *  low lobe far ahead (striking the ground), cuts back across the middle
+ *  and loops round the lobe behind you, home. Every lobe turns the same way.
+ *  The line itself stays thin and bright; behind its head it bursts into a
+ *  ragged pink flame fringe, and long red needles stab down from it to the
+ *  ground, filling the space beneath. A lavender burst splashes up where it
+ *  strikes. Faces right (each lobe turning counterclockwise; clockwise once
+ *  mirrored to face left); origin at your feet. */
 function tempestAnim(): FxSheet {
-  const BACK = 16, RX = 46, RY = 36, MID = 12, W = BACK + RX * 2 + 20, H = RY + MID + 22, by = H - 4, n = 10;
-  const cx = BACK + RX, cy = by - MID, FLY = 4; // the arc's centre; frames the arrow takes to land
-  // the arrow's path: half an oval from your middle, over the top, down ahead
-  const path = (t: number): [number, number] => {
-    const a = Math.PI + t * Math.PI;
-    return [cx + Math.cos(a) * RX, cy + Math.sin(a) * RY];
+  const W = 171, H = 96, OX = 50, by = H - 3, n = 13; // 16px clear at each side for the fringe
+  // the knot, as points a Catmull-Rom spline runs through: the leap (0-4),
+  // the top lobe (4-10), the low lobe far ahead (10-15), back across the
+  // middle (15-18), the lobe behind you (18-22)
+  const P: [number, number][] = [
+    [OX, 83], [73, 73], [96, 54], [110, 31], [118, 13], [110, 7], [94, 8], [88, 23],
+    [92, 39], [99, 56], [110, 72], [129, 86], [147, 77], [155, 59], [148, 42], [131, 34],
+    [105, 27], [78, 25], [45, 28], [23, 39], [16, 56], [24, 73], [40, 83],
+  ];
+  const END = P.length - 1;
+  const path = (u: number): [number, number] => {
+    const i = Math.max(0, Math.min(END - 1, Math.floor(u))), t = Math.max(0, Math.min(1, u - i));
+    const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(END, i + 2)];
+    const c = (k: 0 | 1): number => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * t
+      + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t * t + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t * t * t);
+    return [c(0), c(1)];
   };
-  return anim(W, H, BACK, by, n, (L, f) => {
-    const R = rng(61 + f), head = Math.min(1, (f + 1) / FLY);
-    const fade = f < FLY ? 1 : 1 - (f - FLY + 1) / (n - FLY + 1);
-    // the crescent: thick and white-hot behind the head, thinning back
-    // along the arc to a pale mist at its tail
-    const tail = Math.max(0, head - 0.75), STEPS = 24;
+  // where the whip's head is each frame (home on frame 10), and where its
+  // tail has burnt away to
+  const HEAD = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, END, END, END];
+  const TAIL = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 13, 16, 19.5];
+  const frameAt = (u: number): number => HEAD.findIndex((h) => h >= u);
+  // the needles, stabbed down from the whip as its head passes
+  const R0 = rng(61), needles: { u: number; dx: number; reach: number; ramp: RampName }[] = [];
+  const stab = (u0: number, u1: number, count: number): void => {
+    for (let i = 0; i < count; i++) needles.push({
+      u: u0 + (u1 - u0) * ((i + R0()) / count), dx: -(0.04 + R0() * 0.18), // all leaning forward at the top
+      reach: 0.55 + R0() * 0.45, ramp: (['red', 'red', 'orange', 'pink'] as RampName[])[Math.floor(R0() * 4)],
+    });
+  };
+  stab(1, 21, 72);
+  const burst = (L: Light, x: number, age: number, R: () => number): void => {
+    if (age < 0 || age > 4) return;
+    const g = age / 4, I = 1.4 * (1 - g * 0.6);
+    L.ring('purple', x, by, 7 + g * 14, 3 + g * 6, 1.8 - g * 0.6, I, -Math.PI, 0);
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI * (0.08 + 0.84 * R()), d = 6 + g * 10 + R() * 8;
+      L.line('purple', x, by - 1, x + Math.cos(a) * d, by - 1 + Math.sin(a) * d * 1.3, 1.8, 0.2, I);
+    }
+    if (age < 2) L.disc('purple', x, by - 2, 5 - age * 2, 1.5);
+  };
+  return anim(W, H, OX, by, n, (L, f) => {
+    const R = rng(611 + f), head = HEAD[f], tail = TAIL[f];
+    const STEPS = Math.ceil((head - tail) * 12);
     for (let k = 0; k < STEPS; k++) {
-      const t0 = tail + (head - tail) * (k / STEPS), t1 = tail + (head - tail) * ((k + 1) / STEPS), s = k / STEPS;
-      const [x0, y0] = path(t0), [x1, y1] = path(t1);
-      if (s < 0.3) L.line('dust', x0, y0, x1, y1, 1 + s * 12, 1 + s * 12, 0.45 * fade);
-      else {
-        L.line('pink', x0, y0, x1, y1, 1 + s * 8, 1 + s * 8, (0.6 + s * 0.5) * fade);
-        L.line('pink', x0, y0, x1, y1, 0.5 + s * 2.2, 0.5 + s * 2.2, (1.0 + s * 0.6) * fade);
+      const u0 = tail + (head - tail) * (k / STEPS), u1 = tail + (head - tail) * ((k + 1) / STEPS);
+      const [x0, y0] = path(u0), [x1, y1] = path(u1);
+      const age = head - u0;                       // how long ago the head passed here, in course points
+      const burn = Math.min(1, (u0 - tail) / 0.8);  // the tail end crumbling away
+      const fresh = Math.max(0, 1 - age / 2.5);     // the line is brightest just behind the head
+      // the whip line: thin and white-hot, a little fatter right behind the head
+      L.line('pink', x0, y0, x1, y1, 1.6 + fresh * 1.8, 1.6 + fresh * 1.8, (0.6 + fresh * 0.4) * burn);
+      L.line('pink', x0, y0, x1, y1, 0.4 + fresh * 0.7, 0.4 + fresh * 0.7, (1.2 + fresh * 0.5) * burn);
+      // the flame fringe: torn tongues that flare up as the line ages, on
+      // the outside of the turn (its underside along the top)
+      const flare = Math.min(1, Math.max(0, (age - 0.4) / 1.4)) * burn;
+      if (flare > 0.05) {
+        const dx = x1 - x0, dy = y1 - y0, d = Math.hypot(dx, dy) || 1;
+        let nx = -dy / d, ny = dx / d;
+        if (ny < 0) { nx = -nx; ny = -ny; }
+        // a mass of torn tongues, a few long ones licking well out, swept back
+        const len = (3 + R() * (R() < 0.35 ? 13 : 6)) * flare, lean = -(1 + R() * 4);
+        L.line('pink', x0, y0, x0 + nx * len + dx / d * lean, y0 + ny * len + dy / d * lean, 2.6 * flare, 0.2, 1.25 * flare);
+        if (k % 3 === 0) L.line('pink', x0, y0, x0 - nx * len * 0.4, y0 - ny * len * 0.4, 1.8 * flare, 0.2, 1.0 * flare);
+        if (R() < 0.25) L.disc('purple', x0 + nx * len * 0.6, y0 + ny * len * 0.6, 2.5 * flare, 0.6 * flare);
       }
     }
-    // the arrowhead, while it flies: a white-hot point down the line of flight
-    if (f < FLY) {
-      const [hx, hy] = path(head), [px, py] = path(head - 0.04), d = Math.hypot(hx - px, hy - py) || 1;
-      const ux = (hx - px) / d, uy = (hy - py) / d;
-      L.line('pink', hx - ux * 8 - uy * 7, hy - uy * 8 + ux * 7, hx + ux * 5, hy + uy * 5, 2, 0.6, 1.4);
-      L.line('pink', hx - ux * 8 + uy * 7, hy - uy * 8 - ux * 7, hx + ux * 5, hy + uy * 5, 2, 0.6, 1.4);
-      L.disc('pink', hx, hy, 3.5, 1.6);
+    // the white-hot head, while it flies
+    if (head < END) {
+      const [hx, hy] = path(head);
+      L.disc('pink', hx, hy, 2.2, 1.8);
+      L.spark('pink', hx, hy, 1.1, true);
     }
-    // the rain of thin red spikes falling under the arc behind the arrow
-    for (let i = 0; i < 12; i++) {
-      const t = head * (0.1 + 0.9 * R()), [sx, sy] = path(t), drop = 8 + R() * 12 + f * 2;
-      if (sy + drop > by) continue;
-      L.line('red', sx, sy + drop - 10, sx, sy + drop, 0.3, 0.9, 1.0 * fade);
+    // the needles: stabbed down to the ground in the frame the head passes,
+    // lingering a few frames as they fade
+    for (const nd of needles) {
+      const at = frameAt(nd.u), age = f - at;
+      if (at < 0 || age < 0 || age > 4) continue;
+      const [sx, sy] = path(nd.u), span = by - sy - 4;
+      if (span < 6) continue;
+      const len = span * nd.reach * (age === 0 ? 0.6 : 1), top = by - len, I = age < 2 ? 1.3 : 1.3 * (1 - (age - 1) / 4);
+      L.line(nd.ramp, sx + (top - sy) * nd.dx, top, sx + (by - sy) * nd.dx, by, 0.2, 0.9, I);
     }
-    // where it lands: a gold ring bursting out
-    if (f >= FLY - 1) {
-      const g = (f - FLY + 1) / (n - FLY), [ix, iy] = path(1);
-      L.ring('gold', ix, iy, 5 + g * 15, 4 + g * 11, 1.6 - g * 0.8, 1.2 * (1 - g * 0.7));
-      if (f === FLY - 1 || f === FLY) L.disc('gold', ix, iy, 4, 1.2);
-    }
-    // stars glinting along the arc
-    for (let i = 0; i < 5; i++) {
-      const [sx, sy] = path(head * R());
-      L.spark(i % 2 ? 'gold' : 'dust', sx + R() * 6 - 3, sy + R() * 6 - 3, 1.0 * fade, i < 2);
-    }
+    burst(L, P[11][0], f - frameAt(11), R);
   });
 }
 
