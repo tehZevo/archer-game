@@ -439,20 +439,22 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   // Death: a tombstone drops in and the ghost rises out of it
   arena(20);
   const m = dummy(140);
-  const fell = player.x;
   player.invuln = 0; player.hp = 1;
   const saved = Math.random; Math.random = () => 0.99; // the hit lands
   hurtPlayer(500, m.x);
   Math.random = saved;
   check('the archer is down', player.hp === 0, `${player.hp}`);
-  step(1); // the frame's end starts the death animation, then the respawn
-  check('the death animation starts on the spot she fell on, not the respawn point',
+  step(1); // the frame's end starts the death animation
+  const fell = player.x; // where she came to rest, after the hit's knockback
+  check('the death animation starts on the spot she fell on',
     getPlayerDeath() !== null && Math.abs(getPlayerDeath()!.x - fell) < 1, `${getPlayerDeath()?.x} vs ${fell}`);
-  check('...and the archer is back on her feet', player.hp === player.hpMax && player.onGround);
-  step(6); // the animation runs on its own clock while she plays on
+  check('...and she stays down while it plays (no instant respawn)', player.hp === 0 && Math.abs(player.x - fell) < 1);
+  step(6);
   check('the tombstone drops in from above, the ghost not risen yet',
     tombDrop(getPlayerDeath()!) > 0 && tombDrop(getPlayerDeath()!) < 1 && ghostRise(getPlayerDeath()!) === 0,
     `${tombDrop(getPlayerDeath()!).toFixed(2)}`);
+  setKey('right', true); step(3); setKey('right', false);
+  check('a downed archer takes no input and no hits', Math.abs(player.x - fell) < 1 && !hurtPlayer(5, m.x) && player.hp === 0);
   step(Math.ceil((TOMB_DROP_T * 2) / P.STEP));
   check('the stone lands', tombDrop(getPlayerDeath()!) === 1, `${tombDrop(getPlayerDeath()!).toFixed(2)}`);
   step(6);
@@ -460,6 +462,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   step(Math.ceil(PLAYER_DEATH_T / P.STEP));
   check('the whole animation is about a second and a half, and it clears',
     PLAYER_DEATH_T > 1 && PLAYER_DEATH_T < 2 && getPlayerDeath() === null, `${PLAYER_DEATH_T} ${getPlayerDeath()?.age}`);
+  check('...then she revives, back on her feet', player.hp === player.hpMax && player.onGround);
 }
 
 {
@@ -539,7 +542,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('...and once it ends, a press is a normal cast', player.linkFrom === null, `from ${player.linkFrom}`);
   tap('r'); step(1); closeLinks();
   check('closeLinks forgets it', player.linkFrom === null);
-  player.cd.r = 0; tap('r'); player.hp = 0; step(1);
+  player.cd.r = 0; tap('r'); player.hp = 0; step(1 + Math.ceil(PLAYER_DEATH_T / P.STEP)); // down, then back up
   check('a respawn starts with no links', player.linkFrom === null, `from ${player.linkFrom}`);
 }
 {

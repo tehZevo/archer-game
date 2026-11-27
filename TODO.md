@@ -1,5 +1,4 @@
 # TODOs
-- Bug: the tombstone effect doesn't show on player death — you instantly respawn at the current floor (the tombstone/ghost animation is skipped).
 - Spec: never rotate or scale in-game objects, effects, or decor sprites (exceptions: non-skill-icon HUD elements).
 - Dodge roll during held-Z should not have a rush effect.
 - (art) Dodge roll during held-Z needs a roll animation.

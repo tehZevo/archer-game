@@ -219,6 +219,11 @@ export function setPlayerDeath(x: number, y: number): void {
   death = { x, y, age: 0, seed: (Math.random() * 1e9) | 0 };
 }
 
+/** Start a fresh arena with nobody down. */
+export function clearPlayerDeath(): void {
+  death = null;
+}
+
 export function updatePlayerDeath(dt: number): void {
   if (!death) return;
   death.age += dt;
