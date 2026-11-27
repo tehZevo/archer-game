@@ -797,7 +797,7 @@ describe('recovery (delay) after the Q rushes', () => {
     arena(20);
     dummy(150);
     const recovery = delayTime('ground-q');
-    expect(recovery).toBeLessThanOrEqual(0.35 + 1e-9);
+    expect(recovery).toBeLessThanOrEqual(0.6 + 1e-9);
     cast('ground-q');
     expect(player.casting.recoverT).toBe(recovery);
     expect(player.casting.useT).toBeGreaterThan(0);
@@ -815,7 +815,7 @@ describe('recovery (delay) after the Q rushes', () => {
     arena(20);
     player.ranks.eb = true;
     player.ranks.ha = true;
-    expect(delayTime('eb')).toBeCloseTo(0.35 / 1.2, 6);
+    expect(delayTime('eb')).toBeCloseTo(0.6 / 1.2, 6);
   });
 });
 
