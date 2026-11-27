@@ -290,6 +290,13 @@ export const backdropFor = (name: string): Backdrop => BACKDROPS[name] ?? BACKDR
    Stateless: each particle's position is a function of time and its
    index, in view space, so nothing needs updating or syncing. */
 export interface Particle { x: number; y: number; col: string; w: number; h: number }
+/** A meteor's run, in its cycle's units (it's gone for the rest of the cycle). */
+const METEOR_LIFE = 0.5;
+/** A meteor's brightness through its run: a quick flare, then a long fade to nothing. */
+export const meteorFade = (ph: number): number =>
+  Math.max(0, Math.min(1, ph / 0.05, (METEOR_LIFE - ph) / (METEOR_LIFE - 0.1)));
+/** 0-1 as a two-digit hex alpha. */
+const alphaHex = (a: number): string => Math.round(Math.max(0, Math.min(1, a)) * 255).toString(16).padStart(2, '0');
 export function particlesAt(pt: Particles, t: number, w: number, h: number): Particle[] {
   const out: Particle[] = [];
   const mod = (a: number, m: number): number => ((a % m) + m) % m;
@@ -312,10 +319,13 @@ export function particlesAt(pt: Particles, t: number, w: number, h: number): Par
       case 'glints': if (mod(t * 0.6 + c * 5, 3) > 0.35) continue; break; // brief twinkles
       case 'meteors': {
         const ph2 = mod(t * 0.25 + c * 3, 3); // each falls for a moment every few seconds
-        if (ph2 > 0.5) continue;
+        if (ph2 > METEOR_LIFE) continue;
         x = mod(a * w + ph2 * 160, w); y = b * h * 0.6 + ph2 * 80;
-        for (let k = 1; k < 8; k++) out.push({ x: x - k * 2, y: y - k, col: '#ffffff40', w: 1, h: 1 });
-        break;
+        // it flares up fast, then fades out as it falls, tail and all
+        const f = meteorFade(ph2);
+        for (let k = 1; k < 8; k++) out.push({ x: x - k * 2, y: y - k, col: '#ffffff' + alphaHex(f * 0.25 * (1 - k / 8)), w: 1, h: 1 });
+        out.push({ x, y, col: col.slice(0, 7) + alphaHex(f), w: pw, h: ph });
+        continue;
       }
     }
     out.push({ x, y, col, w: pw, h: ph });
