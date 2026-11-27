@@ -230,10 +230,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // Single-rank skills: each carries its (former) max-level hit/damage numbers
-  check('the kit carries its authored hits and damage (Double Shot 4x120%, Rising Arrows 4, Assault 4, Sweep 4x200%, Blitz 2, Tempest 8x200%, Dive 1x400%)',
+  check('the kit carries its authored hits and damage (Double Shot 4x120%, Rising Arrows 4, Assault 4, Sweep 4x200%, Blitz 2, Tempest 6x300%, Dive 1x400%)',
     SKILLS.z.targets1 === 4 && SKILLS.z.dmg1 === 120 && SKILLS['ground-w'].hits1 === 4 && SKILLS.ab.hits1 === 4 &&
     SKILLS['air-w'].hits1 === 4 && SKILLS['air-w'].dmg1 === 200 && SKILLS.eb.hits1 === 2 &&
-    SKILLS.r.hits1 === 8 && SKILLS.r.dmg1 === 200 && SKILLS['air-q'].hits1 === 1 && SKILLS['air-q'].dmg1 === 400);
+    SKILLS.r.hits1 === 6 && SKILLS.r.dmg1 === 300 && SKILLS['air-q'].hits1 === 1 && SKILLS['air-q'].dmg1 === 400);
   // and the hits land: a Blitz rush (charge + two strikes) takes a big bite
   arena(20); player.ranks['ground-q'] = true; player.ranks.eb = true;
   player.blitz.charges = P.BLITZ_MAX;
