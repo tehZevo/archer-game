@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { arena, dummy, ground, step, tap } from './helpers';
-import { P } from '../src/config';
+import { arena, dummy, ground, landLeap, step, tap } from './helpers';
+import { FX_DUR, P } from '../src/config';
 import { setKey } from '../src/input';
 import { linkable, linkHeld } from '../src/links';
-import { delayTime, rushHolding, useTime } from '../src/castrules';
+import { NUM_GAP } from '../src/combat';
+import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
 import { activeSkill } from '../src/progress';
 import { cast } from '../src/skills';
-import { game, player } from '../src/state';
+import { game, player, READY_FLASH } from '../src/state';
 
 /** Rush Toss with Down held: the slide that opens the W links. */
 function rushToss(): void {
@@ -535,5 +536,275 @@ describe('rush carry', () => {
     expect(framesCarriedAlive).toBeGreaterThan(2);
     expect(moved).toBeGreaterThan(10);
     expect(game.mobs).not.toContain(m);
+  });
+});
+
+describe('E: Piercing Leap on the ground, Downpour in the air', () => {
+  function setup(): void {
+    arena(10);
+    player.ranks['ground-e'] = true;
+    player.ranks['air-e'] = true;
+  }
+
+  it('Piercing Leap throws you up, then its spikes spear the enemies in front as they land', () => {
+    setup();
+    const ahead = dummy(140), behind = dummy(60);
+    tap('e');
+    expect(player.onGround).toBe(false);
+    expect(player.vy).toBeLessThan(0);
+    expect(ahead.hp).toBe(1e6); // the spikes are still falling
+
+    step(Math.ceil(0.3 / P.STEP));
+    expect(ahead.hp).toBeLessThan(1e6);
+    expect(behind.hp).toBe(1e6);
+    expect(player.cd['ground-e']).toBeGreaterThan(4); // a long cooldown
+  });
+
+  it('Downpour hops you up without freezing you, and hits only the enemy beneath', () => {
+    setup();
+    const under = dummy(100), beside = dummy(170);
+    tap('c');
+    step(8);
+    const top = player.y;
+    player.vx = 40;
+    tap('e');
+    step(1);
+    expect(top - player.y).toBeGreaterThan(4); // a clear hop...
+    expect(top - player.y).toBeLessThan(20);
+    expect(player.vy).toBeLessThan(0);
+
+    step(10);
+    expect(player.vy).toBeGreaterThan(0); // ...then you fall, still moving
+    expect(player.vx).not.toBe(0);
+
+    step(4);
+    expect(under.hp).toBeLessThan(1e6);
+    expect(beside.hp).toBe(1e6);
+
+    step(30);
+    expect(player.onGround).toBe(true);
+  });
+
+  it('the two forms cool down separately, and the bar shows the form you are in', () => {
+    setup();
+    tap('e');
+    step(6);
+    expect(player.cd['ground-e']).toBeGreaterThan(4);
+    expect(player.cdMax['ground-e']).toBe(P.SPIKE_CD);
+    expect(player.cd['ground-e.air']).toBe(0);
+
+    // still in the air from the leap: Downpour fires despite the leap's cooldown
+    player.casting.useT = 0;
+    const y = player.y;
+    tap('e');
+    step(1);
+    expect(player.y).toBeLessThan(y);
+    expect(player.cast).toBe('barrage');
+    expect(cdSlot('ground-e')).toBe('ground-e.air');
+    expect(cdSlot('ground-e', false)).toBe('ground-e');
+  });
+});
+
+describe('links refund cooldowns', () => {
+  it('a linked skill takes 1s off every other skill\'s cooldown', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['ground-w'] = true;
+    player.ranks['ground-e'] = true;
+    dummy(150);
+    tap('e');
+    step(2);
+    landLeap();
+    player.cd.r = 5;
+    player.cd['ground-w.air'] = 3;
+    tap('q');
+    step(14); // the rush ends: the link window is open
+    const leap = player.cd['ground-e'], tempest = player.cd.r, sweep = player.cd['ground-w.air'];
+
+    tap('w');
+    step(4);
+    expect(player.cast).toBe('shoot');
+    expect(player.linkFrom).toBe('ground-w');
+    const frames = 4 / 30;
+    expect(Math.abs(player.cd['ground-e'] - (leap - 1 - frames))).toBeLessThan(0.05);
+    expect(player.cd.r).toBeLessThan(tempest - 0.9);
+    expect(player.cd['ground-w.air']).toBeLessThan(sweep - 0.9);
+  });
+});
+
+describe('cooldowns', () => {
+  it('Cyclone Sweep lifts you slowly and can\'t be spammed (8s cooldown)', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['ground-w'] = true;
+    player.ranks['air-w'] = true;
+    const m = dummy(140);
+    tap('c');
+    step(8);
+    tap('w');
+    const y = player.y;
+    let rising = true;
+    for (let i = 0; i < 12; i++) {
+      const before = player.y;
+      step(1);
+      if (player.y >= before) rising = false;
+    }
+    expect(rising).toBe(true);
+    expect(y - player.y).toBeLessThan(15);
+
+    const hp = m.hp;
+    player.casting.useT = 0;
+    tap('w');
+    step(2);
+    expect(hp).toBeLessThan(1e6);
+    expect(m.hp).toBe(hp); // no second spin
+    expect(player.cd['ground-w.air']).toBeGreaterThan(3);
+    expect(player.cdMax['ground-w.air']).toBe(8);
+  });
+
+  it('the ground rush has a 3s cooldown; Meteor Dive has none, only use and recovery time', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['air-q'] = true;
+    tap('q');
+    expect(player.cdMax['ground-q']).toBe(3);
+    expect(player.casting.useT).toBeGreaterThan(0);
+
+    step(40);
+    player.cd['ground-q'] = 0;
+    tap('c');
+    step(6);
+    tap('q');
+    expect(player.cd['ground-q.air']).toBe(0);
+    expect(player.casting.useT).toBeGreaterThan(0);
+    expect(player.casting.recoverT).toBeGreaterThan(0);
+  });
+
+  it('a bar icon flashes as its cooldown runs out, then the flash fades', () => {
+    arena(20);
+    player.ranks['ground-e'] = true;
+    tap('e');
+    expect(player.cd['ground-e']).toBeGreaterThan(0);
+    expect(player.readyT['ground-e']).toBe(0);
+
+    for (let i = 0; i < 400 && player.cd['ground-e'] > 0; i++) step(1);
+    expect(player.cd['ground-e']).toBe(0);
+    expect(player.readyT['ground-e']).toBeGreaterThan(0);
+
+    step(8);
+    expect(player.readyT['ground-e']).toBeGreaterThan(0);
+    expect(player.readyT['ground-e']).toBeLessThan(READY_FLASH);
+    step(10);
+    expect(player.readyT['ground-e']).toBe(0);
+  });
+});
+
+describe('Meteor Dive follow-ups', () => {
+  it('fire off its landing, not its coil, and a Double Shot pressed mid-plunge waits out the landing roll', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['air-q'] = true;
+    dummy(150);
+    tap('c');
+    step(8);
+    tap('q');
+    expect(linkable('ground-w')).toBe(true);
+    expect(linkHeld('ground-w')).toBe(true); // held until the landing
+
+    step(4);
+    tap('z');
+    expect(player.casting.queued).toBe('z');
+    let rolled = false, firedWhileRolling = false;
+    for (let i = 0; i < 40 && player.casting.queued; i++) {
+      step(1);
+      if (player.onGround && player.rush.t > 0) rolled = true;
+      if (player.cast === 'shoot' && player.rush.t > 0) firedWhileRolling = true;
+    }
+    expect(rolled).toBe(true);
+    expect(firedWhileRolling).toBe(false);
+    expect(player.cast).toBe('shoot');
+  });
+});
+
+describe('Tempest (R)', () => {
+  const STORM_FRAMES = Math.ceil((0.7 + 6 * NUM_GAP) / P.STEP); // all 6 hits land
+
+  it('hits every enemy caught in the sweep, and has a long cooldown', () => {
+    arena(25);
+    player.ranks.r = true;
+    const a = dummy(130), b = dummy(170);
+    tap('r');
+    step(STORM_FRAMES);
+    expect(a.hp).toBeLessThan(1e6);
+    expect(b.hp).toBeLessThan(1e6);
+
+    const hp = a.hp;
+    player.casting.useT = 0;
+    tap('r');
+    step(5);
+    expect(a.hp).toBe(hp);
+    expect(player.cd.r).toBeGreaterThan(4);
+  });
+
+  it('lands all 6 of its hits on each enemy', () => {
+    arena(60);
+    player.ranks.r = true;
+    const a = dummy(130);
+    tap('r');
+    step(STORM_FRAMES);
+    expect(1e6 - a.hp).toBeGreaterThan(6 * 0.9); // one hit alone would be about a sixth of this
+  });
+});
+
+describe('Haste (passive)', () => {
+  it('makes use times 20% shorter at rank 3, but leaves cooldowns alone', () => {
+    arena(25);
+    dummy(130);
+    player.ranks.r = true;
+    const castFresh = (key: 'z' | 'r'): void => {
+      player.casting.useT = 0;
+      player.casting.recoverT = 0;
+      player.cd.r = 0;
+      cast(key);
+    };
+
+    castFresh('z');
+    const shotUse = player.casting.useT;
+    expect(shotUse).toBeGreaterThan(0.1);
+    expect(player.cd.z).toBe(0); // Double Shot is paced by its use time alone
+    castFresh('r');
+    const tempestUse = player.casting.useT, tempestCd = player.cd.r;
+
+    player.ranks.ha = true;
+    castFresh('r');
+    expect(player.casting.useT).toBeCloseTo(tempestUse / 1.2, 6);
+    expect(player.cd.r).toBe(tempestCd);
+    castFresh('z');
+    expect(player.casting.useT).toBeCloseTo(shotUse / 1.2, 6);
+  });
+});
+
+describe('skill effects', () => {
+  // an effect living longer than its animation once crashed the renderer
+  it('no effect a skill spawns outlives its animation', () => {
+    const bad = new Set<string>();
+    for (const key of ['z', 'ground-q', 'ground-w', 'ground-e', 'r', 'd'] as const) {
+      arena(60, 200);
+      // learn every skill except the shot variants and the ones that change these casts
+      for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) {
+        const skip = ['s', 'BS', 'VS', 'RA', 'ab'].includes(k);
+        player.ranks[k] = skip ? 0 : 1;
+      }
+      dummy(240);
+      dummy(280);
+      game.fx = [];
+      cast(key);
+      step(1);
+      for (let i = 0; i < 20; i++) {
+        for (const fx of game.fx) if (fx.t > FX_DUR[fx.type] + 1e-9) bad.add(`${key}: ${fx.type}`);
+        step(1);
+      }
+    }
+    expect([...bad]).toEqual([]);
   });
 });

@@ -534,7 +534,7 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   loadCheer(null);
   const was = { level: player.level, exp: player.exp, expNext: player.expNext };
   release(); gotoPlace(climb(2)); player.level = 10; player.expNext = 1e9;
-  const gain = (): number => { const m = game.mobs.find((x) => !x.training)!; const e0 = player.exp; killMob(m); return player.exp - e0; };
+  const gain = (): number => { const m = game.mobs.find((x) => !x.training)!; m.exp = 100; const e0 = player.exp; killMob(m); return player.exp - e0; };
   const plain = gain();
   check('no cheer, no EXP bonus', expMult() === 1 && cheerLeftMs() === 0);
   gotCheer('robin');
