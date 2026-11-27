@@ -7,3 +7,4 @@
 - Bug: the C (copy JSON) action in the skill editor doesn't seem to work.
 - (art) Create art for the Bubble skill.
 - When you reach Lv.10, 30, and 60, show on-screen text prompting you to visit the Sage to advance to the next job.
+- Bug: the "S" in "FOES" and some skill icons in the link line on the skills screen overflow the border — wrap them to a new line or reflow/reword so they fit.
