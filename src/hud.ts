@@ -248,7 +248,7 @@ function drawOverlays(w: number, h: number): void {
   if (confirmUi.open) { drawConfirm(); return; }
   if (game.banner) {
     ctx.save();
-    ctx.globalAlpha = clamp(game.banner.t / 1.15, 0, 1);
+    ctx.globalAlpha = clamp(game.banner.t / P.BANNER_FADE, 0, 1);
     text(ctx, game.banner.text, w / 2, 46, 2, '#ffd166', 'center');
     text(ctx, game.banner.sub, w / 2, 64, 1, '#dbe6f5', 'center');
     ctx.restore();
