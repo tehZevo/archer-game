@@ -25,3 +25,5 @@
   - Phase 2: Dedupe cross-file mechanics (cast-lock/buffer, air/ground `cdSlot` split, Fervor link refund, damage-number stacking, Twin Echoes) — keep the richest instance, trim the rest.
   - Phase 3: Trim the UI walkthroughs (file 07, 137 checks) to the happy path, and collapse per-area repetitions.
   - Keep as-is: `smoke.ts` (baked sheets match generators), asset-integrity checks (paint-in-bounds), and core physics (slope/ledge, Rush Toss carry).
+- (bug) Player damage numbers move upward too fast — they should rise at the same speed as enemy damage numbers.
+- (bug) MISS is spammed; a miss should trigger the same invulnerability cooldown as taking damage (without actually showing the player as invulnerable).
