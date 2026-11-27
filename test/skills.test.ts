@@ -530,7 +530,7 @@ describe('E: Piercing Leap on the ground, Ember Rain in the air', () => {
 
   it('Ember Rain hops you up without freezing you, and hits only the enemy beneath', () => {
     setup();
-    const under = dummy(100), beside = dummy(170);
+    const under = dummy(100), beside = dummy(100 + P.PLUNGE_W); // well outside the column
     tap('c');
     step(8);
     const top = player.y;
@@ -555,7 +555,7 @@ describe('E: Piercing Leap on the ground, Ember Rain in the air', () => {
 
   it('Ember Rain sets the enemy beneath it burning, not the one beside it', () => {
     setup();
-    const under = dummy(100), beside = dummy(170);
+    const under = dummy(100), beside = dummy(100 + P.PLUNGE_W); // well outside the column
     tap('c');
     step(8);
     tap('e');

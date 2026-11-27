@@ -675,28 +675,28 @@ function burningBolt(L: Light, x0: number, y0: number, x1: number, y1: number, t
   L.line('gold', hx - (hx - mx) * 0.4, hy - (hy - my) * 0.4, hx, hy, 0.5, 0.9, 1.25 * I); // white-hot head
 }
 
-/** Ember Rain, on the archer: a small glowing ring spinning above her head,
- *  and a pair of ember wings flaring behind her that fade fast. Origin at
- *  her feet (it follows her through the hop). */
+/** Ember Rain, on the archer: a broad glowing ring spinning above her head,
+ *  and a pair of big ember wings flaring behind her that fade fast. Origin
+ *  at her feet (it follows her through the hop). */
 function emberHaloAnim(): FxSheet {
-  const W = 48, H = 46, cx = W / 2, by = 42, hy = by - 32, n = 6;
+  const W = 88, H = 58, cx = W / 2, by = 54, hy = by - 32, n = 6;
   return anim(W, H, cx, by, n, (L, f) => {
     const R = rng(211 + f), fade = f < 3 ? 1 : 1 - (f - 2) / 4;
     // the ring: faint all round, a bright arc racing round it
     const spin = f * 1.6;
-    L.ring('orange', cx, hy, 7, 2.5, 1.0, 0.6 * fade);
-    arc(L, 'gold', cx, hy, 7, 2.5, 1.2, 1.2 * fade, spin, spin + 2.2);
-    if (f < 2) L.disc('gold', cx, hy, 3 - f, 1.1);
+    L.ring('orange', cx, hy, 14, 5, 1.4, 0.6 * fade);
+    arc(L, 'gold', cx, hy, 14, 5, 1.7, 1.2 * fade, spin, spin + 2.2);
+    if (f < 2) L.disc('gold', cx, hy, 5 - f * 1.5, 1.1);
     // the wings: swept feathers fanning up and out, gone by frame 3
     if (f < 3) {
       const w = 1 - f / 3;
       for (const side of [-1, 1]) for (let k = 0; k < 4; k++) {
-        const a = -0.35 - k * 0.32, len = (16 - k * 2.5) * (0.7 + 0.3 * Math.min(1, f + 0.5));
+        const a = -0.35 - k * 0.32, len = (32 - k * 5) * (0.7 + 0.3 * Math.min(1, f + 0.5));
         const x0 = cx + side * 3, y0 = by - 16;
-        L.line(k ? 'red' : 'orange', x0, y0, x0 + side * Math.cos(a) * len, y0 + Math.sin(a) * len, 1.3, 0.3, (1.05 - k * 0.12) * w);
+        L.line(k ? 'red' : 'orange', x0, y0, x0 + side * Math.cos(a) * len, y0 + Math.sin(a) * len, 2.0, 0.3, (1.05 - k * 0.12) * w);
       }
     }
-    for (let i = 0; i < 4; i++) L.spark(i % 2 ? 'orange' : 'gold', cx + (R() * 2 - 1) * 12, hy - 2 + R() * 18, 0.9 * fade, i === 0);
+    for (let i = 0; i < 6; i++) L.spark(i % 2 ? 'orange' : 'gold', cx + (R() * 2 - 1) * 22, hy - 4 + R() * 22, 0.9 * fade, i < 2);
   });
 }
 
@@ -705,8 +705,11 @@ function emberHaloAnim(): FxSheet {
  *  the ring (P.EMBER_RING above her feet); it reaches EMBER_RING + depth down. */
 function emberFanAnim(width: number, depth: number): FxSheet {
   const W = width + 8, H = Math.round(depth) + 6, cx = W / 2, top = 2, n = 8;
-  // bolt landing spots across the column, and the frame each one fires on
-  const bolts = [0, -0.35, 0.35, -0.7, 0.7, -0.15, 0.15, -0.9, 0.9].map((u, i) => ({ u, at: Math.floor(i / 2) * 0.6 }));
+  // 18 bolts landing across the column, a pair at a time (one each side),
+  // in a shuffled order so the rain doesn't sweep out in a neat line; each
+  // pair fires a beat after the last
+  const order = [0, 4, 2, 7, 1, 5, 8, 3, 6];
+  const bolts = order.flatMap((k, i) => [-1, 1].map((side) => ({ u: side * (k + 0.5) / 9, at: i * 0.3 })));
   return anim(W, H, cx, top, n, (L, f) => {
     const fade = f < n - 2 ? 1 : (n - f) / 3;
     for (const b of bolts) {
