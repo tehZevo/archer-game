@@ -2,6 +2,14 @@
 
 The game renders pixel perfect: every visible element is a 16×16 (or 16-multiple) sprite drawn at integer coordinates on a fixed 240×180 base-resolution canvas, upscaled by CSS with `image-rendering: pixelated` (nearest-neighbour). No element ever samples across a pixel boundary.
 
+## Transformations
+
+In-game objects, effects, and decor sprites are drawn at their natural size and orientation: never rotated, never scaled. Each sprite is authored at the size and angle it is shown at, so a 16×16 sprite occupies 16×16 device pixels on the base canvas.
+
+- **Scale** is baked into the art, not applied at draw time: a bigger mob is a bigger authored sprite, not `drawImage(img, x, y, w * 1.5, h * 1.5)`.
+- **Rotation** is baked in too: a diagonal arrow is a sprite drawn diagonally, not a horizontal sprite passed through `ctx.rotate`.
+- **Exception — non-skill-icon HUD elements** (the HP/MP/EXP bars, the minimap, and other HUD chrome) may scale and rotate freely; they are UI, not world sprites. Skill icons are the canonical 10×10 and are drawn 1:1 (see Sprites).
+
 ## Sprites
 
 - All sprites are authored on a 16×16 grid (the tile unit), built procedurally once at boot as tiny canvases with 1px blocks and drawn with `drawImage`.
