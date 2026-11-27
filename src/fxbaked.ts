@@ -44,7 +44,7 @@ export const BAKED: Record<string, BakedSheet> = {
   muzzle: { src: muzzle, w: 22, h: 18, n: 6, ox: 1, oy: 9 },
   arrow: { src: arrow, w: 26, h: 7, n: 1, ox: 24, oy: 3.5 },
   spikes: { src: spikes, w: 88, h: 96, n: 10, ox: 4, oy: 92 },
-  tempest: { src: tempest, w: 168, h: 72, n: 10, ox: 84, oy: 48 },
+  tempest: { src: tempest, w: 128, h: 70, n: 10, ox: 16, oy: 66 },
   spin: { src: spin, w: 98, h: 78, n: 8, ox: 49, oy: 51 },
   cyclone: { src: cyclone, w: 36, h: 40, n: 8, ox: 18, oy: 20 },
   levelUp: { src: levelUp, w: 44, h: 70, n: 10, ox: 22, oy: 66 },
