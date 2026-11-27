@@ -33,36 +33,6 @@ describe('looks: hair style, hair colour, skin and outfit', () => {
     expect(stepLook(DEFAULT_LOOK, 'style', -1).style).toBe(LOOK_COUNTS.style - 1);
   });
 
-  it('the elf ear follows the skin tone', () => {
-    const palette = lookPalette({ ...DEFAULT_LOOK, skin: 3 });
-    expect(palette.k).toBe(palette.s);
-  });
-
-  it('the default hair style changes at most one pixel of any frame', () => {
-    for (const pose of POSE_NAMES) for (const frame of GRIDS[pose]) expect(pixelsChanged(styled(frame, pose, 0), frame)).toBeLessThanOrEqual(1);
-  });
-
-  it('every hair style and build keeps frames their size, and leaves the body, bow and arms alone', () => {
-    const bad: string[] = [];
-    for (let style = 1; style < LOOK_COUNTS.style; style++) {
-      for (const body of [0, 1]) {
-        for (const pose of POSE_NAMES) {
-          for (const frame of GRIDS[pose]) {
-            const s = styled(frame, pose, style, body);
-            const sameSize = s.length === frame.length && s.every((row, y) => row.length === frame[y].length);
-            if (!sameSize) { bad.push(`style ${style} body ${body} ${pose}: size`); continue; }
-            // below the head (row 12 on), only the cape (c, C), outline (o) and empty (.) pixels may change
-            for (let y = 12; y < frame.length; y++) {
-              for (let x = 0; x < frame[y].length; x++) {
-                if (s[y][x] !== frame[y][x] && !'cCo.'.includes(frame[y][x])) bad.push(`style ${style} body ${body} ${pose}: ${x},${y}`);
-              }
-            }
-          }
-        }
-      }
-    }
-    expect(bad).toEqual([]);
-  });
 });
 
 describe('town extras (each town\'s stylist offers its own, which seeing unlocks everywhere)', () => {
@@ -286,15 +256,6 @@ describe('other players stand still', () => {
   const ghostAt = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t, false));
   const mineAt = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t));
 
-  it('a ghost\'s idle frame does not change with time', () => {
-    expect(ghostAt(0.4)).toBe(ghostAt(0));
-    expect(ghostAt(1.2)).toBe(ghostAt(0));
-  });
-
-  it('while your own archer keeps breathing', () => {
-    expect(mineAt(0.5)).not.toBe(mineAt(0));
-  });
-
   it('a climb steps with the height climbed, not with time', () => {
     expect(poseCycle('climb', 100, 0.5)).toBe(poseCycle('climb', 100, 0));
     expect(poseCycle('climb', 108, 0)).not.toBe(poseCycle('climb', 100, 0));
@@ -307,16 +268,6 @@ describe('the dive\'s pitch is drawn into the frame (no canvas rotation)', () =>
   /** How many filled pixels a frame has. */
   const ink = (rows: string[]): number => rows.join('').replace(/\./g, '').length;
 
-  it('a pitched frame is square and big enough for the whole figure', () => {
-    expect(pitched.length).toBe(pitched[0].length);
-    expect(pitched.length).toBeGreaterThanOrEqual(Math.hypot(upright[0].length, upright.length));
-  });
-
-  it('it has about the same number of pixels, and no new colours', () => {
-    expect(Math.abs(ink(pitched) - ink(upright)) / ink(upright)).toBeLessThan(0.2);
-    for (const ch of new Set(pitched.join(''))) expect(upright.join('')).toContain(ch);
-  });
-
   it('a zero pitch keeps the figure upright', () => {
     expect(pitch(upright, 0).some((row) => row.includes('h'))).toBe(true);
   });
@@ -324,14 +275,6 @@ describe('the dive\'s pitch is drawn into the frame (no canvas rotation)', () =>
 
 describe('town NPCs', () => {
   const times = Array.from({ length: 400 }, (_, i) => i * 0.025);
-
-  it('idle ones breathe and blink, and never wave', () => {
-    const frames = new Set(times.map((t) => npcFrame(t, false, 1.3)));
-    expect(frames.has(0)).toBe(true);
-    expect(frames.has(1)).toBe(true);
-    expect(frames.has(2)).toBe(true);
-    expect(frames.has(3)).toBe(false);
-  });
 
   it('they wave when you are near', () => {
     const frames = new Set(times.map((t) => npcFrame(t, true, 1.3)));

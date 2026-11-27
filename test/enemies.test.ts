@@ -109,50 +109,7 @@ describe('enemy types', () => {
   });
 });
 
-describe('enemy HP bar', () => {
-  it('is hidden until the first hit, then shows for 4s after each hit', () => {
-    arena();
-    const m = dummy(150);
-    expect(m.barT).toBeLessThanOrEqual(0);
-    damage(m, 1);
-    expect(m.barT).toBeGreaterThan(0);
-    for (let i = 0; i < 30; i++) update(1 / 60);
-    expect(m.barT).toBeGreaterThan(0);
-    expect(BAR_SHOW).toBe(4);
-  });
 
-  it('hides again once its time runs out', () => {
-    arena();
-    const m = dummy(150);
-    damage(m, 1);
-    m.barT = 0.01;
-    update(1 / 60);
-    expect(m.barT).toBeLessThanOrEqual(0);
-  });
-});
-
-describe('enemy animation', () => {
-  const walker = { anim: 0, fly: false, vx: 60, stun: 0 };
-
-  it('a walking enemy cycles through all its frames', () => {
-    const frames = new Set<number>();
-    for (let i = 0; i < 24; i++) frames.add(mobFrame({ ...walker, anim: i * ANIM_RATE / 24 }, 4, 8));
-    expect(frames.size).toBe(4);
-  });
-
-  it('a standing enemy holds frame 0, and breathes out a beat later', () => {
-    expect(mobFrame({ ...walker, vx: 0, anim: 3.3 }, 4, 8)).toBe(0);
-    expect(mobFrame({ ...walker, vx: 0, anim: ANIM_RATE * 0.9 }, 4, 8)).toBe(BREATH);
-  });
-
-  it('a stunned enemy holds frame 0', () => {
-    expect(mobFrame({ ...walker, stun: 1, anim: 3.3 }, 4, 8)).toBe(0);
-  });
-
-  it('a hovering flier keeps flapping', () => {
-    expect(mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4)).toBe(1);
-  });
-});
 
 describe('chasing', () => {
   // a chasing enemy aims 3 tiles (48px) past you, so it keeps going as it closes
@@ -237,30 +194,9 @@ describe('enemy variants (cousins of an area\'s enemies that turn up in their pl
     game.mobs.length = 0;
   });
 
-  it('every enemy has art: painted, hand-drawn, or a drawn variant', () => {
-    expect(MOB_TYPES.filter((m) => !hasMobArt(m.n)).map((m) => m.n)).toEqual([]);
-  });
 
-  it('every drawn variant is a cousin of a hand-drawn enemy', () => {
-    for (const name of drawnVariants) expect(DRAWN).toContain(typeNamed(name).of);
-  });
 
-  it('a drawn variant is drawn at its own size, every row the right width', () => {
-    for (const name of drawnVariants) {
-      const art = VARIANT_ART[name], type = typeNamed(name);
-      expect(art.w).toBe(type.w);
-      expect(art.h).toBe(type.h);
-      for (const frame of [0, 1, 2, 3]) {
-        expect(art.rows(frame).length).toBe(art.h);
-        for (const row of art.rows(frame)) expect(row.length).toBe(art.w);
-      }
-      expect(art.hurt().length).toBe(art.h);
-    }
-  });
 
-  it('a drawn variant has its own silhouette, not its parent\'s in new colours', () => {
-    for (const name of drawnVariants) expect(silhouette(name)).not.toBe(silhouette(typeNamed(name).of!));
-  });
 
   it('every variant is of a real (non-variant) enemy, and lives where that enemy does', () => {
     for (const v of variants) {

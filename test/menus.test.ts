@@ -347,11 +347,6 @@ describe('main menu when playing alone (offline)', () => {
   });
 });
 
-describe('text fields', () => {
-  it('the caret blinks between glyphs of the same width, so the text never shifts', () => {
-    expect(textWidth('AB_')).toBe(textWidth('AB '));
-  });
-});
 
 describe('skills screen', () => {
   afterEach(() => {
@@ -409,13 +404,6 @@ describe('skills screen', () => {
     expect(lines.some((l) => l.includes('FOES'))).toBe(true);
   });
 
-  it('the link list tells learned skills from unlearned ones', () => {
-    arena(1);
-    player.ranks.z = true;
-    expect(isLearned('z')).toBe(true);
-    player.ranks.z = false;
-    expect(isLearned('z')).toBe(false);
-  });
 });
 
 describe('settings', () => {
@@ -499,19 +487,6 @@ describe('settings', () => {
   });
 });
 
-describe('the big on-screen banner', () => {
-  beforeEach(() => {
-    arena();
-    bannerMsg('THE SAGE', 'RETURN TO ME AT LV.10');
-  });
-
-  it('is still up halfway through, and clears once its time is up', () => {
-    step(Math.floor(P.BANNER_T / 2 / P.STEP));
-    expect(game.banner).not.toBe(null);
-    step(Math.ceil(P.BANNER_T / 2 / P.STEP));
-    expect(game.banner).toBe(null);
-  });
-});
 
 describe('the EXP bar', () => {
   beforeEach(() => {

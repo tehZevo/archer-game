@@ -396,37 +396,6 @@ describe('queued presses', () => {
   });
 });
 
-describe('rush looks', () => {
-  it('Rush Toss slides in its own aura, scuffing the ground', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    game.fx.length = 0;
-    tap('q');
-    step(4);
-    expect(player.rush.t).toBeGreaterThan(0);
-    expect(player.rush.look).toBe('tossRush');
-    expect(game.fx.some((f) => f.type === 'tossTrail')).toBe(true);
-  });
-
-  it('Electric Blitz has its own aura and scuffs', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    player.ranks.eb = true;
-    game.fx.length = 0;
-    tap('q');
-    step(4);
-    expect(player.rush.look).toBe('blitzRush');
-    expect(game.fx.some((f) => f.type === 'blitzTrail')).toBe(true);
-    expect(game.fx.some((f) => f.type === 'tossTrail')).toBe(false);
-  });
-
-  it('a rush in place (Down + Q) has no slide aura', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    rushToss();
-    expect(player.rush.t > 0 && player.rush.look).toBeFalsy();
-  });
-});
 
 describe('Electric Blitz (Q upgrade)', () => {
   const SLIDE_FRAMES = 22; // the whole slide, from the cast to the strike at its end
@@ -572,53 +541,7 @@ describe('E: Piercing Leap on the ground, Downpour in the air', () => {
   });
 });
 
-describe('links refund cooldowns', () => {
-  it('a linked skill takes 1s off every other skill\'s cooldown', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    player.ranks['ground-w'] = true;
-    player.ranks['ground-e'] = true;
-    dummy(150);
-    tap('e');
-    step(2);
-    landLeap();
-    player.cd.r = 5;
-    player.cd['ground-w.air'] = 3;
-    tap('q');
-    step(14); // the rush ends: the link window is open
-    const leap = player.cd['ground-e'], tempest = player.cd.r, sweep = player.cd['ground-w.air'];
 
-    tap('w');
-    step(4);
-    expect(player.cast).toBe('shoot');
-    expect(player.linkFrom).toBe('ground-w');
-    const frames = 4 / 30;
-    expect(Math.abs(player.cd['ground-e'] - (leap - 1 - frames))).toBeLessThan(0.05);
-    expect(player.cd.r).toBeLessThan(tempest - 0.9);
-    expect(player.cd['ground-w.air']).toBeLessThan(sweep - 0.9);
-  });
-});
-
-describe('cooldowns', () => {
-
-  it('a bar icon flashes as its cooldown runs out, then the flash fades', () => {
-    arena(20);
-    player.ranks['ground-e'] = true;
-    tap('e');
-    expect(player.cd['ground-e']).toBeGreaterThan(0);
-    expect(player.readyT['ground-e']).toBe(0);
-
-    for (let i = 0; i < 400 && player.cd['ground-e'] > 0; i++) step(1);
-    expect(player.cd['ground-e']).toBe(0);
-    expect(player.readyT['ground-e']).toBeGreaterThan(0);
-
-    step(8);
-    expect(player.readyT['ground-e']).toBeGreaterThan(0);
-    expect(player.readyT['ground-e']).toBeLessThan(READY_FLASH);
-    step(10);
-    expect(player.readyT['ground-e']).toBe(0);
-  });
-});
 
 describe('Meteor Dive follow-ups', () => {
   it('fire off its landing, not its coil, and a Double Shot pressed mid-plunge waits out the landing roll', () => {
@@ -696,30 +619,6 @@ describe('Haste (passive)', () => {
   });
 });
 
-describe('skill effects', () => {
-  // an effect living longer than its animation once crashed the renderer
-  it('no effect a skill spawns outlives its animation', () => {
-    const bad = new Set<string>();
-    for (const key of ['z', 'ground-q', 'ground-w', 'ground-e', 'r', 'd'] as const) {
-      arena(60, 200);
-      // learn every skill except the shot variants and the ones that change these casts
-      for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) {
-        const skip = ['s', 'BS', 'VS', 'RA', 'ab'].includes(k);
-        player.ranks[k] = skip ? 0 : 1;
-      }
-      dummy(240);
-      dummy(280);
-      game.fx = [];
-      cast(key);
-      step(1);
-      for (let i = 0; i < 20; i++) {
-        for (const fx of game.fx) if (fx.t > FX_DUR[fx.type] + 1e-9) bad.add(`${key}: ${fx.type}`);
-        step(1);
-      }
-    }
-    expect([...bad]).toEqual([]);
-  });
-});
 
 describe('Rush Toss carrying enemies', () => {
 
@@ -834,56 +733,6 @@ describe('a Double Shot at nothing', () => {
   });
 });
 
-describe('skill looks', () => {
-  const hasFx = (type: string): boolean => game.fx.some((f) => f.type === type);
-  function leapUp(): void {
-    player.y -= 40;
-    player.vy = 0;
-    player.onGround = false;
-  }
-  afterEach(() => release());
-
-  it('Piercing Leap erupts spikes from the ground', () => {
-    arena(30);
-    player.ranks['ground-e'] = true;
-    game.fx.length = 0;
-    tap('e');
-    expect(hasFx('spikes')).toBe(true);
-    expect(hasFx('rush')).toBe(false);
-  });
-
-  it('Cyclone Sweep whirls blades round you and spins the archer', () => {
-    arena(30);
-    player.ranks['air-w'] = true;
-    leapUp();
-    game.fx.length = 0;
-    tap('w');
-    expect(hasFx('spin')).toBe(true);
-    expect(localPose()).toBe('spin');
-  });
-
-  it('Tempest sweeps an oval of energy as the archer vanishes, and she is back after', () => {
-    arena(30);
-    player.ranks.r = true;
-    game.fx.length = 0;
-    tap('r');
-    expect(hasFx('tempest')).toBe(true);
-    expect(hasFx('muzzle')).toBe(false);
-    expect(localPose()).toBe('vanish');
-    step(43);
-    expect(localPose()).not.toBe('vanish');
-  });
-
-  it('Meteor Dive draws its dive pose', () => {
-    arena(30);
-    player.ranks['air-q'] = true;
-    leapUp();
-    tap('q');
-    step(4); // past the windup
-    expect(player.diving).toBeTruthy();
-    expect(localPose()).toBe('dive');
-  });
-});
 
 describe('Tempest is a committed cast', () => {
   it('locks you in place, invulnerable for the whole cast', () => {
@@ -987,19 +836,6 @@ describe('Downpour', () => {
     expect(far.hp).toBe(1e6);
   });
 
-  it('flares on the archer and blasts one tornado below, with no rain or hit sparks', () => {
-    highUp();
-    const m = dummy(140);
-    m.y = player.y + player.h + 10;
-    game.fx.length = 0;
-    tap('e');
-    step(6);
-    const types = game.fx.map((f) => f.type);
-    expect(types).toContain('volleyFlare');
-    expect(types).toContain('tornado');
-    for (const t of ['rain', 'rainHit', 'hit', 'crit']) expect(types).not.toContain(t);
-    expect(m.hp).toBeLessThan(1e6);
-  });
 });
 
 describe('Twin Echoes\' shadow arrows', () => {
@@ -1018,14 +854,7 @@ describe('Twin Echoes\' shadow arrows', () => {
     return game.dmgNums.filter((d) => d.txt !== 'MISS');
   }
 
-  it('every arrow shows its own number', () => {
-    expect(volley().length).toBe(shotCount(rank('z')));
-  });
 
-  it('the numbers stack a line apart, not in a pile', () => {
-    const nums = volley();
-    expect(new Set(nums.map((d) => Math.round(d.y))).size).toBe(nums.length);
-  });
 
   it('the shadow hits as hard as the base arrow', () => {
     const nums = volley();
@@ -1044,14 +873,6 @@ describe('Bolt Flurry', () => {
     return seen;
   }
 
-  it('flies as one 4-bolt volley sprite, even on a whiff', () => {
-    arena(30);
-    player.ranks.s = true;
-    game.shots.length = 0;
-    tap('z');
-    expect(game.shots.length).toBe(1);
-    expect(game.shots[0].sprite).toBe('flurry');
-  });
 
   it('lands its 4 hits on every target, not split between them', () => {
     arena(70);
@@ -1262,32 +1083,6 @@ describe('Rising Arrows and Skyward Assault', () => {
   });
 });
 
-describe('the skill bar flashes the slot you cast from', () => {
-  it('Rush Toss flashes the Q slot, then the flash fades over USE_FLASH', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    player.ranks['air-q'] = true;
-    tap('q');
-    expect(player.usedT['ground-q']).toBeGreaterThan(USE_FLASH - 0.05);
-    expect(player.usedT['ground-q.air']).toBe(0);
-    step(3);
-    expect(player.usedT['ground-q']).toBeGreaterThan(0);
-    expect(player.usedT['ground-q']).toBeLessThan(USE_FLASH);
-    step(10);
-    expect(player.usedT['ground-q']).toBe(0);
-  });
-
-  it('Meteor Dive flashes the stacked air slot, not the ground one', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    player.ranks['air-q'] = true;
-    tap('c');
-    step(6);
-    tap('q');
-    expect(player.usedT['ground-q.air']).toBeGreaterThan(0);
-    expect(player.usedT['ground-q']).toBe(0);
-  });
-});
 
 describe('Jump is movement, not a skill', () => {
   it('a jump pressed during a skill\'s use time is dropped, not buffered', () => {

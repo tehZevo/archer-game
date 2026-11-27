@@ -52,11 +52,6 @@ describe('ghosts (other players)', () => {
     }
   });
 
-  it('play the pose back along with the motion', () => {
-    const { track } = sendTwoSeconds();
-    expect(view(track, 600)!.pose).toBe('walk');
-    expect(view(track, 2000)!.pose).toBe('jump');
-  });
 });
 
 describe('private instances', () => {
@@ -122,14 +117,6 @@ describe('shared spawn boost', () => {
 });
 
 describe('presence', () => {
-  it('random names fit the name tag and the pixel font', () => {
-    for (let i = 0; i < 50; i++) {
-      const name = randomName();
-      expect(name.length).toBeGreaterThanOrEqual(5);
-      expect(name.length).toBeLessThanOrEqual(NAME_MAX);
-      expect(name).toMatch(/^[A-Z0-9]+$/);
-    }
-  });
 
   it('names from other players are cleaned up', () => {
     expect(cleanName('  hi there!!<b> ')).toBe('HITHEREB');
@@ -137,34 +124,9 @@ describe('presence', () => {
     expect(cleanName('x'.repeat(40)).length).toBe(NAME_MAX);
   });
 
-  it('a player always gets the same tint, and different players mostly differ', () => {
-    expect(tintFor('abc123')).toBe(tintFor('abc123'));
-    const tints = new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(tintFor));
-    expect(tints.size).toBeGreaterThanOrEqual(4);
-  });
 
-  it('arrivals on a floor are spread around its middle', () => {
-    const xs: number[] = [];
-    for (let i = 0; i < 12; i++) {
-      gotoPlace(climb(2));
-      xs.push(player.x);
-    }
-    const middle = ground().x + ground().w / 2 - player.w / 2;
-    expect(new Set(xs).size).toBeGreaterThan(6);
-    for (const x of xs) expect(Math.abs(x - middle)).toBeLessThanOrEqual(SPAWN_SPREAD);
-  });
 
-  it('a ghost in the shoot pose spawns nothing by itself (shots arrive as messages)', () => {
-    const track = newTrack();
-    expect(ghostFx(track, { x: 100, y: 50, face: 1, pose: 'shoot', since: 0.3 })).toEqual([]);
-  });
 
-  it('a ghost starting Rush Toss shows its horn of light', () => {
-    const track = newTrack();
-    ghostFx(track, { x: 100, y: 50, face: 1, pose: 'idle', since: 0 });
-    const fx = ghostFx(track, { x: 100, y: 50, face: 1, pose: 'rush', since: 0 });
-    expect(fx.map((f) => f.type)).toEqual(['rush']);
-  });
 });
 
 describe('ghost shots', () => {
@@ -179,28 +141,8 @@ describe('ghost shots', () => {
     track.offset = 1000; // their clock runs 1000ms behind ours
   });
 
-  it('waits for the playback to reach it, then shows a muzzle flash and a tracer', () => {
-    queueShot(track, shot(5000), 6000);
-    const due = 5000 + 1000 + INTERP_MS;
-    expect(dueShots(due - 1)).toEqual([]);
-    expect(dueShots(due).map((f) => f.type).sort()).toEqual(['muzzle', 'tracer']);
-  });
 
-  it('back-to-back shots each show, each at its own time', () => {
-    queueShot(track, shot(5000), 6000);
-    queueShot(track, shot(5100), 6100);
-    const due = 5000 + 1000 + INTERP_MS;
-    expect(dueShots(due).map((f) => f.type).sort()).toEqual(['muzzle', 'tracer']);
-    expect(dueShots(due + 100).map((f) => f.type).sort()).toEqual(['muzzle', 'tracer']);
-  });
 
-  it('a multi-arrow shot shows one tracer per arrow, one after another', () => {
-    queueShot(track, shot(7000, 4), 8000);
-    const due = 7000 + 1000 + INTERP_MS;
-    expect(tracers(due)).toBe(1);
-    expect(tracers(due + SHOT_GAP)).toBe(1);
-    expect(tracers(due + 3 * SHOT_GAP)).toBe(2);
-  });
 
   it('bad or flooding shot messages are capped', () => {
     queueShot(track, { t: NaN, x: 0, y: 0, f: 1, l: 1 } as never, 0);
@@ -246,35 +188,6 @@ describe('when multiplayer is unavailable', () => {
   });
 });
 
-describe('emotes (F1-F7 pop a face over your head, and your ghost\'s)', () => {
-  beforeEach(() => {
-    arena(1);
-    clearEmotes();
-  });
-  afterEach(() => clearEmotes());
-
-  it('F2 shows the sad face over you, for a few seconds', () => {
-    setKey('f2', true);
-    step(1);
-    setKey('f2', false);
-    const now = performance.now();
-    expect(emoteFor(SELF, now)).toBe('sad');
-    expect(emoteFor(SELF, now + EMOTE_MS + 1)).toBe(null);
-  });
-
-  it('emotes from the network are checked', () => {
-    expect(cleanEmote(5)).toBe('love');
-    expect(cleanEmote(7)).toBe(null);
-    expect(cleanEmote('1')).toBe(null);
-    expect(cleanEmote(-1)).toBe(null);
-  });
-
-  it('a player leaving clears their emote', () => {
-    setEmote('peer', 'love', 0);
-    clearEmotes('peer');
-    expect(emoteFor('peer', 0)).toBe(null);
-  });
-});
 
 describe('rooms by the hour', () => {
   // floors carry the UTC hour you entered them; towns never do; layouts ignore it

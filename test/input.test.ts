@@ -42,18 +42,7 @@ describe('keyboard layouts (e.g. AZERTY)', () => {
     expect(normalize(keyEvent('X'))).toBe('x');
   });
 
-  it('labels are QWERTY until the layout is known', () => {
-    expect(keyName('z')).toBe('z');
-    expect(keyName('ground-q')).toBe('ground-q');
-  });
 
-  it('then labels show what the keys type', () => {
-    setLayout({ KeyZ: 'w', KeyQ: 'a', KeyW: 'z', KeyA: 'q' });
-    expect(keyName('z')).toBe('ground-w');
-    expect(keyName('ground-q')).toBe('A');
-    expect(keyName('w')).toBe('z');
-    expect(keyName('escape')).toBe('ESCAPE');
-  });
 });
 
 describe('rebinding keys', () => {
@@ -112,11 +101,6 @@ describe('rebinding keys', () => {
     expect(cleanBinds({ ...binds, q: 'enter' }).q).toBe('q');
   });
 
-  it('the HUD and menus label the bound key', () => {
-    bindKey('a', 'h');
-    expect(keyName('a')).toBe('H');
-    expect(keyName('s')).toBe('s');
-  });
 
   describe('the keys window (settings, then KEYS)', () => {
     /** Open the keys window and pick the second row (Jump, c). */

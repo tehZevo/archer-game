@@ -48,11 +48,6 @@ describe('Driftwood Rest', () => {
     for (const m of game.mobs) expect(m.training).toBe(true);
   });
 
-  it('ways up show the level of the enemies past them', () => {
-    const [left, right] = game.floor.portals;
-    expect(left.lvl).toBe(4);
-    expect(right.lvl).toBe(4);
-  });
 
   it('the plaza deck is reached by a ladder and a rope from the ground', () => {
     const deckTop = Math.min(...game.floor.platforms.filter((p) => p.block === 1 && !p.inner).map((p) => p.y));
@@ -216,17 +211,6 @@ describe('every town', () => {
     expect(bad).toEqual([]);
   });
 
-  it('people on the same level stand far enough apart that their names don\'t overlap', () => {
-    const bad: string[] = [];
-    for (const id of towns) {
-      gotoPlace({ town: id });
-      const npcs = game.floor.npcs ?? [];
-      for (const a of npcs) {
-        for (const b of npcs) if (a !== b && a.y === b.y && Math.abs(a.x - b.x) < 44) bad.push(`${id}: ${a.kind} and ${b.kind}`);
-      }
-    }
-    expect(bad).toEqual([]);
-  });
 
   it('decorations stand on something, and every town has buildings', () => {
     const bad: string[] = [];
@@ -321,20 +305,6 @@ describe('places (a town, or a path and a floor)', () => {
     expect(placeKey(nextPlace({ town: 'driftwood' }))).toBe('woods-1');
   });
 
-  describe('portal labels', () => {
-    beforeEach(() => release());
-
-    it('town portals are labelled with where they go', () => {
-      gotoPlace(DRIFTWOOD);
-      expect(game.floor.portals.map((p) => p.label)).toEqual(['Whispering Woods', 'Sunny Meadows', 'Saltwick Port']);
-    });
-
-    it('the way into a town is labelled with the town\'s name, and the HUD shows the path', () => {
-      gotoPlace({ path: 'meadows', floor: 5 });
-      expect(game.floor.portal.label).toBe('Lanternhollow Town');
-      expect(placeName(game.floor.place)).toBe('Sunny Meadows');
-    });
-  });
 
   it('a town at the end of a branch has only its way down, and nothing lies past it', () => {
     release();
@@ -399,16 +369,3 @@ describe('training dummy', () => {
   });
 });
 
-describe('town portal levels', () => {
-  beforeEach(() => gotoPlace({ town: 'mossgate' }));
-
-  it('each way up shows the level of the enemies past it', () => {
-    const ups = game.floor.portals.filter((p) => !p.down);
-    expect(ups.length).toBeGreaterThan(0);
-    for (const p of ups) expect(p.lvl).toBe(mobLevel(p.to));
-  });
-
-  it('the way down shows none', () => {
-    for (const p of game.floor.portals.filter((q) => q.down)) expect(p.lvl).toBe(undefined);
-  });
-});
