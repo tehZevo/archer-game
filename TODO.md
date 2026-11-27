@@ -31,3 +31,4 @@
 - Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.
 - Add a cheer mechanic: `/cheer <player>` on another player in the channel grants them a 10% EXP buff. You can store 3 cheers at a time, and one recharges per hour.
+- The dodge roll during held-Z (Gale Stream) should have 0.5s use time and 0.2s recovery time. The use time pauses the rapid fire, which resumes as soon as the recovery starts.
