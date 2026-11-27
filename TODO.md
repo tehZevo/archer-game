@@ -5,7 +5,6 @@
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
 - (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
-- Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
 - (design) Rename Glide.
 - (art) The comets in the background of the Observatory and Thistledown should fade out.
 - Reorganize the test suite for concision (~4,265 LOC / 896 checks → ~3,600 LOC / ~500 checks), in three steps, cheapest first:
@@ -17,7 +16,6 @@
 - (design) Assess the suite and determine which tests are low value. Roughly 900 checks cover ~15,000 LOC of behavioural code; decide which of them earn their keep and which are tautologies that pass no matter what the game does. Output: a short list of checks to drop outright, distinct from the consolidation work above.
 - Harder bosses should summon enemies, and even harder bosses should summon elites.
 - (design) Rename Downpour.
-- Air Q (Dive) should travel a fixed diagonal-downward distance equal to Rush Toss's horizontal distance. If it hits the ground mid-travel, it continues for the remaining distance and then performs the toss; if it's still airborne at the end, the player slows toward the end and drops without tossing.
 - (design) Consider renaming all jobs.
 - Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.

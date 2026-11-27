@@ -55,6 +55,7 @@ export const player: Player = {
   readyT, cdMax, usedT,
   diving: false,
   rolling: false,
+  diveDist: 0,
   rapid: { armed: false, on: false, t: 0, face: 1, pauseT: 0 },
   blitz: { charges: P.BLITZ_MAX, t: 0 },
   cast: null, castT: 0, castTotal: 0,

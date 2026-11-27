@@ -62,9 +62,9 @@ export const P = {
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
   DIVE_TIME: 0.3,      // s the plunge lasts before the landing roll
-  DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's)...
-  DIVE_ROLL_DIST: 64,  // ...px it travels at most...
+  DIVE_ROLL_V: 320,    // px/s the roll out of the dive's landing slides at (its own, apart from Rush Toss's), for what's left of RUSH_DIST...
   DIVE_ROLL_MAX: 0.32, // ...and s it lasts at most; its strike lands as it ends
+  DIVE_EASE: 24,       // px before the dive's travel runs out (still airborne) that it slows over
   PLUNGE_W: 56,        // Downpour: width of the column it rains into, px
   PLUNGE_DEPTH: 88,    // ...and how far below your feet it reaches, px (half the old 176)
   PLUNGE_HOP: 121.5,   // px/s bump added to your upward velocity (10% under 135)

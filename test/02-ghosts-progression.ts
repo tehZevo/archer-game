@@ -83,10 +83,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('Meteor Dive plunges you down and forward', player.y > y0 + 4 && player.vx !== 0, `dy ${(player.y - y0).toFixed(1)}`);
   step(24);
   check('the dive lands and rolls into the ground rush', player.onGround && !player.diving);
-  // from higher up: the landing frame itself starts the rush, a real one (it strikes)
+  // from a little higher: the landing frame itself starts the rush, a real one (it strikes)
   arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
-  const m = dummy(180);
-  player.y -= 60; player.onGround = false; player.vy = 0;
+  const m = dummy(160);
+  player.y -= 30; player.onGround = false; player.vy = 0;
   tap('q');
   let landed = -1, rushing = -1;
   for (let i = 0; i < 30 && rushing < 0; i++) {
@@ -98,6 +98,19 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   step(20);
   check('...and its strike lands, releasing the dive\'s links', m.hp < 1e6 && player.linkFrom === 'air-q' && linkable('ground-w') && !linkHeld('ground-w'),
     `from ${player.linkFrom}`);
+  // Its travel is Rush Toss's distance, diagonally: dived from high up, it runs
+  // out in the air, eases off and just drops, with no roll and no toss
+  arena(20); player.ranks['ground-q'] = true; player.ranks['air-q'] = true;
+  const hi = dummy(160);
+  player.y -= 140; player.onGround = false; player.vy = 0;
+  tap('q');
+  let outAt = -1, rolled = false;
+  for (let i = 0; i < 60 && !player.onGround; i++) { step(1); if (outAt < 0 && !player.diving) outAt = i; }
+  const travelled = player.diveDist, stillUp = outAt >= 0;
+  for (let i = 0; i < 20; i++) { step(1); if (player.rush.t > 0) rolled = true; }
+  check('a high dive ends in the air after RUSH_DIST, then drops with no roll or toss',
+    stillUp && Math.abs(travelled - P.RUSH_DIST) < 24 && !rolled && hi.hp === 1e6 && hi.airTime <= 0,
+    `out at ${outAt} travelled ${travelled.toFixed(0)} rolled ${rolled} hp ${hi.hp}`);
 }
 {
   // Cyclone Sweep: W's air form sweeps the enemies around you
@@ -183,8 +196,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   Math.random = saved;
   check('...and the miss starts the i-frame cooldown, quietly (no flashing)', player.invuln > 0.9 && player.invulnQuiet && !hurtPlayer(10, 0, 18),
     `invuln ${player.invuln.toFixed(2)} quiet ${player.invulnQuiet}`);
-  player.invuln = 0;
-  check('...and lands when the roll clears, flashing', hurtPlayer(10, 0, 18) && player.hp === player.hpMax - 10 && !player.invulnQuiet);
+  player.invuln = 0; Math.random = () => 0.9;
+  check('...and lands when the roll clears, flashing', (() => { const hit = hurtPlayer(10, 0, 18); Math.random = saved; return hit; })() && player.hp === player.hpMax - 10 && !player.invulnQuiet);
   player.hp = player.hpMax; player.invuln = 0;
   check('a mob two levels above lands on any roll', hurtPlayer(10, 0, 22) && player.hp === player.hpMax - 10);
   // Twin Echoes (passive): the shadow archer fires alongside you, doubling the
@@ -238,4 +251,20 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   player.blitz.charges = 1; player.blitz.t = 3; player.linkFrom = 'ground-q'; player.ranks['ground-w'] = true; player.casting.useT = 0;
   cast('ground-w');
   check('a linked skill speeds up the charge filling (it never sets it back)', player.blitz.t === 4, `blitzT ${player.blitz.t}`);
+}
+{
+  // A rush carries enemies through hitstun: one the slide's own hit would kill
+  // stays alive, travelling with you, until the carry ends; then it dies
+  arena(20); player.ranks['ground-q'] = true;
+  const m = dummy(player.x + 24); m.hp = 1;
+  tap('q');
+  let carriedAlive = 0, x0 = m.x;
+  for (let i = 0; i < 40 && player.rush.t > 0 || i < 2; i++) {
+    step(1);
+    if (game.mobs.includes(m) && player.rush.carry.some((c) => c.m === m)) carriedAlive++;
+  }
+  const moved = m.x - x0;
+  step(30);
+  check('a rush-carried enemy can\'t die until the carry ends, then does', carriedAlive > 2 && moved > 10 && !game.mobs.includes(m),
+    `carried alive ${carriedAlive} frames, moved ${moved.toFixed(0)}px, still here ${game.mobs.includes(m)}`);
 }
