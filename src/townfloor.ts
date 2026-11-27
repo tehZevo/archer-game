@@ -68,7 +68,7 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
   if (plan === 'market') {
     // two stall decks (shop left, trainer right), a bridge between them holding the way down
     const left = level(8, 8, 1), right = level(24, 8, 1), bridge = level(15, 10, 2);
-    ladder(8, left.top, G); rope(31, right.top, G);
+    ladder(8, left.top, G); rope(25, right.top, G);
     ladder(15, bridge.top, left.top); rope(24, bridge.top, right.top);
     npc('shop', at(10) + 4, left.top); npc('trainer', at(30) - 4, right.top);
     npc('board', at(10) + T / 2, G); npc('stylist', at(30), G); npc('pets', at(24) + 2, G); npc('sage', at(17) + 4, G);
@@ -99,7 +99,7 @@ export function townFloor(town: string, rng: Rng): Floor {
   const plan = townPlanFor(townIndex(town));
   const P = (x: number, y: number, to: Place, label: string): Portal => ({ x, y, w: 40, h: 56, to, label });
   // ways up at the ends of the ground (more than two paths up would share the right end)
-  const upX = [2 * T, WORLD.w - 2 * T];
+  const upX = [2 * T, WORLD.w - 6 * T];
   // ...labelled with where they lead, and the level of the enemies on the first floor up there
   const ups = pathsFrom(town).map((p, i) => {
     const to: Place = { path: p.id, floor: 1 };
@@ -143,8 +143,9 @@ export function townFloor(town: string, rng: Rng): Floor {
     platforms.push(...sh.tiles);
     return Math.min(...sh.tiles.map((t) => t.y));
   };
-  // the dummy stands on a low ledge against the right wall, one storey up
-  const perchTop = block('perch', PERCH_W, G - 5 * T), stepTop = block('step', 1, G - T);
+  // the dummy stands on its own low ledge against the right wall (clear of
+  // the minimap up in the corner), one tile up a step and a short ladder
+  const perchTop = block('perch', PERCH_W, G - 4 * T), stepTop = block('step', 1, G - T);
   ladder(COLS - 1, perchTop, stepTop);
   return {
     dummy: { x: (COLS - PERCH_W) * T + 4, y: perchTop },

@@ -340,13 +340,12 @@ describe('training dummy', () => {
     expect(ground().y - hop.y).toBeLessThanOrEqual(16);
   });
 
-  it('its perch is high enough over a way up under it', () => {
+  it('its perch sits low, with the way up beside it on the ground', () => {
     gotoPlace(DRIFTWOOD);
-    const perchBottom = Math.max(...game.floor.platforms
-      .filter((p) => p.block && p.x >= WORLD.w - 48 && p.y < ground().y - 16)
-      .map((p) => p.y + p.h));
+    const d = game.mobs.find((m) => m.training)!;
+    expect(ground().y - (d.y + d.h)).toBeLessThanOrEqual(6 * 16); // a few storeys, not seven
     const rightWayUp = game.floor.portals.find((q) => !q.down && q.x > WORLD.w / 2)!;
-    expect(ground().y - perchBottom).toBeGreaterThanOrEqual(rightWayUp.h);
+    expect(rightWayUp.y).toBe(ground().y);
   });
 
   it('takes hits and shows every number, but never dies, dodges, moves or gets angry', () => {
