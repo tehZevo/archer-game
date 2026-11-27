@@ -3,7 +3,7 @@ import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { ELITE, FX_DUR, P } from './config';
 import { TOMB, TOMB_PAL } from './tombart';
 import { deathPose, DEATH_T, ghostRise, getPlayerDeath, tombDrop, type Corpse } from './deaths';
-import { bakeDeathSheet, deathFrame } from './deathsheet';
+import { bakeDeathSheet, deathFrame, loadedDeathSheet } from './deathsheet';
 import { ctx } from './canvas';
 import { game, player } from './state';
 import { HITSTUN } from './combat';
@@ -47,20 +47,17 @@ function goldSilhouette(c: HTMLCanvasElement): HTMLCanvasElement {
 
 /* ---------------- enemy deaths (see deaths.ts) ---------------- */
 
-/** Each enemy's baked death sheet (deathsheet.ts), as canvases, built on its first death. */
-const deathSheets = new Map<string, { frames: HTMLCanvasElement[]; cx: number; cy: number }>();
+/** Each enemy's death sheet as canvases: its baked strip, or (until that
+ *  loads) one built from its painter, made on its first death. */
+const deathSheets = new Map<string, { frames: HTMLCanvasElement[]; cx: number; cy: number; baked: boolean }>();
 function deathSheetFor(c: Corpse): { frames: HTMLCanvasElement[]; cx: number; cy: number } | null {
-  let d = deathSheets.get(c.name);
-  if (!d) {
-    const sheet = bakeDeathSheet(c.name, c.recipe);
-    if (!sheet) return null;
-    d = {
-      cx: sheet.cx, cy: sheet.cy,
-      frames: sheet.frames.map(gridCanvas),
-    };
-    deathSheets.set(c.name, d);
-  }
-  return d;
+  const d = deathSheets.get(c.name), baked = loadedDeathSheet(c.name);
+  if (d && (d.baked || !baked)) return d;
+  const sheet = baked ?? bakeDeathSheet(c.name, c.recipe);
+  if (!sheet) return null;
+  const made = { cx: sheet.cx, cy: sheet.cy, frames: sheet.frames.map(gridCanvas), baked: !!baked };
+  deathSheets.set(c.name, made);
+  return made;
 }
 
 export function drawCorpse(c: Corpse): void {

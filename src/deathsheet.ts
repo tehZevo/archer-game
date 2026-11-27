@@ -4,20 +4,24 @@ import { shade, Sprite } from './sprites';
 
 /* ============================================================
    ENEMY DEATH SHEETS
-   Each enemy's death is a baked strip of drawn frames, built once from
+   Each enemy's death is a baked strip of frames (assets/mobs/death, written
+   by `npm run bake`); drawing a death is just picking the frame for its age.
+   The strips are authored here, from
    its death painter (mobdeath.ts / deathdrawn.ts: its own body, in its
    own colours, keeling over, cracking, splatting, crumbling...), cel
    shaded like its walk cycle, fading out with an ordered dither at the
    very end, with the bits that fly off it (feathers, gears, shards...)
    painted in as pixels. Drawing a death is just picking the frame for
    its age. Pure pixel buffers here; drawentities.ts turns them into
-   canvases.
+   canvases. Until its PNG has loaded (or headless), a sheet is built from
+   its painter instead.
    ============================================================ */
 
 /** Frames per death (DEATH_T long, so ~13fps). */
 export const DEATH_FRAMES = 14;
 
-import { fillRect, type Grid } from './grid';
+import { canvasGrid, fillRect, type Grid } from './grid';
+import { BAKED_DEATHS } from './mobbaked';
 export type { Grid } from './grid';
 
 export interface DeathSheet {
@@ -101,3 +105,23 @@ export function bakeDeathSheet(name: string, recipe: DeathRecipe): DeathSheet | 
 
 /** The frame a death shows at its age. */
 export const deathFrame = (age: number): number => Math.min(DEATH_FRAMES - 1, Math.floor((age / DEATH_T) * DEATH_FRAMES));
+
+/** A baked death strip's PNG (a data URL) and layout: n frames of w x h, the body's middle at (cx, cy). */
+export interface BakedDeath { src: string; w: number; h: number; n: number; cx: number; cy: number }
+
+const loaded = new Map<string, DeathSheet>();
+
+/** Start decoding every baked death strip (no-op headless). */
+export function loadDeathSheets(): void {
+  if (typeof Image === 'undefined') return;
+  for (const [name, s] of Object.entries(BAKED_DEATHS)) {
+    const img = new Image();
+    img.onload = () => {
+      loaded.set(name, { frames: Array.from({ length: s.n }, (_, f) => canvasGrid(img, s.w, s.h, f * s.w)), cx: s.cx, cy: s.cy });
+    };
+    img.src = s.src;
+  }
+}
+
+/** An enemy's baked death sheet, once its PNG has loaded. */
+export const loadedDeathSheet = (name: string): DeathSheet | undefined => loaded.get(name);

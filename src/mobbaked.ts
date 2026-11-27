@@ -67,7 +67,76 @@ import m64 from '../assets/mobs/black-knight.png';
 import m65 from '../assets/mobs/bronze-gargoyle.png';
 import m66 from '../assets/mobs/storm-ray.png';
 import m67 from '../assets/mobs/ice-yeti.png';
+import d0 from '../assets/mobs/death/garden-snail.png';
+import d1 from '../assets/mobs/death/enemy-crab.png';
+import d2 from '../assets/mobs/death/hermit-crab.png';
+import d3 from '../assets/mobs/death/gull.png';
+import d4 from '../assets/mobs/death/boar.png';
+import d5 from '../assets/mobs/death/wisp.png';
+import d6 from '../assets/mobs/death/iron-hog.png';
+import d7 from '../assets/mobs/death/beetle.png';
+import d8 from '../assets/mobs/death/rabbit.png';
+import d9 from '../assets/mobs/death/bee.png';
+import d10 from '../assets/mobs/death/frog.png';
+import d11 from '../assets/mobs/death/otter.png';
+import d12 from '../assets/mobs/death/goat.png';
+import d13 from '../assets/mobs/death/hawk.png';
+import d14 from '../assets/mobs/death/bat.png';
+import d15 from '../assets/mobs/death/rock-crawler.png';
+import d16 from '../assets/mobs/death/slime.png';
+import d17 from '../assets/mobs/death/mushling.png';
+import d18 from '../assets/mobs/death/spore-puff.png';
+import d19 from '../assets/mobs/death/crystal-golem.png';
+import d20 from '../assets/mobs/death/shard-bat.png';
+import d21 from '../assets/mobs/death/ruin-guardian.png';
+import d22 from '../assets/mobs/death/jellyfish.png';
+import d23 from '../assets/mobs/death/windup-soldier.png';
+import d24 from '../assets/mobs/death/clockwork-bird.png';
+import d25 from '../assets/mobs/death/dream-moth.png';
+import d26 from '../assets/mobs/death/shadow-fox.png';
+import d27 from '../assets/mobs/death/reflection.png';
+import d28 from '../assets/mobs/death/ice-wisp.png';
+import d29 from '../assets/mobs/death/star-sprite.png';
+import d30 from '../assets/mobs/death/meteor-golem.png';
+import d31 from '../assets/mobs/death/void-blossom.png';
+import d32 from '../assets/mobs/death/cinder-hound.png';
+import d33 from '../assets/mobs/death/ash-wisp.png';
+import d34 from '../assets/mobs/death/armor-knight.png';
+import d35 from '../assets/mobs/death/keep-rat.png';
+import d36 from '../assets/mobs/death/gargoyle.png';
+import d37 from '../assets/mobs/death/choir-spirit.png';
+import d38 from '../assets/mobs/death/reef-ray.png';
+import d39 from '../assets/mobs/death/coral-crawler.png';
+import d40 from '../assets/mobs/death/yeti.png';
+import d41 from '../assets/mobs/death/frost-wolf.png';
+import d42 from '../assets/mobs/death/null-wraith.png';
+import d43 from '../assets/mobs/death/red-snail.png';
+import d44 from '../assets/mobs/death/green-snail.png';
+import d45 from '../assets/mobs/death/blue-crab.png';
+import d46 from '../assets/mobs/death/wild-boar.png';
+import d47 from '../assets/mobs/death/storm-gull.png';
+import d48 from '../assets/mobs/death/horned-beetle.png';
+import d49 from '../assets/mobs/death/brown-hare.png';
+import d50 from '../assets/mobs/death/poison-frog.png';
+import d51 from '../assets/mobs/death/ram.png';
+import d52 from '../assets/mobs/death/ember-crawler.png';
+import d53 from '../assets/mobs/death/bog-slime.png';
+import d54 from '../assets/mobs/death/toadstool.png';
+import d55 from '../assets/mobs/death/quartz-golem.png';
+import d56 from '../assets/mobs/death/ruin-sentinel.png';
+import d57 from '../assets/mobs/death/blue-jelly.png';
+import d58 from '../assets/mobs/death/windup-captain.png';
+import d59 from '../assets/mobs/death/ghost-fox.png';
+import d60 from '../assets/mobs/death/dark-reflection.png';
+import d61 from '../assets/mobs/death/comet-golem.png';
+import d62 from '../assets/mobs/death/thorn-blossom.png';
+import d63 from '../assets/mobs/death/magma-hound.png';
+import d64 from '../assets/mobs/death/black-knight.png';
+import d65 from '../assets/mobs/death/bronze-gargoyle.png';
+import d66 from '../assets/mobs/death/storm-ray.png';
+import d67 from '../assets/mobs/death/ice-yeti.png';
 import type { BakedMob } from './sprites';
+import type { BakedDeath } from './deathsheet';
 
 export const BAKED_MOBS: Record<string, BakedMob> = {
   "Garden Snail": { src: m0, w: 17, h: 14, n: 4, fps: 6 },
@@ -138,4 +207,75 @@ export const BAKED_MOBS: Record<string, BakedMob> = {
   "Bronze Gargoyle": { src: m65, w: 20, h: 14, n: 4, fps: 12 },
   "Storm Ray": { src: m66, w: 22, h: 16, n: 4, fps: 12 },
   "Ice Yeti": { src: m67, w: 20, h: 24, n: 4, fps: 12 },
+};
+
+export const BAKED_DEATHS: Record<string, BakedDeath> = {
+  "Garden Snail": { src: d0, w: 61, h: 58, n: 14, cx: 30, cy: 29 },
+  "Enemy Crab": { src: d1, w: 64, h: 56, n: 14, cx: 32, cy: 28 },
+  "Hermit Crab": { src: d2, w: 63, h: 60, n: 14, cx: 31, cy: 30 },
+  "Gull": { src: d3, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Boar": { src: d4, w: 67, h: 62, n: 14, cx: 33, cy: 31 },
+  "Wisp": { src: d5, w: 60, h: 61, n: 14, cx: 30, cy: 30 },
+  "Iron Hog": { src: d6, w: 70, h: 65, n: 14, cx: 35, cy: 32 },
+  "Beetle": { src: d7, w: 60, h: 55, n: 14, cx: 30, cy: 27 },
+  "Rabbit": { src: d8, w: 59, h: 60, n: 14, cx: 29, cy: 30 },
+  "Bee": { src: d9, w: 62, h: 60, n: 14, cx: 31, cy: 30 },
+  "Frog": { src: d10, w: 60, h: 55, n: 14, cx: 30, cy: 27 },
+  "Otter": { src: d11, w: 66, h: 58, n: 14, cx: 33, cy: 29 },
+  "Goat": { src: d12, w: 64, h: 61, n: 14, cx: 32, cy: 30 },
+  "Hawk": { src: d13, w: 64, h: 57, n: 14, cx: 32, cy: 28 },
+  "Bat": { src: d14, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Rock Crawler": { src: d15, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Slime": { src: d16, w: 60, h: 57, n: 14, cx: 30, cy: 28 },
+  "Mushling": { src: d17, w: 60, h: 62, n: 14, cx: 30, cy: 31 },
+  "Spore Puff": { src: d18, w: 58, h: 58, n: 14, cx: 29, cy: 29 },
+  "Crystal Golem": { src: d19, w: 62, h: 68, n: 14, cx: 31, cy: 34 },
+  "Shard Bat": { src: d20, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Ruin Guardian": { src: d21, w: 62, h: 66, n: 14, cx: 31, cy: 33 },
+  "Jellyfish": { src: d22, w: 58, h: 59, n: 14, cx: 29, cy: 29 },
+  "Windup Soldier": { src: d23, w: 64, h: 64, n: 14, cx: 32, cy: 32 },
+  "Clockwork Bird": { src: d24, w: 64, h: 57, n: 14, cx: 32, cy: 28 },
+  "Dream Moth": { src: d25, w: 64, h: 60, n: 14, cx: 32, cy: 30 },
+  "Shadow Fox": { src: d26, w: 64, h: 59, n: 14, cx: 32, cy: 29 },
+  "Reflection": { src: d27, w: 56, h: 66, n: 14, cx: 28, cy: 33 },
+  "Ice Wisp": { src: d28, w: 58, h: 58, n: 14, cx: 29, cy: 29 },
+  "Star Sprite": { src: d29, w: 58, h: 58, n: 14, cx: 29, cy: 29 },
+  "Meteor Golem": { src: d30, w: 64, h: 66, n: 14, cx: 32, cy: 33 },
+  "Void Blossom": { src: d31, w: 62, h: 62, n: 14, cx: 31, cy: 31 },
+  "Cinder Hound": { src: d32, w: 64, h: 59, n: 14, cx: 32, cy: 29 },
+  "Ash Wisp": { src: d33, w: 58, h: 58, n: 14, cx: 29, cy: 29 },
+  "Armor Knight": { src: d34, w: 60, h: 66, n: 14, cx: 30, cy: 33 },
+  "Keep Rat": { src: d35, w: 60, h: 55, n: 14, cx: 30, cy: 27 },
+  "Gargoyle": { src: d36, w: 64, h: 58, n: 14, cx: 32, cy: 29 },
+  "Choir Spirit": { src: d37, w: 58, h: 62, n: 14, cx: 29, cy: 31 },
+  "Reef Ray": { src: d38, w: 66, h: 60, n: 14, cx: 33, cy: 30 },
+  "Coral Crawler": { src: d39, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Yeti": { src: d40, w: 64, h: 68, n: 14, cx: 32, cy: 34 },
+  "Frost Wolf": { src: d41, w: 66, h: 59, n: 14, cx: 33, cy: 29 },
+  "Null Wraith": { src: d42, w: 58, h: 62, n: 14, cx: 29, cy: 31 },
+  "Red Snail": { src: d43, w: 61, h: 58, n: 14, cx: 30, cy: 29 },
+  "Green Snail": { src: d44, w: 55, h: 54, n: 14, cx: 27, cy: 27 },
+  "Blue Crab": { src: d45, w: 64, h: 57, n: 14, cx: 32, cy: 28 },
+  "Wild Boar": { src: d46, w: 67, h: 62, n: 14, cx: 33, cy: 31 },
+  "Storm Gull": { src: d47, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Horned Beetle": { src: d48, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Brown Hare": { src: d49, w: 59, h: 60, n: 14, cx: 29, cy: 30 },
+  "Poison Frog": { src: d50, w: 60, h: 55, n: 14, cx: 30, cy: 27 },
+  "Ram": { src: d51, w: 66, h: 62, n: 14, cx: 33, cy: 31 },
+  "Ember Crawler": { src: d52, w: 62, h: 56, n: 14, cx: 31, cy: 28 },
+  "Bog Slime": { src: d53, w: 62, h: 58, n: 14, cx: 31, cy: 29 },
+  "Toadstool": { src: d54, w: 64, h: 66, n: 14, cx: 32, cy: 33 },
+  "Quartz Golem": { src: d55, w: 62, h: 68, n: 14, cx: 31, cy: 34 },
+  "Ruin Sentinel": { src: d56, w: 62, h: 66, n: 14, cx: 31, cy: 33 },
+  "Blue Jelly": { src: d57, w: 58, h: 59, n: 14, cx: 29, cy: 29 },
+  "Windup Captain": { src: d58, w: 64, h: 65, n: 14, cx: 32, cy: 32 },
+  "Ghost Fox": { src: d59, w: 64, h: 59, n: 14, cx: 32, cy: 29 },
+  "Dark Reflection": { src: d60, w: 56, h: 66, n: 14, cx: 28, cy: 33 },
+  "Comet Golem": { src: d61, w: 64, h: 66, n: 14, cx: 32, cy: 33 },
+  "Thorn Blossom": { src: d62, w: 62, h: 62, n: 14, cx: 31, cy: 31 },
+  "Magma Hound": { src: d63, w: 64, h: 59, n: 14, cx: 32, cy: 29 },
+  "Black Knight": { src: d64, w: 60, h: 66, n: 14, cx: 30, cy: 33 },
+  "Bronze Gargoyle": { src: d65, w: 64, h: 58, n: 14, cx: 32, cy: 29 },
+  "Storm Ray": { src: d66, w: 66, h: 60, n: 14, cx: 33, cy: 30 },
+  "Ice Yeti": { src: d67, w: 64, h: 68, n: 14, cx: 32, cy: 34 },
 };

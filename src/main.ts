@@ -14,6 +14,7 @@ import { bindMenu } from './menudom';
 import { bindChat } from './chatdom';
 import { loadFxSheets } from './fxsheets';
 import { loadMobSheets } from './sprites';
+import { loadDeathSheets } from './deathsheet';
 import { loadTileSheets } from './tilebake';
 import { loadArtSheets } from './artsheets';
 import { loadArcherSheets } from './archer';
@@ -77,6 +78,7 @@ void loadLayout(); // key labels follow the keyboard layout
 net.joinLobby();
 loadFxSheets(); // skill effects, baked to PNG (see fxsheets.ts)
 loadMobSheets(); // enemies, likewise (see sprites.ts)
+loadDeathSheets(); // and their deaths (see deathsheet.ts)
 loadTileSheets(Object.values(TILESETS)); // and tilesets (see tilebake.ts)
 loadArtSheets(); // and the scenery: props, town decor, backdrops (see artsheets.ts)
 loadArcherSheets(); // and the archer (see archer.ts)
