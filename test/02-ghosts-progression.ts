@@ -191,13 +191,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   check('Double Shot fires two arrows with no Twin Echoes', shotCount(rank('z')) === 2, `${shotCount(rank('z'))}`);
   player.ranks.es = true;
   check('Twin Echoes doubles Double Shot\'s arrows', shotCount(rank('z')) === 4, `${shotCount(rank('z'))}`);
-  player.ranks.z = true;
-  check('...and it scales with the skill\'s own rank', shotCount(rank('z')) === 4, `${shotCount(rank('z'))}`);
-  player.ranks.es = true;
-  check('Twin Echoes stays doubled at max rank', shotCount(rank('z')) === 4, `${shotCount(rank('z'))}`);
   check('Twin Echoes unlocks at Lv.30 and is a passive', SKILLS.es.minLevel === 30 && SKILLS.es.passive === true);
-  player.ranks.es = false;
-  check("a passive's bonus is one lot of arrows until learned", shotCount(rank('z')) === 2);
   arena(20); player.ranks.z = true; player.ranks.es = true;
   check('the shadow doubles a mid-air Downpour too', shotCount(rank('air-e')) === 4, `${shotCount(rank('air-e'))}`);
 }

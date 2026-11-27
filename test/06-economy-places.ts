@@ -98,12 +98,14 @@ import { gainExp, JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage,
   check('the game starts in the Harbor, a town below the Beach', START.town === 'saltwick' && areaOf(START) === 'Harbor' && placeName(START) === 'Saltwick Port'
     && pathsFrom('saltwick').length === 1 && pathsFrom('saltwick')[0].name === 'Sunlit Shore');
   check('the Tide Pools are a high branch, past the Sunken Ruins', depthOfPath('tidepools') >= 5 && pathsInto(PATHS.find((p) => p.id === 'tidepools')!.from)[0].name === 'Sunken Ruins');
-  check('places read as the area (no floor number), or the town', placeName(START) === 'Saltwick Port' && placeName({ path: 'shore', floor: 1 }) === 'Sunlit Shore' && placeName({ path: 'woods', floor: 2 }) === 'Whispering Woods');
-  check('every town is named apart', placeName({ town: 'mossgate' }) === 'Mossgate Village' && placeName({ town: 'lanternhollow' }) === 'Lanternhollow Town'
+  check('places read as the area (no floor number), or the town, and every town is named apart',
+    placeName(START) === 'Saltwick Port' && placeName({ path: 'shore', floor: 1 }) === 'Sunlit Shore' && placeName({ path: 'woods', floor: 2 }) === 'Whispering Woods'
+    && placeName({ town: 'mossgate' }) === 'Mossgate Village' && placeName({ town: 'lanternhollow' }) === 'Lanternhollow Town'
     && new Set(TOWNS.map((t) => t.name)).size === TOWNS.length);
-  check('paths are climbed one way: a town\'s ways up all lead to deeper towns', PATHS.every((p) => townDepth(p.to) > townDepth(p.from)));
-  check('a fork leads into two different areas', TOWNS.every((t) => { const up = pathsFrom(t.id); return up.length < 2 || up[0].name !== up[1].name; }));
-  check('branches can end short of the top tier (a town with no way up)', TOWNS.some((t) => pathsFrom(t.id).length === 0 && townDepth(t.id) < Math.max(...TOWNS.map((u) => townDepth(u.id)))));
+  check('the tower climbs one way: a town\'s ways up lead to deeper, distinct areas, and branches can end short of the top',
+    PATHS.every((p) => townDepth(p.to) > townDepth(p.from))
+    && TOWNS.every((t) => { const up = pathsFrom(t.id); return up.length < 2 || up[0].name !== up[1].name; })
+    && TOWNS.some((t) => pathsFrom(t.id).length === 0 && townDepth(t.id) < Math.max(...TOWNS.map((u) => townDepth(u.id)))));
   check('the last floor of a path is its end (the boss floor)', isPathEnd({ path: 'shore', floor: 3 }) && isPathEnd({ path: 'woods', floor: 5 }) && !isPathEnd({ path: 'woods', floor: 4 }) && !isPathEnd(START));
   check('a path ends in its town; a town leads up its leftmost path', placeKey(nextPlace({ path: 'shore', floor: 3 })) === 'driftwood'
     && placeKey(nextPlace({ path: 'shore', floor: 1 })) === 'shore-2' && placeKey(nextPlace({ town: 'driftwood' })) === 'woods-1');
