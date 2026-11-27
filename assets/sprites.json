@@ -182,14 +182,7 @@
     "Ice Yeti": {"file":"mobs/death/ice-yeti.png","w":64,"h":68,"frames":14,"x":32,"y":34}
   },
   "art": {
-    "portal/0": {"file":"art/portal-0.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/1": {"file":"art/portal-1.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/2": {"file":"art/portal-2.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/3": {"file":"art/portal-3.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/4": {"file":"art/portal-4.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/5": {"file":"art/portal-5.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/6": {"file":"art/portal-6.png","w":20,"h":30,"frames":1,"x":0,"y":0},
-    "portal/7": {"file":"art/portal-7.png","w":20,"h":30,"frames":1,"x":0,"y":0},
+    "portal": {"file":"art/portal.png","w":20,"h":30,"frames":1,"x":0,"y":0},
     "npc/board": {"file":"art/npc-board.png","w":12,"h":18,"frames":1,"x":0,"y":0},
     "hud/panel": {"file":"art/hud-panel.png","w":234,"h":15,"frames":1,"x":0,"y":0},
     "npc/shop/0": {"file":"art/npc-shop-0.png","w":16,"h":24,"frames":1,"x":0,"y":0},
