@@ -10,7 +10,7 @@ import { clearPressed, setKey } from '../src/input';
 import { tick } from '../src/loop';
 import { jobForLevel, recalcStats } from '../src/progress';
 import { MOB_TYPES, P } from '../src/config';
-import { closeLinks } from '../src/links';
+import { closeLinks, linkHeld } from '../src/links';
 import { clearPlayerDeath } from '../src/deaths';
 import { nextPlace, START, type Place } from '../src/world';
 import type { Mob, Platform } from '../src/types';
@@ -18,6 +18,11 @@ import type { Mob, Platform } from '../src/types';
 /** Run the game for `n` fixed steps (frames). */
 export function step(n = 1): void {
   for (let i = 0; i < n; i++) tick();
+}
+
+/** Step until the current cast lets links through (a rush's whole use time). */
+export function linksOpen(): void {
+  for (let i = 0; i < 90 && linkHeld('z'); i++) step(1);
 }
 
 /** Every key the tests press. */

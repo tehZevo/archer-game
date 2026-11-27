@@ -12,10 +12,10 @@ import type { SkillKey } from './types';
    waiting A out. There are no timers: once A's cast is over, a press is
    a normal cast.
 
-   "Recovery begins" is the end of A's animation, except where A waits
-   on an event:
-     Rush Toss / Electric Blitz   the slide's strike landing (rushHolding)
-     Meteor Dive                  the landing roll's strike (rushHolding)
+   "Recovery begins" is the end of A's animation (its use time), except
+   where A waits on an event:
+     Rush Toss / Electric Blitz   the end of the use time, after the slide's strike
+     Meteor Dive                  the end of the use time, after the landing roll
      Skyward Assault              the leap's peak for the Cyclone Sweep,
                                   the hover's end for Tempest and Downpour
    ============================================================ */
@@ -34,7 +34,8 @@ export const chainsZ = (): boolean => player.linkFrom !== null && RUSHES.has(pla
 export function linkHeld(_kind: SkillKey): boolean {
   const from = player.linkFrom;
   if (from === null) return false;
-  if (RUSHES.has(from)) return rushHolding();
+  // a rush waits out its strike (or the Dive its landing roll) and then the rest of its use time
+  if (RUSHES.has(from)) return rushHolding() || player.casting.useT > 0;
   // every skill linked out of the Assault fires at the end of the hover
   if (from === 'ab') return player.hang.t > 0;
   return player.casting.useT > 0;

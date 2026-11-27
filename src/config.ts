@@ -54,7 +54,7 @@ export const P = {
   // Electric Blitz: Q's charged upgrade. A rush you can bank up to 2 of.
   BLITZ_CHARGE_T: 4,   // s to recharge one charge, its only cooldown: one charge refills at a time (a linked skill cuts 1s off)
   BLITZ_MAX: 2,        // charges banked at full
-  RUSH_HOLD: 0.34,    // s a rush holds back the links pressed during it (the slide and its strike); its animation runs on to the use time
+  RUSH_HOLD: 0.34,    // s a rush's slide and strike: movement stays locked through it (links off it wait out the whole use time)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Rush Toss)
   BLITZ_DIST: 96,      // px the blitz travels
   // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
