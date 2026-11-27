@@ -8,7 +8,6 @@
 - Increase the miss chance both ways (player→mob and mob→player) to 10% per level.
 - Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
 - Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
-- Allow switching direction midair after a Glide, even during the skill's use/recovery.
 - HUD meters: show the EXP meter as a percentage (%) instead of A/B, and show HP/MP as the current value (e.g. 500, 1.5k) instead of A/B.
 - (design) Rename Glide.
 - (art) The comets in the background of the Observatory and Thistledown should fade out.
@@ -24,7 +23,6 @@
 - Harder bosses should summon enemies, and even harder bosses should summon elites.
 - (design) Rename Downpour.
 - Air Q (Dive) should travel a fixed diagonal-downward distance equal to Rush Toss's horizontal distance. If it hits the ground mid-travel, it continues for the remaining distance and then performs the toss; if it's still airborne at the end, the player slows toward the end and drops without tossing.
-- (bug) Piercing Leap (`ground-e`) no longer makes you leap.
 - (design) Consider renaming all jobs.
 - Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.

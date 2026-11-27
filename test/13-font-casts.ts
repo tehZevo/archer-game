@@ -7,6 +7,27 @@ import { bubbleable, bubbleText, bubbleWidth, DMG_H, seeded, cleanEmote, clearEm
 }
 
 {
+  // after a Glide you can turn round in the air, even in its use/recovery
+  arena(20); player.ranks.d = true; player.face = 1;
+  tap('c'); step(8); tap('d'); step(1);
+  const gliding = player.casting.key === 'd' && player.casting.useT > 0 && player.vx > 0;
+  setKey('left', true); step(1); setKey('left', false);
+  check('you can turn round mid-Glide (the tumble keeps its momentum)', gliding && player.face === -1 && player.vx > 0 && !player.onGround,
+    `gliding ${gliding} face ${player.face} vx ${player.vx.toFixed(0)}`);
+  step(40);
+}
+{
+  // Piercing Leap from a raised platform rises off that platform, not the ground slab
+  arena(20); player.ranks['ground-e'] = true;
+  const deck = { x: player.x - 40, y: ground().y - 60, w: 80, h: 16 };
+  game.floor.platforms.push(deck);
+  player.y = deck.y - player.h; player.vy = 0; step(2);
+  const top = player.y; let best = top;
+  tap('e'); for (let i = 0; i < 40; i++) { step(1); best = Math.min(best, player.y); }
+  check('Piercing Leap off a raised platform still leaps', top - best > 35, `${(top - best).toFixed(1)}px (on deck ${top === deck.y - player.h})`);
+  game.floor.platforms.pop();
+}
+{
   // Piercing Leap off a jump: the tornado's launch is a lift off the floor, so an
   // early cast doesn't stack its full height on top of the jump's.
   arena(20); player.ranks['ground-e'] = true;

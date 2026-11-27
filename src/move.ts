@@ -152,8 +152,11 @@ function steer(dt: number, locked: boolean): void {
   // it stays put (you can't turn mid-skill), and the buffered skill carries the
   // direction you press it with. A Gale Stream holds its facing: walking
   // backward keeps it firing ahead.
-  if (!streaming() && !locked && held('left')) player.face = -1;
-  if (!streaming() && !locked && held('right')) player.face = 1;
+  // A Glide's commitment is the exception: in the air you can turn round in
+  // its use and recovery (the tumble keeps its momentum; only facing turns).
+  const turn = !streaming() && (!locked || (!player.onGround && player.casting.key === 'd'));
+  if (turn && held('left')) player.face = -1;
+  if (turn && held('right')) player.face = 1;
   let target = 0;
   const speed = P.WALK * nimbleSpeed();
   if (!locked && held('left'))  target = -speed * slow;
