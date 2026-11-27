@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --minify --loader:.png=dataurl",
-    "test": "esbuild test/smoke.ts --bundle --outfile=.tmp/smoke.cjs --platform=node --target=node18 --loader:.png=dataurl && node .tmp/smoke.cjs && vitest run",
-    "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --loader:.png=dataurl --watch=forever",
+    "build": "npm run typecheck && node scripts/esbuild.mjs src/main.ts dist/bundle.js --minify",
+    "test": "node scripts/esbuild.mjs test/smoke.ts .tmp/smoke.cjs --node && node .tmp/smoke.cjs && vitest run",
+    "watch": "node scripts/esbuild.mjs src/main.ts dist/bundle.js --watch",
     "dev": "npm run build:dev & python3 -m http.server 8000 --bind 0.0.0.0",
-    "build:dev": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --target=es2020 --loader:.png=dataurl --watch=forever",
+    "build:dev": "node scripts/esbuild.mjs src/main.ts dist/bundle.js --watch",
     "start": "python3 -m http.server 8000 --bind 0.0.0.0",
-    "bake": "esbuild scripts/bake.ts --bundle --outfile=.tmp/bake.cjs --platform=node --target=node18 --loader:.png=dataurl --log-level=warning && node .tmp/bake.cjs",
-    "fxpreview": "esbuild scripts/fxpreview.ts --bundle --outfile=.tmp/fxpreview.cjs --platform=node --target=node18 --loader:.png=dataurl --log-level=warning && node .tmp/fxpreview.cjs",
+    "bake": "node scripts/esbuild.mjs scripts/bake.ts .tmp/bake.cjs --node && node .tmp/bake.cjs",
+    "fxpreview": "node scripts/esbuild.mjs scripts/fxpreview.ts .tmp/fxpreview.cjs --node && node .tmp/fxpreview.cjs",
     "test:watch": "vitest"
   },
   "devDependencies": {

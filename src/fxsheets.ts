@@ -1,22 +1,19 @@
 import { FX_GEN, FX_SIZED } from './fxsprites';
 import { makeCanvas, sheetAnim, type FxAnim } from './fxlight';
-import { BAKED } from './fxbaked';
+import { BAKED_FX, type BakedSprite } from './baked';
 
 /* ============================================================
    EFFECT SHEETS
    Skill effects ship as PNG sprite sheets (assets/fx/<name>.png): one
    horizontal strip per effect, frame f at x = f * w, facing right, drawn
    additively. The sheets are baked from the procedural generators in
-   fxsprites.ts by `npm run bake` (scripts/bake.ts), which also writes
-   fxbaked.ts with each sheet's frame size and origin.
+   fxsprites.ts by `npm run bake` (scripts/bake.ts), which also indexes
+   each sheet's frame size and origin in assets/sprites.json (see baked.ts).
 
    Each effect converts on its own: fx(name) draws the baked sheet once it
    has loaded, and falls back to running the generator (an effect not baked
    yet, or a sheet still decoding), so the game plays the same throughout.
    ============================================================ */
-
-/** A baked sheet's PNG (a data URL) and layout. */
-export interface BakedSheet { src: string; w: number; h: number; n: number; ox: number; oy: number }
 
 /** Baked sheets that have loaded, cut into frames. */
 const loaded = new Map<string, FxAnim>();
@@ -24,9 +21,9 @@ const loaded = new Map<string, FxAnim>();
 const generated = new Map<string, FxAnim>();
 
 /** Cut a loaded sheet into frame canvases, and mirrored ones for facing left. */
-function cut(img: HTMLImageElement, s: BakedSheet): FxAnim {
+function cut(img: HTMLImageElement, s: BakedSprite): FxAnim {
   const frames: HTMLCanvasElement[] = [], flipped: HTMLCanvasElement[] = [];
-  for (let f = 0; f < s.n; f++) {
+  for (let f = 0; f < s.frames; f++) {
     const a = makeCanvas(s.w, s.h), b = makeCanvas(s.w, s.h);
     a.getContext('2d')!.drawImage(img, f * s.w, 0, s.w, s.h, 0, 0, s.w, s.h);
     const g = b.getContext('2d')!;
@@ -34,13 +31,13 @@ function cut(img: HTMLImageElement, s: BakedSheet): FxAnim {
     g.drawImage(a, 0, 0);
     frames.push(a); flipped.push(b);
   }
-  return { frames, flipped, ox: s.ox, oy: s.oy };
+  return { frames, flipped, ox: s.x, oy: s.y };
 }
 
 /** Start decoding every baked sheet (no-op headless). */
 export function loadFxSheets(): void {
   if (typeof Image === 'undefined') return;
-  for (const [name, s] of Object.entries(BAKED)) {
+  for (const [name, s] of Object.entries(BAKED_FX)) {
     const img = new Image();
     img.onload = () => loaded.set(name, cut(img, s));
     img.src = s.src;

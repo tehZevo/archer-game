@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
+// @ts-expect-error: a plain .mjs script, shared with the esbuild build (no types)
+import { MODULE, moduleSource } from './scripts/pngglob.mjs';
 
 // The game is bundled with esbuild's `--loader:.png=dataurl`: importing a .png
 // gives you its contents as a data URL string. This does the same in tests.
@@ -13,8 +15,15 @@ const pngAsDataUrl = {
   },
 };
 
+// `import urls from 'sprite-urls'`: every PNG under assets/ by path (see scripts/pngglob.mjs).
+const pngGlob = {
+  name: 'png-glob',
+  resolveId: (id: string): string | null => (id === MODULE ? '\0' + MODULE : null),
+  load: (id: string): string | null => (id === '\0' + MODULE ? moduleSource() : null),
+};
+
 export default defineConfig({
-  plugins: [pngAsDataUrl],
+  plugins: [pngAsDataUrl, pngGlob],
   test: {
     include: ['test/**/*.test.ts'],
     setupFiles: ['test/setup.ts'],

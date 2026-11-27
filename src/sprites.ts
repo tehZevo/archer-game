@@ -5,7 +5,7 @@
 import { FRAMES, HURT, MOB_ART, mobSize, paintMob } from './mobart';
 import { VARIANT_ART } from './variantart';
 import { canvasGrid, fillRect, gridCanvas, newGrid, type Grid } from './grid';
-import { BAKED_MOBS } from './mobbaked';
+import { BAKED_MOBS } from './baked';
 
 /** A sprite's pixels, and its canvas (made on first draw). */
 export class Sprite {
@@ -348,9 +348,6 @@ export const MOB_GEN: Record<string, () => MobAnim> = {
   ...Object.fromEntries(Object.keys(MOB_ART).map((n) => [n, () => artMob(n, MOB_ART[n].look.w > 17 ? 12 : 14)])),
 };
 
-/** A baked enemy sheet's PNG (a data URL) and layout: n frames, then the hurt pose. */
-export interface BakedMob { src: string; w: number; h: number; n: number; fps: number }
-
 const loaded = new Map<string, MobAnim>();
 const generated = new Map<string, MobAnim>();
 
@@ -361,7 +358,7 @@ export function loadMobSheets(): void {
     const img = new Image();
     img.onload = () => {
       const cut = (f: number): Sprite => new Sprite(s.w, s.h, canvasGrid(img, s.w, s.h, f * s.w));
-      loaded.set(name, { frames: Array.from({ length: s.n }, (_, f) => cut(f)), fps: s.fps, hurt: cut(s.n) });
+      loaded.set(name, { frames: Array.from({ length: s.frames }, (_, f) => cut(f)), fps: s.fps, hurt: cut(s.frames) });
     };
     img.src = s.src;
   }

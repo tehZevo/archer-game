@@ -21,7 +21,7 @@ import { shade, Sprite } from './sprites';
 export const DEATH_FRAMES = 14;
 
 import { canvasGrid, fillRect, type Grid } from './grid';
-import { BAKED_DEATHS } from './mobbaked';
+import { BAKED_DEATHS } from './baked';
 export type { Grid } from './grid';
 
 export interface DeathSheet {
@@ -106,9 +106,6 @@ export function bakeDeathSheet(name: string, recipe: DeathRecipe): DeathSheet | 
 /** The frame a death shows at its age. */
 export const deathFrame = (age: number): number => Math.min(DEATH_FRAMES - 1, Math.floor((age / DEATH_T) * DEATH_FRAMES));
 
-/** A baked death strip's PNG (a data URL) and layout: n frames of w x h, the body's middle at (cx, cy). */
-export interface BakedDeath { src: string; w: number; h: number; n: number; cx: number; cy: number }
-
 const loaded = new Map<string, DeathSheet>();
 
 /** Start decoding every baked death strip (no-op headless). */
@@ -117,7 +114,7 @@ export function loadDeathSheets(): void {
   for (const [name, s] of Object.entries(BAKED_DEATHS)) {
     const img = new Image();
     img.onload = () => {
-      loaded.set(name, { frames: Array.from({ length: s.n }, (_, f) => canvasGrid(img, s.w, s.h, f * s.w)), cx: s.cx, cy: s.cy });
+      loaded.set(name, { frames: Array.from({ length: s.frames }, (_, f) => canvasGrid(img, s.w, s.h, f * s.w)), cx: s.x, cy: s.y });
     };
     img.src = s.src;
   }

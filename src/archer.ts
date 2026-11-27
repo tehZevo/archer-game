@@ -1,7 +1,7 @@
 import { P } from './config';
 import { DEFAULT_LOOK, LOOK_COUNTS, lookKey, lookPalette, type Look } from './look';
 import { canvasGrid, flipGrid, gridCanvas, hexRgb, newGrid, type Grid } from './grid';
-import { BAKED_ARCHER } from './archerbaked';
+import { BAKED_ARCHER } from './baked';
 /* ============================================================
    ARCHER SPRITE SHEET
    16x24 frames authored as character grids (facing right) and
@@ -450,7 +450,7 @@ const loaded = new Map<string, Record<ArcherPose, Grid[]>>();
 /** Start decoding the archer's sheets (no-op headless). */
 export function loadArcherSheets(): void {
   if (typeof Image === 'undefined') return;
-  for (const [key, src] of Object.entries(BAKED_ARCHER.sheets)) {
+  for (const [key, { src }] of Object.entries(BAKED_ARCHER.sheets)) {
     const img = new Image();
     img.onload = () => {
       const all = canvasGrid(img, img.width, img.height), out = {} as Record<ArcherPose, Grid[]>;

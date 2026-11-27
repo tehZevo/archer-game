@@ -2,7 +2,7 @@ import { NB } from './nb';
 import { make, px, Sprite } from './sprites';
 import { BLOCK_VARIANTS, BOT_H, TOP_H, TOP_W, TOP_Y, painter, type Tileset } from './tileset';
 import { canvasGrid, hexRgb, newGrid, type Grid } from './grid';
-import { BAKED_TILES } from './tilebaked';
+import { BAKED_TILES } from './baked';
 
 /* Turns a tileset's pieces (tileset.ts) into cached 16px sprites:
    block tiles autotiled by their neighbours, slope halves, the band under
@@ -10,13 +10,10 @@ import { BAKED_TILES } from './tilebaked';
 
    Tilesets ship as PNG atlases (assets/tiles/<slug>-<size>.png), baked
    from these painters by `npm run bake`: each distinct piece once, and an
-   index (tilebaked.ts) from every piece, in pieces() order, to its cell.
+   index (assets/sprites.json, see baked.ts) from every piece, in pieces() order, to its cell.
    Once a tileset's atlases load, its pieces are cut from them on first use;
    until then the painters draw them. */
 
-/** A tileset's atlases as baked: per piece size, the PNG and its cell size;
- *  `at` gives each piece (pieces() order) as sheet * CELLS + cell, or -1 for none. */
-export interface BakedTiles { sheets: { src: string; w: number; h: number }[]; at: number[] }
 /** Cells per atlas row, and the stride between sheets in `at`. */
 export const ATLAS_COLS = 16, CELLS = 100000;
 

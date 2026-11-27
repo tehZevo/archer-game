@@ -5,7 +5,7 @@ import { canvasGrid, fillRect, flipGrid, gridCanvas, newGrid, type Grid } from '
 import { PORTAL_FRAMES, portalGrid } from './portalart';
 import { boardGrid, NPC_FRAMES, npcGrid, type NpcLook } from './npcart';
 import { PET_FRAMES, PET_LIST, petGrid } from './petart';
-import { BAKED_ART } from './artbaked';
+import { BAKED_ART } from './baked';
 import { panelGrid } from './hudart';
 import type { DecorKind } from './types';
 
@@ -56,7 +56,7 @@ const canvases = new Map<string, HTMLCanvasElement>();
 /** Start decoding every baked piece of scenery (no-op headless). */
 export function loadArtSheets(): void {
   if (typeof Image === 'undefined') return;
-  for (const [key, src] of Object.entries(BAKED_ART)) {
+  for (const [key, { src }] of Object.entries(BAKED_ART)) {
     const img = new Image();
     img.onload = () => {
       loaded.set(key, canvasGrid(img, img.width, img.height));
