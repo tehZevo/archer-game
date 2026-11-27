@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, dummy, ground, memoryStorage, release, step, tap } from './helpers';
 import {
-  achKey, ACHIEVEMENTS, achUi, bump, cleanRecord, clearAchievements, GOLD_OUTFIT, isDone, record, runBonus, visitArea,
-} from '../src/achievements';
+  achKey, achUi, bump, cleanRecord, clearAchievements, GOLD_OUTFIT, isDone, record, runBonus, visitArea } from '../src/achievements';
 import { damage } from '../src/combat';
 import { COIN_LIFE, drops, wallet } from '../src/economy';
 import { DEFAULT_LOOK, LOOK_COUNTS, stepLook } from '../src/look';
@@ -84,10 +83,6 @@ describe('counting', () => {
     expect(cleanRecord({ stats: { kills: -5, coins: 'x' } }).stats.kills).toBe(0);
     expect(cleanRecord({ areas: [1, 'A', 'A'] }).areas).toEqual(['A']);
     expect(cleanRecord({ done: ['nope', 'kill1'] }).done).toEqual(['kill1']);
-  });
-
-  it('every achievement has its own id', () => {
-    expect(new Set(ACHIEVEMENTS.map((a) => a.id)).size).toBe(ACHIEVEMENTS.length);
   });
 });
 

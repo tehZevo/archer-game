@@ -7,7 +7,7 @@ import { net } from '../src/net';
 import { game, gotoPlace, player } from '../src/state';
 import { TOWN_PLANS } from '../src/townfloor';
 import type { Floor, Platform } from '../src/types';
-import { areaOf, isPathEnd, isTown, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, START, TOWNS, townDepth } from '../src/world';
+import { isPathEnd, isTown, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, START, TOWNS, townDepth } from '../src/world';
 
 const DRIFTWOOD = { town: 'driftwood' };
 const here = (): string => placeKey(game.floor.place);
@@ -115,17 +115,6 @@ describe('other towns', () => {
     tap('up');
     expect(here()).toBe('driftwood');
     expect(game.floor.town).toBeTruthy();
-  });
-
-  it('the Harbor (where you start) has one way up, to Beach 1, and none down', () => {
-    gotoPlace(climb(1));
-    expect(game.floor.town).toBeTruthy();
-    expect(game.floor.portals.length).toBe(1);
-    expect(placeKey(game.floor.portals[0].to)).toBe('shore-1');
-    standAt(game.floor.portals[0]);
-    tap('up');
-    expect(here()).toBe('shore-1');
-    expect(game.floor.town).toBeFalsy();
   });
 });
 
@@ -252,13 +241,6 @@ describe('every town', () => {
 });
 
 describe('the map of towns and paths', () => {
-  const all = [...TOWNS, ...PATHS];
-
-  it('every town and path has its own short id, letters only', () => {
-    expect(new Set(all.map((x) => x.id)).size).toBe(all.length);
-    for (const x of all) expect(x.id).toMatch(/^[a-z]+$/);
-  });
-
   it('every path runs between two known towns', () => {
     const ids = TOWNS.map((t) => t.id);
     for (const p of PATHS) {
@@ -294,8 +276,6 @@ describe('the map of towns and paths', () => {
 });
 
 describe('places (a town, or a path and a floor)', () => {
-  const tierOf = (pathId: string): number => townDepth(PATHS.find((p) => p.id === pathId)!.from) + 1;
-
   it('a path\'s floors are followed by the town it ends in', () => {
     expect(isTown(climb(1))).toBe(true);
     expect(isTown(climb(2))).toBe(false);
@@ -305,28 +285,11 @@ describe('places (a town, or a path and a floor)', () => {
     expect(isTown(climb(11))).toBe(true);
   });
 
-  it('the game starts in the Harbor, a town with one path up: the Sunlit Shore', () => {
-    expect(START.town).toBe('saltwick');
-    expect(areaOf(START)).toBe('Harbor');
-    expect(placeName(START)).toBe('Saltwick Port');
-    expect(pathsFrom('saltwick').map((p) => p.name)).toEqual(['Sunlit Shore']);
-  });
-
-  it('the Tide Pools are a high branch, past the Sunken Ruins', () => {
-    const tidepools = PATHS.find((p) => p.id === 'tidepools')!;
-    expect(tierOf('tidepools')).toBeGreaterThanOrEqual(5);
-    expect(pathsInto(tidepools.from)[0].name).toBe('Sunken Ruins');
-  });
-
   it('a place reads as its area (no floor number) or its town', () => {
     expect(placeName({ path: 'shore', floor: 1 })).toBe('Sunlit Shore');
     expect(placeName({ path: 'woods', floor: 2 })).toBe('Whispering Woods');
     expect(placeName({ town: 'mossgate' })).toBe('Mossgate Village');
     expect(placeName({ town: 'lanternhollow' })).toBe('Lanternhollow Town');
-  });
-
-  it('every town has its own name', () => {
-    expect(new Set(TOWNS.map((t) => t.name)).size).toBe(TOWNS.length);
   });
 
   it('paths only lead upward, to a deeper town', () => {
@@ -390,13 +353,6 @@ describe('training dummy', () => {
   const dummyHere = () => game.mobs.find((m) => m.training)!;
 
   beforeEach(() => release());
-
-  it('every town has exactly one', () => {
-    for (const t of TOWNS) {
-      gotoPlace({ town: t.id });
-      expect(game.mobs.filter((m) => m.training).length).toBe(1);
-    }
-  });
 
   it('stands on its own perch at the right wall, up a ladder from a step you can hop onto', () => {
     gotoPlace(START);

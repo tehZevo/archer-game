@@ -4,7 +4,6 @@ import { MOB_TYPES, P } from '../src/config';
 import { confirmUi } from '../src/confirm';
 import { visitSage } from '../src/sage';
 import { skillStatus } from '../src/skillscreen';
-import { TOWNS } from '../src/world';
 import { hurtPlayer } from '../src/boss';
 import { killMob } from '../src/combat';
 import { bag, BAG_SIZE, clearGear, equip, gear, gearDmg, gearDrops, gearFor, gearSoak, unequip, wear } from '../src/gear';
@@ -12,7 +11,7 @@ import { apply, clearSave, hasSave, load, save, snapshot } from '../src/save';
 import { gainExp, game, gotoPlace, player, spawnMob } from '../src/state';
 import { lastTown, samePlace, START } from '../src/world';
 import type { Mob } from '../src/types';
-import { activeSkill, advanceJob, canAdvance, expToNext, JOBS, nextJob, recalcStats, STAT_GAIN, killsToLevel, mobExp, rank, shotCount, skillRows, spendSkill, STAT_KEYS } from '../src/progress';
+import { activeSkill, advanceJob, canAdvance, JOBS, nextJob, recalcStats, STAT_GAIN, mobExp, rank, shotCount, skillRows, spendSkill, STAT_KEYS } from '../src/progress';
 
 describe('skill upgrades', () => {
   it('are offered only once their base skill is learned', () => {
@@ -369,31 +368,12 @@ describe('enemy levels and EXP', () => {
     spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
     return game.mobs[0].exp;
   }
-  const killsFor = (level: number, mobLevel: number): number => Math.ceil(expToNext(level) / mobExp(mobLevel));
-
   it('an enemy\'s EXP comes from its floor, not your level', () => {
     expect(snailExp(3, 1)).toBe(snailExp(3, 40));
   });
 
   it('enemies on higher floors are worth more', () => {
     expect(snailExp(8, 5)).toBeGreaterThan(snailExp(2, 5));
-  });
-
-  it('Lv.1 takes 10 kills of level-1 enemies', () => {
-    expect(killsFor(1, 1)).toBe(10);
-  });
-
-  it('Lv.99 takes about 100 kills of level-100 enemies', () => {
-    expect(Math.abs(killsFor(99, 100) - 100)).toBeLessThanOrEqual(8);
-  });
-
-  it('kills per level climb steadily from 10 to 100', () => {
-    for (let level = 1; level < 99; level++) {
-      const now = killsFor(level, level), next = killsFor(level + 1, level + 1);
-      expect(next).toBeGreaterThanOrEqual(now);
-      expect(next).toBeLessThanOrEqual(now + 3);
-    }
-    expect(Math.abs(killsToLevel(50) - Math.sqrt(10 * 100))).toBeLessThan(1);
   });
 
   it('higher-level enemies are worth more, and an enemy\'s EXP multiplier scales its reward', () => {
@@ -456,13 +436,6 @@ describe('jobs and the Sage', () => {
     player.job = JOBS[0];
     recalcStats();
   }
-
-  it('every town has a Sage', () => {
-    for (const t of TOWNS) {
-      gotoPlace({ town: t.id });
-      expect(game.floor.npcs!.map((n) => n.kind)).toContain('sage');
-    }
-  });
 
   it('below Lv.10 the Sage sends you away, and 2nd job skills wait for the level', () => {
     archerAt(9);

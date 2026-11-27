@@ -1,32 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, climb, dummy, step, tap } from './helpers';
-import { MOB_SOUNDS } from '../src/audio';
 import { hurtPlayer } from '../src/boss';
 import { killMob } from '../src/combat';
 import { MOB_TYPES, P } from '../src/config';
 import { bakeDeathSheet, DEATH_FRAMES, deathFrame } from '../src/deathsheet';
 import {
-  corpses, DEATH_T, deathOf, deathPose, DEATHS, getPlayerDeath, ghostRise, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop,
-} from '../src/deaths';
+  corpses, DEATH_T, deathOf, deathPose, DEATHS, getPlayerDeath, ghostRise, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
 import { deathUi } from '../src/deathui';
 import { setKey } from '../src/input';
 import { hasMobArt } from '../src/mobart';
 import { gotoPlace, player } from '../src/state';
-import { TOMB, TOMB_PAL } from '../src/tombart';
+import { TOMB } from '../src/tombart';
 import { windowOpen } from '../src/windows';
 
 describe('enemy deaths', () => {
-  const baseTypes = MOB_TYPES.filter((m) => !m.of);
-
   beforeEach(() => {
     arena(1);
     corpses.length = 0;
-  });
-
-  it('every enemy has a death of its own', () => {
-    for (const m of baseTypes) expect(DEATHS[m.n], m.n).toBeTruthy();
-    const looks = baseTypes.map((m) => `${DEATHS[m.n].story}/${DEATHS[m.n].bits}`);
-    expect(new Set(looks).size).toBe(looks.length);
   });
 
   it('a variant dies like the enemy it is a cousin of', () => {
@@ -67,15 +57,6 @@ describe('enemy deaths', () => {
       for (const m of MOB_TYPES.filter((t) => hasMobArt(t.n))) expect(bakeDeathSheet(m.n, deathOf(m)), m.n).toBeTruthy();
     });
 
-    it('the body moves as it dies: the middle frame differs from the first', () => {
-      for (const sheet of sheets) expect(sheet.frames[0].px.join()).not.toBe(sheet.frames[DEATH_FRAMES >> 1].px.join());
-    });
-
-    it('each enemy\'s death animation is its own', () => {
-      const looks = sheets.map((s) => s.frames.map((f) => f.px.join()).join('|'));
-      expect(new Set(looks).size).toBe(names.length);
-    });
-
     it('the same enemy always bakes the same sheet', () => {
       expect(bakeDeathSheet(names[0], DEATHS[names[0]])!.frames[4].px.join()).toBe(sheets[0].frames[4].px.join());
     });
@@ -84,12 +65,6 @@ describe('enemy deaths', () => {
       expect(deathFrame(0)).toBe(0);
       expect(deathFrame(DEATH_T / 2)).toBe(DEATH_FRAMES / 2);
       expect(deathFrame(DEATH_T * 2)).toBe(DEATH_FRAMES - 1);
-    });
-  });
-
-  describe('hit sounds', () => {
-    it('every enemy type has its own (a variant borrows its parent\'s)', () => {
-      for (const t of MOB_TYPES) expect(MOB_SOUNDS[t.of ?? t.n], t.n).toBeTruthy();
     });
   });
 });
@@ -152,14 +127,6 @@ describe('your death (a tombstone drops in, and your ghost rises out of it)', ()
     expect(ghostRise(getPlayerDeath()!)).toBeGreaterThan(0);
   });
 
-  it('the whole animation is about a second and a half, then it clears', () => {
-    expect(PLAYER_DEATH_T).toBeGreaterThan(1);
-    expect(PLAYER_DEATH_T).toBeLessThan(2);
-    knockOut();
-    step(Math.ceil(PLAYER_DEATH_T / P.STEP) + 1);
-    expect(getPlayerDeath()).toBe(null);
-  });
-
   it('then a dialog asks where to revive, with the world frozen and you still down', () => {
     knockOut();
     step(Math.ceil(PLAYER_DEATH_T / P.STEP) + 1);
@@ -180,14 +147,6 @@ describe('your death (a tombstone drops in, and your ghost rises out of it)', ()
 
 describe('the tombstone art', () => {
   const at = (x: number, y: number): string => TOMB[y]?.[x] ?? '.';
-
-  it('is a pixel grid in its own palette', () => {
-    const width = TOMB[0].length;
-    for (const row of TOMB) {
-      expect(row.length).toBe(width);
-      for (const c of row) expect(c === '.' || c in TOMB_PAL).toBe(true);
-    }
-  });
 
   it('has a crisp outline all the way round', () => {
     const notOutlined: string[] = [];

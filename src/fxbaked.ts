@@ -72,7 +72,7 @@ export const BAKED: Record<string, BakedSheet> = {
   spirit: { src: spirit, w: 44, h: 34, n: 7, ox: 10, oy: 17 },
   assaultRise: { src: assaultRise, w: 72, h: 128, n: 7, ox: 24, oy: 118 },
   assaultBang: { src: assaultBang, w: 96, h: 72, n: 6, ox: 48, oy: 36 },
-  assaultDrop: { src: assaultDrop, w: 84, h: 92, n: 8, ox: 44, oy: 82 },
+  assaultDrop: { src: assaultDrop, w: 84, h: 92, n: 8, ox: 30, oy: 82 },
   assaultHit: { src: assaultHit, w: 44, h: 44, n: 6, ox: 22, oy: 22 },
   galeMuzzle: { src: galeMuzzle, w: 20, h: 18, n: 4, ox: 1, oy: 9 },
   galeHit: { src: galeHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },

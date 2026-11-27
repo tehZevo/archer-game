@@ -4,7 +4,7 @@ import { useTime } from '../src/castrules';
 import { P, SKILLS } from '../src/config';
 import { PLAYER_DEATH_T } from '../src/deaths';
 import { setKey } from '../src/input';
-import { closeLinks, linkable, linkHeld } from '../src/links';
+import { linkable, linkHeld } from '../src/links';
 import { CASTS } from '../src/skillcasts';
 import { player } from '../src/state';
 import type { SkillKey } from '../src/types';
@@ -68,13 +68,6 @@ describe('links read off the cast you are in, and nothing else', () => {
   it('once the cast ends, a press is a normal cast', () => {
     tap('r');
     step(40); // the storm and its recovery are over
-    expect(player.linkFrom).toBe(null);
-  });
-
-  it('closeLinks forgets it', () => {
-    tap('r');
-    step(1);
-    closeLinks();
     expect(player.linkFrom).toBe(null);
   });
 

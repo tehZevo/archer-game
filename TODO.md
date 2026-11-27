@@ -4,7 +4,6 @@
 - (art) Give portals a more oval, swirling, rounded look and animation.
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (design) Rename Glide.
-- (design) Assess the suite and determine which tests are low value. Roughly 900 checks cover ~15,000 LOC of behavioural code; decide which of them earn their keep and which are tautologies that pass no matter what the game does. Output: a short list of checks to drop outright, distinct from the consolidation work above.
 - (design) Rename Downpour.
 - (design) Consider renaming all jobs.
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.

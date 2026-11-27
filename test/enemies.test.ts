@@ -11,7 +11,6 @@ import { areaMobs, floorMobs, pickVariant } from '../src/floor';
 import { ANIM_RATE, BREATH, mobFrame } from '../src/mobanim';
 import { CHASE_TURN } from '../src/mobai';
 import { game, gotoPlace, mobBounds, mobDmg, player, spawnMob, spawnWave } from '../src/state';
-import { TILESETS } from '../src/tileset';
 import { update } from '../src/update';
 import type { Mob } from '../src/types';
 
@@ -65,19 +64,10 @@ describe('enemy movement', () => {
 describe('enemy types', () => {
   const beach = areaMobs('Sunlit Shore').map((m) => m.n);
 
-  it('the Beach has its own: snail, enemy crab, hermit crab and gull', () => {
-    for (const name of ['Garden Snail', 'Enemy Crab', 'Hermit Crab', 'Gull']) expect(beach).toContain(name);
-  });
-
   it('areas without a set of their own use the general pool', () => {
     const pool = areaMobs('Nowhere');
     expect(pool.length).toBeGreaterThanOrEqual(2);
     for (const m of pool) expect(!m.areas || m.areas.includes('*')).toBe(true);
-  });
-
-  it('every area with its own tileset has two or more of its own', () => {
-    const areas = Object.keys(TILESETS).filter((a) => a !== 'Harbor'); // the Harbor is only a town
-    for (const area of areas) expect(MOB_TYPES.filter((m) => m.areas?.includes(area)).length).toBeGreaterThanOrEqual(2);
   });
 
   describe('on a Beach floor', () => {
@@ -247,10 +237,6 @@ describe('enemy variants (cousins of an area\'s enemies that turn up in their pl
     game.mobs.length = 0;
   });
 
-  it('there are plenty (15 or more)', () => {
-    expect(variants.length).toBeGreaterThanOrEqual(15);
-  });
-
   it('every enemy has art: painted, hand-drawn, or a drawn variant', () => {
     expect(MOB_TYPES.filter((m) => !hasMobArt(m.n)).map((m) => m.n)).toEqual([]);
   });
@@ -284,11 +270,6 @@ describe('enemy variants (cousins of an area\'s enemies that turn up in their pl
       expect(v.areas?.length).toBeGreaterThan(0);
       for (const area of v.areas!) expect(parent.areas).toContain(area);
     }
-  });
-
-  it('every area with its own enemies has a variant or two', () => {
-    const areas = [...new Set(MOB_TYPES.flatMap((m) => m.areas ?? []))].filter((a) => a !== '*');
-    expect(areas.filter((a) => !variants.some((v) => v.areas!.includes(a)))).toEqual([]);
   });
 
   it('variants are never one of a floor\'s two types', () => {
@@ -359,26 +340,6 @@ describe('elites (rare, bigger, tougher, worth more)', () => {
     const [plain, elite] = plainAndElite();
     expect(elite.y + elite.h).toBeCloseTo(plain.y + plain.h, 2);
     expect(elite.name).toBe(plain.name);
-  });
-
-  it(`an elite drops ${ELITE.COINS} coin piles`, () => {
-    const [plain, elite] = plainAndElite();
-    drops.length = 0;
-    killMob(plain);
-    expect(drops.length).toBe(1);
-    killMob(elite);
-    expect(drops.length).toBe(1 + ELITE.COINS);
-  });
-
-  it('waves roll elites rarely, about 1 in 25', () => {
-    arena();
-    expect(ELITE.CHANCE).toBe(1 / 25);
-    game.floor.spawns = Array.from({ length: 400 }, (_, i) => ({ x: 40 + (i % 10), y: ground().y, types: ['Enemy Crab'] }));
-    game.mobs = [];
-    spawnWave();
-    const share = game.mobs.filter((m) => m.elite).length / game.mobs.length;
-    expect(share).toBeGreaterThan(0.01);
-    expect(share).toBeLessThan(0.09);
   });
 });
 

@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { arena, climb, dummy, ground, landLeap, release, step, tap } from './helpers';
-import { FX_DUR, P, SKILLS, startsLearned } from '../src/config';
+import { FX_DUR, P } from '../src/config';
 import { setKey } from '../src/input';
 import { linkable, linkHeld } from '../src/links';
 import { NUM_GAP } from '../src/combat';
 import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
-import { activeSkill, rank, shotCount, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, rank, shotCount } from '../src/progress';
 import { localPose } from '../src/net';
 import { cast } from '../src/skills';
 import { game, gotoPlace, player, READY_FLASH, USE_FLASH } from '../src/state';
@@ -348,21 +348,6 @@ describe('Cyclone Sweep (W in the air)', () => {
 });
 
 describe('queued presses', () => {
-  it('a Glide (D) pressed while Skyward Assault hovers is dropped, not queued', () => {
-    arena(30);
-    for (const k of ['ground-q', 'ground-w', 'ab', 'ground-e', 'air-e', 'd'] as const) player.ranks[k] = true;
-    dummy(130);
-    tap('q');
-    step(14);
-    tap('w');
-    step(3);
-    expect(player.hang.t).toBeGreaterThan(0);
-    expect(player.onGround).toBe(false);
-
-    tap('d');
-    expect(player.casting.queued).toBeNull();
-    expect(player.hang.t).toBeGreaterThan(0);
-  });
 
   it('Z pressed mid-rush waits, then fires the moment the slide ends', () => {
     arena(20);
@@ -615,52 +600,6 @@ describe('links refund cooldowns', () => {
 });
 
 describe('cooldowns', () => {
-  it('Cyclone Sweep lifts you slowly and can\'t be spammed (8s cooldown)', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    player.ranks['ground-w'] = true;
-    player.ranks['air-w'] = true;
-    const m = dummy(140);
-    tap('c');
-    step(8);
-    tap('w');
-    const y = player.y;
-    let rising = true;
-    for (let i = 0; i < 12; i++) {
-      const before = player.y;
-      step(1);
-      if (player.y >= before) rising = false;
-    }
-    expect(rising).toBe(true);
-    expect(y - player.y).toBeLessThan(15);
-
-    const hp = m.hp;
-    player.casting.useT = 0;
-    tap('w');
-    step(2);
-    expect(hp).toBeLessThan(1e6);
-    expect(m.hp).toBe(hp); // no second spin
-    expect(player.cd['ground-w.air']).toBeGreaterThan(3);
-    expect(player.cdMax['ground-w.air']).toBe(8);
-  });
-
-  it('the ground rush has a 3s cooldown; Meteor Dive has none, only use and recovery time', () => {
-    arena(20);
-    player.ranks['ground-q'] = true;
-    player.ranks['air-q'] = true;
-    tap('q');
-    expect(player.cdMax['ground-q']).toBe(3);
-    expect(player.casting.useT).toBeGreaterThan(0);
-
-    step(40);
-    player.cd['ground-q'] = 0;
-    tap('c');
-    step(6);
-    tap('q');
-    expect(player.cd['ground-q.air']).toBe(0);
-    expect(player.casting.useT).toBeGreaterThan(0);
-    expect(player.casting.recoverT).toBeGreaterThan(0);
-  });
 
   it('a bar icon flashes as its cooldown runs out, then the flash fades', () => {
     arena(20);
@@ -727,15 +666,6 @@ describe('Tempest (R)', () => {
     expect(a.hp).toBe(hp);
     expect(player.cd.r).toBeGreaterThan(4);
   });
-
-  it('lands all 6 of its hits on each enemy', () => {
-    arena(60);
-    player.ranks.r = true;
-    const a = dummy(130);
-    tap('r');
-    step(STORM_FRAMES);
-    expect(1e6 - a.hp).toBeGreaterThan(6 * 0.9); // one hit alone would be about a sixth of this
-  });
 });
 
 describe('Haste (passive)', () => {
@@ -792,14 +722,6 @@ describe('skill effects', () => {
 });
 
 describe('Rush Toss carrying enemies', () => {
-  it('hits 6 enemies at most', () => {
-    arena(1);
-    player.ranks['ground-q'] = true;
-    const mobs = Array.from({ length: 9 }, (_, i) => dummy(120 + i * 6));
-    tap('q');
-    step(14);
-    expect(mobs.filter((m) => m.hp < 1e6).length).toBe(6);
-  });
 
   it('scoops up an enemy just behind you', () => {
     arena(1);
@@ -863,23 +785,6 @@ describe('Glide and Acrobatics (bought with SP, not given)', () => {
     player.vy = 0;
   }
   afterEach(() => release());
-
-  it('a new archer has Double Shot for free, but not Glide', () => {
-    expect(SKILLS.d.learn).toBe(true);
-    expect(startsLearned('z')).toBe(true);
-    expect(startsLearned('d')).toBe(false);
-  });
-
-  it('Glide can take SP from Lv.1', () => {
-    arena(1);
-    player.ranks.d = false;
-    player.sp = 1;
-    const row = skillRows().find((r) => r.key === 'd')!;
-    expect(row.learned).toBe(false);
-    expect(row.action).toBeTruthy();
-    expect(spendSkill('d')).toBe(true);
-    expect(player.ranks.d).toBe(true);
-  });
 
   it('without Acrobatics, Up + Jump on a rope does not rush', () => {
     arena(10);

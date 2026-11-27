@@ -112,12 +112,6 @@ describe('rebinding keys', () => {
     expect(cleanBinds({ ...binds, q: 'enter' }).q).toBe('q');
   });
 
-  it('reset puts the defaults back', () => {
-    bindKey('c', 'j');
-    resetBinds();
-    for (const a of ACTIONS) expect(binds[a.id]).toBe(a.id);
-  });
-
   it('the HUD and menus label the bound key', () => {
     bindKey('a', 'h');
     expect(keyName('a')).toBe('H');

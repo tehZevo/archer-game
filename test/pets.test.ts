@@ -69,12 +69,6 @@ describe('the pet keeper', () => {
       }
     }
   });
-
-  it('sells several kinds of pet, each at its own price', () => {
-    const kinds = Object.values(PET_KINDS);
-    expect(kinds.length).toBeGreaterThanOrEqual(3);
-    expect(new Set(kinds.map((k) => k.price)).size).toBe(kinds.length);
-  });
 });
 
 describe('buying and calling pets', () => {

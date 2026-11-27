@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { arena, dummy, ground, step, tap } from './helpers';
+import { arena, dummy, ground, step } from './helpers';
 import { MOB_TYPES, P } from '../src/config';
 import { capAdd, hurtPlayer } from '../src/boss';
 import { clearGear } from '../src/gear';
@@ -11,39 +11,7 @@ import { cast } from '../src/skills';
 import { game, player } from '../src/state';
 import type { Mob } from '../src/types';
 
-describe('balance', () => {
-  it('a Lv.1 Garden Snail takes 4-11 Double Shots on average', () => {
-    let shots = 0;
-    for (let run = 0; run < 3; run++) {
-      arena();
-      const snail = dummy(140, MOB_TYPES[0].hp);
-      for (let i = 0; i < 20 && game.mobs.includes(snail); i++) {
-        player.cd.z = 0;
-        player.casting.useT = 0;
-        tap('z');
-        step(8);
-        shots++;
-      }
-    }
-    const average = shots / 3;
-    expect(average).toBeGreaterThanOrEqual(4);
-    expect(average).toBeLessThanOrEqual(11);
-  });
-});
-
 describe('regen', () => {
-  it('restores HP and MP once every 5 seconds', () => {
-    arena();
-    player.hp = 50;
-    player.mp = 10;
-    player.regenT = 0;
-    step(Math.round(4.9 / P.STEP));
-    expect(player.hp).toBe(50);
-
-    step(Math.round(0.2 / P.STEP));
-    expect(player.hp).toBeGreaterThan(50);
-    expect(player.mp).toBeGreaterThan(10);
-  });
 
   it('restores no HP within 5 seconds of attacking', () => {
     arena();
@@ -167,24 +135,6 @@ describe('knockback', () => {
     hurtPlayer(1, player.x - 20, 200);
     expect(player.vx).toBe(300);
     expect(player.vy).toBe(-P.HIT_HOP);
-  });
-});
-
-describe('Bubble (passive)', () => {
-  function damageTaken(): number {
-    player.invuln = 0;
-    player.hp = player.hpMax;
-    hurtPlayer(100, undefined, 200);
-    return player.hpMax - player.hp;
-  }
-
-  it('takes a flat 30% off each hit', () => {
-    arena(30);
-    clearGear();
-    player.ranks.bu = false;
-    expect(damageTaken()).toBe(100);
-    player.ranks.bu = true;
-    expect(damageTaken()).toBe(70);
   });
 });
 

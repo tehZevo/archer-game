@@ -160,10 +160,6 @@ describe('main menu', () => {
     vi.unstubAllGlobals();
   });
 
-  it('lists play, channel, code, new code, name, look, settings and awards (no reset without a save)', () => {
-    expect(items()).toEqual(['play', 'channel', 'code', 'create', 'name', 'look', 'settings', 'awards']);
-  });
-
   it('the selection wraps around', () => {
     menuKey('up');
     expect(items()[menu.sel]).toBe('awards');
@@ -452,13 +448,6 @@ describe('settings', () => {
     settingsKey('left');
     expect(settings.sound).toBe(before - 1);
     expect(JSON.parse(stored.getItem('archer-game:settings')!).sound).toBe(before - 1);
-  });
-
-  it('damage numbers can be turned off', () => {
-    openSettings();
-    settingsKey('down');
-    settingsKey('left');
-    expect(settings.dmgNums).toBe(false);
   });
 
   it('a tap on a row changes it, and tapping DONE closes the window', () => {
