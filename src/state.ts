@@ -292,5 +292,5 @@ export function later(delay: number, fn: () => void): void {
 }
 
 export function bannerMsg(text: string, sub = ''): void {
-  game.banner = { text, sub, t: 1.15 };
+  game.banner = { text, sub, t: P.BANNER_T };
 }

@@ -39,6 +39,8 @@ export const P = {
   GALE_SLOW: 0.6,      // walk speed while streaming
   USE_TIME: 0.5,       // s an attack skill locks other skills + movement (links bypass)
   DELAY_TIME: 0.2,     // s of recovery after the animation (see delayTime; links skip it)
+  BANNER_T: 2.4,       // s a big on-screen banner (Sage, level-up, achievement) stays up
+  BANNER_FADE: 0.4,    // s of that it spends fading out (the rest is full brightness)
   ACCEL: 1600,         // groundedAccelForce
   MOB_SPEED: 0.5,     // ...and the most move too fast: every enemy's spd is halved
   RUSH_DIST: 64,      // px the Rush Toss slide always travels: it stops here, not early
