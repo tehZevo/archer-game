@@ -2,21 +2,17 @@
 // No DOM required: runtime.ts falls back to stubs.
 
 import { readdirSync, readFileSync } from 'node:fs';
-import { BAKED_TILES } from '../src/tilebaked';
 import { ATLAS_COLS, CELLS, pieces, SWAY_ROWS, topDeco } from '../src/tilebake';
 import { TILESETS, TOP_W, TOP_Y } from '../src/tileset';
 import { ART_GEN } from '../src/artsheets';
 import { archerShape, GRIDS, lookColours, PAL, recolourFrame, sheetRows, styled, type ArcherPose } from '../src/archer';
-import { BAKED_ARCHER } from '../src/archerbaked';
 import { DEFAULT_LOOK, LOOK_COUNTS, lookPalette, type Look } from '../src/look';
 import { hexRgb } from '../src/grid';
-import { BAKED_ART } from '../src/artbaked';
 import { P, MOB_TYPES, SKILL_BAR } from '../src/config';
-import { BAKED } from '../src/fxbaked';
+import { BAKED_ARCHER, BAKED_ART, BAKED_DEATHS, BAKED_FX, BAKED_MOBS, BAKED_TILES } from '../src/baked';
 import { FX_GEN } from '../src/fxsprites';
 import { packStrip } from '../src/grid';
 import { decodePng } from '../scripts/png';
-import { BAKED_DEATHS, BAKED_MOBS } from '../src/mobbaked';
 import { bakeDeathSheet } from '../src/deathsheet';
 import { deathOf } from '../src/deaths';
 import { breath, lunge, mobAnim, MOB_GEN, recoil } from '../src/sprites';
@@ -211,24 +207,24 @@ setKey('up', false);
 
 // baked effect sheets match their generators (re-run `npm run bake` after changing an effect)
 {
-  const stale = Object.entries(BAKED).filter(([name, s]) => {
+  const stale = Object.entries(BAKED_FX).filter(([name, s]) => {
     const g = FX_GEN[name]?.();
-    if (!g || g.w !== s.w || g.h !== s.h || g.frames.length !== s.n || g.ox !== s.ox || g.oy !== s.oy) return true;
+    if (!g || g.w !== s.w || g.h !== s.h || g.frames.length !== s.frames || g.ox !== s.x || g.oy !== s.y) return true;
     const png = decodePng(readFileSync(`assets/fx/${name}.png`));
     return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip(g.frames).px)) !== 0;
   }).map(([n]) => n);
   check(`every baked effect sheet matches its generator${stale.length ? ' (stale: ' + stale.join(', ') + ')' : ''}`, stale.length === 0);
-  check('every effect has a generator', Object.keys(BAKED).every((n) => FX_GEN[n]));
+  check('every effect has a generator', Object.keys(BAKED_FX).every((n) => FX_GEN[n]));
   const staleMobs = Object.entries(BAKED_MOBS).filter(([name, s]) => {
     const a = MOB_GEN[name]?.();
-    if (!a || a.hurt.w !== s.w || a.hurt.h !== s.h || a.frames.length !== s.n || a.fps !== s.fps) return true;
+    if (!a || a.hurt.w !== s.w || a.hurt.h !== s.h || a.frames.length !== s.frames || a.fps !== s.fps) return true;
     const png = decodePng(readFileSync(`assets/mobs/${slug(name)}.png`));
     return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip([...a.frames, a.hurt].map((f) => f.g)).px)) !== 0;
   }).map(([n]) => n);
   check(`every baked enemy sheet matches its painter${staleMobs.length ? ' (stale: ' + staleMobs.join(', ') + ')' : ''}`, staleMobs.length === 0);
   const staleDeaths = Object.entries(BAKED_DEATHS).filter(([name, s]) => {
     const t = MOB_TYPES.find((m) => m.n === name), d = t && bakeDeathSheet(name, deathOf(t));
-    if (!d || d.frames.length !== s.n || d.frames[0].w !== s.w || d.frames[0].h !== s.h || d.cx !== s.cx || d.cy !== s.cy) return true;
+    if (!d || d.frames.length !== s.frames || d.frames[0].w !== s.w || d.frames[0].h !== s.h || d.cx !== s.x || d.cy !== s.y) return true;
     const png = decodePng(readFileSync(`assets/mobs/death/${slug(name)}.png`));
     return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip(d.frames).px)) !== 0;
   }).map(([n]) => n);
