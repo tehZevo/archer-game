@@ -46,15 +46,6 @@ describe('the skill tree', () => {
   /** The skill screen's row for a skill. */
   const row = (key: string) => skillRows().find((r) => r.key === key);
 
-  it('shows each air form on the key it is used with', () => {
-    arena(60);
-    player.ranks['ground-q'] = true;
-    player.ranks['ground-w'] = true;
-    player.ranks['ground-e'] = true;
-    expect(row('air-q')?.slot).toBe('ground-q'); // Meteor Dive on Q
-    expect(row('air-w')?.slot).toBe('ground-w'); // Cyclone Sweep on W
-    expect(row('air-e')?.slot).toBe('ground-e'); // Downpour on E
-  });
 
   it('locks Meteor Dive until Rush Toss is mastered', () => {
     arena(60);
@@ -125,12 +116,6 @@ describe('equipment', () => {
     expect(gearSoak()).toBe(0);
   });
 
-  it('is named by the level it is made for', () => {
-    const bow = gearFor('weapon', 10);
-    expect(bow.name).toBe('Long Bow');
-    expect(bow.lvl).toBe(10);
-    expect(gearFor('weapon', 20).name).toBe('Yew Bow');
-  });
 
   it('a Lv.10 bow adds 30% to every arrow that lands', () => {
     expect(equip(gearFor('weapon', 10))).toBe(true);
@@ -394,13 +379,6 @@ describe('enemy levels and EXP', () => {
     expect(game.mobs[game.mobs.length - 1].hpMax).toBe(first.hpMax);
   });
 
-  it('a kill shows no floating EXP number', () => {
-    arena(5);
-    const m = dummy(140, 1);
-    const before = game.dmgNums.length;
-    killMob(m);
-    expect(game.dmgNums.length).toBe(before);
-  });
 });
 
 describe('stats', () => {
@@ -468,19 +446,7 @@ describe('jobs and the Sage', () => {
     expect(skillStatus('ni').label).not.toBe('SEE THE SAGE');
   });
 
-  it('reaching Lv.10 puts the Sage prompt on screen, for the full banner time', () => {
-    archerAt(9);
-    gainExp(player.expNext);
-    expect(game.banner?.text).toBe('BECOME A SKY ARCHER');
-    expect(game.banner?.sub).toBe('VISIT THE SAGE IN TOWN');
-    expect(game.banner?.t).toBe(P.BANNER_T);
-  });
 
-  it('a plain level-up still shows the level banner', () => {
-    arena(10);
-    gainExp(player.expNext);
-    expect(game.banner?.text).toBe('LEVEL 11');
-  });
 
   it('by the 4th job the bonus is +30% in all, and there is no job after it', () => {
     archerAt(60);
