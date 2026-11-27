@@ -15,8 +15,13 @@
 - (art) The comets in the background of the Observatory and Thistledown should fade out.
 - Dev skill editor (bug): can't move "down" to select Delay with Enter. The flow should be: navigate the left menu with up/down to highlight a skill; press Enter to select it, moving the cursor to the right side of the screen highlighted on "Use"; left/right on Use adjusts the value; up/down navigates between Use / Delay / Links Into; Enter/Space on Links Into toggles an option on/off.
 - Piercing Leap (`ground-e`) should link into Glide (`d`) — add `d` to its `linksInto` (config.ts:134).
-- Reduce the test suite (~960 checks → ~450–550) by consolidating repetitive tests:
+- Reorganize the test suite for concision (~4,265 LOC / 896 checks → ~3,600 LOC / ~500 checks), in three steps, cheapest first:
+  - Collapse multi-check blocks to one `check()` per behaviour, keeping the values in the template string so a failure still names what broke. Checks are 1,124 of the 4,265 lines; this is ~500 LOC of the saving. Biggest wins: `11-deaths.ts` (527 LOC) and `07-menu-polish.ts` (474).
+  - Replace `harness.ts`'s ~100 hand-listed re-exports with ~12 `export * from '../src/<module>'` lines (~164 LOC → ~45).
+  - Regroup the 19 numbered files into ~8 domain files (`skills`, `combat`, `menus`, `enemies`, `world`, `progression`, `assets`, `net`), merging the twin `07`/`08` menu-polish files. Numbering currently reflects discovery order, not domain.
   - Keep as-is: `smoke.ts` (baked sheets match generators), asset-integrity checks (paint-in-bounds), and core physics (slope/ledge, Rush Toss carry).
+- Move the suite to vitest. Per-test `beforeEach` replaces the repeated `arena(20); player.ranks.x = true; dummy(150);` setup that accounts for most of the ~3,140 non-check lines, and `it()` naming makes the run readable. Biggest structural win (~1,000 LOC), and it removes the bundle's dependence on module import order for the RNG seed (see the `harness.ts` header comment).
+- (design) Assess the suite and determine which tests are low value. Roughly 900 checks cover ~15,000 LOC of behavioural code; decide which of them earn their keep and which are tautologies that pass no matter what the game does. Output: a short list of checks to drop outright, distinct from the consolidation work above.
 - (bug) Player damage numbers move upward too fast — they should rise at the same speed as enemy damage numbers.
 - (bug) MISS is spammed; a miss should trigger the same invulnerability cooldown as taking damage (without actually showing the player as invulnerable).
 - Harder bosses should summon enemies, and even harder bosses should summon elites.
