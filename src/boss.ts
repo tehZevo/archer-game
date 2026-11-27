@@ -97,7 +97,7 @@ export const capAdd = (v: number, add: number): number => {
  *  (not while climbing or hovering in Skyward Assault). The attacker's level sets
  *  how often it misses (see missChance). */
 export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolean {
-  if (player.invuln > 0) return false;
+  if (player.invuln > 0 || player.hp <= 0) return false; // no hitting an archer who's down
   if (Math.random() < missChance(attackerLvl, player.level)) {
     // a missed attack shows "MISS" over the player, like the player's own misses
     game.dmgNums.push({ x: player.x, y: player.y - 14, v: 0, t: 1, crit: false, vy: -80, txt: 'MISS', col: '#ffffff' });

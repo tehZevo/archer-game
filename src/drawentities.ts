@@ -274,6 +274,7 @@ const ECHO_TINT = '#7fb8ff';
 const invulnAlpha = (): number => (player.invuln > 0 && !player.invulnQuiet ? 0.8 : 1);
 
 export function drawPlayer(): void {
+  if (getPlayerDeath()) return; // down: the tombstone and ghost stand in for her (drawPlayerDeath)
   if (player.diving) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha(), DIVE_TINT);
   // Twin Echoes: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and

@@ -7,7 +7,7 @@ import { CAM, P, SKILL_ORDER, slotOf } from './config';
 import { cameraTarget, gainExp, game, gotoPlace, logMsg, player, READY_FLASH, spawnWave } from './state';
 import { pressed } from './input';
 import { revive } from './combat';
-import { setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
+import { getPlayerDeath, setPlayerDeath, updateCorpses, updatePlayerDeath } from './deaths';
 import { cast } from './skills';
 import { updateRush } from './rush';
 import { updateRapid } from './rapid';
@@ -33,12 +33,9 @@ import { heldDir, movePlayer } from './move';
  * moves before the world, and the rush pushes enemies after they move.
  */
 export function update(dt: number): void {
-  // knocked out: the tombstone and ghost animation starts here, and ages on
-  // its own clock while the respawned archer plays on (see deaths.ts)
-  updatePlayerDeath(dt);
-  if (player.hp <= 0) setPlayerDeath(player.x, player.y + player.h);
   if (windowInput(dt)) return;
   game.time += dt;
+  if (knockedOut(dt)) return;
   tickPlayer(dt);
   if (keyInput()) return;
   tickWaves(dt);
@@ -48,8 +45,24 @@ export function update(dt: number): void {
   if (usePortal()) return;
   tickWorld(dt);
   tickEffects(dt);
-  if (player.hp <= 0) revive();
+  // knocked out: a tombstone drops where she fell and her ghost rises out of
+  // it; she revives once that has played (see knockedOut)
+  if (player.hp <= 0) setPlayerDeath(player.x, player.y + player.h);
   updateCamera(dt);
+}
+
+/** While the archer is down: the tombstone and ghost play out on the spot she
+ *  fell, the world goes on around them (she takes no input and no hits), and
+ *  when it's done she revives. True while down (the step is spent). */
+function knockedOut(dt: number): boolean {
+  if (!getPlayerDeath()) return false;
+  updatePlayerDeath(dt);
+  tickWaves(dt);
+  tickWorld(dt);
+  tickEffects(dt);
+  if (!getPlayerDeath()) revive();
+  updateCamera(dt);
+  return true;
 }
 
 /** Regen, the Electric Blitz charges, cooldowns and status effects. */

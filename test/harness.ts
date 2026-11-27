@@ -36,6 +36,7 @@ import { tick } from '../src/loop';
 import { jobForLevel, recalcStats } from '../src/progress';
 import { MOB_TYPES } from '../src/config';
 import { closeLinks } from '../src/links';
+import { clearPlayerDeath } from '../src/deaths';
 
 export { ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE } from '../src/config';
 export { game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH } from '../src/state';
@@ -65,7 +66,7 @@ export { barrageTargets, cast } from '../src/skills';
 export { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
 export { CASTS } from '../src/skillcasts';
 export { MOB_SOUNDS } from '../src/audio';
-export { GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
+export { clearPlayerDeath, GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
 export { fmtNum } from '../src/util';
 export { BOSS, bossAlive, bossName, bossType, capAdd, hurtPlayer, quakes } from '../src/boss';
 export { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
@@ -134,6 +135,7 @@ const ground = (): Platform => game.floor.platforms[0];
 /** Fresh Beach 1 (stage 2; stage 1 is the Harbor town) with no mobs, the player standing at x on the ground. */
 function arena(level = 1, x = 100): void {
   release();
+  clearPlayerDeath(); // a death from an earlier section doesn't carry over
   gotoPlace(climb(2)); game.mobs = []; game.floor.spawns = [];
   player.level = level; player.job = jobForLevel(level); player.stats = { dex: 0, vit: 0, spi: 0, luk: 0 }; recalcStats(); // as if the Sage had advanced you
   for (const k of Object.keys(player.ranks) as (keyof typeof player.ranks)[]) player.ranks[k] = ['z', 'd', 'ground-q', 'ground-w', 'sa'].includes(k);
