@@ -4,7 +4,6 @@
 - (art) Give portals a more oval, swirling, rounded look and animation.
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
 - (art) Reduce the blue sparkles in the Mushroom Grotto floor tiles by ~70%.
-- Reduce the launch height of enemies (when knocked airborne) by 50%.
 - (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
 - When you die, show a dialog to return to the previous town; in dev mode, also allow reviving in place.
 - The upgraded ground W (Skyward Assault, `ab`) should chain into Dive (`air-q`) — add `air-q` to its `linksInto` (config.ts:154).
