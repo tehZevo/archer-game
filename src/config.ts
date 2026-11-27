@@ -167,7 +167,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // Passives: no key; their effect is `bonus` (0 until learned).
   es: { key: 'es', name: 'Twin Echoes', tag: 'Passive', job: 4, minLevel: 30, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 2,
-        desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire' },
+        desc: 'A shadow archer shoots with you, doubling the arrows your attacks fire. Each arrow deals 60% damage' },
   sa: { key: 'sa', name: 'Precision', tag: 'Passive', job: 1, minLevel: 1, passive: true, learn: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.21,
         desc: 'Crit chance up' },
