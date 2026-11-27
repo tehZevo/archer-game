@@ -8,7 +8,7 @@ import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
 import { activeSkill, rank, shotCount, skillRows, spendSkill } from '../src/progress';
 import { localPose } from '../src/net';
 import { cast } from '../src/skills';
-import { game, gotoPlace, player, READY_FLASH } from '../src/state';
+import { game, gotoPlace, player, READY_FLASH, USE_FLASH } from '../src/state';
 import { surfaceYAt } from '../src/surface';
 
 /** Rush Toss with Down held: the slide that opens the W links. */
@@ -1216,5 +1216,246 @@ describe('Bolt Flurry', () => {
     expect(shotCount(rank('z'))).toBe(8);
     expect(numbersOverASecond().size).toBe(8);
     expect(m.hp).toBeLessThan(1e6);
+  });
+});
+
+describe('Glide', () => {
+  it('you can turn round mid-Glide, and the tumble keeps its momentum', () => {
+    arena(20);
+    player.ranks.d = true;
+    player.face = 1;
+    tap('c');
+    step(8);
+    tap('d');
+    step(1);
+    expect(player.casting.key).toBe('d');
+    expect(player.casting.useT).toBeGreaterThan(0);
+    expect(player.vx).toBeGreaterThan(0);
+    setKey('left', true);
+    step(1);
+    setKey('left', false);
+    expect(player.face).toBe(-1);
+    expect(player.vx).toBeGreaterThan(0);
+    expect(player.onGround).toBe(false);
+  });
+
+  it('a rope you fly past on the way up takes over from it', () => {
+    arena(1);
+    const g = ground();
+    game.floor.ropes.length = 0;
+    game.floor.ladders.length = 0;
+    game.floor.ropes.push({ x: player.x, y1: g.y - 90, y2: g.y });
+    player.y = g.y - player.h - 10;
+    player.onGround = false;
+    player.vx = 0;
+    player.vy = -60;
+    tap('d');
+    expect(player.cast).toBe('jump');
+    expect(player.casting.useT).toBeGreaterThan(0);
+
+    setKey('up', true);
+    player.x = game.floor.ropes[0].x;
+    step(1);
+    expect(player.climb).not.toBe(null); // grabbed mid-Glide
+    expect(player.casting.useT).toBe(0); // which ends the Glide
+    expect(player.casting.key).toBe(null);
+
+    const y = player.y;
+    step(8);
+    setKey('up', false);
+    expect(player.climb).not.toBe(null);
+    expect(player.y).toBeLessThan(y - 10); // and Up keeps climbing
+  });
+});
+
+describe('Piercing Leap', () => {
+  /** The highest the archer gets over the next n frames, in px above `from`. */
+  function peak(from: number, n: number): number {
+    let best = from;
+    for (let i = 0; i < n; i++) {
+      step(1);
+      best = Math.min(best, player.y);
+    }
+    return from - best;
+  }
+
+  it('leaps off a raised platform too, not just the ground slab', () => {
+    arena(20);
+    player.ranks['ground-e'] = true;
+    const deck = { x: player.x - 40, y: ground().y - 60, w: 80, h: 16 };
+    game.floor.platforms.push(deck);
+    player.y = deck.y - player.h;
+    player.vy = 0;
+    step(2);
+    const top = player.y;
+    tap('e');
+    expect(peak(top, 40)).toBeGreaterThan(35);
+  });
+
+  it('from the floor rises about its own height', () => {
+    arena(20);
+    player.ranks['ground-e'] = true;
+    tap('e');
+    const height = peak(ground().y - player.h, 40);
+    expect(height).toBeGreaterThan(35);
+    expect(height).toBeLessThan(48);
+  });
+
+  it('cast a frame into a jump, it still measures from the floor, so it does not stack on the jump', () => {
+    arena(20);
+    player.ranks['ground-e'] = true;
+    const g = ground().y - player.h;
+    tap('e');
+    const flat = peak(g, 40);
+    tap('c');
+    step(1);
+    tap('e');
+    step(1);
+    expect(Math.abs(g + player.h - P.SPIKE_LIFT_H - player.liftTop)).toBeLessThan(8);
+    expect(peak(g, 40)).toBeLessThan(flat + 4);
+  });
+
+  it('rises to its height, holds there for the whole cast, then falls', () => {
+    arena(20);
+    player.ranks['ground-e'] = true;
+    const g = ground().y - player.h;
+    const riseTime = P.SPIKE_LIFT_H / P.SPIKE_RISE_V;
+    tap('e');
+    step(Math.ceil((riseTime + 0.1) / P.STEP));
+    const top = g - player.y;
+    expect(Math.abs(top - P.SPIKE_LIFT_H)).toBeLessThan(3);
+
+    step(Math.floor((useTime('ground-e') - riseTime - 0.3) / P.STEP));
+    expect(Math.abs(g - player.y - top)).toBeLessThan(1);
+    expect(player.casting.useT).toBeGreaterThan(0);
+
+    step(Math.ceil(0.4 / P.STEP));
+    expect(g - player.y).toBeLessThan(top - 2);
+  });
+
+  it('stops your run, so you rise straight up', () => {
+    arena(20);
+    player.ranks['ground-e'] = true;
+    player.vx = 200;
+    tap('e');
+    expect(player.vx).toBe(0);
+    expect(player.vy).toBeLessThan(0);
+    const x = player.x;
+    step(6);
+    expect(Math.abs(player.x - x)).toBeLessThan(1);
+  });
+});
+
+describe('the aerial kit plants you (momentum from a run or jump is dropped)', () => {
+  it('Cyclone Sweep holds its spot', () => {
+    arena(30);
+    player.ranks['ground-w'] = true;
+    player.ranks['air-w'] = true;
+    tap('c');
+    step(6);
+    player.vx = 180;
+    player.vy = -60;
+    tap('w');
+    expect(player.vx).toBe(0);
+    expect(player.vy).toBeGreaterThan(-60); // gravity picks back up next frame; the upward push is gone
+    const x = player.x;
+    step(6);
+    expect(Math.abs(player.x - x)).toBeLessThan(1);
+  });
+
+  it('Meteor Dive hangs frozen through its coil, then plunges down and forward at 45 degrees', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['air-q'] = true;
+    tap('c');
+    step(6);
+    player.vx = 180;
+    player.vy = -60;
+    tap('q');
+    expect(player.vx).toBe(0);
+    expect(player.vy).toBeGreaterThan(-60);
+    expect(player.diving).toBeFalsy();
+    step(2); // the 0.1s coil is the first three frames
+    expect(player.diving).toBeFalsy();
+    expect(player.vx).toBe(0);
+    step(2);
+    expect(player.diving).toBeTruthy();
+    expect(player.vx).toBeGreaterThan(100);
+    expect(player.vy).toBeGreaterThan(100);
+  });
+});
+
+describe('Rising Arrows and Skyward Assault', () => {
+  it('carry no cooldown: the next Rush Toss can fire the Volley again at once', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['ground-w'] = true;
+    player.ranks.ab = true;
+    tap('q');
+    step(12);
+    tap('w');
+    expect(player.cast).toBe('barrage');
+    expect(player.cd['ground-w']).toBe(0);
+
+    while (!player.onGround) step(1); // back on the ground, so Q is Rush Toss again
+    step(60); // Rush Toss's 3s cooldown runs out
+    tap('q');
+    step(12);
+    tap('w');
+    expect(player.cast).toBe('barrage');
+    expect(player.cd['ground-w']).toBe(0);
+  });
+});
+
+describe('the skill bar flashes the slot you cast from', () => {
+  it('Rush Toss flashes the Q slot, then the flash fades over USE_FLASH', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['air-q'] = true;
+    tap('q');
+    expect(player.usedT['ground-q']).toBeGreaterThan(USE_FLASH - 0.05);
+    expect(player.usedT['ground-q.air']).toBe(0);
+    step(3);
+    expect(player.usedT['ground-q']).toBeGreaterThan(0);
+    expect(player.usedT['ground-q']).toBeLessThan(USE_FLASH);
+    step(10);
+    expect(player.usedT['ground-q']).toBe(0);
+  });
+
+  it('Meteor Dive flashes the stacked air slot, not the ground one', () => {
+    arena(20);
+    player.ranks['ground-q'] = true;
+    player.ranks['air-q'] = true;
+    tap('c');
+    step(6);
+    tap('q');
+    expect(player.usedT['ground-q.air']).toBeGreaterThan(0);
+    expect(player.usedT['ground-q']).toBe(0);
+  });
+});
+
+describe('Jump is movement, not a skill', () => {
+  it('a jump pressed during a skill\'s use time is dropped, not buffered', () => {
+    arena(20);
+    dummy(150);
+    tap('z');
+    expect(player.casting.useT).toBeGreaterThan(0);
+    tap('c');
+    expect(player.onGround).toBe(true);
+    expect(player.casting.queued).toBe(null);
+    while (player.casting.useT > 0) step(1);
+    step(14);
+    expect(player.onGround).toBe(true);
+  });
+
+  it('once movement is free, it jumps on the press', () => {
+    arena(20);
+    dummy(150);
+    tap('z');
+    while (player.casting.useT > 0) step(1);
+    step(14); // and its recovery
+    tap('c');
+    expect(player.onGround).toBe(false);
+    expect(player.vy).toBeLessThan(0);
   });
 });

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { arena, climb, dummy, ground, release, step, tap } from './helpers';
 import { TOWN_MIN_H } from '../src/floorframe';
 import { miniRect, MINI_SCALE, toMini } from '../src/minimap';
-import { MOB_TYPES, P, TILE, WORLD } from '../src/config';
+import { CAM, MOB_TYPES, P, TILE, WORLD } from '../src/config';
 import { generateFloor, groupSize, LAYOUTS, type Layout } from '../src/floor';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { coinValue, drops } from '../src/economy';
-import { isTown, mobLevel, PATHS, pathsInto, townDepth } from '../src/world';
+import { isTown, mobLevel, PATHS, pathsInto, placeKey, townDepth } from '../src/world';
 import { killMob } from '../src/combat';
 import { makeShape, SHAPES } from '../src/floorshape';
 import { setKey } from '../src/input';
@@ -14,6 +14,8 @@ import { seeded } from '../src/rng';
 import { cameraTarget, game, gotoPlace, player, spawnMob, spawnWave } from '../src/state';
 import { surfaceYAt } from '../src/surface';
 import type { Platform } from '../src/types';
+import { confirmUi } from '../src/confirm';
+import { windowOpen } from '../src/windows';
 
 /** Go to a place with no enemies. */
 function emptyPlace(n: number): void {
@@ -637,5 +639,96 @@ describe('the world\'s top and bottom', () => {
     player.onGround = false;
     step(1);
     expect(player.y).toBeLessThanOrEqual(WORLD.h - player.h);
+  });
+});
+
+describe('the return portal', () => {
+  const here = { path: 'woods', floor: 3 };
+  /** Go to woods 3 and stand in its return portal; returns the portal. */
+  function standInIt() {
+    gotoPlace(here);
+    const back = game.floor.portals.find((q) => q.down)!;
+    player.x = back.x;
+    player.y = back.y - player.h;
+    player.onGround = true;
+    return back;
+  }
+  afterEach(() => {
+    confirmUi.open = false;
+  });
+
+  it('every combat floor has one on the ground, back to the town below the path', () => {
+    const back = standInIt();
+    expect(back.y).toBeGreaterThanOrEqual(game.floor.platforms[0].y - 1);
+    expect(back.to.town).toBe('driftwood');
+  });
+
+  it('stepping in asks first, and the dialog takes Enter (not the chat line)', () => {
+    standInIt();
+    tap('up');
+    expect(confirmUi.open).toBe(true);
+    expect(game.floor.place.floor).toBe(3);
+    expect(windowOpen()).toBe(true);
+    confirmUi.yes = false;
+    tap('enter');
+    expect(confirmUi.open).toBe(false);
+  });
+
+  it('saying no keeps you on the floor', () => {
+    standInIt();
+    tap('up');
+    confirmUi.yes = false;
+    tap('z');
+    expect(confirmUi.open).toBe(false);
+    expect(game.floor.place.floor).toBe(3);
+  });
+
+  it('saying yes takes you to the town', () => {
+    standInIt();
+    tap('up');
+    confirmUi.yes = true;
+    tap('z');
+    expect(game.floor.town).toBeTruthy();
+    expect(placeKey(game.floor.place)).toBe('driftwood');
+  });
+});
+
+describe('the camera on a fresh floor', () => {
+  beforeEach(() => {
+    game.view.w = 240;
+    game.view.h = 180;
+  });
+
+  it('starts centred on the player (it used to pan in from the top-left)', () => {
+    gotoPlace(climb(2));
+    const want = cameraTarget();
+    expect(Math.abs(game.cam.x - want.x)).toBeLessThan(1);
+    expect(Math.abs(game.cam.y - want.y)).toBeLessThan(1);
+    step(1);
+    expect(Math.abs(game.cam.x - want.x)).toBeLessThan(1);
+    expect(Math.abs(game.cam.y - want.y)).toBeLessThan(1);
+  });
+
+  it('so she starts inside the deadzone', () => {
+    gotoPlace(climb(2));
+    // (unless she spawned by a wall and the camera is pinned to the world's edge)
+    const pinned = game.cam.x <= 0 || game.cam.x >= WORLD.w - game.view.w;
+    if (!pinned) {
+      expect(player.x).toBeGreaterThan(game.cam.x + game.view.w * CAM.left);
+      expect(player.x).toBeLessThan(game.cam.x + game.view.w * CAM.right);
+    }
+    const feet = player.y + player.h;
+    expect(feet).toBeGreaterThan(game.cam.y + game.view.h * CAM.top);
+    expect(feet).toBeLessThan(game.cam.y + game.view.h * CAM.bottom);
+  });
+
+  it('on every floor up the tower', () => {
+    const off: number[] = [];
+    for (const n of [1, 3, 5, 8, 10]) {
+      gotoPlace(climb(n));
+      const want = cameraTarget();
+      if (Math.abs(game.cam.x - want.x) > 1 || Math.abs(game.cam.y - want.y) > 1) off.push(n);
+    }
+    expect(off).toEqual([]);
   });
 });

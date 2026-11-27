@@ -1,8 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { memoryStorage } from './helpers';
-import { ACTIONS, actionFor, bindKey, binds, capture, cleanBinds, keyName, normalize, resetBinds, setLayout } from '../src/input';
+import { arena, dummy, memoryStorage } from './helpers';
+import {
+  actionFor,
+  ACTIONS,
+  bindKey,
+  binds,
+  capture,
+  cleanBinds,
+  keyName,
+  normalize,
+  resetBinds,
+  setKey,
+  setLayout,
+} from '../src/input';
 import { KEY_ROWS, keysUi } from '../src/keys';
 import { openSettings, settingsKey, settingsUi, SETTING_ROWS } from '../src/settings';
+import { advance } from '../src/loop';
+import { P } from '../src/config';
+import { player } from '../src/state';
 
 /** A fake keyboard event: what the key types (key) and where it sits (code). */
 const keyEvent = (key: string, code?: string) => ({ key, code }) as unknown as Parameters<typeof normalize>[0];
@@ -171,5 +186,29 @@ describe('rebinding keys', () => {
       expect(keysUi.open).toBe(false);
       expect(settingsUi.open).toBe(true);
     });
+  });
+});
+
+describe('the game loop', () => {
+  it('a frame can run several catch-up steps, but a tap fires once, not on each', () => {
+    arena(20);
+    dummy(150);
+    player.cdMax.z = 0;
+    setKey('z', true);
+    const steps = advance({ acc: 0 }, P.STEP * 3 + 1e-6, false);
+    setKey('z', false);
+    expect(steps).toBe(3);
+    expect(player.casting.queued).toBe(null);
+    expect(player.cast).toBe('shoot');
+  });
+
+  it('a stalled frame is capped at 0.1s of steps', () => {
+    expect(advance({ acc: 0 }, 5, false)).toBe(Math.floor(0.1 / P.STEP + 1e-9));
+  });
+
+  it('a frozen world runs no steps, and drops the time', () => {
+    const clock = { acc: 0.05 };
+    expect(advance(clock, 0.1, true)).toBe(0);
+    expect(clock.acc).toBe(0);
   });
 });
