@@ -214,9 +214,9 @@ function midairSpin(r: SkillRank): void {
   });
 }
 
-/** Rising Arrows (W's ground form): knock the enemies ahead into the air and
- *  shoot them before they land. Q's rush gathers them up first, and only a
- *  link off it makes this available. */
+/** Rising Arrows (W's ground form): a volley that rains on the enemies Q's
+ *  rush has launched, hitting them before they land. Only a link off the rush
+ *  makes this available. */
 function skyfallVolley(r: SkillRank): void {
   pose('shoot', 'ground-w');
   sfx.risingArrows();
