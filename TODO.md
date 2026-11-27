@@ -42,3 +42,4 @@
 - Increase Tempest's (`r`) damage to 300% (`dmg1: 200` → `300`, config.ts:149).
 - Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.
+- Add a cheer mechanic: `/cheer <player>` on another player in the channel grants them a 10% EXP buff. You can store 3 cheers at a time, and one recharges per hour.
