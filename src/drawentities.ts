@@ -185,7 +185,7 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   ctx.translate(Math.round(x), Math.round(feet));
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
   // every frame is centred on the middle of the body (a 24px frame sits on
-  // the feet; the dive's bigger, pitched frame turns about the middle)
+  // the feet; the dive's and prone's bigger frames sit on the middle)
   ctx.drawImage(img, -img.width / 2, -ARCHER_H / 2 - img.height / 2);
   ctx.restore();
 }
@@ -213,15 +213,16 @@ tintCv.width = ARCHER_W; tintCv.height = ARCHER_H;
 const tintCtx = tintCv.getContext('2d') as CanvasRenderingContext2D;
 /** The frame washed with a colour (only where the frame has pixels). */
 function tinted(img: HTMLCanvasElement, col: string): HTMLCanvasElement {
-  if (tintCv.width !== img.width) tintCv.width = img.width; // the prone frame is wider
+  // the prone and dive frames are bigger than standing ones
+  if (tintCv.width !== img.width || tintCv.height !== img.height) { tintCv.width = img.width; tintCv.height = img.height; }
   tintCtx.globalCompositeOperation = 'source-over';
   tintCtx.globalAlpha = 1;
-  tintCtx.clearRect(0, 0, img.width, ARCHER_H);
+  tintCtx.clearRect(0, 0, img.width, img.height);
   tintCtx.drawImage(img, 0, 0);
   tintCtx.globalCompositeOperation = 'source-atop';
   tintCtx.globalAlpha = 0.45;
   tintCtx.fillStyle = col;
-  tintCtx.fillRect(0, 0, img.width, ARCHER_H);
+  tintCtx.fillRect(0, 0, img.width, img.height);
   return tintCv;
 }
 

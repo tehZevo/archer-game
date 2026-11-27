@@ -135,63 +135,38 @@ const SPIN_LOWER = [
   '................',
 ];
 
-// Meteor Dive: stretched out head-first, bow reaching ahead, legs together
-// and trailing, pitched down the line of the dive at bake time (pitch()).
-// The second frame flutters the feet.
-const DIVE_LEGS = [
-  ['.....olllloo....', '.....olllloo....', '.....ollllo.....', '.....obbbbo.....', '.....obbbbo.....', '.....oooooo.....'],
-  ['.....olllloo....', '.....olllloo....', '.....ollllo.....', '....obbbbo......', '....obbbbo......', '....oooooo......'],
+// Meteor Dive: plunging head-first, crown leading and face to the ground,
+// legs trailing, the cape along the back and the bow held down under the
+// chin. A bigger frame (30x21), centred on the body's middle like every
+// frame; the second flutters the feet.
+const DIVE = [
+  'ooo...........................',
+  'obbbbo........................',
+  'obbbbbo.......................',
+  '.oobbllo......................',
+  '...olllllo....................',
+  '....olllllloCo................',
+  '.....olllllllocCo.............',
+  '......ollltttTTocCCo..oo......',
+  '......ottttttTTTTcCCookko.....',
+  '.......otttttttTTTTcookhho....',
+  '........oggggggggggThhhhhho...',
+  '..........otttttttTThhhhhhho..',
+  '............ossstttthHHHhhhho.',
+  '..............oossotoSssHhgho.',
+  '...............osoooSsssshgho.',
+  '................oso.Ssssshgho.',
+  '.................osoosssshgho.',
+  '..................ososseshgho.',
+  '..............oowwssoossshho..',
+  '.............owWxxxxxwooohoo..',
+  '.............oo.....oo...o....',
 ];
+const DIVE_FLUTTER: [number, number, string][] = [[0, 0, '.ooo'], [1, 0, '.obbbbo'], [2, 0, '.obbbbbo'], [3, 0, '..obllo']];
 
 /** Every other pixel gone: the Tempest's shimmer as you blink out. */
 const dither = (g: string[], odd: number): string[] =>
   g.map((r, y) => [...r].map((ch, x) => ((x + y + odd) % 2 ? '.' : ch)).join(''));
-
-/* ---------------- pitching a frame (no canvas rotation) ----------------
-   The dive's head-down angle lives in the frame itself: the grid is scaled
-   up 4x with EPX (which rounds off diagonal edges instead of blocking
-   them), turned, and sampled back down at each pixel's centre, so the
-   pitched archer is still clean pixel art. The result is a square frame
-   centred on the body's middle (drawArcher centres every frame there). */
-
-/** How far the Meteor Dive pitches you head-down, radians (clockwise, facing right). */
-export const DIVE_PITCH = 0.8;
-
-/** EPX / Scale2x: each pixel becomes 4, corners taking a neighbour's colour
- *  where two neighbours agree, so slopes stay smooth. */
-function epx(g: string[]): string[] {
-  const h = g.length, w = g[0].length, at = (x: number, y: number): string => g[Math.max(0, Math.min(h - 1, y))][Math.max(0, Math.min(w - 1, x))];
-  const out: string[] = [];
-  for (let y = 0; y < h; y++) {
-    let r0 = '', r1 = '';
-    for (let x = 0; x < w; x++) {
-      const p = at(x, y), a = at(x, y - 1), b = at(x + 1, y), c = at(x - 1, y), d = at(x, y + 1);
-      r0 += (c === a && c !== d && a !== b ? a : p) + (a === b && a !== c && b !== d ? b : p);
-      r1 += (d === c && d !== b && c !== a ? c : p) + (b === d && b !== a && d !== c ? d : p);
-    }
-    out.push(r0, r1);
-  }
-  return out;
-}
-
-/** The grid turned by `a` radians about its middle, into a square frame big enough to hold it. */
-export function pitch(g: string[], a: number): string[] {
-  const big = epx(epx(g)), K = 4, h = g.length, w = g[0].length;
-  const S = Math.ceil(Math.hypot(w, h)) + 1 & ~1; // even, so the middle is a pixel corner
-  const cos = Math.cos(a), sin = Math.sin(a), out: string[] = [];
-  for (let y = 0; y < S; y++) {
-    let row = '';
-    for (let x = 0; x < S; x++) {
-      const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2;
-      // back from the output pixel to the source: the inverse turn
-      const sx = (cos * dx + sin * dy + w / 2) * K, sy = (-sin * dx + cos * dy + h / 2) * K;
-      const ix = Math.floor(sx), iy = Math.floor(sy);
-      row += ix >= 0 && iy >= 0 && ix < w * K && iy < h * K ? big[iy][ix] : '.';
-    }
-    out.push(row);
-  }
-  return out;
-}
 
 /** Swap one row band of a frame: rows [from, from + band.length). */
 function withRows(base: string[], from: number, band: string[]): string[] {
@@ -265,7 +240,7 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   barrage: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, JUMP_LEGS)],
   prone: [PRONE],
   spin: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, SPIN_LOWER)],
-  dive: DIVE_LEGS.map((legs) => withRows(withRows(IDLE, 12, FOLLOW_BODY), 18, legs)),
+  dive: [DIVE, poke(DIVE, DIVE_FLUTTER)],
   // the release frame breaking up into a shimmer (render.ts fades it out)
   vanish: [dither(withRows(IDLE, 12, SHOOT_BODY), 0), dither(withRows(IDLE, 12, SHOOT_BODY), 1)],
   fall: [poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE), poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE2)],
@@ -352,7 +327,8 @@ const SWEPT_CLIMB: Cell[][] = [
 
 /** A frame's grid with a hair style and body type applied. */
 export function styled(grid: string[], pose: ArcherPose, style: number, body = 0): string[] {
-  if (pose === 'prone') return grid; // lying flat: the head's drawn shifted, so the side-view styles don't map onto it
+  // lying flat or diving head-first: the head's drawn turned, so the side-view styles don't map onto it
+  if (pose === 'prone' || pose === 'dive') return grid;
   const g = grid.slice();
   const put = (row: number, col: number, s: string, only: string): void => {
     if (!g[row]) return;
@@ -388,12 +364,12 @@ export function styled(grid: string[], pose: ArcherPose, style: number, body = 0
    so hair, skin and outfit colours never need sheets of their own. */
 
 /** Every pose's frames as pixels for a hair style and body type, in the
- *  default look's colours (the dive pitched after the hair and face are on). */
+ *  default look's colours. */
 export function archerShape(style: number, body: number): Record<ArcherPose, Grid[]> {
   const pal = { ...PAL, ...lookPalette(DEFAULT_LOOK) };
   const out = {} as Record<ArcherPose, Grid[]>;
   for (const p of Object.keys(GRIDS) as ArcherPose[]) {
-    out[p] = GRIDS[p].map((g) => styled(g, p, style, body)).map((g) => (p === 'dive' ? pitch(g, DIVE_PITCH) : g)).map((rows) => {
+    out[p] = GRIDS[p].map((g) => styled(g, p, style, body)).map((rows) => {
       const g = newGrid(rows[0].length, rows.length);
       rows.forEach((r, y) => [...r].forEach((ch, x) => {
         const col = pal[ch];

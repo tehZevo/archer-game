@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, memoryStorage, release, tap } from './helpers';
-import { archerFrame, DIVE_PITCH, GRIDS, pitch, poseCycle, styled } from '../src/archer';
+import { archerFrame, GRIDS, poseCycle, styled } from '../src/archer';
 import { NPC_R, wallet } from '../src/economy';
 import { BASIC, cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { disabled, initMenu, items, lookLocked, menu, menuKey } from '../src/menu';
@@ -273,17 +273,6 @@ describe('other players stand still', () => {
   it('a climb steps with the height climbed, not with time', () => {
     expect(poseCycle('climb', 100, 0.5)).toBe(poseCycle('climb', 100, 0));
     expect(poseCycle('climb', 108, 0)).not.toBe(poseCycle('climb', 100, 0));
-  });
-});
-
-describe('the dive\'s pitch is drawn into the frame (no canvas rotation)', () => {
-  const upright = GRIDS.dive[0];
-  const pitched = pitch(upright, DIVE_PITCH);
-  /** How many filled pixels a frame has. */
-  const ink = (rows: string[]): number => rows.join('').replace(/\./g, '').length;
-
-  it('a zero pitch keeps the figure upright', () => {
-    expect(pitch(upright, 0).some((row) => row.includes('h'))).toBe(true);
   });
 });
 
