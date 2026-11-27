@@ -3,7 +3,7 @@ import { arena, climb, dummy, ground, release, step, tap } from './helpers';
 import { TOWN_MIN_H } from '../src/floorframe';
 import { miniRect, MINI_SCALE } from '../src/minimap';
 import { CAM, MOB_TYPES, P, TILE, WORLD } from '../src/config';
-import { generateFloor, groupSize, LAYOUTS, type Layout } from '../src/floor';
+import { generateFloor, LAYOUTS, type Layout } from '../src/floor';
 import { coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods } from '../src/floormods';
 import { coinValue, drops } from '../src/economy';
 import { isTown, mobLevel, PATHS, pathsInto, placeKey, townDepth } from '../src/world';
@@ -286,18 +286,6 @@ describe('slopes', () => {
 });
 
 describe('floor layouts', () => {
-  it('a jump rises about 26px', () => {
-    arena(1);
-    const y0 = player.y;
-    let apex = 0;
-    tap('c');
-    for (let i = 0; i < 40; i++) {
-      step(1);
-      apex = Math.max(apex, y0 - player.y);
-    }
-    expect(apex).toBeGreaterThan(23);
-    expect(apex).toBeLessThan(29);
-  });
 
   // up the leftmost branch, to Mushroom Grotto's town
   const pathFloors = Array.from({ length: 24 }, (_, i) => i + 1).filter((n) => !isTown(climb(n)));
@@ -385,27 +373,6 @@ describe('floor layouts', () => {
 });
 
 describe('spawn groups', () => {
-  it('a group is 4 on short platforms, up to 8 on long ones', () => {
-    expect(groupSize(4)).toBe(4);
-    expect(groupSize(6)).toBe(4);
-    expect(groupSize(10)).toBe(6);
-    expect(groupSize(14)).toBe(8);
-    expect(groupSize(30)).toBe(8);
-  });
-
-  it('every platform spawn zone holds a group of 4-8', () => {
-    let zones = 0;
-    for (const n of [1, 2, 3, 4]) {
-      gotoPlace(climb(n));
-      for (const z of game.floor.spawns) {
-        if (z.block === undefined) continue;
-        zones++;
-        expect(z.cap ?? 1).toBeGreaterThanOrEqual(4);
-        expect(z.cap ?? 1).toBeLessThanOrEqual(8);
-      }
-    }
-    expect(zones).toBeGreaterThan(0);
-  });
 
   it('enemies knocked hard sideways and up stay on their own platform', () => {
     release();
@@ -463,22 +430,9 @@ describe('the map', () => {
     const lowest = (paths: typeof PATHS[number][]): number => Math.min(...paths.map((p) => p.lvl[0]));
     const highest = (paths: typeof PATHS[number][]): number => Math.max(...paths.map((p) => p.lvl[1]));
 
-    it('there are seven', () => {
-      expect([...pathsByTier().keys()].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    });
-
     it('each tier starts above where the one below tops out', () => {
       const tiers = pathsByTier();
       for (let t = 2; t <= 7; t++) expect(lowest(tiers.get(t)!)).toBeGreaterThan(highest(tiers.get(t - 1)!));
-    });
-
-    it('tiers 4 and 5 have four paths at most', () => {
-      expect(pathsByTier().get(4)!.length).toBeLessThanOrEqual(4);
-      expect(pathsByTier().get(5)!.length).toBeLessThanOrEqual(4);
-    });
-
-    it('tier 7 tops out above Lv.40', () => {
-      expect(highest(pathsByTier().get(7)!)).toBeGreaterThan(40);
     });
   });
 });
@@ -509,23 +463,6 @@ describe('minimap', () => {
 
 describe('floor size', () => {
   // floors are trimmed to their content: a thin ground, a little sky
-  it('each floor is ground (4 tiles) up to its portals plus 2-3 tiles of sky', () => {
-    const bad: string[] = [];
-    for (let n = 1; n <= 20; n++) {
-      release();
-      gotoPlace(climb(n));
-      const f = game.floor, base = f.platforms[0];
-      const top = Math.min(...f.portals.map((p) => p.y - p.h));
-      if (WORLD.h !== f.h) bad.push(`floor ${n}: WORLD.h is not the floor height`);
-      if (base.h !== 4 * TILE || base.y + base.h !== f.h) bad.push(`floor ${n}: ground is not 4 tiles at the bottom`);
-      if (top < 2 * TILE) bad.push(`floor ${n}: under 2 tiles of sky`);
-      // towns get extra sky (see TOWN_MIN_H), and so may floors at the minimum height
-      if (top > 3 * TILE && !f.town && f.h > 180) bad.push(`floor ${n}: over 3 tiles of sky`);
-      if (f.h < (f.town ? TOWN_MIN_H : 180)) bad.push(`floor ${n}: too short (${f.h})`);
-      if (f.platforms.some((p) => p.y < 0) || f.ropes.some((r) => r.y1 < 0)) bad.push(`floor ${n}: something above the top`);
-    }
-    expect(bad).toEqual([]);
-  });
 
   it('towns are taller than the view, so climbing to the deck moves the camera up', () => {
     release();

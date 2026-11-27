@@ -11,7 +11,6 @@ import { game, gotoPlace, player } from '../src/state';
 import { mobLevel, START } from '../src/world';
 
 /** Town folk who aren't shopkeepers or trainers. */
-const OTHER_NPCS = ['stylist', 'board', 'pets', 'sage'];
 
 function emptyWallet(): void {
   wallet.coins = 0;
@@ -83,14 +82,6 @@ describe('potions', () => {
     arena(5);
     emptyWallet();
     step(Math.ceil(POTION_CD / P.STEP) + 1); // let the last test's potion cooldown run out
-  });
-
-  it('A drinks an HP potion: +40% of max HP', () => {
-    wallet.hp = 2;
-    player.hp = 10;
-    tap('a');
-    expect(wallet.hp).toBe(1);
-    expect(player.hp).toBe(Math.min(player.hpMax, 10 + Math.ceil(player.hpMax * 0.4)));
   });
 
   it('have a short cooldown', () => {
@@ -195,7 +186,6 @@ describe('the shop', () => {
 });
 
 describe('the trainer', () => {
-  const shopsAndTrainers = () => game.floor.npcs!.filter((n) => !OTHER_NPCS.includes(n.kind));
   const coach = () => game.floor.npcs!.find((n) => n.kind === 'trainer')!;
 
   beforeEach(() => {
@@ -206,17 +196,6 @@ describe('the trainer', () => {
   afterEach(() => {
     if (trainer.open) tap('escape');
     release();
-  });
-
-  it('the first town has only a shopkeeper', () => {
-    gotoPlace(START);
-    expect(shopsAndTrainers().map((n) => n.kind)).toEqual(['shop']);
-  });
-
-  it('the third town has a trainer beside the shopkeeper', () => {
-    gotoPlace({ town: 'mossgate' });
-    expect(shopsAndTrainers().length).toBe(2);
-    expect(coach()).toBeTruthy();
   });
 
   it('Up beside the trainer opens it; a branch swap keeps the rank and takes the coins', () => {

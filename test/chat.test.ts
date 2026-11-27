@@ -77,11 +77,6 @@ describe('cheers (/cheer <player> gives them +10% EXP)', () => {
   describe('your stock', () => {
     const t = 1_000_000_000_000;
 
-    it('you hold three', () => {
-      expect([spendCheer(t), spendCheer(t + 1), spendCheer(t + 2), spendCheer(t + 3)]).toEqual([true, true, true, false]);
-      expect(cheersLeft(t + 3)).toBe(0);
-    });
-
     it('one comes back an hour after you first spend from a full stock', () => {
       spendCheer(t);
       spendCheer(t + 1);

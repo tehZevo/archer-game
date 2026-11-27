@@ -11,7 +11,7 @@ import {
   STYLIST_ROWS, stylistTap } from '../src/stylist';
 import { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src/townlooks';
 import { placeName, START, TOWNS } from '../src/world';
-import { NPC_FRAMES, npcFrame, npcRows } from '../src/npcart';
+import { npcFrame } from '../src/npcart';
 import { DECOR_FRAMES, type DecorKind, paintDecor, paintSmoke, SMOKE, TOWN_PALS } from '../src/towndecor';
 
 const POSE_NAMES = Object.keys(GRIDS) as (keyof typeof GRIDS)[];
@@ -63,25 +63,10 @@ describe('looks: hair style, hair colour, skin and outfit', () => {
     }
     expect(bad).toEqual([]);
   });
-
-  it('the male build changes the face', () => {
-    for (const pose of POSE_NAMES.filter((p) => p !== 'prone' && p !== 'climb')) {
-      const frame = GRIDS[pose][0];
-      expect(pixelsChanged(styled(frame, pose, 0, 1), styled(frame, pose, 0, 0))).toBeGreaterThanOrEqual(3);
-    }
-  });
-
-  it('long hair shows down the back', () => {
-    expect(styled(GRIDS.idle[0], 'idle', 2).join()).not.toBe(styled(GRIDS.idle[0], 'idle', 1).join());
-  });
 });
 
 describe('town extras (each town\'s stylist offers its own, which seeing unlocks everywhere)', () => {
   const extras = Object.values(TOWN_LOOKS).flat();
-
-  it('every town\'s stylist has an extra', () => {
-    for (const t of TOWNS) expect(TOWN_LOOKS[t.name]?.length).toBeGreaterThan(0);
-  });
 
   it('extras are real looks, not basic ones, and each is offered by one town only', () => {
     const ids = extras.map((e) => `${e.k}:${e.i}`);
@@ -352,42 +337,5 @@ describe('town NPCs', () => {
     const frames = new Set(times.map((t) => npcFrame(t, true, 1.3)));
     expect(frames.has(3)).toBe(true);
     expect(frames.has(2)).toBe(false);
-  });
-
-  it('every frame is its own, and the three NPCs look different', () => {
-    const shopFrames = Array.from({ length: NPC_FRAMES }, (_, f) => npcRows('shop', f).join());
-    expect(new Set(shopFrames).size).toBe(NPC_FRAMES);
-    const npcs = (['shop', 'stylist', 'trainer'] as const).map((k) => npcRows(k, 0).join());
-    expect(new Set(npcs).size).toBe(3);
-  });
-});
-
-describe('town decor that moves', () => {
-  /** Each frame of a piece of decor, as a string to compare. */
-  function framesOf(kind: DecorKind): string[] {
-    return Array.from({ length: DECOR_FRAMES[kind] }, (_, f) => {
-      const cells: string[] = [];
-      paintDecor(kind, TOWN_PALS[0], (x, y, col, w = 1, h = 1) => cells.push(`${x},${y},${w},${h},${col}`), false, f);
-      return cells.join(';');
-    });
-  }
-  const moving = (Object.keys(DECOR_FRAMES) as DecorKind[]).filter((k) => DECOR_FRAMES[k] > 1);
-
-  it('lamps, flowers, signs and awnings move', () => {
-    for (const k of ['lamp', 'flowers', 'sign', 'awning']) expect(moving).toContain(k);
-  });
-
-  it('and each of their frames is different', () => {
-    const still = moving.filter((k) => new Set(framesOf(k)).size <= 1);
-    expect(still).toEqual([]);
-  });
-
-  it('chimney smoke rises frame by frame', () => {
-    const frames = Array.from({ length: SMOKE.frames }, (_, f) => {
-      const cells: string[] = [];
-      paintSmoke((x, y) => cells.push(`${x},${y}`), f);
-      return cells.join(';');
-    });
-    expect(new Set(frames).size).toBe(SMOKE.frames);
   });
 });

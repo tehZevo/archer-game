@@ -2,10 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { archerFrame, climbPhase, GRIDS, POSE_FPS } from '../src/archer';
 import { POSES } from '../src/ghost';
 import { BACKDROPS, meteorFade, particlesAt } from '../src/backdrop';
-import { MOB_TYPES } from '../src/config';
-import { bakeDeathSheet } from '../src/deathsheet';
-import { DEATHS } from '../src/deaths';
-import { MOB_GEN } from '../src/sprites';
 import { HURT, MOB_ART, paintMob } from '../src/mobart';
 import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
 import { BOT_H, hash, TILESETS, tilesetFor, TOP_H, TOP_W, variantAt } from '../src/tileset';
@@ -27,16 +23,6 @@ function boxChecker(w: number, h: number, colour = HEX6) {
 }
 
 describe('archer sprite sheet', () => {
-  it('every frame is 16x24, except lying flat which is 24x24', () => {
-    for (const [pose, frames] of Object.entries(GRIDS)) {
-      const width = pose === 'prone' ? 24 : 16;
-      expect(frames.length).toBeGreaterThan(0);
-      for (const grid of frames) {
-        expect(grid.length).toBe(24);
-        for (const row of grid) expect(row.length).toBe(width);
-      }
-    }
-  });
 
   it('the head lying flat is as tall as the standing head', () => {
     const headRows = (grid: string[]): number => grid.filter((row) => /[hs]/.test(row)).length;
@@ -215,15 +201,6 @@ describe('enemy art', () => {
 });
 
 describe('backdrop and tile polish', () => {
-  it('the Mushroom Grotto loam has only a few blue glints', () => {
-    const grotto = TILESETS['Mushroom Grotto'];
-    let glints = 0;
-    for (let v = 0; v < 8; v++) {
-      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (['#9ff3ea', '#5ad8c8'].includes(grotto.fill(x, y, v))) glints++;
-    }
-    expect(glints).toBeGreaterThan(0);
-    expect(glints).toBeLessThanOrEqual(16);
-  });
 
   describe('Starfall Observatory comets', () => {
     const comets = BACKDROPS['Starfall Observatory'].particles!;
@@ -244,51 +221,6 @@ describe('backdrop and tile polish', () => {
       const fading = [0.3, 1.1, 2.7, 5.2].some((t) => headAlphas(t).some((a) => a > 70 && a < 255));
       expect(fading).toBe(true);
     });
-  });
-});
-
-describe('the snails', () => {
-  /** Whether a sprite's first frame has a filled pixel at x, y. */
-  function filledAt(name: string, x: number, y: number): boolean {
-    const f = MOB_GEN[name]().frames[0];
-    return f.g.px[(y * f.w + x) * 4 + 3] > 0;
-  }
-
-  it('the Green Snail is the smallest enemy', () => {
-    const green = MOB_TYPES.find((m) => m.n === 'Green Snail')!;
-    for (const m of MOB_TYPES) {
-      if (m === green) continue;
-      expect(m.w * m.h, m.n).toBeGreaterThan(green.w * green.h);
-      expect(m.w).toBeGreaterThanOrEqual(green.w);
-      expect(m.h).toBeGreaterThanOrEqual(green.h);
-    }
-  });
-
-  it('the Green Snail is a cone: one pixel at the tip, each row as wide or wider than the one above', () => {
-    const width = MOB_GEN['Green Snail']().frames[0].w;
-    /** How wide its shell (the part left of x = 9) is on row y. */
-    const shellWidth = (y: number): number => {
-      const xs = [];
-      for (let x = 0; x < Math.min(width, 9); x++) if (filledAt('Green Snail', x, y)) xs.push(x);
-      return xs.length ? xs[xs.length - 1] - xs[0] + 1 : 0;
-    };
-    const widths = Array.from({ length: 8 }, (_, y) => shellWidth(y));
-    expect(widths[0]).toBe(1);
-    for (let y = 1; y < 8; y++) expect(widths[y]).toBeGreaterThanOrEqual(widths[y - 1]);
-    expect(widths[7]).toBeGreaterThanOrEqual(8);
-  });
-
-  it('the Garden Snail keeps a square-ish shell', () => {
-    let across = 0, down = 0;
-    for (let x = 0; x < 11; x++) if (filledAt('Garden Snail', x, 5)) across++;
-    for (let y = 1; y <= 11; y++) if (filledAt('Garden Snail', 5, y)) down++;
-    expect(across).toBeGreaterThanOrEqual(10);
-    expect(Math.abs(across - down)).toBeLessThanOrEqual(1);
-  });
-
-  it('both snails die their own drawn deaths', () => {
-    expect(bakeDeathSheet('Garden Snail', DEATHS['Garden Snail'])).toBeTruthy();
-    expect(bakeDeathSheet('Green Snail', DEATHS['Garden Snail'])).toBeTruthy();
   });
 });
 

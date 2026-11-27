@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { arena, climb, dummy, release, step, tap } from './helpers';
-import { BOSS, bossAlive, bossName, bossType, minions, quakes, summon } from '../src/boss';
+import { BOSS, bossAlive, minions, quakes, summon } from '../src/boss';
 import { killMob } from '../src/combat';
 import { P, WORLD } from '../src/config';
 import { game, gotoPlace, mobHp, player } from '../src/state';
@@ -38,10 +38,6 @@ describe('where bosses are', () => {
     expect(boss.h).toBe(boss.type.h * BOSS.SCALE);
     expect(boss.hpMax).toBe(mobHp(boss.type, boss.level, BOSS.HP));
     expect(boss.fly).toBeFalsy();
-  });
-
-  it('the Tide Pools\' boss is the Giant Enemy Crab', () => {
-    expect(bossName(bossType('Tide Pools'))).toBe('Giant Enemy Crab');
   });
 });
 

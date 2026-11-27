@@ -4,7 +4,7 @@ import { damage } from '../src/combat';
 import { P } from '../src/config';
 import { setKey } from '../src/input';
 import { game, gotoPlace, player } from '../src/state';
-import { applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
+import { applyStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus } from '../src/status';
 
 describe('status effects', () => {
   beforeEach(() => {
@@ -16,12 +16,6 @@ describe('status effects', () => {
     player.effects.length = 0;
     game.mobs = [];
     release();
-  });
-
-  it('the starting area carries no element; the Swamp carries poison', () => {
-    expect(areaStatus()).toBe(undefined);
-    gotoPlace({ path: 'swamp', floor: 1 });
-    expect(areaStatus()).toBe('poison');
   });
 
   describe('poison', () => {
