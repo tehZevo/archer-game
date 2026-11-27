@@ -4,6 +4,7 @@ import { POSES } from '../src/ghost';
 import { BACKDROPS, meteorFade, particlesAt } from '../src/backdrop';
 import { HURT, MOB_ART, paintMob } from '../src/mobart';
 import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
+import { PORTAL_H, PORTAL_W, portalGrid } from '../src/portalart';
 import { BOT_H, hash, TILESETS, tilesetFor, TOP_H, TOP_W, variantAt } from '../src/tileset';
 import { MAP_AREAS } from '../src/world';
 import fontPng from '../assets/font.png';
@@ -86,6 +87,27 @@ describe('props and backdrops', () => {
 
 });
 
+
+describe('the portal', () => {
+  /** Whether a pixel of a portal frame is filled. */
+  const filled = (f: number, x: number, y: number): boolean => portalGrid(f).px[(y * PORTAL_W + x) * 4 + 3] > 0;
+
+  it('is an oval: its top corners are empty', () => {
+    expect(filled(0, 0, 0)).toBe(false);
+  });
+
+  it('is an oval: its middle is filled', () => {
+    expect(filled(0, PORTAL_W / 2, 13)).toBe(true);
+  });
+
+  it('swirls: the next frame is a different picture', () => {
+    expect(portalGrid(1).px.join()).not.toBe(portalGrid(0).px.join());
+  });
+
+  it('sits on its ground ring at the bottom', () => {
+    expect(filled(0, PORTAL_W / 2, PORTAL_H - 1)).toBe(true);
+  });
+});
 
 describe('backdrop and tile polish', () => {
 
