@@ -158,3 +158,5 @@ export { check, release, step, tap, landLeap, ground, arena, dummy };
 export { skillScreen, skillStatus, tabLabel, tabSkills, visibleTabs } from '../src/skillscreen';
 export { JOBS, advanceJob, canAdvance, nextJob } from '../src/progress';
 export { visitSage } from '../src/sage';
+
+export { editableSkills, linkTargets, resetSkill, skillEditor, skillEditorInput, openSkillEditor } from '../src/skilleditor';
