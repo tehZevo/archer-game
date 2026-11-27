@@ -210,8 +210,9 @@ function drawBottomBars(pad: number): number {
   const { h } = game.view;
   const bw = 74, bgap = 3, y = h - 14;
   text(ctx, `Lv.${player.level}`, pad, y - 9, 1, '#dbe6f5', 'left');
-  bar(pad, y, bw, 'HP', `${fmtNum(player.hp)}/${fmtNum(player.hpMax)}`, player.hp / player.hpMax, '#3fbf72');
-  bar(pad + bw + bgap, y, bw, 'MP', `${fmtNum(player.mp)}/${fmtNum(player.mpMax)}`, player.mp / player.mpMax, '#3f8fd6');
+  // HP / MP read the current value (500, 1.5K); the bar shows how full it is
+  bar(pad, y, bw, 'HP', fmtNum(player.hp), player.hp / player.hpMax, '#3fbf72');
+  bar(pad + bw + bgap, y, bw, 'MP', fmtNum(player.mp), player.mp / player.mpMax, '#3f8fd6');
   bar(pad + 2 * (bw + bgap), y, bw, 'EXP', expBar().text, expBar().pct, '#ffd166');
   return y;
 }
