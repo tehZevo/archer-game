@@ -23,3 +23,4 @@ import './15-gale-stream';
 import './17-assault-fx';
 import './14-tail';
 import './18-skill-editor';
+import './19-skill-matrix';

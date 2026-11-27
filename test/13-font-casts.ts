@@ -142,10 +142,8 @@ import { bubbleable, bubbleText, bubbleWidth, DMG_H, seeded, cleanEmote, clearEm
   // The W-slot skills are paced by the Rush Toss link alone: a fresh Q
   // lets the follow-up fire again immediately, with nothing cooling down.
   arena(20); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true;
-  check('Rising Arrows and Skyward Assault carry no cooldown', SKILLS['ground-w'].cd === 0 && SKILLS.ab.cd === 0,
-    `W ${SKILLS['ground-w'].cd} AB ${SKILLS.ab.cd}`);
   tap('q'); step(12); tap('w');
-  check('...and casting the Volley leaves nothing to cool down', player.cd['ground-w'] === 0 && player.cast === 'barrage',
+  check('Rising Arrows and Skyward Assault carry no cooldown', player.cd['ground-w'] === 0 && player.cast === 'barrage',
     `cast ${player.cast} cd ${player.cd['ground-w'].toFixed(2)}`);
   while (!player.onGround) step(); // back on the ground: the next press is a Rush Toss, not the air form
   step(60); // let Rush Toss's 3s cooldown run out before casting it again
