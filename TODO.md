@@ -16,7 +16,6 @@
 - (design) Assess the suite and determine which tests are low value. Roughly 900 checks cover ~15,000 LOC of behavioural code; decide which of them earn their keep and which are tautologies that pass no matter what the game does. Output: a short list of checks to drop outright, distinct from the consolidation work above.
 - (design) Rename Downpour.
 - (design) Consider renaming all jobs.
-- Add a training dummy in town, on its own platform against a wall, that shows damage numbers but never dies.
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.
 - Add a cheer mechanic: `/cheer <player>` on another player in the channel grants them a 10% EXP buff. You can store 3 cheers at a time, and one recharges per hour.
 - Make Twin Echoes (`es`) cut your damage to 60% while it's learned. Since it doubles your hits, the trade is a net gain of about 20% (e.g. Double Shot: 2 × 120% = 240% → 4 × 72% = 288%).

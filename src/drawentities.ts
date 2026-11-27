@@ -79,7 +79,24 @@ export function drawCorpse(c: Corpse): void {
 /** A mob that just struck you (contact damage resets atkCd to 1.1) lunges for this long. */
 const LUNGE_FROM = 0.85;
 
+/** The training dummy: a straw target on a post, rocking when it's hit. */
+function drawDummy(m: Mob): void {
+  const x = Math.round(m.x), feet = Math.round(m.y + m.h);
+  const rock = (m.hurt ?? 0) > 0 ? (Math.floor((m.hurt ?? 0) * 20) % 2 ? 1 : -1) : 0;
+  const px = (c: string, dx: number, dy: number, w: number, h: number): void => { ctx.fillStyle = c; ctx.fillRect(x + dx, feet - dy, w, h); };
+  px('#5a3a1e', -1, 14, 2, 14);             // the post
+  px('#3b2412', -4, 2, 8, 2);               // its foot
+  px('#2a1a0c', -6 + rock, 23, 12, 11);     // the body's outline
+  px('#c9a36b', -5 + rock, 22, 10, 9);      // straw
+  px('#e8d3a0', -5 + rock, 22, 10, 2);      // lit top
+  px('#d94a3a', -2 + rock, 19, 4, 4);       // the target
+  px('#fff1d6', -1 + rock, 18, 2, 2);
+  px('#8a6a3a', -7 + rock, 17, 14, 2);      // the crossbar arms
+  if (m.hitFlash > 0) { ctx.globalAlpha = 0.5; px('#ffffff', -5 + rock, 22, 10, 9); ctx.globalAlpha = 1; }
+}
+
 export function drawMob(m: Mob): void {
+  if (m.training) { drawDummy(m); return; }
   const a = mobAnim(m.type.n);
   // in hitstun it holds its hurt pose (eyes shut, recoiling); a boss shows its enemy's, grown huge
   const f = a ? mobFrame(m, a.frames.length, a.fps) : 0;

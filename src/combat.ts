@@ -65,8 +65,10 @@ export const HITSTUN = 0.35, DYING_MAX = 0.6;
 export const MISS_IFRAMES = 0.35;
 
 export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
-  // the higher-level target dodges more (see missChance)
-  target.aggro = true;
+  // the higher-level target dodges more (see missChance); the training dummy
+  // always matches your level, so it never dodges
+  if (target.training) target.level = game.player.level;
+  else target.aggro = true;
   if (Math.random() < missChance(game.player.level, target.level)) {
     // the MISS rides the same floating-number treatment as a hit
     game.dmgNums.push(stackedNum(target, 0, false, 'MISS', opts.more, opts.first));
@@ -85,6 +87,14 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   target.hp -= dmg;
   target.hitFlash = 0.14;
   target.barT = BAR_SHOW;
+  if (target.training) {
+    // it shows the hit and its number, then shrugs it off: no knock, no death
+    target.hp = target.hpMax; target.hurt = HITSTUN;
+    if (!opts.noFx) game.fx.push({ type: opts.fx ?? (crit ? 'crit' : 'hit'), x: target.x, y: target.y + target.h / 2, t: 0.24, face: -game.player.face });
+    sfx.mobHit(target.name);
+    game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more, opts.first));
+    return;
+  }
   target.aggro = true;
   target.hurt = HITSTUN;
   const hx = target.x + rand(-4, 4), hy = target.y + target.h / 2 + rand(-4, 4);

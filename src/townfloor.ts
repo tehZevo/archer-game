@@ -85,6 +85,10 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
   return { x: at(12) + T / 2, y: high.top };
 }
 
+
+/** Columns across the world, and the training dummy's perch against the right wall. */
+const COLS = WORLD.w / TILE, PERCH_W = 3;
+
 export function townFloor(town: string, rng: Rng): Floor {
   const ground = groundSlab(), G = ground.y, T = TILE;
   const plan = townPlanFor(townIndex(town));
@@ -125,7 +129,19 @@ export function townFloor(town: string, rng: Rng): Floor {
     return { ...P(downAt.x + i * 44, downAt.y, to, placeName(to)), down: true };
   });
   if (down.length) deco('sign', downAt.x - 30, downAt.y);
+  // the training dummy's perch against the right wall, high over the way up
+  // under it; its ladder stands on a one-tile step you hop onto, so climbing
+  // down never drops you into that portal
+  const block = (kind: string, cols: number, base: number): number => {
+    const sh = makeShape(kind, (COLS - cols) * T, base, cols, false, rng), id = ++blockId;
+    sh.tiles.forEach((t) => { t.block = id; });
+    platforms.push(...sh.tiles);
+    return Math.min(...sh.tiles.map((t) => t.y));
+  };
+  const perchTop = block('perch', PERCH_W, G - 6 * T), stepTop = block('step', 1, G - T);
+  ladder(COLS - 1, perchTop, stepTop);
   return {
+    dummy: { x: (COLS - PERCH_W) * T + 4, y: perchTop },
     place: { town }, town: true, h: GEN_H, layout: plan,
     platforms, ladders, ropes, spawns: [],
     portal: ups[0] ?? down[0], portals: [...ups, ...down],

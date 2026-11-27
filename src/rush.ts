@@ -64,7 +64,7 @@ function grab(face: number): void {
   const grabX = player.x + face * (P.RUSH_GRAB - P.RUSH_GRAB_BACK) / 2;
   for (const m of hitbox(grabX, player.y + player.h / 2, P.RUSH_GRAB + P.RUSH_GRAB_BACK, 40)) {
     if (player.rush.carry.length >= r.targets) break; // carry only as many as it hits
-    if (player.rush.carry.some((c) => c.m === m)) continue;
+    if (player.rush.carry.some((c) => c.m === m) || m.training) continue; // (the dummy's bolted down)
     player.rush.carry.push({ m, off: Math.max(10, (m.x - player.x) * face) });
     // a carried enemy can't die mid-carry: its death waits for the strike (see mobai)
     damage(m, r.dmg * P.RUSH_HIT, { more: true });

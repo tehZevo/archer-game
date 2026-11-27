@@ -199,7 +199,7 @@ import { gainExp, JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage,
   check('...and sits one line above it', lines);
   step(Math.ceil(0.15 / P.STEP));
   check('the second number shows after ~1/8 s, the later ones still wait', (game.dmgNums[1].delay ?? 0) <= 0 && (game.dmgNums[2].delay ?? 0) > 0);
-  step(Math.ceil(2 / P.STEP));
+  step(120);
   game.dmgNums.length = 0; damage(m, 1);
   check('after a pause a new stack starts at the bottom, right away', game.dmgNums[0].delay === 0 && game.dmgNums[0].y === m.y - 8);
   // each cast owns its stack: a new cast's first hit starts at the bottom even
@@ -252,4 +252,35 @@ import { gainExp, JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage,
   apply({ ...s, job: undefined });
   check('a save without a job starts at the 1st', player.job.job === 1);
   arena(1);
+}
+
+{
+  // every town has a training dummy on its own ledge against the right wall:
+  // it shows your damage numbers but never dies, moves, dodges or fights back
+  const missing = TOWNS.filter((t) => { gotoPlace({ town: t.id }); return game.mobs.filter((m) => m.training).length !== 1; });
+  check('every town has one training dummy', missing.length === 0, missing.map((t) => t.id).join(', '));
+  gotoPlace(START);
+  const d = game.mobs.find((m) => m.training)!;
+  const feet = d.y + d.h, perch = game.floor.platforms.filter((p) => p.block && p.y === feet && d.x >= p.x - d.w && d.x <= p.x + p.w);
+  const lad = game.floor.ladders.find((l) => l.y1 === feet && l.x > WORLD.w - 16);
+  const hop = lad && game.floor.platforms.find((p) => p.block && p.y === lad.y2 && lad.x >= p.x && lad.x <= p.x + p.w);
+  check('...on its own perch against the right wall, up a ladder by the wall from a step you can hop onto',
+    perch.length > 0 && !!hop && !!lad && ground().y - hop.y <= 16 && !game.floor.npcs?.some((n) => n.y === feet)
+    && Math.max(...game.floor.platforms.filter((p) => p.block === perch[0].block).map((p) => p.x + p.w)) === WORLD.w);
+  gotoPlace({ town: 'driftwood' });
+  const perchBot = Math.max(...game.floor.platforms.filter((p) => p.block && p.x >= WORLD.w - 48 && p.y < ground().y - 16).map((p) => p.y + p.h));
+  const upR = game.floor.portals.find((q) => !q.down && q.x > WORLD.w / 2);
+  check('...high enough over a way up under it', !!upR && ground().y - perchBot >= upR.h);
+  gotoPlace(START);
+  const t = game.mobs.find((m) => m.training)!;
+  const x0 = t.x, y0 = t.y, hp0 = t.hp;
+  game.dmgNums.length = 0;
+  player.level = 50;
+  for (let i = 0; i < 40; i++) damage(t, 1e6, { more: i < 39, first: i === 0, launch: true });
+  const nums = game.dmgNums.length, missed = game.dmgNums.some((n) => n.txt === 'MISS');
+  step(120);
+  check('it takes hits and shows every number, but never dies, dodges, moves or gets angry',
+    game.mobs.includes(t) && t.hp === hp0 && nums === 40 && !missed
+    && t.x === x0 && t.y === y0 && !t.aggro && t.airTime === 0, `nums ${nums} hp ${t.hp}`);
+  player.level = 1;
 }

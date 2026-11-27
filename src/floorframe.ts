@@ -37,6 +37,7 @@ export function trim(f: Floor): Floor {
   for (const p of portals) p.y -= shift;
   for (const n of f.npcs ?? []) n.y -= shift;
   for (const d of f.decor ?? []) d.y -= shift;
+  if (f.dummy) f.dummy.y -= shift;
   f.h = GEN_H - shift;
   return f;
 }

@@ -68,7 +68,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   gotoPlace(drift);
   const [upL, upR, down] = game.floor.portals;
   check('a town has two ways up and one down', game.floor.portals.length === 3 && placeKey(upL.to) === 'woods-1' && placeKey(upR.to) === 'meadows-1'
-    && !upL.down && !upR.down && down.down === true && placeKey(down.to) === 'saltwick' && game.mobs.length === 0);
+    && !upL.down && !upR.down && down.down === true && placeKey(down.to) === 'saltwick' && game.mobs.every((m) => m.training));
   check('ways up show the level of the enemies past them', upL.lvl === 4 && upR.lvl === 4);
   const deck = game.floor.platforms.filter((p) => p.block === 1 && !p.inner);
   const deckTop = Math.min(...deck.map((p) => p.y));
@@ -108,7 +108,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
     for (const u of tops) for (const v of tops) {
       if (u === v || u.block === v.block || u.x >= v.x + v.w || v.x >= u.x + u.w || u.y >= v.y) continue;
       const under = fl.platforms.filter((p) => p.block === u.block && p.x === u.x).reduce((m, p) => Math.max(m, p.y + p.h), 0);
-      if (v.y - under < player.h + 4) bad.push(`${a.town}: no headroom at x ${v.x}`);
+      if (v.y - under < player.h + 4 && under !== v.y) bad.push(`${a.town}: no headroom at x ${v.x}`); // (a step resting on it is fine)
     }
     // climbing off a ladder or rope never lands you in a portal
     for (const q of fl.portals) for (const c of [...fl.ladders, ...fl.ropes]) {
@@ -163,7 +163,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
         still.set(m, Math.abs(m.x - (last.get(m) ?? -9)) > 0.2 ? 0 : (still.get(m) ?? 0) + 1); last.set(m, m.x);
       }
     }
-    total += game.mobs.length; frozen += game.mobs.filter((m) => (still.get(m) ?? 0) > 45).length;
+    total += game.mobs.filter((m) => !m.training).length; frozen += game.mobs.filter((m) => !m.training && (still.get(m) ?? 0) > 45).length;
   }
   check('patrolling enemies turn at platform ends instead of freezing', frozen === 0, `${frozen}/${total} frozen`);
 
@@ -193,10 +193,10 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   let bad = 0, runs = 0;
   for (const n of [1, 2, 3, 4]) {
     release(); gotoPlace(climb(n));
-    const count = Math.min(10, game.mobs.filter((m) => !m.fly).length);
+    const count = Math.min(10, game.mobs.filter((m) => !m.fly && !m.training).length);
     for (let k = 0; k < count; k++) for (const face of [1, -1]) {
       release(); gotoPlace(climb(n)); player.invuln = 1e9; player.mp = 999; player.ranks['ground-q'] = true;
-      const m = game.mobs.filter((x) => !x.fly)[k];
+      const m = game.mobs.filter((x) => !x.fly && !x.training)[k];
       if (!m) continue;
       player.x = m.x - face * 14; player.y = m.y + m.h - player.h; player.vy = 0; player.face = face;
       player.onGround = true; player.climb = null; player.cd['ground-q'] = 0; player.casting.useT = 0;

@@ -53,6 +53,11 @@ const PROFILES: Record<string, Profile> = {
 };
 export const SHAPES = Object.keys(PROFILES);
 
+/** Town-only profiles, kept out of SHAPES so climb floors never pick them:
+ *  `perch` is the training dummy's narrow ledge against the wall, `step` the
+ *  one-tile hop up to its ladder. */
+const TOWN_PROFILES: Record<string, Profile> = { perch: '333', step: '1' };
+
 /** Expand a profile into its columns. */
 function parseProfile(p: Profile): Col[] {
   const cols: Col[] = [];
@@ -119,7 +124,7 @@ function autotile(tiles: Platform[]): void {
  *  of its bottom row, `width` tiles wide (6-10; see widen), optionally
  *  mirrored. `rng` picks which flat columns widen it. */
 export function makeShape(kind: string, x: number, baseY: number, width: number, mirror: boolean, rng: Rng): Shape {
-  const prof = PROFILES[kind] ?? PROFILES.flat;
+  const prof = PROFILES[kind] ?? TOWN_PROFILES[kind] ?? PROFILES.flat;
   const cols = parseProfile(mirror ? mirrorProfile(prof) : prof);
   widen(cols, width, rng);
   const tiles = columnTiles(cols, x, baseY);

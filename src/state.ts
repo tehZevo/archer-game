@@ -185,6 +185,22 @@ export function spawnWave(): void {
 /** How far either side of the ground's centre a player can arrive, px. */
 export const SPAWN_SPREAD = 64;
 
+/** The training dummy's look: a straw target on a post (not one of MOB_TYPES). */
+export const DUMMY_TYPE: MobType = { n: 'Training Dummy', lvl: 1, hp: 100, w: 14, h: 24, spd: 0, dmg: 0, col: '#c9a36b' };
+
+/** Stand a town's training dummy on its ledge (a floor without one: nothing). */
+function spawnDummy(): void {
+  const d = game.floor.dummy;
+  if (!d) return;
+  const { w, h } = DUMMY_TYPE, hp = 1e9;
+  game.mobs.push({
+    x: d.x, y: d.y - h, w, h, vx: 0, vy: 0, home: d.x, range: 0, dir: -1,
+    type: DUMMY_TYPE, name: DUMMY_TYPE.n, hp, hpMax: hp, spd: 0, dmg: 0, fly: false, col: DUMMY_TYPE.col,
+    level: 1, exp: 0, stun: 0, atkCd: 0, airTime: 0, aggro: false, hitFlash: 0, barT: 0, anim: 0,
+    spawn: { x: d.x, y: d.y, types: [] }, training: true,
+  });
+}
+
 export function gotoPlace(place: Place): void {
   game.floor = generateFloor(place);
   visitArea(areaOf(place));
@@ -197,6 +213,7 @@ export function gotoPlace(place: Place): void {
   game.waveT = 0;
   spawnWave();
   spawnBoss();
+  spawnDummy();
   // Drop the player onto the ground slab. The portal sits on the summit
   // platform, so use the ground's own centre — the portal's x can fall in a
   // gap between the ground's tiles on narrower worlds.

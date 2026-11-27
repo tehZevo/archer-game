@@ -25,6 +25,7 @@ export function updateMobs(dt: number): void {
     if (m.hitFlash > 0) m.hitFlash -= dt;
     if (m.barT > 0) m.barT -= dt;
     if (m.hurt) m.hurt = Math.max(0, m.hurt - dt);
+    if (m.training) continue; // the training dummy just stands there
     if (m.dying !== undefined) {
       // dead, waiting on its attacker's last hits: frozen where it was struck
       // (one a rush is carrying stays alive, travelling with you, until the carry ends)
