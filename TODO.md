@@ -10,4 +10,4 @@
 - Character should properly turn around after a dodge roll from held-Z.
 - Gray out the icons in the skills screen's link list for skills you haven't acquired yet.
 - Bug: the C (copy JSON) action in the skill editor doesn't seem to work.
-- Remove the left/right tune control and the tab field text in the skill editor menu.
+- Remove the left/right tune control in the skill editor; make fields navigable with left/right/up/down to select the field to edit, Enter to start modifying, left/right to adjust the value, and Enter again to set it.
