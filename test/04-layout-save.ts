@@ -169,7 +169,9 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   for (const n of [1, 2, 3, 4]) {
     gotoPlace(climb(n));
     const blocks = new Map<number, { top: number; bot: number }>();
-    for (const p of game.floor.platforms) if (p.block) {
+    // (a town's training-dummy perch and its step stand apart, against the right wall)
+    const byWall = (b: number): boolean => !!game.floor.town && game.floor.platforms.every((p) => p.block !== b || p.x >= WORLD.w - 48);
+    for (const p of game.floor.platforms) if (p.block && !byWall(p.block)) {
       const b = blocks.get(p.block) ?? { top: Infinity, bot: -Infinity };
       b.top = Math.min(b.top, p.y); b.bot = Math.max(b.bot, p.y + p.h); blocks.set(p.block, b);
     }

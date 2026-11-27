@@ -190,7 +190,7 @@ setKey('up', false);
 
 // --- 12. the game starts in a town (the Harbor) whose way up leads to the Beach ---
 gotoPlace(START);
-check('the start (the Harbor) is a town', game.floor.town === true && game.mobs.length === 0);
+check('the start (the Harbor) is a town', game.floor.town === true && game.mobs.every((m) => m.training));
 player.x = game.floor.portal.x; player.y = game.floor.portal.y - player.h;
 player.onGround = true;
 setKey('up', true);

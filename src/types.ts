@@ -199,6 +199,8 @@ export interface Mob {
   spawn: Spawn;
   /** A rare, tougher spawn (see ELITE in config.ts): bigger, gold-outlined, worth more. */
   elite?: boolean;
+  /** A town's training dummy: it takes hits and shows their numbers, but never dies, moves or fights back. */
+  training?: boolean;
   /** Status effects on it (see status.ts). */
   effects?: Status[];
   /** Set on an area's boss: what it's doing (see boss.ts). */
@@ -471,6 +473,8 @@ export interface Floor {
   npcs?: Npc[];
   /** Towns: buildings and street furniture, purely visual (see towndecor.ts). */
   decor?: Decor[];
+  /** Towns: where the training dummy stands (its feet), on its own ledge against the right wall. */
+  dummy?: { x: number; y: number };
   town: boolean;
   /** Random floors: the layout style it was built with (see LAYOUTS in floor.ts). */
   layout?: string;
