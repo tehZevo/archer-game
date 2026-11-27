@@ -132,7 +132,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.2, delay: 0.1, mp1: 10, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },
   'ground-q': { key: 'ground-q', linksInto: [...LAUNCHER_LINKS.filter((k) => k !== 'ground-q'), 'z', 's'], keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
-       cd: 3, use: 0.4, delay: 0.6, mp1: 80, dmg1: 400, targets1: 6,
+       cd: 3, use: 0.5, delay: 0.5, mp1: 80, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },
   'ground-w': { key: 'ground-w', keyed: true, bar: true, name: 'Rising Arrows', tag: 'Link', job: 2, minLevel: 10,
        cd: 0, use: 0.4, delay: 0.2, mp1: 60, dmg1: 110, hits1: 4, targets1: 4,
@@ -143,7 +143,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   // The air forms of Q, W and E: their own rows and unlock levels, each with
   // no cooldown (use time only) and chaining into its ground form.
   'air-q': { key: 'air-q', linksInto: [...LAUNCHER_LINKS, 'd', 'ground-e', 'z', 's'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30,
-       cd: 0, use: 0.4, delay: 0.6, mp1: 160, dmg1: 400, hits1: 1, requires: 'ground-q',
+       cd: 0, use: 0.5, delay: 0.5, mp1: 160, dmg1: 400, hits1: 1, requires: 'ground-q',
        desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
   'air-w': { key: 'air-w', linksInto: ['d', 'air-e', 'z', 's'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
        cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 280, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
@@ -155,7 +155,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 10.0, use: 0.7, mp1: 400, dmg1: 300, hits1: 6, targets1: 12,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   eb: { key: 'eb', linksInto: [...LAUNCHER_LINKS, 'z', 's'], upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
-       cd: 0, use: 0.4, delay: 0.6, mp1: 320, dmg1: 460, hits1: 2, targets1: 10, rushHits: 2,
+       cd: 0, use: 0.5, delay: 0.5, mp1: 320, dmg1: 460, hits1: 2, targets1: 10, rushHits: 2,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   ab: { key: 'ab', linksInto: ['air-w', 'air-q', 'r', 'z', 's', 'ground-q', 'air-e'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
        cd: 0, use: 0.4, delay: 0.2, mp1: 130, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',

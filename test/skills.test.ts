@@ -853,7 +853,7 @@ describe('recovery (delay) after the Q rushes', () => {
     arena(20);
     player.ranks.eb = true;
     player.ranks.ha = true;
-    expect(delayTime('eb')).toBeCloseTo(0.6 / 1.2, 6);
+    expect(delayTime('eb')).toBeCloseTo(0.5 / 1.2, 6);
   });
 });
 
