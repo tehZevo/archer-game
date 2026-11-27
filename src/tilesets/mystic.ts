@@ -28,8 +28,8 @@ const grotto: Tileset = {
     let col = hash(x >> 1, y >> 1, v + 110) < 0.3 ? '#2a1e30' : '#32243a';
     const thread = Math.round(4 + v * 3 + 2 * Math.sin(x * 0.45 + v)) % 16;
     if (y === thread && hash(x, v, 111) < 0.8) col = '#6a5a8a';
-    if (y === thread && x % 5 === v) col = '#9ff3ea';
-    if (hash(x, y, v + 112) < 0.02) col = '#5ad8c8'; // a spore
+    if (y === thread && x % 5 === v && hash(x, y, v + 115) < 0.45) col = '#9ff3ea'; // a glowing bead, now and then
+    if (hash(x, y, v + 112) < 0.006) col = '#5ad8c8'; // a spore
     return col;
   },
   surface(x, d, v) {
