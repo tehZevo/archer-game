@@ -138,10 +138,12 @@ function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void
   const tg = alive([...carried, ...near]).slice(0, r.targets);
   // a horn of light erupts under each target (or ahead, if none)
   fxUnder(fx, tg, cx, player.y + player.h, FX_DUR[fx]);
-  // the rush carries and hits (a Blitz strikes twice); the launch is the W's job
+  // the rush carries and hits (a Blitz strikes twice), tossing the targets
+  // skyward; a link fires off this strike, so chaining out of the rush cuts
+  // the toss short (the next cast picks the enemy up where it lies)
   eachShot(shotCount(r), 0, (more, h) => {
     alive(tg).forEach((m) => {
-      damage(m, r.dmg, { more });
+      damage(m, r.dmg, { more, launch: true });
       if (!inPlace && h === 0) m.vx = face * 80; // a little follow-through drift
     });
   });
