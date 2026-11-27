@@ -47,6 +47,8 @@ export interface SaveData {
   petKind?: PetKind | null;
   /** Each owned pet's chosen customizations (absent: the kind's defaults). */
   petCustoms?: PetCustoms;
+  /** The pet upgrades you've bought. */
+  petBought?: (keyof PetCustoms)[];
   /** The equipped weapon and armor (absent in older saves: nothing worn). */
   gear?: { weapon: GearItem | null; armor: GearItem | null };
   /** Spare gear (absent in older saves: an empty bag). */
@@ -66,7 +68,7 @@ export function snapshot(): SaveData {
     town: lastTown(game.floor.place),
     coins: wallet.coins, potions: { hp: wallet.hp, mp: wallet.mp },
     quests: quests.map((q) => ({ ...q })),
-    pets: [...pet.owned], petKind: pet.kind, petCustoms: pet.customs,
+    pets: [...pet.owned], petKind: pet.kind, petCustoms: pet.customs, petBought: [...pet.bought],
     gear: { weapon: gear.weapon, armor: gear.armor },
     bag: bag.map((i) => ({ ...i })),
   };
@@ -128,7 +130,7 @@ export function apply(d: unknown): Place | null {
   wallet.hp = int(s.potions?.hp, 0, CARRY_MAX, START_POTIONS);
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, START_POTIONS);
   loadQuests(s.quests);
-  loadPets(s.pets, s.petKind, s.petCustoms);
+  loadPets(s.pets, s.petKind, s.petCustoms, s.petBought);
   gear.weapon = cleanGear(s.gear?.weapon, 'weapon');
   gear.armor = cleanGear(s.gear?.armor, 'armor');
   bag.length = 0;
