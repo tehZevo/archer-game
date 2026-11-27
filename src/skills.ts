@@ -31,6 +31,8 @@ export function cast(key: SkillKey, chained = false): void {
   const airKey = airborne ? AIR_FORM[key] : undefined;
   const kind = airKey ?? activeSkill(key).key;
   if (!isLearned(kind)) return;
+  // no Glide out of a dodge roll: the roll is its own evasive move
+  if (kind === 'd' && player.rolling) return;
   // Meteor Dive, Cyclone Sweep and Downpour want you properly airborne:
   // at least ~2/3 of a full jump's peak above the floor.
   if (airKey && game.floor.platforms[0].y - (player.y + player.h) < AIR_MIN_H) return;
