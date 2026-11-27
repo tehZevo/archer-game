@@ -6,8 +6,6 @@
 // their imports, seed, and helpers through ./harness. Import order is the
 // original single-file order, so the seeded RNG stream is unchanged.
 
-import './07-menu-polish';
-import './08-menu-polish-2';
 import './09-enemies-status-pets';
 import './10-keys-skillart';
 import './11-deaths';

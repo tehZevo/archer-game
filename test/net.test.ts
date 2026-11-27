@@ -3,7 +3,7 @@ import { arena, climb, dummy, ground, step } from './helpers';
 import { P } from '../src/config';
 import { killMob } from '../src/combat';
 import { boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate } from '../src/boost';
-import { canConnect, net, newCode, parseCode, roomId } from '../src/net';
+import { canConnect, hourStamp, net, newCode, parseCode, roomId } from '../src/net';
 import { game, gotoPlace, player, SPAWN_SPREAD } from '../src/state';
 import { SELF } from '../src/chat';
 import { cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, emoteFor, EMOTES, setEmote } from '../src/emotes';
@@ -292,5 +292,35 @@ describe('emotes (F1-F7 pop a face over your head, and your ghost\'s)', () => {
     setEmote('peer', 'love', 0);
     clearEmotes('peer');
     expect(emoteFor('peer', 0)).toBe(null);
+  });
+});
+
+describe('rooms by the hour', () => {
+  // floors carry the UTC hour you entered them; towns never do; layouts ignore it
+  it('the hour stamp is the UTC hour, as YYYYMMDDHH', () => {
+    expect(hourStamp(Date.UTC(2026, 10, 24, 14, 59, 59))).toBe('2026112414');
+    expect(hourStamp(Date.UTC(2026, 10, 24, 15, 0, 0))).toBe('2026112415');
+  });
+
+  it('floor rooms are tagged with it, public or private', () => {
+    expect(roomId('shore-2', 2, '', '2026112414')).toBe('eurekaland-shore-2-c2-h2026112414');
+    expect(roomId('shore-2', 1, 'ABCDE', '2026112414').endsWith('-pABCDE-h2026112414')).toBe(true);
+  });
+
+  it('towns have no hour tag, and neither does a floor with no hour yet', () => {
+    expect(roomId('driftwood', 1, '', '2026112414')).toBe('eurekaland-driftwood-c1');
+    expect(roomId('shore-2', 1, '', '')).toBe('eurekaland-shore-2-c1');
+  });
+
+  it('a floor\'s layout is the same whatever the hour', () => {
+    const was = net.hour;
+    const layout = (): string => JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
+    net.hour = '2026112414';
+    gotoPlace(climb(4));
+    const first = layout();
+    net.hour = '2026112415';
+    gotoPlace(climb(4));
+    net.hour = was;
+    expect(layout()).toBe(first);
   });
 });
