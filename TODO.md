@@ -28,3 +28,5 @@
 - Air Q (Dive) should travel a fixed diagonal-downward distance equal to Rush Toss's horizontal distance. If it hits the ground mid-travel, it continues for the remaining distance and then performs the toss; if it's still airborne at the end, the player slows toward the end and drops without tossing.
 - A dodge roll (jump during held-Z / Gale Stream) should make you start firing in the OPPOSITE direction you were firing before the roll.
 - You should not be able to Glide (`d`) out of a dodge roll.
+- Give the dodge roll its own landing routine so it doesn't fire the spike (the `diveLand` horn-of-light strike). Today the roll reuses Meteor Dive's `landDive()` → `slide('ground-q', 'diveLand')` (rush.ts:156-161), so its landing rolls into a Rush Toss-style slide and strike; program the roll as its own routine, separate from the dive's landing, so it ends cleanly without the spike.
+- The dodge roll should not deal any damage — its landing strike currently hits enemies for Rush Toss's damage (the `strike()` call in rush.ts, using `rank('ground-q')`). Make the roll's own routine deal zero damage.
