@@ -32,12 +32,13 @@ Keep the suite minimal and high-value; aim to shrink it as the game stabilizes.
 
 ## Planning
 
-Work is tracked in GitHub issues (https://github.com/tehZevo/archer-game/issues), not a TODO file. Two labels call out items that need a human touch:
+Work is tracked in GitHub issues (https://github.com/tehZevo/archer-game/issues), not a TODO file. Three labels call out items that need a human touch:
 
 - **art** — best done by an art-capable model or a human eye (sprite, effect, animation work).
 - **design** — needs human validation of a naming/feel call before implementation.
+- **sound** — needs sound design work.
 
-Check the labels before picking up an item; plain issues are straight-ahead engineering.
+Check the labels before picking up an item; plain issues are straight-ahead engineering. Never pick up an `art`, `sound`, or `design` issue unless the user specifically asks for one.
 
 Before starting an issue, assign yourself to it (`gh issue edit <n> --add-assignee <you>`) so parallel work is visible to everyone. Skip issues that already have an assignee — pick an unassigned one instead.
 
