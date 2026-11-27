@@ -185,8 +185,10 @@ function tempest(r: SkillRank): void {
   const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
   game.fx.push({ type: 'tempest', x: player.x, y: player.y + player.h, t: FX_DUR.tempest, follow: true });
   netShot(mx, my, player.face, P.TEMPEST_R);
-  tg.forEach((m) => later(Math.abs(m.x - mx) / P.ARROW_V, () => {
-    if (game.mobs.includes(m)) damage(m, r.dmg, { fx: 'tempestHit' });
+  // each enemy the storm passes takes the full hit count (8, doubled by Twin
+  // Echoes), not one: the first lands as the bolt reaches it, the rest follow
+  tg.forEach((m) => eachShot(shotCount(r), Math.abs(m.x - mx) / P.ARROW_V, (more) => {
+    if (game.mobs.includes(m)) damage(m, r.dmg, { fx: 'tempestHit', more });
   }));
 }
 
