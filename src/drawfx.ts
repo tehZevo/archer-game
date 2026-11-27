@@ -5,7 +5,7 @@ import { ctx } from './canvas';
 import { clamp } from './util';
 import { BOSS, QUAKE_T } from './boss';
 import { outlinedText } from './font';
-import { bubbleable, bubbleText, DMG_H } from './dmgfont';
+import { bubbleable, bubbleText, dmgLabel, DMG_H } from './dmgfont';
 import { gridCanvas } from './grid';
 import type { DmgNum, Fx, Shot } from './types';
 
@@ -80,7 +80,7 @@ export function drawDmg(d: DmgNum): void {
   ctx.save();
   // fully solid for the first 3/4 of the rise, then a quick fade over the last 1/4
   ctx.globalAlpha = clamp(d.t / 0.25, 0, 1);
-  const s = d.txt ?? String(d.v), y = Math.round(d.y) - 10;
+  const s = d.txt ?? dmgLabel(d.v, d.crit), y = Math.round(d.y) - 10;
   if (bubbleable(s)) {
     // the bubble font at its natural size, centred on d.x (d.y is the old text baseline)
     const c = dmgCanvas(s, d.col);
