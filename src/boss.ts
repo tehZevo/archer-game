@@ -84,6 +84,14 @@ export function spawnBoss(): void {
   });
 }
 
+
+/** Add the push `add` to speed `v`, but never past |add| in its direction:
+ *  faster than that already, v is left as it is. */
+export const capAdd = (v: number, add: number): number => {
+  const d = Math.sign(add), max = Math.abs(add);
+  return v * d >= max ? v : d * Math.min(v * d + max, max);
+};
+
 /** Hurt the player (unless they're still flashing from the last hit). True if it landed.
  *  Hit by something at `fromX`, they're bumped a little up and back, away from it (on top of their own momentum)
  *  (not while climbing or hovering in Skyward Assault). The attacker's level sets
@@ -97,9 +105,10 @@ export function hurtPlayer(dmg: number, fromX?: number, attackerLvl = 0): boolea
   }
   if (fromX !== undefined && !player.climb && player.hang.t <= 0) {
     const away = Math.sign(player.x - fromX) || -player.face;
-    // added to the momentum you already had, not replacing it
-    player.vx += away * P.HIT_PUSH;
-    player.vy -= P.HIT_HOP;
+    // added to the momentum you already had, but capped at the knockback's own
+    // speed (like Downpour's hop): already going that fast that way, it adds nothing
+    player.vx = capAdd(player.vx, away * P.HIT_PUSH);
+    player.vy = capAdd(player.vy, -P.HIT_HOP);
     player.onGround = false;
   }
   // armor soaks a share of the hit, then the Bubble passive a flat share of the rest

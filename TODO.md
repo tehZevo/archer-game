@@ -1,5 +1,4 @@
 # TODOs
-- Cap the knockback velocity: only add up to the knockback's max velocity (don't add any if the player is already moving at or above that), the way Downpour caps its velocity.
 - Allow changing your gender when you first create your character on the main menu; after creation it should be locked.
 - Lock character customization after creation in the main menu; all other changes must be done through the stylist for a 1000 gold fee.
 - (art) Increase the detail of the blue snail (Garden Snail) while keeping its silhouette rectangular/square-ish.
