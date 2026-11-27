@@ -209,9 +209,11 @@ function jumpRoll(): void {
   player.onGround = false;
   player.vy = -P.ROLL_HOP_V;
   player.vx = dir * P.ROLL_VX;
-  player.diving = true; // the roll's dive trail
+  player.face = dir; // turn to face the way you rolled, and keep facing it
+  player.diving = true; // the roll's pose and landing (no speed trail: see rolling)
+  player.rolling = true;
   player.invuln = P.ROLL_INVULN;
-  player.rapid.face = (dir === 1 ? -1 : 1); // fire opposite the roll
+  player.rapid.face = dir; // fire the way you rolled
 }
 
 /** Skills that push the player around while they play. */
