@@ -2,6 +2,7 @@ import { WORLD } from './config';
 import { ctx } from './canvas';
 import { game } from './state';
 import { art } from './artsheets';
+import { PORTAL_FPS, PORTAL_FRAMES } from './portalart';
 import { tilesetFor, type Tileset } from './tileset';
 import { areaOf } from './world';
 import { drawBackdrop } from './backdropdraw';
@@ -30,29 +31,31 @@ export function drawBackground(ts: Tileset): void {
 }
 
 
-/** The portal recoloured by a canvas filter, baked once per filter (a live
- *  ctx.filter is slow, often a CPU fallback). */
+/** A portal frame recoloured by a canvas filter, baked once per filter and
+ *  frame (a live ctx.filter is slow, often a CPU fallback). */
 const portalTints = new Map<string, HTMLCanvasElement>();
-function portalSprite(filter: string): HTMLCanvasElement {
-  const s = art('portal');
+function portalSprite(filter: string, f: number): HTMLCanvasElement {
+  const s = art(`portal/${f}`);
   if (filter === 'none') return s;
-  let c = portalTints.get(filter);
+  const key = `${filter}|${f}`;
+  let c = portalTints.get(key);
   if (!c) {
     c = document.createElement('canvas'); c.width = s.width; c.height = s.height;
     const g = c.getContext('2d')!;
     g.filter = filter;
     g.drawImage(s, 0, 0);
-    portalTints.set(filter, c);
+    portalTints.set(key, c);
   }
   return c;
 }
 
 export function drawPortal(p: Portal): void {
-  const s = art('portal');
+  const t = performance.now() / 1000, f = Math.floor(t * PORTAL_FPS) % PORTAL_FRAMES;
+  const s = art(`portal/${f}`);
   const down = !!p.down;
   // a way down glows a different colour; a sealed one (boss still up) is dark
   const filter = !portalOpen(p) ? 'grayscale(1) brightness(0.55)' : down ? 'hue-rotate(150deg)' : 'none';
-  ctx.drawImage(portalSprite(filter), Math.round(p.x - s.width / 2), Math.round(p.y - s.height));
+  ctx.drawImage(portalSprite(filter, f), Math.round(p.x - s.width / 2), Math.round(p.y - s.height)); // it spins in place: no bob
   if (p.label) {
     // centred over the portal, but kept inside the world (town names are long)
     const half = textWidth(p.label) / 2 + 2;
