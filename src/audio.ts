@@ -98,7 +98,7 @@ export const sfx = {
     noise({ dur: 0.3, vol: 0.2, filter: { type: 'highpass', f: 1500, to: 5000 } });
     osc({ type: 'triangle', f: 700, to: 300, dur: 0.2, vol: 0.12 });
   },
-  /** Tempest: a wide storm that booms as it sweeps out. */
+  /** Trefoil Tempest: a wide storm that booms as it sweeps out. */
   tempest: (): void => {
     osc({ type: 'sine', f: 90, to: 40, dur: 0.6, vol: 0.45, drive: 0.5 });
     noise({ dur: 0.5, vol: 0.3, filter: { type: 'bandpass', f: 600, to: 4000, q: 2 }, flutter: 10 });

@@ -625,7 +625,7 @@ describe('Meteor Dive follow-ups', () => {
   });
 });
 
-describe('Tempest (R)', () => {
+describe('Trefoil Tempest (R)', () => {
   const STORM_FRAMES = Math.ceil((0.7 + 6 * NUM_GAP) / P.STEP); // all 6 hits land
 
   it('hits every enemy caught in the sweep, and has a long cooldown', () => {
@@ -789,7 +789,7 @@ describe('a Double Shot at nothing', () => {
 });
 
 
-describe('Tempest is a committed cast', () => {
+describe('Trefoil Tempest is a committed cast', () => {
   it('locks you in place, invulnerable for the whole cast', () => {
     arena(20);
     player.ranks.r = true;

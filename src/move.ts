@@ -26,7 +26,7 @@ export const heldDir = (): -1 | 0 | 1 => held('left') ? -1 : held('right') ? 1 :
  * time) blocks movement input.
  */
 export function movePlayer(dt: number, locked: boolean): void {
-  // A freezing cast (Tempest) pins you in place: no gravity, no drift.
+  // A freezing cast (Trefoil Tempest) pins you in place: no gravity, no drift.
   if (player.casting.freeze) {
     player.vx = 0; player.vy = 0;
     player.animState = 'jump';
@@ -91,7 +91,7 @@ function jumpOffClimb(dir: -1 | 1 | 0): void {
 /** Skyward Assault: hover in place, striking airborne enemies at intervals. */
 function hover(dt: number): void {
   player.hang.t -= dt;
-  // (a Tempest pressed during the hover fires as it ends: the finisher on
+  // (a Trefoil Tempest pressed during the hover fires as it ends: the finisher on
   // the Q -> W -> AB chain, see links.linkHeld)
   player.vx = 0; player.vy = 0;
   player.hang.hitT -= dt;

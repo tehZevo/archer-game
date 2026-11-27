@@ -18,7 +18,7 @@ Attack skills have a short use time during which no other skill or movement inpu
 
 A skill's use time is the **whole time it commits the player**: every phase of the move — the leap, the hover, the slide, the arrows flying out and landing — fits inside it, and a skill linked off it fires at the end of it. One number per skill, so raising it slows the entire move and lowering it speeds the entire move up.
 
-Every active skill costs MP, scaled by job tier: **1st Job 10–50 MP, 2nd Job 50–100 MP, 3rd Job 100–200 MP, 4th Job 200–400 MP**. Within a tier's band, cost scales with impact: longer cooldown and more power/damage cost more MP (Tempest's 10s cooldown and 6-hit sweep sits near the top of its band, the no-cooldown main attacks near the bottom). Passives cost no MP.
+Every active skill costs MP, scaled by job tier: **1st Job 10–50 MP, 2nd Job 50–100 MP, 3rd Job 100–200 MP, 4th Job 200–400 MP**. Within a tier's band, cost scales with impact: longer cooldown and more power/damage cost more MP (Trefoil Tempest's 10s cooldown and 6-hit sweep sits near the top of its band, the no-cooldown main attacks near the bottom). Passives cost no MP.
 
 Using a skill doesn't announce its name on screen.
 

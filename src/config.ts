@@ -83,7 +83,7 @@ export const P = {
   SPIN_RISE_V: 22.5,   // px/s: the midair sweep lifts you at this steady speed (was a slow fall)
   SPIN_CD: 8,          // ...and its cooldown, s (so one jump gets one sweep)
 
-  TEMPEST_R: 96,       // Tempest: radius of the sweep around you, px
+  TEMPEST_R: 96,       // Trefoil Tempest: radius of the sweep around you, px
   RISE_VY: 430,        // Rising Arrow: your jump matches a launched enemy's (see damage's launch), so you rise together
   RISE_VX: 40,         // ...with a little forward drift, to stay over them
   FRICTION: 700,       // ground friction when no input (a short slide)
@@ -151,7 +151,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   'air-e': { key: 'air-e', linksInto: ['air-w', 'air-q', 'r', 'air-e', 'z', 's'], name: 'Ember Rain', tag: 'Aerial', job: 3, minLevel: 30,
        cd: 0, use: 0.4, delay: 0.2, mp1: 140, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain burning bolts down onto enemies beneath you, setting them alight' },
-  r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e', 'z', 's'], keyed: true, bar: true, name: 'Tempest', tag: 'Finisher', job: 4, minLevel: 60,
+  r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e', 'z', 's'], keyed: true, bar: true, name: 'Trefoil Tempest', tag: 'Finisher', job: 4, minLevel: 60,
        cd: 10.0, use: 0.7, mp1: 400, dmg1: 300, hits1: 6, targets1: 12,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   eb: { key: 'eb', linksInto: [...LAUNCHER_LINKS, 'z', 's'], upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,

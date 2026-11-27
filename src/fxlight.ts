@@ -22,7 +22,7 @@ export const RAMPS = {
   lime: ramp([[70, 110, 10], [140, 200, 20], [214, 240, 60], [250, 250, 170], [255, 255, 255]]),
   gold: ramp([[150, 90, 10], [230, 160, 30], [255, 209, 102], [255, 240, 190], [255, 255, 255]]),
   // skill colours (match the icon palette): Meteor Dive yellow, Piercing Leap purple,
-  // Tempest purple + pink, Skyward Assault light blue, Cyclone Sweep red
+  // Trefoil Tempest purple + pink, Skyward Assault light blue, Cyclone Sweep red
   yellow: ramp([[150, 120, 0], [230, 190, 20], [255, 225, 77], [255, 245, 170], [255, 255, 255]]),
   purple: ramp([[70, 20, 140], [120, 50, 210], [165, 100, 255], [215, 180, 255], [255, 255, 255]]),
   pink: ramp([[150, 30, 110], [230, 70, 170], [255, 130, 210], [255, 200, 235], [255, 255, 255]]),

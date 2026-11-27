@@ -317,7 +317,7 @@ describe('Skyward Assault', () => {
   });
 });
 
-describe('Tempest', () => {
+describe('Trefoil Tempest', () => {
   it('links into Meteor Dive, which fires out of the storm as it ends', () => {
     learn('r', 'ground-q', 'air-q');
     jump(7); // airborne, where Q is the Meteor Dive
@@ -350,7 +350,7 @@ describe('Tempest', () => {
 });
 
 describe('more links', () => {
-  it('a Tempest linked off the Assault hover still pays its cooldown (less the 1s a link shaves)', () => {
+  it('a Trefoil Tempest linked off the Assault hover still pays its cooldown (less the 1s a link shaves)', () => {
     learn('ground-q', 'ab', 'r');
     dummy(130);
     intoAssaultHover();

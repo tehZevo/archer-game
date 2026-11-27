@@ -138,7 +138,7 @@ function spikesAnim(): FxSheet {
   }, 0.4);
 }
 
-/** Tempest: a white-hot whip of energy lashes out of you and ties a
+/** Trefoil Tempest: a white-hot whip of energy lashes out of you and ties a
  *  trefoil knot across the whole area: it leaps forward and up, curls over
  *  the top lobe and drops back through its own first leg, swings round the
  *  low lobe far ahead, cuts back across the middle and loops round the lobe
