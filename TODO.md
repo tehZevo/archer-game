@@ -26,3 +26,4 @@
 - (bug) MISS is spammed; a miss should trigger the same invulnerability cooldown as taking damage (without actually showing the player as invulnerable).
 - Harder bosses should summon enemies, and even harder bosses should summon elites.
 - (design) Rename Downpour.
+- Fix Skyward Assault + Downpour: keep the chain window open through the whole hover, so Downpour fires at the end of the hover instead of cutting it short instantly.
