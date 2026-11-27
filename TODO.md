@@ -34,3 +34,4 @@
 - Give each damage line a horizontal jitter of ±4px, plus an offset of 2px per stack height in the direction of the damage (the player's facing at cast time, i.e. `player.face`), so a multi-hit cast fans out sideways instead of stacking dead-center. Apply in `stackedNum` (combat.ts:122), which currently places numbers at `x: m.x`.
 - Remove the max stack height: drop the `NUM_MAX = 8` cap (`combat.ts:112`) so a cast's hits stack as high as it fires, removing the `Math.min(k + 1, NUM_MAX - 1)` clamp in `stackedNum` (combat.ts:118).
 - Reduce Tempest (`r`) from 8 base hits to 6 (`hits1: 8` → `6`, config.ts:149).
+- (bug) Piercing Leap (`ground-e`) no longer makes you leap.
