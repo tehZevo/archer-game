@@ -8,6 +8,7 @@
  * which is what the game ships and draws (see fxsheets.ts).
  */
 import { anim, arc, rng, type FxSheet, type Light, type RampName } from './fxlight';
+import { P } from './config';
 
 /** A hit's burst at (c, cy): a spiky starburst that collapses into an
  *  expanding oval shockwave and sparkle dust, over frames 0..5. */
@@ -686,45 +687,100 @@ function spiritAnim(): FxSheet {
   });
 }
 
-/** Ember Rain, on the archer: an orange burst at the bow with green
- *  motes flung off it. Origin at her middle. */
-function volleyFlareAnim(): FxSheet {
-  const S = 40, c = S / 2;
-  return anim(S, S, c, c, 5, (L, f) => {
-    const R = rng(81 + f), fade = 1 - f / 5;
-    if (f < 2) L.disc('orange', c, c + 4, 6 - f * 2, 1.2);
-    L.ring('orange', c, c + 4, 6 + f * 3, 3 + f * 1.5, 1.2, 0.9 * fade);
-    for (let i = 0; i < 6; i++) {
-      const a = R() * Math.PI * 2, d = 4 + f * 3 + R() * 4;
-      L.spark(i % 2 ? 'green' : 'lime', c + Math.cos(a) * d, c + 4 + Math.sin(a) * d * 0.7, 0.9 * fade, i === 0);
+/** One burning crossbow bolt flying from (x0, y0) toward (x1, y1), its head
+ *  a fraction `t` of the way: a white-hot point, a gold shaft and a red-orange
+ *  flame trailing back up its line. */
+function burningBolt(L: Light, x0: number, y0: number, x1: number, y1: number, t: number, I: number): void {
+  const hx = x0 + (x1 - x0) * t, hy = y0 + (y1 - y0) * t;
+  const tail = Math.max(0, t - 0.3), tx = x0 + (x1 - x0) * tail, ty = y0 + (y1 - y0) * tail;
+  const mx = (hx + tx) / 2, my = (hy + ty) / 2;
+  L.line('red', tx, ty, hx, hy, 0.3, 1.9, 0.8 * I);     // the flame it drags
+  L.line('orange', mx, my, hx, hy, 0.4, 1.4, 1.1 * I);  // the burning shaft
+  L.line('gold', hx - (hx - mx) * 0.4, hy - (hy - my) * 0.4, hx, hy, 0.5, 0.9, 1.25 * I); // white-hot head
+}
+
+/** Ember Rain, on the archer: a small glowing ring spinning above her head,
+ *  and a pair of ember wings flaring behind her that fade fast. Origin at
+ *  her feet (it follows her through the hop). */
+function emberHaloAnim(): FxSheet {
+  const W = 48, H = 46, cx = W / 2, by = 42, hy = by - 32, n = 6;
+  return anim(W, H, cx, by, n, (L, f) => {
+    const R = rng(211 + f), fade = f < 3 ? 1 : 1 - (f - 2) / 4;
+    // the ring: faint all round, a bright arc racing round it
+    const spin = f * 1.6;
+    L.ring('orange', cx, hy, 7, 2.5, 1.0, 0.6 * fade);
+    arc(L, 'gold', cx, hy, 7, 2.5, 1.2, 1.2 * fade, spin, spin + 2.2);
+    if (f < 2) L.disc('gold', cx, hy, 3 - f, 1.1);
+    // the wings: swept feathers fanning up and out, gone by frame 3
+    if (f < 3) {
+      const w = 1 - f / 3;
+      for (const side of [-1, 1]) for (let k = 0; k < 4; k++) {
+        const a = -0.35 - k * 0.32, len = (16 - k * 2.5) * (0.7 + 0.3 * Math.min(1, f + 0.5));
+        const x0 = cx + side * 3, y0 = by - 16;
+        L.line(k ? 'red' : 'orange', x0, y0, x0 + side * Math.cos(a) * len, y0 + Math.sin(a) * len, 1.3, 0.3, (1.05 - k * 0.12) * w);
+      }
     }
+    for (let i = 0; i < 4; i++) L.spark(i % 2 ? 'orange' : 'gold', cx + (R() * 2 - 1) * 12, hy - 2 + R() * 18, 0.9 * fade, i === 0);
   });
 }
 
-/** Ember Rain's blast: a flat tornado under the archer's feet:
- *  a low, wide whirl of orange rings sweeping out under her, with a
- *  green-shot impact ring. Origin at the top centre (her feet). */
-function tornadoAnim(depth: number): FxSheet {
-  const W = 84, H = Math.round(depth) + 14, cx = W / 2, top = 4;
-  return anim(W, H, cx, top, 8, (L, f) => {
-    const R = rng(131 + f), fade = f < 5 ? 1 : 1 - (f - 4) / 4;
-    const reach = Math.min(1, (f + 1) / 3) * depth; // it drives down over the first frames
-    for (let k = 0; k < 5; k++) {
-      const t = k / 4, y = top + t * reach;
-      const rx = 34 - t * 16, ry = 4 - t * 1.5; // a wide, flat whirl, tapering a little
-      const spin = f * 1.3 + k * 0.55;
-      // the whole ring faintly, its front half bright: a whirl, not stacked bars
-      L.ring('orange', cx, y, rx, ry, 1.1, 0.45 * fade);
-      arc(L, 'orange', cx, y, rx, ry, 1.4, (1.2 - t * 0.3) * fade, spin, spin + 2.4);
-      if (k % 3 === 1) arc(L, 'green', cx, y, rx * 0.85, ry, 1.0, 0.9 * fade, spin + 2.8, spin + 4.2);
+/** Ember Rain's volley: the ring above her fires a downward fan of burning
+ *  bolts into the column below, centre first and out to the edges. Origin at
+ *  the ring (P.EMBER_RING above her feet); it reaches EMBER_RING + depth down. */
+function emberFanAnim(width: number, depth: number): FxSheet {
+  const W = width + 8, H = Math.round(depth) + 6, cx = W / 2, top = 2, n = 8;
+  // bolt landing spots across the column, and the frame each one fires on
+  const bolts = [0, -0.35, 0.35, -0.7, 0.7, -0.15, 0.15, -0.9, 0.9].map((u, i) => ({ u, at: Math.floor(i / 2) * 0.6 }));
+  return anim(W, H, cx, top, n, (L, f) => {
+    const fade = f < n - 2 ? 1 : (n - f) / 3;
+    for (const b of bolts) {
+      const t = (f - b.at + 1) / 3; // three frames from the ring to the ground
+      if (t <= 0 || t > 1.35) continue;
+      burningBolt(L, cx + b.u * 4, top + 1, cx + b.u * (width / 2), H - 2, Math.min(1, t), (t > 1 ? 2.35 - t * 1.4 : 1) * fade);
     }
-    if (f >= 2) {
-      const by = top + depth, g = (f - 2) / 6;
-      L.ring('orange', cx, by, 18 + g * 20, 3 + g * 2, 1.3, 1.0 * (1 - g));
-      L.disc('lime', cx, by - 1, 4 - g * 3, 1.1 * (1 - g));
-      for (let i = 0; i < 6; i++) L.spark(i % 2 ? 'green' : 'orange', cx + (R() * 2 - 1) * (16 + f * 4), by - R() * 6, 0.9 * fade, i === 0);
+    // the ring's muzzle flash as it fires
+    if (f < 4) L.disc(f % 2 ? 'orange' : 'gold', cx, top + 1, 3.5 - f * 0.6, 1.1);
+  }, 0.35);
+}
+
+/** A landed Ember Rain bolt: a short spiky flare kicked up off the ground
+ *  that breaks into sparks drifting up. Origin at the ground point. */
+function emberFlareAnim(): FxSheet {
+  const W = 26, H = 28, cx = W / 2, by = H - 2, n = 6;
+  const spikes = [-0.5, -0.2, 0, 0.25, 0.55];
+  return anim(W, H, cx, by, n, (L, f) => {
+    const R = rng(241 + f), fade = 1 - f / n;
+    if (f < 3) {
+      const grow = f === 0 ? 0.7 : f === 1 ? 1 : 0.55;
+      spikes.forEach((a, i) => {
+        const len = (i % 2 ? 9 : 14) * grow;
+        L.line(i === 2 ? 'gold' : 'orange', cx, by, cx + Math.sin(a) * len, by - Math.cos(a) * len, 1.6, 0.3, 1.15);
+      });
+      L.disc(f ? 'orange' : 'gold', cx, by - 1, 4 - f, 1.2);
+      L.ring('red', cx, by, 4 + f * 3, 1.2 + f * 0.4, 1.0, 0.9);
+    }
+    if (f >= 1) {
+      for (let i = 0; i < 6; i++) {
+        const sx = cx + (R() * 2 - 1) * (4 + f * 2), sy = by - 4 - f * 3 - R() * 10;
+        L.spark(i % 3 ? 'orange' : 'gold', sx, sy, 0.95 * fade, i === 0 && f < 4);
+      }
     }
   }, 0.4);
+}
+
+/** A burning enemy: little flames licking up over it with embers rising
+ *  off them. Loops; origin at the enemy's middle. */
+function burningAnim(): FxSheet {
+  const W = 16, H = 18, cx = W / 2, cy = 11, n = 4;
+  const tongues = [-4, 0, 4];
+  return anim(W, H, cx, cy, n, (L, f) => {
+    const R = rng(261 + f);
+    tongues.forEach((dx, i) => {
+      const k = (f + i) % n, len = 4 + ((k * 3) % 5);
+      L.line(i === 1 ? 'orange' : 'red', cx + dx, cy + 4, cx + dx + (k % 2 ? 1 : -1), cy + 4 - len, 1.4, 0.3, 0.95);
+    });
+    L.spark('gold', cx + (R() * 2 - 1) * 5, cy - 3 - ((f * 3) % 7), 0.9);
+  }, 0.35);
 }
 
 /** Acrobatics's rush: green streaks shooting up past the archer with
@@ -810,8 +866,10 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   tempestHit: () => hitAnim(false, 'pink'),
   skyHit: () => hitAnim(false, 'sky'),
   spinHit: () => hitAnim(false, 'red'),
-  volleyFlare: () => volleyFlareAnim(),
-  tornado: () => tornadoAnim(20), // a flat sweeping blast under her, not a tall column
+  emberHalo: () => emberHaloAnim(),
+  emberFan: () => emberFanAnim(P.PLUNGE_W, P.EMBER_RING + P.PLUNGE_DEPTH),
+  emberFlare: () => emberFlareAnim(),
+  burning: () => burningAnim(),
   climbRise: () => climbRiseAnim(),
   diveWindup: () => diveWindupAnim(),
   rain: () => rainAnim(),

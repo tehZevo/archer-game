@@ -10,9 +10,10 @@ import { shotCount } from './progress';
 import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
 import { useTime } from './castrules';
+import { applyStatus } from './status';
 import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
 
-import type { SkillKey, SkillRank } from './types';
+import type { Mob, SkillKey, SkillRank } from './types';
 
 /**
  * What each skill does once cast() has let it through (and paid for it).
@@ -162,8 +163,9 @@ function spikeLift(r: SkillRank): void {
 }
 
 /** Ember Rain (E's air form): a small upward bump (no freeze: you keep
- *  your drift and fall right after) as arrows rain straight down into a
- *  column beneath you, hitting every enemy in it. */
+ *  your drift and fall right after) as a ring over your head fires a fan of
+ *  burning bolts down into a column beneath you, hitting every enemy in it
+ *  and setting them burning. */
 function plungingVolley(r: SkillRank): void {
   endHover();
   pose('barrage', 'air-e');
@@ -175,12 +177,24 @@ function plungingVolley(r: SkillRank): void {
     .slice(0, r.targets);
   // leave a faster existing upward speed untouched; otherwise add the hop, capped at -PLUNGE_MAX
   player.vy = player.vy < -P.PLUNGE_MAX ? player.vy : Math.max(player.vy - P.PLUNGE_HOP, -P.PLUNGE_MAX);
-  // one flare on her and a single tornado blast driving down below her (no
-  // per-enemy rain: the blast is the hit effect)
-  game.fx.push({ type: 'volleyFlare', x: player.x, y: player.y + player.h / 2, t: FX_DUR.volleyFlare });
-  game.fx.push({ type: 'tornado', x: player.x, y: feet, t: FX_DUR.tornado });
+  // the ring (and wings) ride along with her; the fan fires from where the ring is now
+  game.fx.push({ type: 'emberHalo', x: player.x, y: feet, t: FX_DUR.emberHalo, follow: true });
+  game.fx.push({ type: 'emberFan', x: player.x, y: feet - P.EMBER_RING, t: FX_DUR.emberFan });
+  emberFlares(tg, feet);
+  tg.forEach((m) => applyStatus(m, 'burn', { stacks: P.EMBER_BURN_STACKS, dur: P.EMBER_BURN_DUR, dot: P.EMBER_BURN_DOT }));
   eachShot(shotCount(r), 0.08, (more, h) => {
     alive(tg).forEach((m) => damage(m, r.dmg, { noFx: true, more, first: h === 0 }));
+  });
+}
+
+/** Where Ember Rain's bolts land: a flare at each struck enemy's feet, and on
+ *  the ground below wherever the column reaches it, as the bolts arrive. */
+function emberFlares(tg: Mob[], feet: number): void {
+  for (const m of tg) later(0.1, () => game.fx.push({ type: 'emberFlare', x: m.x, y: m.y + m.h, t: FX_DUR.emberFlare }));
+  [0, -0.7, 0.7].forEach((u, i) => {
+    const x = player.x + u * (P.PLUNGE_W / 2);
+    const ground = surfaceBetween(x, 1, feet, feet + P.PLUNGE_DEPTH);
+    if (ground) later(0.1 + i * 0.05, () => game.fx.push({ type: 'emberFlare', x, y: surfaceYAt(ground, x), t: FX_DUR.emberFlare }));
   });
 }
 

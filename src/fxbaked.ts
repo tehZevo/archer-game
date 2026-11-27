@@ -18,8 +18,10 @@ import spikeHit from '../assets/fx/spikeHit.png';
 import tempestHit from '../assets/fx/tempestHit.png';
 import skyHit from '../assets/fx/skyHit.png';
 import spinHit from '../assets/fx/spinHit.png';
-import volleyFlare from '../assets/fx/volleyFlare.png';
-import tornado from '../assets/fx/tornado.png';
+import emberHalo from '../assets/fx/emberHalo.png';
+import emberFan from '../assets/fx/emberFan.png';
+import emberFlare from '../assets/fx/emberFlare.png';
+import burning from '../assets/fx/burning.png';
 import climbRise from '../assets/fx/climbRise.png';
 import diveWindup from '../assets/fx/diveWindup.png';
 import rain from '../assets/fx/rain.png';
@@ -59,8 +61,10 @@ export const BAKED: Record<string, BakedSheet> = {
   tempestHit: { src: tempestHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },
   skyHit: { src: skyHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },
   spinHit: { src: spinHit, w: 31, h: 31, n: 6, ox: 15.5, oy: 15.5 },
-  volleyFlare: { src: volleyFlare, w: 40, h: 40, n: 5, ox: 20, oy: 20 },
-  tornado: { src: tornado, w: 84, h: 34, n: 8, ox: 42, oy: 4 },
+  emberHalo: { src: emberHalo, w: 48, h: 46, n: 6, ox: 24, oy: 42 },
+  emberFan: { src: emberFan, w: 64, h: 126, n: 8, ox: 32, oy: 2 },
+  emberFlare: { src: emberFlare, w: 26, h: 28, n: 6, ox: 13, oy: 26 },
+  burning: { src: burning, w: 16, h: 18, n: 4, ox: 8, oy: 11 },
   climbRise: { src: climbRise, w: 24, h: 44, n: 6, ox: 12, oy: 42 },
   diveWindup: { src: diveWindup, w: 56, h: 48, n: 6, ox: 12, oy: 10 },
   rain: { src: rain, w: 40, h: 64, n: 8, ox: 20, oy: 58 },

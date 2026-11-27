@@ -146,18 +146,18 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '...RRRR...',
     '..........',
   ],
-  // Ember Rain: orange arrows (green fletching) raining onto a green target
+  // Ember Rain: a gold ring firing a fan of burning bolts down onto ember flares
   'air-e': [
-    '.e..e..e..',
+    '..gGGGg...',
+    '.G.....G..',
+    '..gGGGg...',
     '.r..r..r..',
-    '.r..r..r..',
-    '.r..r..r..',
-    'RrRRrRRrR.',
-    '.R..R..R..',
+    'r...r...r.',
+    'R...r...R.',
+    'g...g...g.',
     '..........',
-    '.EEEEEEE..',
-    'E.e.e.e.E.',
-    'EEEEEEEEE.',
+    'R.Rg.gR.R.',
+    'RRRRRRRRR.',
   ],
   // Tempest: a purple storm ring with a pink swirl inside
   r: [

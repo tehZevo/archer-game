@@ -32,6 +32,15 @@ describe('status effects', () => {
       expect(1000 - player.hp).toBe(Math.round(1000 * DOT.poison.player * MAX_STACKS));
     });
 
+    it('a dose with its own rate ticks at that rate on an enemy', () => {
+      const m = dummy(100);
+      m.training = false;
+      const hp = m.hp;
+      applyStatus(m, 'poison', { dot: 1 });
+      updateStatus(m, 1.01, m);
+      expect(hp - m.hp).toBe(Math.max(1, Math.round(player.war)));
+    });
+
     it('never takes you below 1 HP', () => {
       applyStatus(player, 'poison');
       player.hp = 2;
