@@ -172,6 +172,8 @@ export const areaOf = (p: Place): string => (isTown(p) ? townArea(p.town) : path
 
 /** What players call a place: "Whispering Woods 3", or the town's name. */
 export const placeName = (p: Place): string => (isTown(p) ? townById(p.town).name : areaOf(p));
+/** A place with its floor of the area, for the HUD ("Sunlit Shore 3"); a town is just its name. */
+export const placeWithFloor = (p: Place): string => (isTown(p) ? placeName(p) : `${placeName(p)} ${p.floor}`);
 
 /** The last floor of a path, right before its end town: the boss floor. */
 export const isPathEnd = (p: Place): boolean => !isTown(p) && p.floor === pathById(p.path)?.floors;

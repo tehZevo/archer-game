@@ -7,7 +7,7 @@ import { net } from '../src/net';
 import { game, gotoPlace, player } from '../src/state';
 import { TOWN_PLANS } from '../src/townfloor';
 import type { Floor, Platform } from '../src/types';
-import { isPathEnd, isTown, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, START, TOWNS, townDepth } from '../src/world';
+import { isPathEnd, isTown, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, placeWithFloor, START, TOWNS, townDepth } from '../src/world';
 
 const DRIFTWOOD = { town: 'driftwood' };
 const here = (): string => placeKey(game.floor.place);
@@ -274,6 +274,14 @@ describe('places (a town, or a path and a floor)', () => {
     expect(placeName({ path: 'woods', floor: 2 })).toBe('Whispering Woods');
     expect(placeName({ town: 'mossgate' })).toBe('Mossgate Village');
     expect(placeName({ town: 'lanternhollow' })).toBe('Lanternhollow Town');
+  });
+
+  it('the HUD shows a floor with its number', () => {
+    expect(placeWithFloor({ path: 'woods', floor: 2 })).toBe('Whispering Woods 2');
+  });
+
+  it('the HUD shows a town by its name alone', () => {
+    expect(placeWithFloor({ town: 'mossgate' })).toBe('Mossgate Village');
   });
 
   it('paths only lead upward, to a deeper town', () => {
