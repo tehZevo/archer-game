@@ -331,7 +331,8 @@ describe('training dummy', () => {
     expect(perch.length).toBeGreaterThan(0);
     const perchRight = Math.max(...game.floor.platforms.filter((p) => p.block === perch[0].block).map((p) => p.x + p.w));
     expect(perchRight).toBe(WORLD.w);
-    expect(game.floor.npcs?.some((n) => n.y === feet)).toBe(false); // nobody else up there
+    const perchLeft = Math.min(...game.floor.platforms.filter((p) => p.block === perch[0].block).map((p) => p.x));
+    expect(game.floor.npcs?.some((n) => n.y === feet && n.x >= perchLeft)).toBe(false); // nobody else up there
 
     const ladder = game.floor.ladders.find((l) => l.y1 === feet && l.x > WORLD.w - 16)!;
     expect(ladder).toBeTruthy();
