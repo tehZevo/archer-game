@@ -161,13 +161,13 @@ function spikeLift(r: SkillRank): void {
   player.onGround = false;
 }
 
-/** Downpour (E's air form): a small upward bump (no freeze: you keep
+/** Ember Rain (E's air form): a small upward bump (no freeze: you keep
  *  your drift and fall right after) as arrows rain straight down into a
  *  column beneath you, hitting every enemy in it. */
 function plungingVolley(r: SkillRank): void {
   endHover();
   pose('barrage', 'air-e');
-  sfx.downpour();
+  sfx.emberRain();
   const feet = player.y + player.h;
   const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
     .filter((m) => m.y + m.h > feet) // beneath you, not beside you

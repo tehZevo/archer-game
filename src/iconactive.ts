@@ -146,7 +146,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '...RRRR...',
     '..........',
   ],
-  // Downpour: orange arrows (green fletching) raining onto a green target
+  // Ember Rain: orange arrows (green fletching) raining onto a green target
   'air-e': [
     '.e..e..e..',
     '.r..r..r..',

@@ -686,7 +686,7 @@ function spiritAnim(): FxSheet {
   });
 }
 
-/** Downpour, on the archer: an orange burst at the bow with green
+/** Ember Rain, on the archer: an orange burst at the bow with green
  *  motes flung off it. Origin at her middle. */
 function volleyFlareAnim(): FxSheet {
   const S = 40, c = S / 2;
@@ -701,7 +701,7 @@ function volleyFlareAnim(): FxSheet {
   });
 }
 
-/** Downpour's blast: a flat tornado under the archer's feet:
+/** Ember Rain's blast: a flat tornado under the archer's feet:
  *  a low, wide whirl of orange rings sweeping out under her, with a
  *  green-shot impact ring. Origin at the top centre (her feet). */
 function tornadoAnim(depth: number): FxSheet {

@@ -39,7 +39,7 @@ export const grabCancels = (): boolean =>
   player.casting.useT <= 0 || (player.casting.key !== null && GRAB_THROUGH.has(player.casting.key));
 
 /** Keys with an air form that is its own skill (its own row, rank and
- *  cooldown): Q (Meteor Dive), W (Cyclone Sweep), E (Downpour). */
+ *  cooldown): Q (Meteor Dive), W (Cyclone Sweep), E (Ember Rain). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { 'ground-q': 'air-q', 'ground-w': 'air-w', 'ground-e': 'air-e' };
 
 /** The cooldown slot a key uses right now: its air form's ("E.air") in the

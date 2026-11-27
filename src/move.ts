@@ -131,7 +131,7 @@ function walk(dt: number, locked: boolean): void {
   const prevFeet = player.y + player.h, prevX = player.x;
   integrate(player, dt);
   // clamp to the world before colliding, so the ground test uses the final x;
-  // vertically too: chained aerial hops (Downpour's stacked momentum)
+  // vertically too: chained aerial hops (Ember Rain's stacked momentum)
   // can't carry you off the top of the map
   player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2);
   player.y = clamp(player.y, 0, WORLD.h - player.h);

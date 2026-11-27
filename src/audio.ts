@@ -93,8 +93,8 @@ export const sfx = {
   cyclone: (): void => {
     noise({ dur: 0.4, vol: 0.24, attack: 0.2, filter: { type: 'bandpass', f: 400, to: 3000, q: 3 }, flutter: 18 });
   },
-  /** Downpour: arrows raining straight down. */
-  downpour: (): void => {
+  /** Ember Rain: arrows raining straight down. */
+  emberRain: (): void => {
     noise({ dur: 0.3, vol: 0.2, filter: { type: 'highpass', f: 1500, to: 5000 } });
     osc({ type: 'triangle', f: 700, to: 300, dur: 0.2, vol: 0.12 });
   },

@@ -17,7 +17,7 @@ import type { SkillKey } from './types';
      Rush Toss / Electric Blitz   the end of the use time, after the slide's strike
      Meteor Dive                  the end of the use time, after the landing roll
      Skyward Assault              the leap's peak for the Cyclone Sweep,
-                                  the hover's end for Tempest and Downpour
+                                  the hover's end for Tempest and Ember Rain
    ============================================================ */
 
 /** The rushes: Double Shot chains off them (see skills.gate). */

@@ -91,7 +91,7 @@ describe('the skill tree', () => {
 
 describe('Twin Echoes (passive)', () => {
 
-  it('doubles the arrows every attack fires, Double Shot and Downpour alike', () => {
+  it('doubles the arrows every attack fires, Double Shot and Ember Rain alike', () => {
     arena(20);
     player.ranks.z = true;
     expect(shotCount(rank('z'))).toBe(2);

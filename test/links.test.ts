@@ -132,7 +132,7 @@ describe('Electric Blitz', () => {
 });
 
 describe('aerial links', () => {
-  it('Downpour links into Cyclone Sweep: W pressed mid-volley fires as the volley ends', () => {
+  it('Ember Rain links into Cyclone Sweep: W pressed mid-volley fires as the volley ends', () => {
     learn('d', 'ground-e', 'air-e', 'air-w');
     dummy(100);
     jump(4);
@@ -146,7 +146,7 @@ describe('aerial links', () => {
     expect(Math.abs(frames * P.STEP - useTime('air-e'))).toBeLessThan(0.07);
   });
 
-  it('a whiffed Downpour still links (linking needs no hit)', () => {
+  it('a whiffed Ember Rain still links (linking needs no hit)', () => {
     learn('ground-e', 'air-e');
     jump();
     tap('e');
@@ -166,7 +166,7 @@ describe('aerial links', () => {
     expect(player.casting.useT).toBeGreaterThan(0);
   });
 
-  it('Cyclone Sweep links into Downpour', () => {
+  it('Cyclone Sweep links into Ember Rain', () => {
     learn('ground-w', 'air-w', 'ground-e', 'air-e');
     dummy(100);
     jump();
@@ -217,7 +217,7 @@ describe('Skyward Assault', () => {
       expect(player.hang.t).toBeGreaterThan(0);
     });
 
-    it('Downpour waits out the whole hover, then fires', () => {
+    it('Ember Rain waits out the whole hover, then fires', () => {
       learn('ground-q', 'ground-w', 'ab', 'air-e');
       dummy(130);
       intoAssaultHover();
