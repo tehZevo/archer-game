@@ -14,3 +14,5 @@
 - When you die, show a dialog to return to the previous town; in dev mode, also allow reviving in place.
 - The upgraded ground W (Skyward Assault, `ab`) should chain into Dive (`air-q`) — add `air-q` to its `linksInto` (config.ts:154).
 - Increase the miss chance both ways (player→mob and mob→player) to 10% per level.
+- Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
+- Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
