@@ -1,6 +1,6 @@
 import { P, WORLD } from './config';
 import { clamp } from './util';
-import { game, logMsg, mobDmg, mobHp, player } from './state';
+import { game, logMsg, mobDmg, mobHp, player, spawnMob } from './state';
 import { areaMobs } from './floor';
 import { CHASE_TURN } from './mobai';
 import { areaOf, isPathEnd, mobLevel } from './world';
@@ -8,7 +8,7 @@ import { mobExp, passiveBonus } from './progress';
 import { gearSoak } from './gear';
 import { missChance } from './combat';
 import { sfx } from './audio';
-import type { Mob, MobType, Portal } from './types';
+import type { Mob, MobType, Portal, Spawn } from './types';
 
 /* ============================================================
    BOSSES
@@ -18,6 +18,8 @@ import type { Mob, MobType, Portal } from './types';
    - charge: a fast rush along the ground; get out of its lane
    - slam: a jump that lands with a shockwave along the ground; be in
      the air (or far away) when it lands
+   Harder bosses (Lv.SUMMON_LVL and up) also call in their area's enemies
+   now and then; the hardest (Lv.ELITE_LVL and up) call in elites.
    The floor's way up stays sealed until it's beaten.
    ============================================================ */
 
@@ -34,11 +36,19 @@ export const BOSS = {
   RUSH: 4, RUSH_T: 0.8,
   /** slam: jump speed, shockwave reach either side (px) and damage multiple */
   JUMP: 420, QUAKE_R: 110, QUAKE_DMG: 1.3,
+  /** summoning: the boss level it starts at, and the level its summons turn elite */
+  SUMMON_LVL: 30, ELITE_LVL: 60,
+  /** s between summons, how many it calls each time, and the most alive at once */
+  SUMMON_CD: 9, SUMMON_N: 2, SUMMON_MAX: 4,
 } as const;
 
-export type BossAct = 'walk' | 'windCharge' | 'charge' | 'windSlam' | 'slam';
+export type BossAct = 'walk' | 'windCharge' | 'charge' | 'windSlam' | 'slam' | 'windSummon';
 export interface BossState {
   act: BossAct; t: number; cd: number; air: boolean;
+  /** a summoner's countdown to its next summon (absent: it doesn't summon) */
+  summonCd?: number;
+  /** the zone its summons belong to (so they're counted, and kept off the waves) */
+  pack?: Spawn;
   /** a slam down at a player below: the feet height it drops to (it
    *  passes through any platform above that on the way down) */
   dropTo?: number;
@@ -80,8 +90,30 @@ export function spawnBoss(): void {
     fly: false, col: type.col, level, exp: mobExp(level) * BOSS.EXP,
     stun: 0, atkCd: 0, airTime: 0, aggro: true, hitFlash: 0, barT: 0, anim: 0,
     spawn: { x: WORLD.w / 2, y: ground.y, types: [], minX: 24, maxX: WORLD.w - 24 },
-    boss: { act: 'walk', t: 0, cd: BOSS.CD, air: false },
+    boss: { act: 'walk', t: 0, cd: BOSS.CD, air: false, ...(level >= BOSS.SUMMON_LVL ? { summonCd: BOSS.SUMMON_CD } : {}) },
   });
+}
+
+/** The enemies a boss has summoned that are still up. */
+export const minions = (m: Mob): Mob[] => game.mobs.filter((o) => !o.boss && m.boss?.pack && o.spawn === m.boss.pack);
+
+/** Call in SUMMON_N of the area's own enemies at the boss's sides (up to
+ *  SUMMON_MAX alive); elites from a Lv.ELITE_LVL+ boss. They come in angry. */
+export function summon(m: Mob): void {
+  const b = m.boss!;
+  const ground = game.floor.platforms[0];
+  b.pack ??= { x: m.x, y: ground.y, types: [], minX: 24, maxX: WORLD.w - 24 };
+  const pool = areaMobs(areaOf(game.floor.place)).filter((t) => !t.fly && t !== m.type);
+  const types = pool.length ? pool : [m.type];
+  const n = Math.min(BOSS.SUMMON_N, BOSS.SUMMON_MAX - minions(m).length);
+  for (let i = 0; i < n; i++) {
+    const side = i % 2 ? 1 : -1;
+    b.pack.x = clamp(m.x + side * (m.w / 2 + 16), 24, WORLD.w - 24);
+    spawnMob(b.pack, types[Math.floor(Math.random() * types.length)], m.level >= BOSS.ELITE_LVL);
+    const s = game.mobs[game.mobs.length - 1];
+    s.aggro = true;
+  }
+  if (n > 0) { sfx.hit(); logMsg(`${m.name} calls for help!`); }
 }
 
 
@@ -146,13 +178,21 @@ export function bossMove(m: Mob, dt: number, lo: number, hi: number): void {
         m.turn = 0; m.dir = want;
       } else m.turn = 0;
       m.vx += (m.dir * m.spd - m.vx) * Math.min(1, 8 * dt);
-      if ((b.cd -= dt) <= 0) {
+      if (b.summonCd !== undefined) b.summonCd -= dt;
+      if ((b.cd -= dt) <= 0 && b.summonCd !== undefined && b.summonCd <= 0 && minions(m).length < BOSS.SUMMON_MAX) {
+        // a summoner's turn to call for help (it winds up the same way)
+        b.act = 'windSummon'; b.t = BOSS.WIND;
+      } else if (b.cd <= 0) {
         // far away: rush at you; close in: jump and slam
         b.act = Math.abs(d) > 90 ? 'windCharge' : 'windSlam';
         b.t = BOSS.WIND;
       }
       break;
     }
+    case 'windSummon':
+      m.vx *= 0.7;
+      if (b.t <= 0) { summon(m); b.summonCd = BOSS.SUMMON_CD; rest(m); }
+      break;
     case 'windCharge':
     case 'windSlam':
       m.vx *= 0.7;
@@ -205,7 +245,7 @@ function rest(m: Mob): void {
 
 
 /** True while the boss is winding up (it flashes and shakes). */
-export const windingUp = (m: Mob): boolean => m.boss?.act === 'windCharge' || m.boss?.act === 'windSlam';
+export const windingUp = (m: Mob): boolean => m.boss?.act === 'windCharge' || m.boss?.act === 'windSlam' || m.boss?.act === 'windSummon';
 
 /** Fade the shockwaves. */
 export function updateQuakes(dt: number): void {

@@ -69,7 +69,7 @@ export { CASTS } from '../src/skillcasts';
 export { MOB_SOUNDS } from '../src/audio';
 export { clearPlayerDeath, GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop } from '../src/deaths';
 export { fmtNum } from '../src/util';
-export { BOSS, bossAlive, bossName, bossType, capAdd, hurtPlayer, quakes } from '../src/boss';
+export { BOSS, bossAlive, bossName, bossType, capAdd, hurtPlayer, minions, quakes, summon } from '../src/boss';
 export { cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 export { stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP, shownLook, styleChanged, STYLE_FEE, stylistRows } from '../src/stylist';
 export { styled } from '../src/archer';
