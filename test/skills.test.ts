@@ -200,6 +200,20 @@ describe('Rush Toss', () => {
     expect(m.airTime).toBeGreaterThan(0);
   });
 
+  it('with Twin Echoes, the strike launches its target only once', () => {
+    arena(1);
+    player.ranks.es = true;
+    const m = dummy(130);
+    tap('q');
+    let launches = 0, air = m.airTime;
+    for (let i = 0; i < 40; i++) {
+      step(1);
+      if (m.airTime > air) launches++; // a launch resets its air time
+      air = m.airTime;
+    }
+    expect(launches).toBe(1);
+  });
+
   it('covers its full distance even when an enemy slows it', () => {
     arena(1);
     dummy(player.x + 20);
