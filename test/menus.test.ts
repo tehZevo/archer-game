@@ -14,7 +14,7 @@ import {
   settingsTap, settingsUi, SETTING_ROWS, VOLUME_MAX,
 } from '../src/settings';
 import { closeSkillScreen, openSkillScreen, skillScreen, skillStatus, statLines, tabLabel, tabSkills } from '../src/skillscreen';
-import { game, player } from '../src/state';
+import { bannerMsg, game, player } from '../src/state';
 import type { SkillKey } from '../src/types';
 import { START } from '../src/world';
 import { editableSkills, linkTargets, openSkillEditor, resetSkill, skillEditor, skillEditorInput } from '../src/skilleditor';
@@ -513,5 +513,25 @@ describe('settings', () => {
     expect(game.time).toBe(time);
     tap('escape');
     expect(game.pause).toBeFalsy();
+  });
+});
+
+describe('the big on-screen banner', () => {
+  beforeEach(() => {
+    arena();
+    bannerMsg('THE SAGE', 'RETURN TO ME AT LV.10');
+  });
+
+  it('shows for a few seconds, not a blink', () => {
+    expect(game.banner?.text).toBe('THE SAGE');
+    expect(P.BANNER_T).toBeGreaterThan(2);
+    expect(game.banner!.t).toBe(P.BANNER_T);
+  });
+
+  it('is still up halfway through, and clears once its time is up', () => {
+    step(Math.floor(P.BANNER_T / 2 / P.STEP));
+    expect(game.banner).not.toBe(null);
+    step(Math.ceil(P.BANNER_T / 2 / P.STEP));
+    expect(game.banner).toBe(null);
   });
 });

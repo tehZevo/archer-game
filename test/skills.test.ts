@@ -5,7 +5,8 @@ import { setKey } from '../src/input';
 import { linkable, linkHeld } from '../src/links';
 import { NUM_GAP } from '../src/combat';
 import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
-import { activeSkill, skillRows, spendSkill } from '../src/progress';
+import { activeSkill, rank, skillRows, spendSkill } from '../src/progress';
+import { localPose } from '../src/net';
 import { cast } from '../src/skills';
 import { game, gotoPlace, player, READY_FLASH } from '../src/state';
 import { surfaceYAt } from '../src/surface';
@@ -942,5 +943,70 @@ describe('Glide and Acrobatics (bought with SP, not given)', () => {
       return y - player.y;
     };
     expect(climbOneFrame(true)).toBeCloseTo(climbOneFrame(false), 2);
+  });
+});
+
+describe('a Double Shot at nothing', () => {
+  it('still fires one arrow per hit', () => {
+    arena(1);
+    game.fx.length = 0;
+    const tracers = new Set<object>();
+    tap('z');
+    for (let i = 0; i < Math.ceil((P.Z_WINDUP + 0.3) / P.STEP); i++) {
+      step(1);
+      for (const fx of game.fx) if (fx.type === 'tracer') tracers.add(fx);
+    }
+    expect(tracers.size).toBe(rank('z').hits);
+  });
+});
+
+describe('skill looks', () => {
+  const hasFx = (type: string): boolean => game.fx.some((f) => f.type === type);
+  function leapUp(): void {
+    player.y -= 40;
+    player.vy = 0;
+    player.onGround = false;
+  }
+  afterEach(() => release());
+
+  it('Piercing Leap erupts spikes from the ground', () => {
+    arena(30);
+    player.ranks['ground-e'] = true;
+    game.fx.length = 0;
+    tap('e');
+    expect(hasFx('spikes')).toBe(true);
+    expect(hasFx('rush')).toBe(false);
+  });
+
+  it('Cyclone Sweep whirls blades round you and spins the archer', () => {
+    arena(30);
+    player.ranks['air-w'] = true;
+    leapUp();
+    game.fx.length = 0;
+    tap('w');
+    expect(hasFx('spin')).toBe(true);
+    expect(localPose()).toBe('spin');
+  });
+
+  it('Tempest sweeps an oval of energy as the archer vanishes, and she is back after', () => {
+    arena(30);
+    player.ranks.r = true;
+    game.fx.length = 0;
+    tap('r');
+    expect(hasFx('tempest')).toBe(true);
+    expect(hasFx('muzzle')).toBe(false);
+    expect(localPose()).toBe('vanish');
+    step(43);
+    expect(localPose()).not.toBe('vanish');
+  });
+
+  it('Meteor Dive draws its dive pose', () => {
+    arena(30);
+    player.ranks['air-q'] = true;
+    leapUp();
+    tap('q');
+    step(4); // past the windup
+    expect(player.diving).toBeTruthy();
+    expect(localPose()).toBe('dive');
   });
 });

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { arena, dummy, step, tap } from './helpers';
+import { arena, dummy, ground, step, tap } from './helpers';
 import { MOB_TYPES, P } from '../src/config';
 import { capAdd, hurtPlayer } from '../src/boss';
 import { clearGear } from '../src/gear';
@@ -255,5 +255,60 @@ describe('damage numbers', () => {
       for (const w of wobble) expect(Math.abs(w)).toBeLessThanOrEqual(4);
       expect(new Set(wobble.map((w) => w.toFixed(2))).size).toBeGreaterThan(1);
     });
+  });
+});
+
+describe('getting hit (bumps you up and back, away from the enemy)', () => {
+  function touchAnEnemy(): { x: number; hp: number } {
+    arena(1, 120);
+    player.invuln = 0;
+    const m = dummy(player.x + 8);
+    m.dmg = 1;
+    m.atkCd = 0;
+    m.aggro = true;
+    const before = { x: player.x, hp: player.hp };
+    step(1);
+    return before;
+  }
+  afterEach(() => {
+    game.mobs.length = 0;
+    player.invuln = 999;
+  });
+
+  it('touching an enemy hurts you, and bumps you up and back', () => {
+    const before = touchAnEnemy();
+    expect(player.hp).toBeLessThan(before.hp);
+    expect(player.onGround).toBe(false);
+    expect(player.vy).toBeLessThan(0);
+    expect(player.vx).toBeLessThan(0); // away from the enemy, on your right
+  });
+
+  it('it is only a little bump: you land a little way back', () => {
+    const before = touchAnEnemy();
+    let peak = 0;
+    for (let i = 0; i < 30 && !player.onGround; i++) {
+      step(1);
+      peak = Math.max(peak, ground().y - (player.y + player.h));
+    }
+    expect(player.onGround).toBe(true);
+    expect(peak).toBeGreaterThan(3);
+    expect(peak).toBeLessThan(16);
+    expect(before.x - player.x).toBeGreaterThan(8);
+    expect(before.x - player.x).toBeLessThan(50);
+  });
+
+  it('hit from behind, you are pushed the other way', () => {
+    arena(1, 120);
+    player.invuln = 0;
+    hurtPlayer(1, player.x - 10, player.level);
+    expect(player.vx).toBeGreaterThan(0);
+  });
+
+  it('a hit from no particular place (a status tick) does not move you', () => {
+    arena(1, 120);
+    player.invuln = 0;
+    hurtPlayer(1);
+    expect(player.vx).toBe(0);
+    expect(player.onGround).toBe(true);
   });
 });
