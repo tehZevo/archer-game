@@ -16,7 +16,9 @@ import { BAKED } from '../src/fxbaked';
 import { FX_GEN } from '../src/fxsprites';
 import { packStrip } from '../src/grid';
 import { decodePng } from '../scripts/png';
-import { BAKED_MOBS } from '../src/mobbaked';
+import { BAKED_DEATHS, BAKED_MOBS } from '../src/mobbaked';
+import { bakeDeathSheet } from '../src/deathsheet';
+import { deathOf } from '../src/deaths';
 import { breath, lunge, mobAnim, MOB_GEN, recoil } from '../src/sprites';
 import { slug } from '../scripts/slug';
 import { game, player, gainExp, gotoPlace } from '../src/state';
@@ -224,6 +226,14 @@ setKey('up', false);
     return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip([...a.frames, a.hurt].map((f) => f.g)).px)) !== 0;
   }).map(([n]) => n);
   check(`every baked enemy sheet matches its painter${staleMobs.length ? ' (stale: ' + staleMobs.join(', ') + ')' : ''}`, staleMobs.length === 0);
+  const staleDeaths = Object.entries(BAKED_DEATHS).filter(([name, s]) => {
+    const t = MOB_TYPES.find((m) => m.n === name), d = t && bakeDeathSheet(name, deathOf(t));
+    if (!d || d.frames.length !== s.n || d.frames[0].w !== s.w || d.frames[0].h !== s.h || d.cx !== s.cx || d.cy !== s.cy) return true;
+    const png = decodePng(readFileSync(`assets/mobs/death/${slug(name)}.png`));
+    return Buffer.compare(Buffer.from(png.px), Buffer.from(packStrip(d.frames).px)) !== 0;
+  }).map(([n]) => n);
+  check(`every baked death strip matches its painter${staleDeaths.length ? ' (stale: ' + staleDeaths.join(', ') + ')' : ''}`, staleDeaths.length === 0);
+  check('every enemy with a death has its strip baked', MOB_TYPES.every((t) => !bakeDeathSheet(t.n, deathOf(t)) || BAKED_DEATHS[t.n]));
   // tilesets: every piece's atlas cell matches what its painter draws now
   const staleTiles = Object.entries(TILESETS).filter(([name, ts]) => {
     const b = BAKED_TILES[name];
