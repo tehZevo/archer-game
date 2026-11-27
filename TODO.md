@@ -17,3 +17,4 @@
 - Make rush skills carry enemies through hitstun: an enemy picked up by a rush (Rush Toss / Electric Blitz) can't die until its rush carry finishes, so carried enemies stay alive and travel with you for the duration.
 - Pet shop upgrades should cost coins: coins 2000, items 3000, range 4000, potions 5000.
 - Allow switching direction midair after a Glide, even during the skill's use/recovery.
+- Increase Skyward Assault's (`ab`) use time to 0.4 and decrease its delay to 0.2 (config.ts:155).
