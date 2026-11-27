@@ -19,8 +19,8 @@ import { P, player, setKey, check, step, arena, dummy } from './harness';
   const near = dummy(150), far = dummy(220);
   hold('z', true); step(1);
   check('a held Z shot arms the stream', player.rapid.armed && !player.rapid.on);
-  step(Math.ceil(0.6 / P.STEP) + 1);
-  check('the stream starts once the shot\'s use time is over', player.rapid.on);
+  step(Math.ceil(0.6 / P.STEP) + 2);
+  check('the stream starts once the shot\'s full cast is over', player.rapid.on);
   const before = near.hp, farBefore = far.hp, mp = player.mp;
   step(Math.round(1 / P.STEP)); // one second of streaming
   check('the stream keeps hitting the closest enemy', near.hp < before);
@@ -55,7 +55,7 @@ import { P, player, setKey, check, step, arena, dummy } from './harness';
   arena(60);
   player.ranks['held-z'] = true;
   dummy(150);
-  hold('z', true); step(Math.ceil(0.6 / P.STEP) + 1); // arm and start the stream
+  hold('z', true); step(Math.ceil(0.6 / P.STEP) + 2); // arm and start the stream
   check('the stream is running', player.rapid.on);
   const face = player.face;
   hold('right', true);
