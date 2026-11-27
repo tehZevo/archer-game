@@ -77,7 +77,7 @@ function drawDecorations(g: Ctx, ts: Tileset): void {
 
 /** An area's props, one canvas each (see props.ts; baked, see artsheets.ts). */
 function bakedProps(area: string): HTMLCanvasElement[] {
-  const key = PROPS[area] ? area : 'Classic';
+  const key = PROPS[area] ? area : 'Harbor';
   return propsFor(area).map((_, i) => art(`prop/${key}/${i}`));
 }
 

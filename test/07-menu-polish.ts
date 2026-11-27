@@ -34,20 +34,20 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 
 {
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
-  check('every area on the map has a tileset (Classic until it gets its own)', ['Sunlit Shore', 'Whispering Woods', 'Echoing Caves', 'Murky Swamp', 'Craggy Mountains', 'Endless Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
+  check('every area on the map has a tileset (the Harbor set until it gets its own)', ['Sunlit Shore', 'Whispering Woods', 'Echoing Caves', 'Murky Swamp', 'Craggy Mountains', 'Endless Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
   check('Clockwork Spire is on the map', MAP_AREAS.includes('Clockwork Spire'));
   const fallback = ['Old Keep', 'Ember Wastes', 'Sky Reef', 'Chapel Spire', 'Frozen Summit']; // no sets of their own yet
   const own = MAP_AREAS.filter((a) => !fallback.includes(a));
   check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
-  check('unknown areas fall back to Classic', tilesetFor('Nowhere').name === 'Classic');
+  check('unknown areas fall back to the Harbor (there is no Classic set)', tilesetFor('Nowhere').name === 'Harbor' && !TILESETS.Classic && !PROPS.Classic && !BACKDROPS.Classic);
   // props and backdrops: every area with a tileset has its own; props paint inside their canvas
   const inside = (paint: (p: (x: number, y: number, c: string, w?: number, h?: number) => void) => void, W: number, H: number): boolean => {
     let ok = true, any = false;
     paint((x, y, c, w = 1, h = 1) => { any = true; if (!/^#[0-9a-f]{3,8}$/i.test(c) || x < -0.5 || y < -0.5 || x + w > W + 0.5 || y + h > H + 0.5) ok = false; });
     return ok && any;
   };
-  const withSets = Object.keys(TILESETS).filter((a) => a !== 'Classic');
+  const withSets = Object.keys(TILESETS);
   check('every area with a tileset has its own props and backdrop', withSets.every((a) => PROPS[a] && BACKDROPS[a]),
     withSets.filter((a) => !PROPS[a] || !BACKDROPS[a]).join(', '));
   check('every prop paints only inside its canvas', Object.values(PROPS).every((ps) => ps.every((p) => inside(p, PROP_W, PROP_H))));
@@ -162,7 +162,7 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const beach = areaMobs('Sunlit Shore').map((m) => m.n);
   check('the Beach has its own enemies (snail, enemy crab, hermit crab, gull)', ['Garden Snail', 'Enemy Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
   check('areas without a set use the general pool', areaMobs('Nowhere').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Nowhere').length >= 2);
-  const withOwn = Object.keys(TILESETS).filter((a) => !['Classic', 'Harbor'].includes(a)); // the Harbor is only a town
+  const withOwn = Object.keys(TILESETS).filter((a) => a !== 'Harbor'); // the Harbor is only a town
   check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
     withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
   let artOk = true;

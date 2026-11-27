@@ -25,24 +25,6 @@ import { NATURE } from './tilesets/nature';
 
 export * from './tilekit';
 
-/* ---------------- Classic: the original grass and dirt (areas without their own set yet) ---------------- */
-const classic: Tileset = {
-  name: 'Classic',
-  sky: ['#1a3a54', '#20536b', '#16394f'],
-  fill: (x, y, v) => ((x === 4 && y === 4) || (x === 11 && y === 10) || (v === 1 && x === 8 && y === 13)) ? '#5a3f24' : '#6b4a2b',
-  surface: (_x, d) => (d === 0 ? '#7ed36f' : d < 3 ? '#57a34d' : d < 5 ? '#3f7d3a' : null),
-  edge: { outer: '#2a1b0e', inner: '#4e3520', surfOuter: '#2c5a28', surfInner: '#3f7d3a', style: 'round', r: 2 },
-  rope(p) {
-    p(5, 0, '#c8a06a', 6, 16); p(5, 0, '#e0c088', 1, 16); p(10, 0, '#8a6a3c', 1, 16);
-    for (const [x, y] of [[6, 0], [7, 4], [8, 8], [7, 12]]) p(x, y, '#d8b278', 2, 1);
-  },
-  ladder(p) {
-    p(3, 0, '#a9762f', 2, 16); p(11, 0, '#a9762f', 2, 16);
-    p(3, 0, '#c8944a', 1, 16); p(11, 0, '#c8944a', 1, 16);
-    p(5, 7, '#a9762f', 6, 2); p(5, 7, '#c8944a', 6, 1);
-  },
-};
-
 /* ---------------- Sunlit Shore: layered sand, shells, sea grass, driftwood ---------------- */
 const beach: Tileset = {
   name: 'Sunlit Shore',
@@ -286,8 +268,8 @@ const clockwork: Tileset = {
 };
 
 export const TILESETS: Record<string, Tileset> = {
-  Classic: classic, 'Sunlit Shore': beach, 'Whispering Woods': forest, 'Echoing Caves': cave, 'Clockwork Spire': clockwork,
+  'Sunlit Shore': beach, 'Whispering Woods': forest, 'Echoing Caves': cave, 'Clockwork Spire': clockwork,
   ...NATURE, ...MYSTIC, ...LATE, ...FRONTIER,
 };
-/** The tileset an area is drawn with (areas without their own yet use Classic). */
-export const tilesetFor = (area: string): Tileset => TILESETS[area] ?? classic;
+/** The tileset an area is drawn with (areas without their own yet use the Harbor's). */
+export const tilesetFor = (area: string): Tileset => TILESETS[area] ?? TILESETS.Harbor;

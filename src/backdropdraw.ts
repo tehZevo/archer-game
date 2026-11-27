@@ -13,7 +13,7 @@ const baked = new Map<string, HTMLCanvasElement[]>();
 
 /** An area's two layers (baked, see artsheets.ts). */
 function bake(area: string): HTMLCanvasElement[] {
-  const key = BACKDROPS[area] ? area : 'Classic';
+  const key = BACKDROPS[area] ? area : 'Harbor';
   return [art(`backdrop/${key}/far`), art(`backdrop/${key}/mid`)];
 }
 
