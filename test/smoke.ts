@@ -26,6 +26,7 @@ import { tick } from '../src/loop';
 import { GLYPH, ICON_GLYPHS } from '../src/icons';
 import { SKILLS } from '../src/config';
 import { advanceJob, canAdvance, rank, spendSp, expToNext, isLearned, skillRows } from '../src/progress';
+import { skillScreen, tabSkills, visibleTabs } from '../src/skillscreen';
 
 let failures = 0;
 function check(name: string, cond: boolean): void {
@@ -142,11 +143,14 @@ check('esc pauses the game', !!game.pause && game.waveT === wave0 && player.rege
 const vit0 = player.stats.vit, hp0 = player.hpMax;
 tap('down'); tap('z'); // VIT
 check('pause menu spends AP on a stat', player.stats.vit === vit0 + 1 && player.hpMax > hp0 && player.ap === 8);
-tap('right'); // skills column
-const wRow = skillRows().findIndex((r) => r.key === 'ground-w');
+tap('right'); tap('z'); // the SKILLS button
+check('the pause menu SKILLS button opens the skills screen on your job tab', skillScreen.open && skillScreen.tab === 1 && visibleTabs().join() === '0,1');
+const wRow = tabSkills(1).indexOf('ground-w');
 for (let i = 0; i < wRow; i++) tap('down');
 tap('z');
-check('pause menu spends SP to learn Rising Arrows', isLearned('ground-w') && player.sp === 1);
+check('the skills screen spends SP to learn Rising Arrows', isLearned('ground-w') && player.sp === 1);
+tap('escape');
+check('closing the skills screen returns to the pause menu', !skillScreen.open && !!game.pause);
 tap('escape');
 check('esc resumes', !game.pause);
 

@@ -49,7 +49,7 @@ export { ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, cl
 export { update } from '../src/update';
 export { advance, tick } from '../src/loop';
 export { CHASE_TURN } from '../src/mobai';
-export { activeSkill, expBar, MAX_LEVEL, passiveBonus, PAUSE_ROWS, pauseScroll, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN } from '../src/progress';
+export { activeSkill, expBar, MAX_LEVEL, passiveBonus, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN } from '../src/progress';
 export { surfaceYAt } from '../src/surface';
 export { areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, type Layout } from '../src/floor';
 export { makeShape, SHAPES } from '../src/floorshape';
@@ -153,6 +153,6 @@ function dummy(x: number, hp = 1e6): Mob {
 }
 
 export { check, release, step, tap, landLeap, ground, arena, dummy };
-export { skillScreen, skillStatus, tabLabel, tabSkills } from '../src/skillscreen';
+export { skillScreen, skillStatus, tabLabel, tabSkills, visibleTabs } from '../src/skillscreen';
 export { JOBS, advanceJob, canAdvance, nextJob } from '../src/progress';
 export { visitSage } from '../src/sage';

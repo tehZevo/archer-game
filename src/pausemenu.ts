@@ -1,20 +1,19 @@
 import { critChance, critMult, critOverflowPoints } from './combat';
 import { ctx } from './canvas';
 import { game, player } from './state';
-import { canSpendSp, skillRows, PAUSE_ROWS, pauseScroll, STAT_INFO, STAT_KEYS } from './progress';
+import { STAT_INFO, STAT_KEYS } from './progress';
 import { pauseSpend } from './windows';
 import { armorSoak, bag, gear, weaponBonus } from './gear';
 import type { GearItem } from './gear';
 import { settingsTap, settingsUi } from './settings';
 import { achUi } from './achievements';
 import { text } from './font';
-import { ICON, skillIcon } from './icons';
 import { fmtNum } from './util';
 
 /* ---------------- pause menu ----------------
    Drawn over the frozen game by hud.ts; this module also owns the menu's
    tap/click input, since both share the row layout (ROW, TOP, COLS).
-   Esc opens it. Left column: stats (spend AP). Right column: skills (spend SP). */
+   Esc opens it. Left column: stats (spend AP). Right: a button opening the skills screen (K). */
 const ROW = 9, TOP = 57;
 const COLS = [{ x: 6, w: 80 }, { x: 92, w: 142 }];
 
@@ -69,23 +68,12 @@ export function drawPause(): void {
   gearRow(0, gear.weapon ? short(gear.weapon) : 'NO WEAPON', gear.weapon ? hi : dim);
   gearRow(1, gear.armor ? short(gear.armor) : 'NO ARMOR', gear.armor ? hi : dim);
   bag.forEach((it, i) => gearRow(2 + i, `- ${short(it)}`, dim));
-  const rows = skillRows();
-  // a long skill list scrolls (the cursor stays in view) instead of running
-  // into the description below; little arrows show there is more
-  const top = pauseScroll(m, rows.length);
-  rows.slice(top, top + PAUSE_ROWS).forEach((r, vi) => {
-    const i = top + vi, y = TOP + vi * ROW, x = COLS[1].x, can = canSpendSp() && !!r.action;
-    if (m.col === 1 && m.row === i) { ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(COLS[1].x + 0.5, y - 1.5, COLS[1].w - 1, ROW); }
-    // the skill's icon (full-size, matching the HUD's) stands in for the old yellow key-name label
-    if (r.slot) ctx.drawImage(skillIcon(r.key), x + 2, y - 6, ICON, ICON);
-    text(ctx, r.name, x + 16, y, 1, r.learned ? hi : dim, 'left');
-    const tag = r.learned ? '' : 'NEW';
-    text(ctx, can ? `${tag}+` : tag, x + COLS[1].w - 3, y, 1, can ? gold : dim, 'right');
-  });
-  const ax = COLS[1].x + COLS[1].w / 2;
-  ctx.fillStyle = dim;
-  if (top > 0) for (let k = 0; k < 3; k++) ctx.fillRect(ax - k, TOP - 6 + k, 2 * k + 1, 1);
-  if (top + PAUSE_ROWS < rows.length) for (let k = 0; k < 3; k++) ctx.fillRect(ax - k, TOP + PAUSE_ROWS * ROW + 1 - k, 2 * k + 1, 1);
+  // the skills live on their own screen (K): here, a button that opens it
+  const kb = skillsButton(), on = m.col === 1;
+  ctx.fillStyle = on ? '#16223a' : '#0d1526'; ctx.fillRect(kb.x, kb.y, kb.w, kb.h);
+  ctx.strokeStyle = on ? gold : '#4a5c7a'; ctx.lineWidth = 1; ctx.strokeRect(kb.x + 0.5, kb.y + 0.5, kb.w - 1, kb.h - 1);
+  text(ctx, 'OPEN SKILLS (K)', kb.x + kb.w / 2, kb.y + 4, 1, on ? gold : player.sp > 0 ? hi : dim, 'center');
+  if (player.sp > 0) text(ctx, `${player.sp} SP TO SPEND`, kb.x + kb.w / 2, kb.y + kb.h + 5, 1, gold, 'center');
 
   // description of the selected row
   let desc = '';
@@ -97,7 +85,7 @@ export function drawPause(): void {
     const what = !it ? 'Nothing worn' : it.kind === 'weapon' ? `${it.name} Lv.${it.lvl}: +${Math.round(weaponBonus(it) * 100)}% attack` : `${it.name} Lv.${it.lvl}: soaks ${Math.round(armorSoak(it) * 100)}% damage`;
     desc = g < 2 ? (it ? `${what}. Z: into the bag` : what) : `${what}. Z: wear  X: throw away`;
   } else if (m.col === 0) desc = `${STAT_INFO[STAT_KEYS[m.row]].name}: ${STAT_INFO[STAT_KEYS[m.row]].desc}`;
-  else if (rows[m.row]) desc = rows[m.row].action || rows[m.row].need || `${rows[m.row].name}: mastered`;
+  else desc = 'Learn and view your skills. Also K';
   desc = desc.replace(/[^A-Za-z0-9 .\/:+%-]/g, ' ').replace(/ +/g, ' ').trim();
   // long descriptions (e.g. a branch upgrade's lock-out note) wrap to two lines
   const lines = wrap(desc, 32).slice(0, 2);
@@ -118,6 +106,9 @@ function wrap(s: string, n: number): string[] {
   return out;
 }
 
+/** The Esc menu's button opening the skills screen (screen space). */
+export const skillsButton = (): { x: number; y: number; w: number; h: number } => ({ x: COLS[1].x, y: TOP - 2, w: COLS[1].w, h: 15 });
+
 /** The Esc menu's SETTINGS button (screen space). */
 export const settingsButton = (w: number): { x: number; y: number; w: number; h: number } => ({ x: w - 58, y: 4, w: 52, h: 13 });
 
@@ -137,12 +128,12 @@ export function bindMenuClicks(canvas: HTMLCanvasElement): void {
     if (x >= ab.x && x < ab.x + ab.w && y >= ab.y && y < ab.y + ab.h) { m.col = 3; m.row = 0; pauseSpend(m); return; }
     const sb = settingsButton(game.view.w);
     if (x >= sb.x && x < sb.x + sb.w && y >= sb.y && y < sb.y + sb.h) { m.col = 2; m.row = 0; pauseSpend(m); return; }
+    const kb = skillsButton();
+    if (x >= kb.x && x < kb.x + kb.w && y >= kb.y && y < kb.y + kb.h) { m.col = 1; m.row = 0; pauseSpend(m); return; }
     const col = COLS.findIndex((c) => x >= c.x && x < c.x + c.w);
-    const n = col === 0 ? STAT_KEYS.length : skillRows().length;
-    const vis = Math.floor((y - TOP + 1.5) / ROW);
-    if (col === 1 && vis >= PAUSE_ROWS) return;
-    const row = vis + (col === 1 ? pauseScroll(m, n) : 0);
-    if (col < 0 || row < 0 || row >= n) return;
+    if (col !== 0) return;
+    const n = STAT_KEYS.length, row = Math.floor((y - TOP + 1.5) / ROW);
+    if (row < 0 || row >= n) return;
     if (m.col === col && m.row === row) pauseSpend(m);
     else { m.col = col as 0 | 1; m.row = row; }
   });

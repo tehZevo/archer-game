@@ -1,7 +1,7 @@
 import { game, gotoPlace } from './state';
 import { pressed, repeated } from './input';
 import { achKey, achUi, openAchievements } from './achievements';
-import { skillRows, spendSkill, spendStat, STAT_KEYS } from './progress';
+import { spendStat, STAT_KEYS } from './progress';
 import { shop, shopInput, trainer, trainerInput } from './economy';
 import { petShop, petShopInput } from './pets';
 import { bag, unequip, wear } from './gear';
@@ -102,7 +102,7 @@ export function devInput(dt: number): void {
 
 function pauseInput(m: PauseMenu, dt: number): void {
   // the stats column runs on into what you wear and the bag of spares
-  const n = m.col === 0 ? STAT_KEYS.length + 2 + bag.length : m.col === 1 ? skillRows().length : 1;
+  const n = m.col === 0 ? STAT_KEYS.length + 2 + bag.length : 1;
   // holding Up/Down keeps moving (key repeat)
   if (repeated('up', dt)) m.row = (m.row + n - 1) % n;
   if (repeated('down', dt)) m.row = (m.row + 1) % n;
@@ -115,7 +115,7 @@ function pauseInput(m: PauseMenu, dt: number): void {
   if (pressed('x') && b >= 0 && bag[b]) { bag.splice(b, 1); m.row = Math.min(m.row, STAT_KEYS.length + 1 + bag.length); }
 }
 
-/** Spend a point on the selected stat or skill row (or open the settings). */
+/** Spend a point on the selected stat, or press the selected button (skills, settings, awards). */
 export function pauseSpend(m: PauseMenu): void {
   if (m.col === 2) openSettings();
   else if (m.col === 3) openAchievements();
@@ -127,5 +127,5 @@ export function pauseSpend(m: PauseMenu): void {
     else if (g < 2) unequip(g === 0 ? 'weapon' : 'armor');
     else wear(g - 2);
   }
-  else { const r = skillRows()[m.row]; if (r) spendSkill(r.key); }
+  else openSkillScreen(); // the skills column is a button: it opens the skills screen
 }
