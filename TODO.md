@@ -16,3 +16,4 @@
 - (design) Figure out how to have the training dummy show a running average of damage over time, until it hasn't been hit for ~4 seconds.
 - Make Twin Echoes (`es`) cut your damage to 60% while it's learned. Since it doubles your hits, the trade is a net gain of about 20% (e.g. Double Shot: 2 × 120% = 240% → 4 × 72% = 288%).
 - (design) Music: define the leitmotif(s).
+- (art) Rework the Tempest effect as a single large sweeping energy arrow — a broad pink/magenta crescent with a white-hot core — that arcs outward from the player and fades to a pale mist, backed by a rain of thin red spikes behind it, a golden ring burst at the point of impact, and white/gold star sparkles scattered along the arc.
