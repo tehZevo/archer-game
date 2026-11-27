@@ -3,7 +3,6 @@
 - (art) Create art for the Bubble skill.
 - (art) Give portals a more oval, swirling, rounded look and animation.
 - (art) Upgrade the player sprite to higher quality with more distinct features between the male and female versions; remove the long hair from the male.
-- (art) The tombstone looks antialiased — give it a grittier, pixel-art look with a crisp outline.
 - (design) Rename Glide.
 - Reorganize the test suite for concision (~4,265 LOC / 896 checks → ~3,600 LOC / ~500 checks), in three steps, cheapest first:
   - Collapse multi-check blocks to one `check()` per behaviour, keeping the values in the template string so a failure still names what broke. Checks are 1,124 of the 4,265 lines; this is ~500 LOC of the saving. Biggest wins: `11-deaths.ts` (527 LOC) and `07-menu-polish.ts` (474).

@@ -1,6 +1,7 @@
 import { drawFxFrame, drawLoop } from './drawfx';
 import { EMOTE_ART, EMOTE_PAL, emoteFor, emotes } from './emotes';
 import { ELITE, FX_DUR, P } from './config';
+import { TOMB, TOMB_PAL } from './tombart';
 import { deathPose, DEATH_T, ghostRise, getPlayerDeath, tombDrop, type Corpse } from './deaths';
 import { bakeDeathSheet, deathFrame } from './deathsheet';
 import { ctx } from './canvas';
@@ -321,24 +322,14 @@ export function drawPlayerDeath(): void {
   if (!d) return;
   const drop = tombDrop(d), rise = ghostRise(d);
 
-  // the stone: a rounded slab with a base, dropped from above the screen
-  const W = 13, H = 18;
-  const y = d.y - (1 - drop) * 90;
+  // the stone, dropped from above the screen: pixel art on whole pixels
+  const y = Math.round(d.y - (1 - drop) * 90), x0 = Math.round(d.x) - (TOMB[0].length >> 1);
   ctx.save();
   ctx.globalAlpha = Math.min(1, drop * 2);
-  ctx.fillStyle = '#8b93a6';
-  ctx.beginPath();
-  ctx.moveTo(d.x - W / 2, y);
-  ctx.lineTo(d.x - W / 2, y - H + W / 2);
-  ctx.arc(d.x, y - H + W / 2, W / 2, Math.PI, 0);
-  ctx.lineTo(d.x + W / 2, y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#6f7789'; // base slab
-  ctx.fillRect(d.x - W / 2 - 2, y - 3, W + 4, 3);
-  ctx.fillStyle = '#5b6376'; // engraved lines
-  ctx.fillRect(d.x - 3, y - H + 6, 6, 1);
-  ctx.fillRect(d.x - 3, y - H + 9, 6, 1);
+  TOMB.forEach((row, j) => [...row].forEach((ch, i) => {
+    const col = TOMB_PAL[ch];
+    if (col) { ctx.fillStyle = col; ctx.fillRect(x0 + i, y - TOMB.length + j, 1, 1); }
+  }));
   ctx.restore();
 
   // the ghost: her own sprite, rising off the stone and fading out
