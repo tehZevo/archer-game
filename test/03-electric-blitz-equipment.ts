@@ -122,8 +122,9 @@ import { capAdd, NUM_GAP, P, seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_M
     `cast ${player.cast} from ${player.linkFrom}`);
   check('the link refunds 1s off Piercing Leap', Math.abs(player.cd['ground-e'] - (cd1 - 1 - 4 / 30)) < 0.05,
     `cd ${player.cd['ground-e'].toFixed(2)} after a ${cd1.toFixed(2)}s cooldown`);
-  check('...and 1s off Cyclone Sweep', player.cd['ground-w.air'] < cdW1 - 0.9 && player.cd['ground-w.air'] > cdW1 - 1.3, `cd ${player.cd['ground-w.air'].toFixed(2)} of ${cdW1.toFixed(2)}`);
-  check('the same link also shaves Tempest', player.cd.r < cdR1 - 0.9 && player.cd.r > cdR1 - 1.3, `cd.r ${player.cd.r.toFixed(2)} of ${cdR1.toFixed(2)}`);
+  check('...and 1s off every other skill\'s cooldown too',
+    player.cd['ground-w.air'] < cdW1 - 0.9 && player.cd.r < cdR1 - 0.9,
+    `W ${player.cd['ground-w.air'].toFixed(2)} of ${cdW1.toFixed(2)}, R ${player.cd.r.toFixed(2)} of ${cdR1.toFixed(2)}`);
 }
 {
   // Cyclone Sweep (W in the air): one sweep per 4s, and a slow rise

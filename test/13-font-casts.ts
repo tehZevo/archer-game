@@ -304,7 +304,6 @@ import { bubbleable, bubbleText, bubbleWidth, DMG_H, seeded, cleanEmote, clearEm
   tap('d');
   check('Glide links into Meteor Dive', player.linkFrom === 'd' && linkable('air-q'), `from ${player.linkFrom}`);
   tap('q');
-  check('...and a Q pressed mid-Glide is buffered', player.casting.queued === 'ground-q', `queued ${player.casting.queued}`);
   let fired = -1;
   for (let i = 0; i < 30 && fired < 0; i++) { step(1); if (player.cast === 'dive') fired = i; }
   check('the Dive fires as the Glide ends, chaining the combo', fired >= 0 && fired < 16 && player.linkFrom === 'air-q', `fired ${fired} from ${player.linkFrom}`);

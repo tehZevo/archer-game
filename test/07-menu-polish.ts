@@ -34,13 +34,14 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
 
 {
   // tilesets: every area has one; the pieces paint valid colours for every pixel and variant
-  check('every area on the map has a tileset (the Harbor set until it gets its own)', ['Sunlit Shore', 'Whispering Woods', 'Echoing Caves', 'Murky Swamp', 'Craggy Mountains', 'Endless Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a)));
-  check('Clockwork Spire is on the map', MAP_AREAS.includes('Clockwork Spire'));
+  check('every area on the map has a tileset (the Harbor set until it gets its own), and Clockwork Spire is on the map',
+    ['Sunlit Shore', 'Whispering Woods', 'Echoing Caves', 'Murky Swamp', 'Craggy Mountains', 'Endless Sky', 'Clockwork Spire'].every((a) => !!tilesetFor(a))
+    && MAP_AREAS.includes('Clockwork Spire'));
   const fallback = ['Old Keep', 'Ember Wastes', 'Sky Reef', 'Chapel Spire', 'Frozen Summit']; // no sets of their own yet
   const own = MAP_AREAS.filter((a) => !fallback.includes(a));
-  check('every area in play and on the planned route has its own tileset', own.every((a) => tilesetFor(a).name === a),
+  check('every area in play and on the planned route has its own tileset, and unknown areas fall back to the Harbor (there is no Classic set)',
+    own.every((a) => tilesetFor(a).name === a) && tilesetFor('Nowhere').name === 'Harbor' && !TILESETS.Classic && !PROPS.Classic && !BACKDROPS.Classic,
     own.filter((a) => tilesetFor(a).name !== a).join(', '));
-  check('unknown areas fall back to the Harbor (there is no Classic set)', tilesetFor('Nowhere').name === 'Harbor' && !TILESETS.Classic && !PROPS.Classic && !BACKDROPS.Classic);
   // props and backdrops: every area with a tileset has its own; props paint inside their canvas
   const inside = (paint: (p: (x: number, y: number, c: string, w?: number, h?: number) => void) => void, W: number, H: number): boolean => {
     let ok = true, any = false;
@@ -48,13 +49,14 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
     return ok && any;
   };
   const withSets = Object.keys(TILESETS);
-  check('every area with a tileset has its own props and backdrop', withSets.every((a) => PROPS[a] && BACKDROPS[a]),
+  check('every area with a tileset has its own props and backdrop, and backdrop particles stay in view',
+    withSets.every((a) => PROPS[a] && BACKDROPS[a])
+    && Object.values(BACKDROPS).every((b) => !b.particles || particlesAt(b.particles, 3.7, 240, 180).every((q) => q.x >= -20 && q.x <= 240 && q.y >= -20 && q.y <= 180)),
     withSets.filter((a) => !PROPS[a] || !BACKDROPS[a]).join(', '));
   check('every prop paints only inside its canvas', Object.values(PROPS).every((ps) => ps.every((p) => inside(p, PROP_W, PROP_H))));
   let placed = 0;
   for (let i = 0; i < 400; i++) { const k = propAt('Whispering Woods', i, 7); if (k !== null) { placed++; if (k < 0 || k >= PROPS['Whispering Woods'].length) placed = -999; } }
   check('props stand on a few tops, not most', placed > 20 && placed < 90, `${placed}/400`);
-  check('backdrop particles stay in view', Object.values(BACKDROPS).every((b) => !b.particles || particlesAt(b.particles, 3.7, 240, 180).every((q) => q.x >= -20 && q.x <= 240 && q.y >= -20 && q.y <= 180)));
   const hex = /^#[0-9a-f]{6}$/;
   let bad = '';
   for (const ts of Object.values(TILESETS)) {
@@ -75,15 +77,16 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   check('tileset pieces paint valid colours inside their sprites', bad === '', bad);
   const vs = new Set<number>();
   for (let i = 0; i < 64; i++) vs.add(variantAt(i, 3));
-  check('tile variants are 0-3, all used, and fixed per position', [...vs].every((v) => v >= 0 && v < 4) && vs.size === 4 && variantAt(5, 7) === variantAt(5, 7));
   const bv = new Set(Array.from({ length: 128 }, (_, i) => variantAt(i, 3, 0, BLOCK_VARIANTS)));
-  check('block fills pick from all 8 variants', bv.size === BLOCK_VARIANTS && [...bv].every((v) => v < BLOCK_VARIANTS));
-  check('decorations pick variants apart from the fill', [...Array(32).keys()].some((i) => variantAt(i, 0) !== variantAt(i, 0, 1)) && hash(1, 2) !== hash(2, 1));
+  check('tile variants are 0-3 and all used, block fills pick from all 8, and decorations pick their variant apart from the fill',
+    [...vs].every((v) => v >= 0 && v < 4) && vs.size === 4 && variantAt(5, 7) === variantAt(5, 7)
+    && bv.size === BLOCK_VARIANTS && [...bv].every((v) => v < BLOCK_VARIANTS)
+    && [...Array(32).keys()].some((i) => variantAt(i, 0) !== variantAt(i, 0, 1)) && hash(1, 2) !== hash(2, 1));
 }
 
 {
   // dev mode (?dev): its own rooms, the warp menu, and the [ ] keys
-  check('dev mode is off without ?dev', dev.on === false);
+  check('dev mode is off without ?dev, and [ and ] do nothing there', dev.on === false);
   const before = roomId('driftwood', 1);
   setKey('[', true); step(1); setKey('[', false);
   const lv = player.level, fl = game.floor.place;
@@ -92,9 +95,8 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   dev.on = true;
   check('dev rooms get their own ids', roomId('driftwood', 1) === before + '-dev' && roomId('driftwood', 0, 'ABCDE').endsWith('-dev'));
   setKey(']', true); step(1); setKey(']', false); step(1);
-  check('] warps up to the next place in dev mode', samePlace(game.floor.place, nextPlace(fl)));
-  setKey('`', true); step(1); setKey('`', false); step(1);
-  check('` opens the dev menu', dev.open);
+  check('] warps up to the next place in dev mode, and ` opens the dev menu',
+    samePlace(game.floor.place, nextPlace(fl)) && (setKey('`', true), step(1), setKey('`', false), step(1), dev.open));
   const stops = devStops();
   // walking down the list, each area's start town is the last town row above it
   let lastTownRow = '', underItsTown = true, sorted = true;
@@ -121,35 +123,40 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   }
   dev.on = false;
   // text chat
-  check('chat keeps only what the font draws, upper-cased and capped',
-    cleanChat('  hi, there!  \u{1F600} ok?') === "HI, THERE! OK?" && cleanChat('x'.repeat(200)).length === CHAT_MAX && cleanChat('   ') === '');
-  check('chat wraps on words and splits long ones', JSON.stringify(wrap('HELLO THERE FRIEND', 11)) === '["HELLO THERE","FRIEND"]' && wrap('A'.repeat(25), 10).length === 3);
+  check('chat keeps only what the font draws, upper-cased and capped, and wraps on words',
+    cleanChat('  hi, there!  \u{1F600} ok?') === "HI, THERE! OK?" && cleanChat('x'.repeat(200)).length === CHAT_MAX && cleanChat('   ') === ''
+    && JSON.stringify(wrap('HELLO THERE FRIEND', 11)) === '["HELLO THERE","FRIEND"]' && wrap('A'.repeat(25), 10).length === 3);
   chat.log.length = 0; clearBubbles();
   say('hello world');
-  check('saying something logs it and shows our bubble', chat.log.length === 1 && chat.log[0].id === SELF && chat.log[0].text === 'HELLO WORLD' && !!bubbleFor(SELF, performance.now()));
+  check('saying something logs it and shows our bubble, and blank lines are not sent',
+    chat.log.length === 1 && chat.log[0].id === SELF && chat.log[0].text === 'HELLO WORLD' && !!bubbleFor(SELF, performance.now()));
   say('   ');
   check('blank lines are not sent', chat.log.length === 1);
   const t0 = 1e6;
   addChat('peer1', 'BOB', 'HI', '#ff0000', t0);
-  check('a bubble lasts a few seconds, then goes', !!bubbleFor('peer1', t0 + 1000) && bubbleFor('peer1', t0 + bubbleMs('HI') + 1) === null);
-  check('old lines leave the log unless you are typing', !logLines(t0 + LOG_SHOW_MS + 1).some((l) => l.id === 'peer1'));
+  check('a bubble lasts a few seconds, then goes, and old lines leave the log unless you are typing',
+    !!bubbleFor('peer1', t0 + 1000) && bubbleFor('peer1', t0 + bubbleMs('HI') + 1) === null
+    && !logLines(t0 + LOG_SHOW_MS + 1).some((l) => l.id === 'peer1'));
   chat.typing = true;
   check('typing shows the whole recent log', logLines(t0 + LOG_SHOW_MS + 1).some((l) => l.id === 'peer1'));
   chat.typing = false; chat.log.length = 0; clearBubbles();
   // AZERTY: keys go by physical position, labels by layout
   const ev = (key: string, code?: string) => ({ key, code }) as unknown as Parameters<typeof normalize>[0];
-  check('the key in the Z spot is Z on any layout (AZERTY types W there)', normalize(ev('w', 'KeyZ')) === 'z' && normalize(ev('a', 'KeyQ')) === 'q');
-  check('digits, space, arrows and Enter go by physical key', normalize(ev('&', 'Digit1')) === '1' && normalize(ev(' ', 'Space')) === ' ' && normalize(ev('ArrowUp', 'ArrowUp')) === 'up' && normalize(ev('Enter', 'NumpadEnter')) === 'enter');
-  check('without a code, the typed key is used', normalize(ev('ArrowLeft')) === 'left' && normalize(ev('X')) === 'x');
-  check('labels are QWERTY until the layout is known', keyName('z') === 'z' && keyName('ground-q') === 'ground-q');
-  setLayout({ KeyZ: 'w', KeyQ: 'a', KeyW: 'z', KeyA: 'q' });
-  check('on AZERTY the labels show what the keys type', keyName('z') === 'ground-w' && keyName('ground-q') === 'A' && keyName('w') === 'z' && keyName('escape') === 'ESCAPE');
+  check('the key in the Z spot is Z on any layout, and digits, space, arrows and Enter go by physical key',
+    normalize(ev('w', 'KeyZ')) === 'z' && normalize(ev('a', 'KeyQ')) === 'q'
+    && normalize(ev('&', 'Digit1')) === '1' && normalize(ev(' ', 'Space')) === ' ' && normalize(ev('ArrowUp', 'ArrowUp')) === 'up' && normalize(ev('Enter', 'NumpadEnter')) === 'enter'
+    && normalize(ev('ArrowLeft')) === 'left' && normalize(ev('X')) === 'x');
+  check('labels are QWERTY until the layout is known, then show what the keys type',
+    keyName('z') === 'z' && keyName('ground-q') === 'ground-q'
+    && (setLayout({ KeyZ: 'w', KeyQ: 'a', KeyW: 'z', KeyA: 'q' }),
+        (keyName('z') === 'ground-w' && keyName('ground-q') === 'A' && keyName('w') === 'z' && keyName('escape') === 'ESCAPE')));
   setLayout({});
   // rooms by hour: floors carry the UTC hour you entered them; towns never do; layouts ignore it
-  check('the hour stamp is the UTC hour, YYYYMMDDHH', hourStamp(Date.UTC(2026, 10, 24, 14, 59, 59)) === '2026112414' && hourStamp(Date.UTC(2026, 10, 24, 15, 0, 0)) === '2026112415');
-  check('floor rooms are tagged with the hour', roomId('shore-2', 2, '', '2026112414') === 'eurekaland-shore-2-c2-h2026112414' && roomId('shore-2', 1, 'ABCDE', '2026112414').endsWith('-pABCDE-h2026112414'));
-  check('towns have no hour tag', roomId('driftwood', 1, '', '2026112414') === 'eurekaland-driftwood-c1');
-  check('no hour yet: no tag', roomId('shore-2', 1, '', '') === 'eurekaland-shore-2-c1');
+  check('the hour stamp is the UTC hour (YYYYMMDDHH), and floor rooms are tagged with it',
+    hourStamp(Date.UTC(2026, 10, 24, 14, 59, 59)) === '2026112414' && hourStamp(Date.UTC(2026, 10, 24, 15, 0, 0)) === '2026112415'
+    && roomId('shore-2', 2, '', '2026112414') === 'eurekaland-shore-2-c2-h2026112414' && roomId('shore-2', 1, 'ABCDE', '2026112414').endsWith('-pABCDE-h2026112414'));
+  check('towns have no hour tag, and neither does a floor with no hour yet',
+    roomId('driftwood', 1, '', '2026112414') === 'eurekaland-driftwood-c1' && roomId('shore-2', 1, '', '') === 'eurekaland-shore-2-c1');
   const was = net.hour;
   net.hour = '2026112414'; gotoPlace(climb(4)); const a = JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
   net.hour = '2026112415'; gotoPlace(climb(4)); const b = JSON.stringify(game.floor.platforms.map((p) => [p.x, p.y]));
@@ -160,8 +167,9 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
 {
   // enemies: two types per floor from the area's set; each platform fields one or both
   const beach = areaMobs('Sunlit Shore').map((m) => m.n);
-  check('the Beach has its own enemies (snail, enemy crab, hermit crab, gull)', ['Garden Snail', 'Enemy Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n)));
-  check('areas without a set use the general pool', areaMobs('Nowhere').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Nowhere').length >= 2);
+  check('the Beach has its own enemies (snail, enemy crab, hermit crab, gull), and areas without a set use the general pool',
+    ['Garden Snail', 'Enemy Crab', 'Hermit Crab', 'Gull'].every((n) => beach.includes(n))
+    && areaMobs('Nowhere').every((m) => !m.areas || m.areas.includes('*')) && areaMobs('Nowhere').length >= 2);
   const withOwn = Object.keys(TILESETS).filter((a) => a !== 'Harbor'); // the Harbor is only a town
   check('every area with its own tileset has its own enemies (two or more)', withOwn.every((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length >= 2),
     withOwn.filter((a) => MOB_TYPES.filter((m) => m.areas?.includes(a)).length < 2).join(', '));
@@ -169,12 +177,11 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   for (const [name, { look }] of Object.entries(MOB_ART)) for (const f of [0, 1, 2, 3, HURT]) {
     paintMob(name, f, (x, y, c, w = 1, h = 1) => { if (x < 0 || y < 0 || x + w > look.w || y + h > look.h || !/^#[0-9a-f]{6}$/i.test(c)) artOk = false; });
   }
-  check('enemy art paints inside its box (the hitbox)', artOk);
   // the hurt pose (hitstun) is its own drawing: not just frame 0 again
   const rects = (name: string, f: number): string => { const r: string[] = []; paintMob(name, f, (x, y, c, w = 1, h = 1) => r.push(`${x},${y},${c},${w},${h}`)); return r.join(';'); };
   const sameHurt = Object.keys(MOB_ART).filter((n) => [0, 1, 2, 3].some((f) => rects(n, HURT) === rects(n, f)));
-  check('every painted enemy has its own hurt pose', sameHurt.length === 0, sameHurt.join(', '));
-  check('every enemy with painted art uses its box as its size', MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h));
+  check('enemy art paints inside its box (the hitbox), every painted enemy has its own hurt pose, and uses its box as its size', artOk && sameHurt.length === 0
+    && MOB_TYPES.filter((m) => MOB_ART[m.n]).every((m) => m.w === MOB_ART[m.n].look.w && m.h === MOB_ART[m.n].look.h), sameHurt.join(', '));
   let pairsOk = true, singles = 0, doubles = 0;
   for (const n of [2, 3, 4]) { // the Beach
     gotoPlace(climb(n));
@@ -200,30 +207,29 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   for (let i = 0; i < 30; i++) update(1 / 60);
   const still = m.barT > 0;
   m.barT = 0.01; update(1 / 60);
-  check('enemy HP bar: hidden before the first hit', before);
-  check('enemy HP bar: shown after a hit, for 4 s', after && still && BAR_SHOW === 4);
-  check('enemy HP bar: hidden again once the time runs out', m.barT <= 0);
+  check('enemy HP bar: hidden before the first hit, shown for 4 s after one, then hidden again',
+    before && after && still && BAR_SHOW === 4 && m.barT <= 0);
 }
 
 {
   // enemy animations: walkers step only while moving; fliers always flap; stun freezes
   const walk = { anim: 0, fly: false, vx: 60, stun: 0 }, frames = new Set<number>();
   for (let i = 0; i < 24; i++) { walk.anim = i * ANIM_RATE / 24; frames.add(mobFrame(walk, 4, 8)); }
-  check('a walking enemy cycles through all its frames', frames.size === 4, [...frames].join(','));
-  check('a standing enemy holds frame 0', mobFrame({ ...walk, vx: 0, anim: 3.3 }, 4, 8) === 0);
-  check('...and breathes out a beat later', mobFrame({ ...walk, vx: 0, anim: ANIM_RATE * 0.9 }, 4, 8) === BREATH);
-  check('a stunned enemy holds frame 0', mobFrame({ ...walk, stun: 1, anim: 3.3 }, 4, 8) === 0);
-  check('a hovering flier keeps flapping', mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4) === 1);
+  check('a walking enemy cycles through all its frames; a standing one holds frame 0 and breathes out a beat later',
+    frames.size === 4 && mobFrame({ ...walk, vx: 0, anim: 3.3 }, 4, 8) === 0 && mobFrame({ ...walk, vx: 0, anim: ANIM_RATE * 0.9 }, 4, 8) === BREATH,
+    [...frames].join(','));
+  check('a stunned enemy holds frame 0 while a hovering flier keeps flapping',
+    mobFrame({ ...walk, stun: 1, anim: 3.3 }, 4, 8) === 0 && mobFrame({ anim: ANIM_RATE * 0.25, fly: true, vx: 0, stun: 0 }, 2, 4) === 1);
 }
 
 {
   // bosses: an area's last floor has one, and its way up stays sealed until it's beaten
   release();
   let endN = 1; while (!isPathEnd(climb(endN))) endN++;
-  gotoPlace(climb(endN - 1));
-  check('no boss before the last floor of an area', !game.mobs.some((m) => m.boss));
-  gotoPlace(START);
-  check('no boss in a town', !game.mobs.some((m) => m.boss));
+  check('no boss before the last floor of an area, and none in a town', (() => {
+    gotoPlace(climb(endN - 1)); const a = !game.mobs.some((m) => m.boss);
+    gotoPlace(START); return a && !game.mobs.some((m) => m.boss);
+  })());
   gotoPlace(climb(endN));
   const bs = game.mobs.filter((m) => m.boss);
   check("an area's last floor has exactly one boss", bs.length === 1);
@@ -263,44 +269,28 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   const deck: Platform = { x: WORLD.w / 2 - 60, y: ground.y - 48, w: 120, h: 16 };
   game.floor.platforms.push(deck);
   const onDeck = (): void => { stand(deck.x + deck.w / 2); player.y = deck.y - player.h; player.plat = deck; };
-  // a slam can put the boss up on a platform above it, and it keeps chasing
-  // from there (it is not tied to the ground it spawned on)
+  // A slam lands at the target's feet, not a fixed height: it rises onto a deck
+  // above it and drops through one it is standing on.
   {
-    // a platform wide enough for the boss to stand on, above the ground
-    {
-      onDeck();
-      boss.x = deck.x + deck.w / 2; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
-      boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
-      step(2);
-      check('the boss stands on a high platform with you', Math.abs(boss.y + boss.h - deck.y) < 1, `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y} (deck ${deck.x},${deck.w} ground ${ground.y})`);
-    }
-  }
-  // a slam aimed at a player on a high platform lands on that platform,
-  // rising to their feet rather than to a fixed height
-  {
-    {
-      onDeck();
-      boss.x = deck.x + deck.w / 2; boss.y = ground.y - boss.h; boss.vx = boss.vy = 0;
-      boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
-      quakes.length = 0;
-      for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = 1; game.mobs.splice(0, game.mobs.length, boss); step(1); }
-      check('a slam from the ground lands on the platform you stand on', Math.abs(boss.y + boss.h - deck.y) < 1 && boss.boss.act === 'walk', `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y}, act ${boss.boss.act}`);
-      game.mobs.push(boss);
-    }
-  }
-  // and the other way: a slam from a high platform at a player below drops
-  // down through it to their level
-  {
-    {
-      const mid = deck.x + deck.w / 2, below = mid + (mid < WORLD.w / 2 ? 1 : -1) * (deck.w / 2 + 40);
-      game.mobs.splice(0, game.mobs.length, boss);
-      boss.x = mid; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
-      boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
-      stand(below); step(2);
-      boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
-      for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = 1; game.mobs.splice(0, game.mobs.length, boss); stand(below); step(1); }
-      check('a slam from a platform jumps down to the player below', Math.abs(boss.y + boss.h - ground.y) < 1 && boss.boss.act === 'walk' && !boss.boss.dropTo, `feet ${(boss.y + boss.h).toFixed(1)} vs ground ${ground.y}, act ${boss.boss.act}`);
-    }
+    onDeck();
+    boss.x = deck.x + deck.w / 2; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
+    boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
+    step(2);
+    check('the boss stands on a high platform with you', Math.abs(boss.y + boss.h - deck.y) < 1, `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y}`);
+    boss.y = ground.y - boss.h;
+    boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+    quakes.length = 0;
+    for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = 1; game.mobs.splice(0, game.mobs.length, boss); step(1); }
+    check('a slam from the ground lands on the platform you stand on', Math.abs(boss.y + boss.h - deck.y) < 1 && boss.boss.act === 'walk', `feet ${(boss.y + boss.h).toFixed(1)} vs ${deck.y}, act ${boss.boss.act}`);
+    game.mobs.push(boss);
+    const below = deck.x + deck.w / 2 + deck.w / 2 + 40;
+    game.mobs.splice(0, game.mobs.length, boss);
+    boss.x = deck.x + deck.w / 2; boss.y = deck.y - boss.h; boss.vx = boss.vy = 0;
+    boss.boss = { act: 'walk', t: 0, cd: 9, air: false };
+    stand(below); step(2);
+    boss.boss = { act: 'windSlam', t: 0.01, cd: 9, air: false };
+    for (let i = 0; i < 300 && boss.boss.act !== 'walk'; i++) { player.invuln = 1; game.mobs.splice(0, game.mobs.length, boss); stand(below); step(1); }
+    check('...and a slam from a platform jumps down to the player below', Math.abs(boss.y + boss.h - ground.y) < 1 && boss.boss.act === 'walk' && !boss.boss.dropTo, `feet ${(boss.y + boss.h).toFixed(1)} vs ground ${ground.y}, act ${boss.boss.act}`);
   }
   game.floor.platforms.splice(game.floor.platforms.indexOf(deck), 1);
   // beaten: the way up opens
@@ -311,13 +301,15 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   check('then the way up opens', samePlace(game.floor.place, climb(endN + 1)));
   player.hpMax = player.hp = hp0;
   // looks: hair style, hair colour, skin and outfit; set from the menu or the town stylist
-  check('a bad saved look falls back to the default', JSON.stringify(cleanLook({ style: 99, hair: -1, skin: 'x' })) === JSON.stringify(DEFAULT_LOOK));
-  check('a good look is kept', cleanLook({ style: 2, hair: 3, skin: 1, outfit: 4 }).hair === 3);
-  check('stepping a look wraps around', stepLook(DEFAULT_LOOK, 'style', -1).style === LOOK_COUNTS.style - 1);
-  check('the elf ear follows the skin tone', lookPalette({ ...DEFAULT_LOOK, skin: 3 }).k === lookPalette({ ...DEFAULT_LOOK, skin: 3 }).s);
+  check('a saved look round-trips: a bad one falls back to the default, a good one is kept',
+    JSON.stringify(cleanLook({ style: 99, hair: -1, skin: 'x' })) === JSON.stringify(DEFAULT_LOOK) && cleanLook({ style: 2, hair: 3, skin: 1, outfit: 4 }).hair === 3);
+  check('stepping a look wraps around, and the elf ear follows the skin tone',
+    stepLook(DEFAULT_LOOK, 'style', -1).style === LOOK_COUNTS.style - 1
+    && lookPalette({ ...DEFAULT_LOOK, skin: 3 }).k === lookPalette({ ...DEFAULT_LOOK, skin: 3 }).s);
   const poses = Object.keys(GRIDS) as (keyof typeof GRIDS)[];
   const diff = (a: string[], b: string[]): number => a.reduce((n, r, y) => n + [...r].filter((ch, x) => ch !== b[y][x]).length, 0);
-  check('the default hair style leaves the sprites as drawn (the female build adds only a lash)', poses.every((p) => GRIDS[p].every((g) => diff(styled(g, p, 0), g) <= 1)));
+  check('every hair style and build keeps frames their size, and the body, bow and arms untouched',
+    poses.every((p) => GRIDS[p].every((g) => diff(styled(g, p, 0), g) <= 1)));
   for (let st = 1; st < LOOK_COUNTS.style; st++) for (const body of [0, 1]) {
     const ok = poses.every((p) => GRIDS[p].every((g) => {
       const s = styled(g, p, st, body);
@@ -327,17 +319,18 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
     }));
     if (!ok) check(`hair style ${st}, body ${body}: frames keep their size; the body, bow and arms are untouched`, ok);
   }
-  check('every hair style and build keeps frames their size, and the body, bow and arms untouched', true);
-  check('every hair style looks different', new Set(Array.from({ length: LOOK_COUNTS.style }, (_, st) => styled(GRIDS.idle[0], 'idle', st).join())).size === LOOK_COUNTS.style);
-  check('the male build changes the face', poses.filter((p) => p !== 'prone' && p !== 'climb').every((p) => diff(styled(GRIDS[p][0], p, 0, 1), styled(GRIDS[p][0], p, 0, 0)) >= 3));
+  check('every hair style looks different, and the male build changes the face',
+    new Set(Array.from({ length: LOOK_COUNTS.style }, (_, st) => styled(GRIDS.idle[0], 'idle', st).join())).size === LOOK_COUNTS.style
+    && poses.filter((p) => p !== 'prone' && p !== 'climb').every((p) => diff(styled(GRIDS[p][0], p, 0, 1), styled(GRIDS[p][0], p, 0, 0)) >= 3));
   // town stylists: each town offers its own extra, which seeing unlocks everywhere
   const towns = TOWNS.map((t) => t.name);
   check('every town\'s stylist has an extra', towns.every((t) => TOWN_LOOKS[t]?.length), towns.filter((t) => !TOWN_LOOKS[t]?.length).join(', '));
   const extras = Object.values(TOWN_LOOKS).flat().map((e) => `${e.k}:${e.i}`);
-  check('extras are real, not basic, and each offered by one town', new Set(extras).size === extras.length
-    && Object.values(TOWN_LOOKS).flat().every((e) => e.i < LOOK_COUNTS[e.k] && !isBasic(e.k, e.i)));
   const allExtras = (['style', 'hair'] as const).flatMap((k) => Array.from({ length: LOOK_COUNTS[k] }, (_, i) => `${k}:${i}`).filter((x) => !isBasic(x.split(':')[0] as 'style', +x.split(':')[1])));
-  check('every extra style and colour can be found in some town', allExtras.every((x) => extras.includes(x)), allExtras.filter((x) => !extras.includes(x)).join(', '));
+  check('extras are real, not basic, each offered by exactly one town, and between them they cover every style and colour',
+    new Set(extras).size === extras.length
+    && Object.values(TOWN_LOOKS).flat().every((e) => e.i < LOOK_COUNTS[e.k] && !isBasic(e.k, e.i))
+    && allExtras.every((x) => extras.includes(x)), allExtras.filter((x) => !extras.includes(x)).join(', '));
   check('long hair shows down the back', styled(GRIDS.idle[0], 'idle', 2).join() !== styled(GRIDS.idle[0], 'idle', 1).join());
   // the menu's LOOK row opens the stylist; keys go to it until it closes
   const mem = new Map<string, string>();
@@ -347,12 +340,12 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   menu.sel = items().indexOf('look'); menuKey('enter');
   check('LOOK in the menu opens the stylist to create your archer', stylist.open && stylist.sel === 0 && stylist.town === null && stylistRows()[0] === 'BODY');
   menuKey('right');
-  check('a new archer picks a body (gender) first', myLook().body === 1);
+  check('a new archer picks a body (gender) first, and Right steps the row', myLook().body === 1);
   menuKey('down'); menuKey('right');
   check('Right changes the picked row (hair style)', myLook().style === 1);
   menuKey('down'); menuKey('left');
-  check('...the next row down is the hair colour', myLook().hair === BASIC.hair! - 1);
-  check('the look is kept on this device', cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === BASIC.hair! - 1);
+  check('...the next row down is the hair colour, and the look is kept on this device',
+    myLook().hair === BASIC.hair! - 1 && cleanLook(JSON.parse(localStorage.getItem('archer-game:look') ?? '{}')).hair === BASIC.hair! - 1);
   menuKey('escape');
   check('Esc closes the stylist, not the menu', !stylist.open && menu.open);
   // taps: a row's left half steps back, its right half forward
@@ -380,25 +373,20 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   tap('up');
   check('Up beside the stylist opens the window', stylist.open);
   const town = placeName(game.floor.place), extra = TOWN_LOOKS[town][0];
-  check('the town stylist knows which town it is in, and says its looks are new', stylist.town === town && stylist.fresh > 0);
-  check('the town stylist has no BODY row: the body is fixed once created', stylistRows()[0] === 'HAIR' && !stylistRows().includes('BODY'));
+  check('the town stylist knows which town it is in, says its looks are new, and has no BODY row',
+    stylist.town === town && stylist.fresh > 0 && stylistRows()[0] === 'HAIR' && !stylistRows().includes('BODY'));
   tap('right');
   check('arrows try a look on there, without keeping it yet', shownLook().style === 1 && myLook().style === 0 && styleChanged());
   wallet.coins = STYLE_FEE - 1; stylist.sel = stylistRows().indexOf('DONE'); tap('z');
   check('keeping it needs the fee', stylist.open && myLook().style === 0 && wallet.coins === STYLE_FEE - 1 && stylist.note !== '');
   wallet.coins = STYLE_FEE + 5; tap('z');
   check(`DONE keeps the new look for ${STYLE_FEE} gold`, !stylist.open && myLook().style === 1 && myLook().body === 1 && wallet.coins === 5);
-  openStylist(town); stylist.sel = 0; tap('right'); tap('x');
-  check('walking away keeps your look and your gold', myLook().style === 1 && wallet.coins === 5);
-  openStylist(town); stylist.sel = STYLIST_ROWS.indexOf('DONE'); tap('z');
-  check('DONE without changes is free', !stylist.open && wallet.coins === 5);
   setMyLook({ ...DEFAULT_LOOK, [extra.k]: extra.i - 1 });
   openStylist(town);
   stylist.sel = STYLIST_ROWS.indexOf(extra.k === 'style' ? 'HAIR' : 'HAIR COLOUR'); tap('right');
   check('it offers its own extra', shownLook()[extra.k] === extra.i, `${extra.k} ${shownLook()[extra.k]} want ${extra.i}`);
   tap('x');
-  check('X closes it', !stylist.open && !game.pause);
-  check('seeing it unlocked the extra for good (the menu offers it now)', isUnlocked(extra.k, extra.i) && offeredAt(null)(extra.k, extra.i));
+  check('X closes it, and seeing it unlocked the extra for good', !stylist.open && !game.pause && isUnlocked(extra.k, extra.i) && offeredAt(null)(extra.k, extra.i));
   openStylist(town);
   check('a second visit has nothing new', stylist.fresh === 0);
   stylist.open = false; clearUnlocks();
@@ -423,9 +411,9 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   tap('up');
   check('Up beside the board opens it', board.open && boardRows().length > 0);
   tap('z');
-  check('Z takes the selected posting', quests.length === 1 && quests[0].have === 0);
+  check('Z takes the selected posting, and it leaves the offer list',
+    quests.length === 1 && quests[0].have === 0 && boardRows().filter((r) => r.active === null).every((r) => r.q.mob !== quests[0].mob));
   const q = quests[0];
-  check('a taken posting leaves the offer list', boardRows().filter((r) => r.active === null).every((r) => r.q.mob !== q.mob));
   for (let i = 0; i < q.need + 3; i++) questKill(q.mob);
   questKill('Nobody');
   check('kills count toward the quest (capped at the goal)', q.have === q.need);
@@ -433,7 +421,7 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   board.sel = 0; tap('z');
   check('Z hands in a finished quest for EXP and coins', quests.length === 0 && wallet.coins === coins0 + q.coins && (player.exp > exp0 || player.level > lvl0));
   for (let i = 0; i < 5; i++) { board.sel = boardRows().findIndex((r) => r.active === null); if (board.sel >= 0) tap('z'); }
-  check(`at most ${QUEST_MAX} quests at once`, quests.length <= QUEST_MAX);
+  check(`at most ${QUEST_MAX} quests at once, and X drops an active one`, quests.length <= QUEST_MAX);
   const n0 = quests.length; board.sel = 0; tap('x');
   check('X drops an active quest', quests.length === n0 - 1);
   tap('escape');

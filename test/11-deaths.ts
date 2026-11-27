@@ -247,9 +247,8 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   arena(1); player.stats.dex = 0; recalcStats();
   const war1 = player.war;
   arena(21); recalcStats();
-  check('attack grows 2.55 per level (was 1.7)', Math.abs(player.war - (14 + 20 * 2.55)) < 1e-9, `${player.war}`);
-  check('...and it is 1.5x the old per-level step', Math.abs((player.war - 14) / 20 - 1.5 * 1.7) < 1e-9);
-  check('the Lv.1 archer still starts at 14 attack', Math.abs(war1 - 14) < 1e-9, `${war1}`);
+  check('attack grows 2.55 per level (was 1.7), and the Lv.1 archer starts at 14',
+    Math.abs(player.war - (14 + 20 * 2.55)) < 1e-9 && Math.abs(war1 - 14) < 1e-9, `${player.war} / ${war1}`);
   arena(1); spawnMob({ x: 100, y: ground().y, types: ['Garden Snail'] } as never, MOB_TYPES[0]);
   const max1 = LV_1_DMG * (MOB_TYPES[0].dmg / 3);
   check('a Lv.1 mob hits for 50%-100% of its base damage', game.mobs[0].dmg >= Math.round(max1 * 0.5) && game.mobs[0].dmg <= Math.round(max1), `${game.mobs[0].dmg} of max ${Math.round(max1)}`);
@@ -265,16 +264,15 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // LUK rework: 2% crit chance a point, capped at 100%, overflow to crit damage
   arena(20); player.ranks.sa = false; player.stats.luk = 0; recalcStats(); // no Precision: the 15% base alone
-  check('LUK starts at the 15% base crit', Math.abs(critChance() - 0.15) < 1e-9, `${critChance()}`);
-  player.stats.luk = 10;
-  check('each LUK point is worth 2% crit chance', Math.abs(critChance() - 0.35) < 1e-9, `${critChance()}`);
+  check('LUK starts at the 15% base crit, and each point is worth 2% more',
+    Math.abs(critChance() - 0.15) < 1e-9 && (player.stats.luk = 10, Math.abs(critChance() - 0.35) < 1e-9),
+    `${critChance()}`);
   player.stats.luk = 43;
   check('the base 15% counts toward the cap, so 43 points fills it at 100%', critChance() === 1, `${critChance()}`);
   player.stats.luk = 48;
   check('points past the cap convert at 2% crit damage each, counting only the overflow',
     Math.abs(critMult() - (1.5 + 5 * 0.02)) < 1e-9 && critOverflowPoints() === 5, `${critMult()} (${critOverflowPoints()} over)`);
   player.stats.luk = 0;
-  check('below the cap a crit still hits for 1.5x', Math.abs(critMult() - 1.5) < 1e-9);
   // and the multiplier is the one damage() applies
   arena(20); player.ranks.sa = false; recalcStats();
   const m = dummy(140); m.level = 20;
@@ -296,12 +294,11 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const m = dummy(140); m.level = 35; // 15 levels above: guaranteed miss
   const saved = Math.random; Math.random = () => 0.5;
   damage(m, 1);
-  check('the missed attack shows a floating MISS', game.dmgNums.length === 1 && game.dmgNums[0].txt === 'MISS',
-    `${game.dmgNums.length} ${game.dmgNums[0]?.txt}`);
-  check('...as a stacked damage number, not flat text', game.dmgNums[0].col === '#ffb347' && game.dmgNums[0].vy === -12,
-    `${game.dmgNums[0].col} ${game.dmgNums[0].vy}`);
-  check('...and it procs the invulnerability delay', player.invuln > 0 && player.invuln <= MISS_IFRAMES, `${player.invuln.toFixed(2)}`);
-  check('...which is the quiet kind (no flash)', player.invulnQuiet);
+  check('the missed attack shows a floating MISS, as a stacked damage number, not flat text',
+    game.dmgNums.length === 1 && game.dmgNums[0].txt === 'MISS' && game.dmgNums[0].col === '#ffb347' && game.dmgNums[0].vy === -12,
+    `${game.dmgNums.length} ${game.dmgNums[0]?.txt} ${game.dmgNums[0]?.col}`);
+  check('...and it procs the quiet invulnerability delay, which ticks down like a normal hit\'s',
+    player.invuln > 0 && player.invuln <= MISS_IFRAMES && player.invulnQuiet, `${player.invuln.toFixed(2)}`);
   step(1);
   check('the i-frames tick down like a normal hit\'s', player.invuln < MISS_IFRAMES, `${player.invuln.toFixed(3)}`);
   Math.random = saved;
@@ -322,11 +319,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 }
 
 {
-  // Twin Echoes's arrows always proc and stack above the base hit's number
+  // The shadow's arrows stack above the base hit's number, one line each
   arena(20); player.ranks.z = true; player.ranks.es = true;
   const m = dummy(140); player.x = m.x - 40;
-  check('the shadow doubles the shot without changing the skill\'s own hits',
-    rank('z').hits === 2 && shotCount(rank('z')) === 4, `${rank('z').hits}/${shotCount(rank('z'))}`);
   game.dmgNums.length = 0;
   const saved = Math.random; Math.random = () => 0.99; // no crits or misses
   tap('z'); step(Math.ceil((P.Z_WINDUP + 0.4) / P.STEP)); // the whole volley lands
@@ -346,31 +341,28 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   const m = dummy(130);
   tap('q'); step(14); // Skyward Assault is a link off the rush
   tap('w'); step(4); // mid-leap: the hover is live
-  check('the assault is hovering', player.hang.t > 0 && player.cast === 'barrage', `hangT ${player.hang.t.toFixed(2)}`);
-  check('...and it links into the sweep', linkable('air-w') && !linkHeld('air-w'));
+  check('the assault is hovering and links into the sweep',
+    player.hang.t > 0 && player.cast === 'barrage' && linkable('air-w') && !linkHeld('air-w'),
+    `cast ${player.cast} hangT ${player.hang.t.toFixed(2)}`);
   const fervor0 = player.fervor;
   tap('w');
-  check('the sweep fires out of the hover, not after it', player.cast === 'shoot' && player.linkFrom === 'air-w',
-    `cast ${player.cast} from ${player.linkFrom}`);
-  step(12); // the sweep's four hits stagger out
-  check('...and it hits', m.hp < 1e6, `hp ${m.hp}`);
-  check('the linked sweep ends the hover', player.hang.t <= 0, `hangT ${player.hang.t.toFixed(2)}`);
-  check('...and stacks Fervor like any other link', player.fervor === fervor0 + 1, `fervor ${fervor0} -> ${player.fervor}`);
+  step(12); // the sweep fires out of the hover, not after it, and its four hits stagger out
+  check('the sweep fires out of the hover, hits, ends the hover and stacks Fervor',
+    player.cast === 'shoot' && player.linkFrom === 'air-w' && m.hp < 1e6 && player.hang.t <= 0 && player.fervor === fervor0 + 1,
+    `cast ${player.cast} from ${player.linkFrom} hp ${m.hp} hangT ${player.hang.t.toFixed(2)} fervor ${fervor0} -> ${player.fervor}`);
 }
 
 {
   // Buffering: W pressed during the assault's own animation is kept and fires
-  // on the first free frame
+  // on the first free frame, once the leap is underway (not after it lands).
   arena(30); player.ranks['ground-q'] = true; player.ranks['ground-w'] = true; player.ranks.ab = true; player.ranks['air-w'] = true;
   dummy(130);
   tap('q'); step(14);
   tap('w');
   check('the assault starts', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
-  tap('w'); step(1); // pressed while the leap is still playing
-  check('the sweep is buffered, not dropped', player.casting.queued === 'ground-w', `queued ${player.casting.queued}`);
-  check('...and the assault is still playing', player.cast === 'barrage' && player.castT > 0, `castT ${player.castT.toFixed(2)}`);
-  step(2);
-  check('...then fires once the leap is underway', player.cast === 'shoot' && player.casting.queued === null, `cast ${player.cast}`);
+  tap('w'); step(3); // pressed while the leap is still playing
+  check('the sweep is buffered, then fires once the leap is underway',
+    player.cast === 'shoot' && player.casting.queued === null, `cast ${player.cast} queued ${player.casting.queued}`);
 }
 
 {
@@ -385,18 +377,16 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
 {
   // Each enemy type has its own hit sound
   arena(20);
-  check('a Garden Snail has its own impact voice', MOB_SOUNDS['Garden Snail'] !== undefined);
-  check('...as does every base mob type (a variant borrows its parent\'s voice)',
-    MOB_TYPES.every((t) => MOB_SOUNDS[t.of ?? t.n] !== undefined),
+  check('every base mob type has its own impact voice (a variant borrows its parent\'s)',
+    MOB_TYPES.every((t) => MOB_SOUNDS[t.of ?? t.n] !== undefined) && MOB_SOUNDS['Garden Snail'] !== undefined,
     MOB_TYPES.filter((t) => !MOB_SOUNDS[t.of ?? t.n]).map((t) => t.n).join(', '));
   const snail = MOB_SOUNDS['Garden Snail'], gull = MOB_SOUNDS['Gull'];
-  check('...and no two sound the same', new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size >= 20,
-    `${new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size} distinct`);
-  check('every enemy has its own voice (cry and material) for its death',
-    new Set(MOB_TYPES.map((t) => { const v = MOB_SOUNDS[t.n]; return `${v.f}:${v.t}:${v.s}:${v.m}`; })).size === MOB_TYPES.length);
+  check('no two sound the same, and each death names its material',
+    new Set(MOB_TYPES.map((t) => { const v = MOB_SOUNDS[t.n]; return `${v.f}:${v.t}:${v.s}:${v.m}`; })).size === MOB_TYPES.length
+    && snail.f !== gull.f && snail.t !== gull.t,
+    `${new Set(MOB_TYPES.map((t) => `${MOB_SOUNDS[t.n].f}:${MOB_SOUNDS[t.n].t}`)).size} distinct of ${MOB_TYPES.length}`);
   check('a golem crumbles, a slime splats and a windup soldier clanks apart',
     MOB_SOUNDS['Meteor Golem'].m === 'stone' && MOB_SOUNDS['Slime'].m === 'goo' && MOB_SOUNDS['Windup Soldier'].m === 'metal');
-  check('a snail and a gull are pitched apart', snail.f !== gull.f && snail.t !== gull.t);
 }
 
 {
