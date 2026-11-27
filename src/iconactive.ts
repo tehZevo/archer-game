@@ -159,7 +159,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     'R.Rg.gR.R.',
     'RRRRRRRRR.',
   ],
-  // Tempest: a purple storm ring with a pink swirl inside
+  // Trefoil Tempest: a purple storm ring with a pink swirl inside
   r: [
     '...PPPP...',
     '.PP....PP.',

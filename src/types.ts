@@ -235,7 +235,7 @@ export interface Casting {
   /** s of recovery after the animation: blocks new skills, not movement. Links skip it. */
   recoverT: number;
   /** True for a cast that pins you in place: gravity stops and vx/vy are
-   *  zeroed for its whole duration (Tempest), not just the ground lock. */
+   *  zeroed for its whole duration (Trefoil Tempest), not just the ground lock. */
   freeze: boolean;
   /** A skill pressed too early, fired on the first free frame. */
   queued: SkillKey | null;
@@ -295,7 +295,7 @@ export interface Player extends Body {
   /** Feet y the Piercing Leap rises to and holds at. */
   liftTop: number;
   /** How the current cast draws you, over its usual pose: whirling
-   *  round (Cyclone Sweep) or gone (Tempest). Cleared by the next cast. */
+   *  round (Cyclone Sweep) or gone (Trefoil Tempest). Cleared by the next cast. */
   skillPose?: 'spin' | 'vanish' | null;
   /** Skyward Assault's hover: time left, strikes left and their pacing / damage / reach. */
   hang: Hover;

@@ -284,7 +284,7 @@ const invulnAlpha = (): number => (player.invuln > 0 && !player.invulnQuiet ? 0.
 export function drawPlayer(): void {
   if (getPlayerDeath()) return; // down: the tombstone and ghost stand in for her (drawPlayerDeath)
   if (player.hang.t > 0) return; // Skyward Assault: she's gone into the strikes for the whole hover
-  if (player.skillPose === 'vanish' && player.castT > 0) return; // Tempest: she's gone for the whole cast
+  if (player.skillPose === 'vanish' && player.castT > 0) return; // Trefoil Tempest: she's gone for the whole cast
   if (player.diving && !player.rolling) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha(), DIVE_TINT);
   // Twin Echoes: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and
