@@ -198,8 +198,9 @@ function emberFlares(tg: Mob[], feet: number): void {
   });
 }
 
-/** Tempest: you vanish as a huge energy arrow sweeps up and arcs out ahead,
- *  striking every enemy in a wide radius (nearest first). */
+/** Tempest: you vanish (hidden for the whole cast, see drawPlayer) as a huge
+ *  energy arrow sweeps up and arcs out ahead, striking every enemy in a wide
+ *  radius (nearest first). */
 function tempest(r: SkillRank): void {
   pose('shoot', 'r');
   player.skillPose = 'vanish';
