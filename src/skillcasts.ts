@@ -2,6 +2,8 @@ import { FX_DUR, P } from './config';
 import { game, later, player } from './state';
 import { held } from './input';
 import { damage, hitbox, NUM_GAP, spawnArrow } from './combat';
+import { surfaceBetween } from './physics';
+import { surfaceYAt } from './surface';
 import { sfx } from './audio';
 import { netShot } from './net';
 import { shotCount } from './progress';
@@ -139,16 +141,17 @@ function spikeLift(r: SkillRank): void {
         if (game.mobs.includes(m)) damage(m, r.dmg, { more, first: h === 0, fx: 'spikeHit' });
       });
     }));
-  // The launch is a fixed lift off the floor, not a stack on top of a jump:
-  // cast on the way up, you keep whatever the jump has already given you.
-  const floor = game.floor.platforms[0].y - player.h;
-  const gained = Math.max(0, floor - (player.y + player.h));
-  player.vx = 0; // you plant in place and rise straight up, no run momentum carried
-  // Rise to SPIKE_LIFT_H off the floor (never below where you are), then hold
-  // there for the rest of the cast, so the hover lasts as long as the
-  // commitment does. move.skillForces drives it; any other skill ends it.
+  // The launch is a fixed lift off the surface beneath you (the platform you
+  // stand on or jumped from, not the ground slab), not a stack on top of a
+  // jump: cast on the way up, you keep whatever the jump has already given you.
   const feet = player.y + player.h;
-  player.liftTop = Math.min(feet, feet + gained - P.SPIKE_LIFT_H);
+  const under = surfaceBetween(player.x, player.w, feet - 1, Infinity);
+  const base = under ? surfaceYAt(under, player.x) : feet;
+  player.vx = 0; // you plant in place and rise straight up, no run momentum carried
+  // Rise to SPIKE_LIFT_H off that surface (never below where you are), then
+  // hold there for the rest of the cast, so the hover lasts as long as the
+  // commitment does. move.skillForces drives it; any other skill ends it.
+  player.liftTop = Math.min(feet, base - P.SPIKE_LIFT_H);
   player.liftT = useTime('ground-e');
   player.vy = 0;
   player.onGround = false;
