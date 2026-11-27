@@ -4,7 +4,7 @@
    palette swap of its parent): a Red Snail with a spiralled shell on a
    soft foot, a Blue Crab with one huge crusher claw, a Wild Boar with
    tusks and a bristling mane, a Storm Gull with a crest and a lightning
-   streak. Character grids like sprites.ts's crab and gull: a palette key
+   streak, and a tiny Green Snail under a tall cone of a shell. Character grids like sprites.ts's crab and gull: a palette key
    per pixel, '.' clear. Facing right, feet on the bottom row; frames 0-3
    are the walk/flap cycle, then a hurt pose (eyes squeezed shut).
    ============================================================ */
@@ -65,6 +65,39 @@ const RED_SNAIL: VariantArt = {
   rows: snailRows,
   // the stalks snap down into the head and the eyes screw shut
   hurt: () => mark(snailRows(0), [[12, 0, '.'], [15, 0, '.'], [12, 1, '.'], [15, 1, '.'], [12, 2, '.'], [14, 2, '.'], [13, 4, 'k'], [14, 4, 'k'], [15, 6, 'k'], [15, 7, 'k']]),
+};
+
+/* ---------------- Green Snail ----------------
+   The smallest enemy: a tall cone of a shell, whorls running up it to the
+   tip, over a little pale foot. Its one eye stalk bobs as it glides. */
+const CONE = [
+  '....o......',
+  '...ogo.....',
+  '...ogGo....',
+  '..ogDDo....',
+  '..oGGGDo...',
+  '.ogDDGGo...',
+  '.oGGGDDGo..',
+  'ogDDGGGDo..',
+];
+const coneRows = (f: number): string[] => {
+  const bob = f === 1 || f === 2 ? 1 : 0, ripple = f % 2;
+  return mark([
+    ...CONE,
+    'oBBBBBBBwBo',
+    '.o' + Array.from({ length: 7 }, (_, x) => (x % 2 === ripple ? 'b' : 'B')).join('') + 'o.',
+  ], [
+    // the head and its stalk, nodding a pixel
+    [10, 3 + bob, 'k'], [10, 4, 'b'], [10, 5, 'b'], [9, 5, 'o'],
+    [9, 6, 'B'], [10, 6, 'B'], [9, 7, 'B'], [10, 7, 'm'], [10, 8, 'o'],
+  ]);
+};
+const GREEN_SNAIL: VariantArt = {
+  w: 11, h: 10, fps: 6,
+  pal: { o: '#12301a', G: '#4aa84a', g: '#9ae07a', D: '#2a6a2a', B: '#d8e8a0', b: '#a8b870', w: '#f4fae0', k: '#0d1424', m: '#6a7a3a' },
+  rows: coneRows,
+  // the stalk ducks down and the eye screws shut
+  hurt: () => mark(coneRows(0), [[10, 3, '.'], [10, 4, '.'], [10, 5, 'o'], [10, 6, 'k'], [9, 6, 'k'], [10, 7, 'k']]),
 };
 
 /* ---------------- Blue Crab ----------------
@@ -201,6 +234,7 @@ const STORM_GULL: VariantArt = {
 /** Every drawn variant, by name (its parent is MOB_TYPES' `of`). */
 export const VARIANT_ART: Record<string, VariantArt> = {
   'Red Snail': RED_SNAIL,
+  'Green Snail': GREEN_SNAIL,
   'Blue Crab': BLUE_CRAB,
   'Wild Boar': WILD_BOAR,
   'Storm Gull': STORM_GULL,

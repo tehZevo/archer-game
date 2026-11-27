@@ -270,6 +270,7 @@ export const MOB_TYPES: MobType[] = [
   // look and stats. They live wherever their base (`of`) does unless they list their
   // own areas, and turn up in its place VARIANT_CHANCE of the time (see pickVariant).
   { n: 'Red Snail',       of: 'Garden Snail',   lvl: 2,  hp: 210, w: 17, h: 14,                   spd: 44,  dmg: 3, col: '#f07a5a' },
+  { n: 'Green Snail',     of: 'Garden Snail',   lvl: 1,  hp: 110, w: 11, h: 10,                   spd: 58,  dmg: 2, col: '#4aa84a' },
   { n: 'Blue Crab',       of: 'Enemy Crab',           lvl: 3,  hp: 160, w: 20, h: 13,                   spd: 92,  dmg: 3, col: '#4a8ae8' },
   { n: 'Wild Boar',     of: 'Boar',           lvl: 9,  hp: 340, w: 23, h: 18,                   spd: 70,  dmg: 5, col: '#8a5a3a', areas: ['Whispering Woods'] },
   { n: 'Storm Gull',      of: 'Gull',           lvl: 5,  hp: 170, w: 18, h: 12,                   spd: 105, dmg: 3, col: '#8a94a8', fly: true, areas: ['Endless Sky'] },

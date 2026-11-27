@@ -71,6 +71,7 @@ export const MOB_SOUNDS: Record<string, MobVoice> = {
   'Comet Golem': { f: 105, d: 0.12, t: 'sawtooth', s: 62, m: 'stone' },
   'Thorn Blossom': { f: 390, d: 0.07, t: 'triangle', s: 270, m: 'plant' },
   'Red Snail': { f: 310, d: 0.07, t: 'triangle', s: 200, m: 'shell' },
+  'Green Snail': { f: 420, d: 0.05, t: 'triangle', s: 260, m: 'shell' },
   'Blue Crab': { f: 190, d: 0.06, t: 'square', s: 95, m: 'shell' },
   'Wild Boar': { f: 135, d: 0.1, t: 'sawtooth', s: 62, m: 'soft' },
   'Storm Gull': { f: 640, d: 0.05, t: 'sawtooth', s: 500, m: 'wing' },

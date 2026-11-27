@@ -1,6 +1,4 @@
 # TODOs
-- (art) Increase the detail of the blue snail (Garden Snail) while keeping its silhouette rectangular/square-ish.
-- (art) Add or update the green snail's art, making him the smallest mob and triangle-shaped.
 - Remove the `Classic` tileset/props/backdrop and use `Harbor` as the fallback for areas without their own set (update `backdropFor`, `propsFor`, `floorlayer.ts`, `backdropdraw.ts`, and the tileset map).
 - Move some maps up from tiers 4 and 5 to thin them out, creating new tiers 6 and 7. The purpose is to add more levels to the game: the new tiers extend the level curve past where tier 5 ends now (each tier higher-level than the last), so mobs and level ranges keep climbing rather than tiers 4-5 being split across their current range.
 - Bug: the tombstone effect doesn't show on player death — you instantly respawn at the current floor (the tombstone/ghost animation is skipped).
