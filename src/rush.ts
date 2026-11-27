@@ -1,5 +1,5 @@
 import { FX_DUR, P } from './config';
-import type { FxKind, RushLook } from './types';
+import type { FxKind, RushLook, SkillKey } from './types';
 import { game, mobBounds, player } from './state';
 import { damage, hitbox } from './combat';
 import { surfaceBetween, surfaceYAt } from './physics';
@@ -100,36 +100,37 @@ export function endRush(): void {
  */
 export function groundRush(inPlace: boolean, blitz: boolean): void {
   pose('rush', blitz ? 'eb' : 'ground-q');
-  if (inPlace) armStrike(true)();
+  if (inPlace) armStrike(true, blitz ? 'eb' : 'ground-q')();
   else {
-    slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST, 'rush', blitz ? 'blitzRush' : 'tossRush');
+    slide(blitz ? P.BLITZ_SLIDE_V : P.RUSH_SLIDE_V, P.RUSH_MAX, blitz ? P.BLITZ_DIST : P.RUSH_DIST, blitz ? 'eb' : 'ground-q', 'rush', blitz ? 'blitzRush' : 'tossRush');
     if (blitz) player.blitz.charges--;
   }
 }
 
 /** Set up the strike that lands when the slide ends (see endRush), and return it. */
-function armStrike(inPlace: boolean, fx: FxKind = 'rush'): () => void {
+function armStrike(inPlace: boolean, key: SkillKey, fx: FxKind = 'rush'): () => void {
   if (fx === 'blitzRush') sfx.blitz(); else sfx.rushToss();
   const face = player.face;
   rushStrike = (): void => {
     rushStrike = null;
-    strike(inPlace, face, fx);
+    strike(inPlace, face, fx, key);
   };
   return rushStrike;
 }
 
 /** Slide forward at `v` px/s, for at most `t` s or `dist` px, striking (with
  *  burst `fx`) at the end; `look` is the slide's own effect on the archer. */
-function slide(v: number, t: number, dist: number, fx: FxKind = 'rush', look: RushLook | null = null): void {
-  armStrike(false, fx);
+function slide(v: number, t: number, dist: number, key: SkillKey, fx: FxKind = 'rush', look: RushLook | null = null): void {
+  armStrike(false, key, fx);
   player.vx = player.face * v;
   startSlide(t, dist, look);
 }
 
 /** The rush's strike: the carried enemies, then the nearest ones ahead. `fx`
- *  is the burst under each target (the dive's landing has its own). */
-function strike(inPlace: boolean, face: number, fx: FxKind): void {
-  const r = rank('ground-q');
+ *  is the burst under each target (the dive's landing has its own). `key` is
+ *  the skill being cast (Rush Toss or its Electric Blitz upgrade). */
+function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void {
+  const r = rank(key);
   const carried = player.rush.carry.map((c) => c.m);
   player.rush.carry = [];
   const cx = inPlace ? player.x : player.x + face * 24;
@@ -155,5 +156,5 @@ export function landDive(): void {
   player.diving = false;
   player.rolling = false;
   setPose('dive', P.DIVE_ROLL_MAX); // the roll is the tail of the dive's own animation
-  slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'diveLand');
+  slide(P.DIVE_ROLL_V, P.DIVE_ROLL_MAX, P.DIVE_ROLL_DIST, 'ground-q', 'diveLand');
 }
