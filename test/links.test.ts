@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { arena, dummy, release, step, tap } from './helpers';
+import { arena, dummy, linksOpen, release, step, tap } from './helpers';
 import { useTime } from '../src/castrules';
 import { P, SKILLS } from '../src/config';
 import { PLAYER_DEATH_T } from '../src/deaths';
@@ -37,7 +37,7 @@ function jump(frames = 8): void {
 /** Rush Toss, then Skyward Assault off it, a few frames into its hover. */
 function intoAssaultHover(): void {
   tap('q');
-  step(14);
+  linksOpen();
   tap('w');
   step(3);
 }
@@ -108,18 +108,20 @@ describe('Electric Blitz', () => {
     expect(linkable('eb')).toBe(true);
     tap('q'); // pressed mid-animation: buffered, not dropped
     expect(player.casting.queued).toBe('ground-q');
-    step(12); // the first blitz's slide (0.34s) ends
+    untilQueuedFires(); // fires as the first blitz's use time ends
     expect(player.blitz.charges).toBe(P.BLITZ_MAX - 2);
     expect(player.cast).toBe('rush');
     expect(player.linkFrom).toBe('eb'); // links now read off the chained blitz
     expect(player.castT).toBeGreaterThan(0.3);
   });
 
-  it('Meteor Dive links into it on landing, with no use-time wait', () => {
+  it('Meteor Dive links into it once the landing rush\'s use time ends', () => {
     jump();
     tap('q');
     step(15); // the windup, the plunge, and the landing rush
     expect(linkable('eb')).toBe(true);
+    expect(linkHeld('eb')).toBe(true);
+    linksOpen();
     expect(linkHeld('eb')).toBe(false);
     const charges = player.blitz.charges;
     tap('q');
@@ -283,7 +285,7 @@ describe('Skyward Assault', () => {
       learn('ground-q', 'ground-w', 'ab', 'air-w');
       dummy(130);
       tap('q');
-      step(14);
+      linksOpen();
       tap('w');
       expect(player.cast).toBe('barrage');
       expect(player.castT).toBeGreaterThan(0);

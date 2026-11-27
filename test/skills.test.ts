@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { arena, climb, dummy, ground, landLeap, release, step, tap } from './helpers';
+import { arena, climb, dummy, ground, landLeap, linksOpen, release, step, tap } from './helpers';
 import { FX_DUR, P } from '../src/config';
 import { setKey } from '../src/input';
 import { linkable, linkHeld } from '../src/links';
 import { NUM_GAP } from '../src/combat';
-import { cdSlot, delayTime, rushHolding, useTime } from '../src/castrules';
+import { cdSlot, delayTime, useTime } from '../src/castrules';
 import { activeSkill, rank, shotCount } from '../src/progress';
 import { localPose } from '../src/net';
 import { cast } from '../src/skills';
@@ -120,7 +120,7 @@ describe('links after Rush Toss', () => {
     player.ranks['ground-w'] = true;
     const m = dummy(125);
     rushToss();
-    step(12);
+    linksOpen();
     const hp = m.hp;
     tap('z');
     step(15);
@@ -134,7 +134,7 @@ describe('links after Rush Toss', () => {
     player.ranks.ab = true;
     const m = dummy(125);
     rushToss();
-    step(12);
+    linksOpen();
     const x = player.x, y = player.y, hp = m.hp;
 
     tap('w');
@@ -159,7 +159,7 @@ describe('links after Rush Toss', () => {
     player.ranks.ab = true;
     dummy(125);
     rushToss();
-    step(12);
+    linksOpen();
     expect(linkable('ab')).toBe(true);
 
     tap('w');
@@ -297,7 +297,7 @@ describe('Meteor Dive (Q in the air)', () => {
     expect(landedFrame).toBeGreaterThanOrEqual(0);
     expect(rushFrame).toBe(landedFrame);
 
-    step(20);
+    linksOpen();
     expect(m.hp).toBeLessThan(1e6);
     expect(player.linkFrom).toBe('air-q');
     expect(linkable('ground-w')).toBe(true);
@@ -384,14 +384,16 @@ describe('queued presses', () => {
     expect(player.rush.t).toBeLessThanOrEqual(0);
   });
 
-  it('Z right after a rush fires at once', () => {
+  it('Z pressed during a rush fires as its use time ends', () => {
     arena(20);
     player.ranks['ground-q'] = true;
     player.ranks['ground-w'] = false;
     tap('q');
-    for (let i = 0; i < 30 && (player.rush.t > 0 || rushHolding()); i++) step(1);
-    expect(player.casting.useT).toBeGreaterThan(0);
+    step(1);
     tap('z');
+    expect(player.cast).toBe('rush');
+    linksOpen();
+    step(1);
     expect(player.cast).toBe('shoot');
   });
 
@@ -1083,7 +1085,7 @@ describe('Rising Arrows and Skyward Assault', () => {
     player.ranks['ground-w'] = true;
     player.ranks.ab = true;
     tap('q');
-    step(12);
+    linksOpen();
     tap('w');
     expect(player.cast).toBe('barrage');
     expect(player.cd['ground-w']).toBe(0);
@@ -1091,7 +1093,7 @@ describe('Rising Arrows and Skyward Assault', () => {
     while (!player.onGround) step(1); // back on the ground, so Q is Rush Toss again
     step(60); // Rush Toss's 3s cooldown runs out
     tap('q');
-    step(12);
+    linksOpen();
     tap('w');
     expect(player.cast).toBe('barrage');
     expect(player.cd['ground-w']).toBe(0);
