@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, memoryStorage, release, tap } from './helpers';
-import { GRIDS, styled } from '../src/archer';
+import { archerFrame, DIVE_PITCH, GRIDS, pitch, poseCycle, styled } from '../src/archer';
 import { NPC_R, wallet } from '../src/economy';
 import { BASIC, cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { disabled, initMenu, items, lookLocked, menu, menuKey } from '../src/menu';
@@ -12,6 +12,8 @@ import {
 } from '../src/stylist';
 import { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src/townlooks';
 import { placeName, START, TOWNS } from '../src/world';
+import { NPC_FRAMES, npcFrame, npcRows } from '../src/npcart';
+import { DECOR_FRAMES, type DecorKind, paintDecor, paintSmoke, SMOKE, TOWN_PALS } from '../src/towndecor';
 
 const POSE_NAMES = Object.keys(GRIDS) as (keyof typeof GRIDS)[];
 
@@ -296,5 +298,102 @@ describe('the stylist', () => {
         expect(offeredAt(placeName(START))(extra.k, extra.i)).toBe(true);
       });
     });
+  });
+});
+
+describe('other players stand still', () => {
+  // the idle's breathing read as floating, so a ghost uses the standing frame
+  const frames = { ...GRIDS, idle: [['a'], ['b']] } as never;
+  const ghostAt = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t, false));
+  const mineAt = (t: number): unknown => archerFrame(frames, 'idle', poseCycle('idle', 100, t));
+
+  it('a ghost\'s idle frame does not change with time', () => {
+    expect(ghostAt(0.4)).toBe(ghostAt(0));
+    expect(ghostAt(1.2)).toBe(ghostAt(0));
+  });
+
+  it('while your own archer keeps breathing', () => {
+    expect(mineAt(0.5)).not.toBe(mineAt(0));
+  });
+
+  it('a climb steps with the height climbed, not with time', () => {
+    expect(poseCycle('climb', 100, 0.5)).toBe(poseCycle('climb', 100, 0));
+    expect(poseCycle('climb', 108, 0)).not.toBe(poseCycle('climb', 100, 0));
+  });
+});
+
+describe('the dive\'s pitch is drawn into the frame (no canvas rotation)', () => {
+  const upright = GRIDS.dive[0];
+  const pitched = pitch(upright, DIVE_PITCH);
+  /** How many filled pixels a frame has. */
+  const ink = (rows: string[]): number => rows.join('').replace(/\./g, '').length;
+
+  it('a pitched frame is square and big enough for the whole figure', () => {
+    expect(pitched.length).toBe(pitched[0].length);
+    expect(pitched.length).toBeGreaterThanOrEqual(Math.hypot(upright[0].length, upright.length));
+  });
+
+  it('it has about the same number of pixels, and no new colours', () => {
+    expect(Math.abs(ink(pitched) - ink(upright)) / ink(upright)).toBeLessThan(0.2);
+    for (const ch of new Set(pitched.join(''))) expect(upright.join('')).toContain(ch);
+  });
+
+  it('a zero pitch keeps the figure upright', () => {
+    expect(pitch(upright, 0).some((row) => row.includes('h'))).toBe(true);
+  });
+});
+
+describe('town NPCs', () => {
+  const times = Array.from({ length: 400 }, (_, i) => i * 0.025);
+
+  it('idle ones breathe and blink, and never wave', () => {
+    const frames = new Set(times.map((t) => npcFrame(t, false, 1.3)));
+    expect(frames.has(0)).toBe(true);
+    expect(frames.has(1)).toBe(true);
+    expect(frames.has(2)).toBe(true);
+    expect(frames.has(3)).toBe(false);
+  });
+
+  it('they wave when you are near', () => {
+    const frames = new Set(times.map((t) => npcFrame(t, true, 1.3)));
+    expect(frames.has(3)).toBe(true);
+    expect(frames.has(2)).toBe(false);
+  });
+
+  it('every frame is its own, and the three NPCs look different', () => {
+    const shopFrames = Array.from({ length: NPC_FRAMES }, (_, f) => npcRows('shop', f).join());
+    expect(new Set(shopFrames).size).toBe(NPC_FRAMES);
+    const npcs = (['shop', 'stylist', 'trainer'] as const).map((k) => npcRows(k, 0).join());
+    expect(new Set(npcs).size).toBe(3);
+  });
+});
+
+describe('town decor that moves', () => {
+  /** Each frame of a piece of decor, as a string to compare. */
+  function framesOf(kind: DecorKind): string[] {
+    return Array.from({ length: DECOR_FRAMES[kind] }, (_, f) => {
+      const cells: string[] = [];
+      paintDecor(kind, TOWN_PALS[0], (x, y, col, w = 1, h = 1) => cells.push(`${x},${y},${w},${h},${col}`), false, f);
+      return cells.join(';');
+    });
+  }
+  const moving = (Object.keys(DECOR_FRAMES) as DecorKind[]).filter((k) => DECOR_FRAMES[k] > 1);
+
+  it('lamps, flowers, signs and awnings move', () => {
+    for (const k of ['lamp', 'flowers', 'sign', 'awning']) expect(moving).toContain(k);
+  });
+
+  it('and each of their frames is different', () => {
+    const still = moving.filter((k) => new Set(framesOf(k)).size <= 1);
+    expect(still).toEqual([]);
+  });
+
+  it('chimney smoke rises frame by frame', () => {
+    const frames = Array.from({ length: SMOKE.frames }, (_, f) => {
+      const cells: string[] = [];
+      paintSmoke((x, y) => cells.push(`${x},${y}`), f);
+      return cells.join(';');
+    });
+    expect(new Set(frames).size).toBe(SMOKE.frames);
   });
 });

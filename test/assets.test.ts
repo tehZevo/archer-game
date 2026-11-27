@@ -10,6 +10,10 @@ import { HURT, MOB_ART, paintMob } from '../src/mobart';
 import { PROP_H, PROP_W, propAt, PROPS } from '../src/props';
 import { BLOCK_VARIANTS, BOT_H, hash, TILESETS, tilesetFor, TOP_H, TOP_W, variantAt } from '../src/tileset';
 import { MAP_AREAS } from '../src/world';
+import fontPng from '../assets/font.png';
+import { FONT_CHARS } from '../src/font';
+import { bubbleable, bubbleText, bubbleWidth, DMG_H } from '../src/dmgfont';
+import { NUM_LINE } from '../src/combat';
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
 
@@ -298,5 +302,45 @@ describe('the snails', () => {
   it('both snails die their own drawn deaths', () => {
     expect(bakeDeathSheet('Garden Snail', DEATHS['Garden Snail'])).toBeTruthy();
     expect(bakeDeathSheet('Green Snail', DEATHS['Garden Snail'])).toBeTruthy();
+  });
+});
+
+describe('the font', () => {
+  it('font.png is one 5x7 cell per character', () => {
+    const png = Uint8Array.from(atob(fontPng.split(',')[1]), (c) => c.charCodeAt(0));
+    // a PNG's width and height are 4-byte numbers at bytes 16 and 20
+    const readU32 = (at: number): number => ((png[at] << 24) | (png[at + 1] << 16) | (png[at + 2] << 8) | png[at + 3]) >>> 0;
+    expect(readU32(16)).toBe([...FONT_CHARS].length * 5);
+    expect(readU32(20)).toBe(7);
+  });
+});
+
+describe('damage numbers (a bubble font)', () => {
+  it('are drawn at natural size, fitting a line', () => {
+    const g = bubbleText('1234567890', '#ffb347');
+    expect(g.h).toBe(DMG_H);
+    expect(g.w).toBe(bubbleWidth('1234567890'));
+    expect(DMG_H).toBeLessThanOrEqual(NUM_LINE + 1);
+  });
+
+  it('the digits share one outline, with no empty column between them', () => {
+    const g = bubbleText('1234567890', '#ffb347');
+    const empty: number[] = [];
+    for (let x = 0; x < g.w; x++) {
+      let filled = false;
+      for (let y = 0; y < g.h; y++) if (g.px[(y * g.w + x) * 4 + 3]) filled = true;
+      if (!filled) empty.push(x);
+    }
+    expect(empty).toEqual([]);
+  });
+
+  it('every digit and MISS has a glyph', () => {
+    expect(bubbleable('0123456789')).toBe(true);
+    expect(bubbleable('MISS')).toBe(true);
+    expect(bubbleable('?')).toBe(false);
+  });
+
+  it('a number is drawn in its own colour', () => {
+    expect(bubbleText('7', '#ff4d4d').px.join()).not.toBe(bubbleText('7', '#ffb347').px.join());
   });
 });

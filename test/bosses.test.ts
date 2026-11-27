@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { arena, climb, release, step, tap } from './helpers';
+import { arena, climb, dummy, release, step, tap } from './helpers';
 import { BOSS, bossAlive, bossName, bossType, minions, quakes, summon } from '../src/boss';
 import { killMob } from '../src/combat';
 import { P, WORLD } from '../src/config';
@@ -249,5 +249,23 @@ describe('a boss fight', () => {
       expect(minions(boss).length).toBe(BOSS.SUMMON_N);
       for (const m of minions(boss)) expect(m.elite).toBe(true);
     });
+  });
+});
+
+describe('a boss turning round', () => {
+  it('turns to face you at the regular enemies\' pace, not in a snap', () => {
+    arena(20);
+    const boss = dummy(100);
+    boss.boss = { act: 'walk', t: 0, cd: 99, air: false };
+    boss.dir = 1;
+    boss.spd = 40;
+    player.x = 60; // behind it, so it wants to face left
+    step(1);
+    expect(boss.dir).toBe(1);
+    step(6); // 0.2s in: still turning, and standing while it does
+    expect(boss.dir).toBe(1);
+    expect(boss.vx).toBe(0);
+    step(4); // past CHASE_TURN
+    expect(boss.dir).toBe(-1);
   });
 });

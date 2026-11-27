@@ -319,3 +319,52 @@ describe('Tempest', () => {
     expect(player.cd.r).toBeGreaterThan(9);
   });
 });
+
+describe('more links', () => {
+  it('a Tempest linked off the Assault hover still pays its cooldown (less the 1s a link shaves)', () => {
+    learn('ground-q', 'ab', 'r');
+    dummy(130);
+    intoAssaultHover();
+    tap('r');
+    untilQueuedFires(); // fires as the hover ends
+    expect(player.cast).toBe('shoot');
+    expect(player.cd.r).toBeGreaterThan(8);
+    expect(player.cd.r).toBeLessThan(10);
+    // so a second cast right away is spent
+    tap('r');
+    expect(player.cd.r).toBeGreaterThan(8);
+    expect(player.castT).toBeGreaterThan(0);
+  });
+
+  it('a Glide pressed mid-sweep is buffered, and fires as the sweep ends', () => {
+    learn('d', 'ground-w', 'air-w');
+    const m = dummy(150);
+    jump();
+    tap('w');
+    expect(player.cast).toBe('shoot');
+    expect(m.hp).toBeLessThan(1e6); // the sweep hits on the cast
+    expect(player.castT).toBeGreaterThan(useTime('air-w') - 0.4); // and poses for its whole animation
+    tap('d');
+    expect(player.casting.queued).toBe('d');
+    const frames = untilQueuedFires();
+    expect(Math.abs(frames * P.STEP - useTime('air-w'))).toBeLessThan(0.1);
+    expect(player.cast).toBe('jump');
+  });
+
+  it('Glide links into Meteor Dive, which fires as the Glide ends', () => {
+    learn('ground-q', 'air-q');
+    jump(4);
+    tap('d');
+    expect(player.linkFrom).toBe('d');
+    expect(linkable('air-q')).toBe(true);
+    tap('q');
+    let fired = -1;
+    for (let i = 0; i < 30 && fired < 0; i++) {
+      step(1);
+      if (player.cast === 'dive') fired = i;
+    }
+    expect(fired).toBeGreaterThanOrEqual(0);
+    expect(fired).toBeLessThan(16);
+    expect(player.linkFrom).toBe('air-q');
+  });
+});
