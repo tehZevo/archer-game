@@ -16,7 +16,7 @@ interface KeyEv extends Event { key: string; code?: string }
    QWERTY names ('z', 'q', '1', ...); keyName() gives the layout's letter. */
 const CODE_IDS: Record<string, string> = {
   Space: ' ', Enter: 'enter', NumpadEnter: 'enter', Escape: 'escape',
-  BracketLeft: '[', BracketRight: ']', Backslash: '\\', Backquote: '`',
+  BracketLeft: '[', BracketRight: ']', Backslash: '\\', Backquote: '`', Slash: '/',
   ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
 };
 
