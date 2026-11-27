@@ -6,7 +6,7 @@ A vanilla-TypeScript, canvas-based vertical platformer (classic MMO-flavoured ar
 
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run build` — typecheck + bundle to `dist/bundle.js`
-- `npm test` — bundles and runs `test/smoke.ts` then `test/mechanics.ts` under Node (headless; `src/runtime.ts` supplies canvas/audio shims). Mechanics checks are seeded and short; keep the whole run to about a second, no long fuzzing.
+- `npm test` — bundles and runs `test/smoke.ts` under Node (headless; `src/runtime.ts` supplies canvas/audio shims), then the vitest suite (`test/*.test.ts`; `npm run test:watch` to watch). Tests are seeded (`test/setup.ts` resets the seed before each one) and short; keep the whole run to about a second, no long fuzzing.
 - `npm run watch` — esbuild watch mode
 - `npm start` — static server on :8000
 - `npm run worktree -- <branch> [base]` — make a branch worktree in `../archer-game-wt/<branch>` with `node_modules` linked correctly
@@ -28,7 +28,7 @@ Keep the suite minimal and high-value; aim to shrink it as the game stabilizes.
 - **One check per behavior.** Group the assertions that prove one behavior (a value, its effect, its timing) into a single `check` with a detail string, rather than a check per field.
 - **Test the contract, not the implementation.** Assert the player-visible rule (the `linksInto` grammar, the damage, the cooldown), not every internal field that happens to exist today.
 - **Representative over exhaustive.** Cover each source of a family (one launcher, one aerial, one finisher) rather than every pair in a matrix: the `SKILLS` table is the spec, the tests spot-check its rows.
-- **Group tests logically.** Each numbered file in `test/` is one feature group: keep every check of that feature in its file (no `-2` sequels), group related checks into blocks that read like the feature's rules, and merge files whose features belong together.
+- **Group tests logically.** Each `test/<topic>.test.ts` file is one feature group: keep every test of that feature in its file (no `-2` sequels), one `it` per behaviour inside `describe` blocks that read like the feature's rules, and shared helpers in `test/helpers.ts`. Keep tests plain enough for a junior dev to read: import from `src/` directly, set up state in the test (or a `beforeEach`), no clever tricks.
 
 ## Conventions
 
