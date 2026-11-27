@@ -333,7 +333,8 @@ export function localPose(): Pose {
   if (player.diving) return 'dive';
   // the dive's coil holds the plunge pose; its landing roll slides like a rush
   if (player.cast === 'dive' && player.castT > 0) return player.onGround ? 'rush' : 'dive';
-  if (player.skillPose && player.castT > 0) return player.skillPose;
+  // Cyclone Sweep's whirl (Tempest's vanish has no pose: peers see the shot)
+  if (player.skillPose === 'spin' && player.castT > 0) return 'spin';
   if (player.cast === 'rush') return 'rush';
   // the Piercing Leap / Ember Rain / Skyward Assault casts show the shoot pose too
   if (player.cast === 'shoot' || player.cast === 'barrage') return 'shoot';

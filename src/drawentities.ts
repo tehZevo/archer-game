@@ -172,7 +172,7 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   const frame = archerFrame(archerFrames(look), pose, poseCycle(pose, feet, t, breathe), since);
   const img = tint ? tinted(frame, tint) : frame;
   ctx.save();
-  ctx.globalAlpha = alpha * (pose === 'vanish' ? vanishAlpha(since ?? 0) : 1);
+  ctx.globalAlpha = alpha;
   if (pose === 'spin') {
     // Cyclone Sweep: the archer becomes the whirl itself, the turn drawn
     // into the sheet's frames (a ghost's, with no cast clock, just loops)
@@ -188,15 +188,6 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   ctx.drawImage(img, -img.width / 2, -ARCHER_H / 2 - img.height / 2);
   ctx.restore();
 }
-/** Tempest: you blink out, stay gone while the sweep goes round, and
- *  flicker back as it ends (s since the cast). */
-function vanishAlpha(s: number): number {
-  if (s < 0.06) return 1 - s / 0.06;
-  if (s < 0.26) return 0;
-  if (s < 0.36) return Math.floor(s * 60) % 2 ? (s - 0.26) / 0.1 : 0.2;
-  return 1;
-}
-
 /** Meteor Dive's colour: its afterimages wash yellow. */
 const DIVE_TINT = '#ffe14d';
 
@@ -293,6 +284,7 @@ const invulnAlpha = (): number => (player.invuln > 0 && !player.invulnQuiet ? 0.
 export function drawPlayer(): void {
   if (getPlayerDeath()) return; // down: the tombstone and ghost stand in for her (drawPlayerDeath)
   if (player.hang.t > 0) return; // Skyward Assault: she's gone into the strikes for the whole hover
+  if (player.skillPose === 'vanish' && player.castT > 0) return; // Tempest: she's gone for the whole cast
   if (player.diving && !player.rolling) drawDiveTrail(myLook(), player.x, player.y + player.h, player.face, performance.now() / 1000, invulnAlpha(), DIVE_TINT);
   // Twin Echoes: the shadow archer is a permanent companion at your side,
   // mirroring your pose. It fires (adds its extra hits) when you attack, and

@@ -188,10 +188,6 @@ const ROLL = [
 /** A square grid turned a quarter turn anticlockwise (whole pixels, nothing lost). */
 const quarterTurn = (g: string[]): string[] => g.map((_, y) => g.map((r) => r[r.length - 1 - y]).join(''));
 
-/** Every other pixel gone: the Tempest's shimmer as you blink out. */
-const dither = (g: string[], odd: number): string[] =>
-  g.map((r, y) => [...r].map((ch, x) => ((x + y + odd) % 2 ? '.' : ch)).join(''));
-
 /** Swap one row band of a frame: rows [from, from + band.length). */
 function withRows(base: string[], from: number, band: string[]): string[] {
   const f = base.slice();
@@ -241,7 +237,7 @@ const PRONE = [
   '..ooo.ooooooooooooooooo.',
 ];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'prone' | 'spin' | 'dive' | 'vanish' | 'fall' | 'roll';
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'prone' | 'spin' | 'dive' | 'fall' | 'roll';
 
 const RUSH = ['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY];
 // walk: the body sinks a pixel on the long stride and the cape's hem swings
@@ -265,7 +261,6 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   spin: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, SPIN_LOWER)],
   dive: [DIVE, poke(DIVE, DIVE_FLUTTER)],
   // the release frame breaking up into a shimmer (render.ts fades it out)
-  vanish: [dither(withRows(IDLE, 12, SHOOT_BODY), 0), dither(withRows(IDLE, 12, SHOOT_BODY), 1)],
   fall: [poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE), poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE2)],
   // rolling backward (away from your facing): the ball turns anticlockwise
   roll: [ROLL, quarterTurn(ROLL), quarterTurn(quarterTurn(ROLL)), quarterTurn(quarterTurn(quarterTurn(ROLL)))],
@@ -273,7 +268,7 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, prone: 1, spin: 1, dive: 10, vanish: 20, fall: 7, roll: 12,
+  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, prone: 1, spin: 1, dive: 10, fall: 7, roll: 12,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;
