@@ -208,7 +208,9 @@ function tempest(r: SkillRank): void {
   sfx.tempest();
   const mx = player.x + player.face * 8, my = player.y + 13;
   const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
-  game.fx.push({ type: 'tempest', x: player.x, y: player.y + player.h, t: FX_DUR.tempest, face: player.face, follow: true });
+  // one skill, two looks: cast in midair, the knot floats free of the floor
+  const look = player.onGround ? 'tempest' : 'tempestAir';
+  game.fx.push({ type: look, x: player.x, y: player.y + player.h, t: FX_DUR[look], face: player.face, follow: true });
   netShot(mx, my, player.face, P.TEMPEST_R);
   // each enemy the storm passes takes the full hit count (8, doubled by Twin
   // Echoes), not one: the first lands as the bolt reaches it, the rest follow
