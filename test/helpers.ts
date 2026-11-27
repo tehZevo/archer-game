@@ -9,7 +9,7 @@ import { game, gotoPlace, player, spawnMob } from '../src/state';
 import { clearPressed, setKey } from '../src/input';
 import { tick } from '../src/loop';
 import { jobForLevel, recalcStats } from '../src/progress';
-import { MOB_TYPES } from '../src/config';
+import { MOB_TYPES, P } from '../src/config';
 import { closeLinks } from '../src/links';
 import { clearPlayerDeath } from '../src/deaths';
 import { nextPlace, START, type Place } from '../src/world';
@@ -57,7 +57,8 @@ export function landLeap(): void {
 
 /** A clean test floor: Beach 1 with no enemies, and the player standing on the
  *  ground at `x`, at `level`, with full MP, nothing on cooldown, and only the
- *  basic skills learned (plus Arrow Blitz's ground skills). The player can't
+ *  basic skills learned (plus Arrow Blitz's ground skills), and Electric
+ *  Blitz's charges full. The player can't
  *  be hurt (invuln), so enemies don't interfere unless a test wants them to. */
 export function arena(level = 1, x = 100): void {
   release();
@@ -75,6 +76,9 @@ export function arena(level = 1, x = 100): void {
     player.ranks[k] = ['z', 'd', 'ground-q', 'ground-w', 'sa'].includes(k);
   }
   for (const k of Object.keys(player.cd) as (keyof typeof player.cd)[]) player.cd[k] = 0;
+  for (const k of Object.keys(player.readyT) as (keyof typeof player.readyT)[]) player.readyT[k] = 0;
+  player.blitz.charges = P.BLITZ_MAX;
+  player.blitz.t = 0;
 
   player.mp = 999;
   player.hp = player.hpMax;
