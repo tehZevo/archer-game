@@ -27,7 +27,6 @@ export const skillEditor = {
   sel: 0, // selected skill (index into editableSkills)
   field: 0, // 0 = the skill itself, 1 = use, 2 = delay, 3 = links into
   linkSel: 0, // selected link target (index into linkTargets)
-  editing: false, // true between the two Enters that modify a value
 };
 
 /** How many fields the arrow keys walk through (skill, use, delay, links). */
@@ -90,25 +89,38 @@ function copyJson(): void {
   document.body.removeChild(ta);
 }
 
-/** Up/Down/Left/Right pick a field, Enter starts modifying it, Left/Right
- *  then adjust the value, and Enter again sets it. Tab also steps the field,
- *  C copies the kit, R resets the whole kit, T/Esc closes. */
+/** Two panes. The skill list (left): Up/Down highlight a skill, Enter
+ *  selects it and moves the cursor to the right pane, on USE. The right
+ *  pane: Up/Down walk USE / DELAY / LINKS INTO (and on into the link list),
+ *  Left/Right adjust USE and DELAY, Enter/Space (or Z) toggles the
+ *  highlighted link. Esc goes back to the list (Esc there, or T, closes);
+ *  Tab steps the field; C copies the kit; R resets the whole kit. */
 export function skillEditorInput(dt: number): void {
   const e = skillEditor;
   const skills = editableSkills();
   if (e.sel >= skills.length) e.sel = skills.length - 1;
   const cur = skills[e.sel];
 
-  if (pressed('escape') || pressed('t')) { closeSkillEditor(); return; }
+  if (pressed('t') || (pressed('escape') && e.field === 0)) { closeSkillEditor(); return; }
+  if (pressed('escape')) { e.field = 0; return; }
   if (pressed('c')) { copyJson(); return; }
   if (pressed('r')) { resetSkill(); return; }
+  if (pressed('tab')) { e.field = (e.field + 1) % FIELDS; return; }
+
+  if (e.field === 0) {
+    // the skill list
+    if (repeated('up', dt)) e.sel = (e.sel + skills.length - 1) % skills.length;
+    if (repeated('down', dt)) e.sel = (e.sel + 1) % skills.length;
+    if (pressed('enter')) { e.field = 1; e.linkSel = 0; }
+    return;
+  }
 
   if (e.field === 3) {
-    // the link list is its own picker: Up/Down walk the targets, Z/Enter toggles
+    // the link list: Up/Down walk the targets (Up off the top goes back to
+    // DELAY), Enter/Space/Z toggles the highlighted one
     const targets = linkTargets();
     if (e.linkSel >= targets.length) e.linkSel = targets.length - 1;
-    if (pressed('tab')) { e.field = 0; return; }
-    if (pressed('enter') || pressed('z')) {
+    if (pressed('enter') || pressed(' ') || pressed('z')) {
       const t = targets[e.linkSel];
       const list = SKILLS[cur].linksInto ?? (SKILLS[cur].linksInto = []);
       const i = list.indexOf(t);
@@ -116,33 +128,19 @@ export function skillEditorInput(dt: number): void {
       else list.push(t); // a skill can link into itself
       return;
     }
-    if (repeated('up', dt)) e.linkSel = (e.linkSel + targets.length - 1) % targets.length;
-    if (repeated('down', dt)) e.linkSel = (e.linkSel + 1) % targets.length;
-    if (pressed('left')) e.linkSel = (e.linkSel + targets.length - 1) % targets.length;
-    if (pressed('right')) e.linkSel = (e.linkSel + 1) % targets.length;
+    if (repeated('up', dt)) { if (e.linkSel === 0) e.field = 2; else e.linkSel--; }
+    if (repeated('down', dt)) e.linkSel = Math.min(targets.length - 1, e.linkSel + 1);
     return;
   }
 
-  if (pressed('tab')) { e.field = (e.field + 1) % FIELDS; return; }
-
-  if (e.editing) {
-    // modifying: Left/Right adjust the value, Enter sets it and leaves
-    if (pressed('enter')) { e.editing = false; return; }
-    const dir = pressed('left') ? -1 : pressed('right') ? 1 : 0;
-    if (dir) {
-      if (e.field === 1) SKILLS[cur].use = step(useOf(cur), dir);
-      else SKILLS[cur].delay = step(delayOf(cur), dir);
-    }
-    return;
+  // USE / DELAY: Left/Right tune the value, Up/Down move between the fields
+  const dir = pressed('left') ? -1 : pressed('right') ? 1 : 0;
+  if (dir) {
+    if (e.field === 1) SKILLS[cur].use = step(useOf(cur), dir);
+    else SKILLS[cur].delay = step(delayOf(cur), dir);
   }
-
-  // not modifying: all four arrows move the cursor. Up/Down pick the skill,
-  // Left/Right pick the field (the skill field's arrows also change the skill).
-  if (repeated('up', dt)) e.sel = (e.sel + skills.length - 1) % skills.length;
-  if (repeated('down', dt)) e.sel = (e.sel + 1) % skills.length;
-  if (pressed('left')) e.field = (e.field + FIELDS - 1) % FIELDS;
-  if (pressed('right')) e.field = (e.field + 1) % FIELDS;
-  if (pressed('enter')) e.editing = true;
+  if (repeated('up', dt) && e.field > 1) e.field--;
+  if (repeated('down', dt)) { e.field++; if (e.field === 3) e.linkSel = 0; }
 }
 
 /** Draw the editor over the frozen game: the skill list on the left, the
@@ -190,7 +188,8 @@ export function drawSkillEditor(): void {
     text(ctx, `${has ? '[x]' : '[ ]'} ${SKILLS[t].name}`, rx, ty, 1, on ? gold : has ? white : dim, 'left');
   });
 
-  text(ctx, skillEditor.editing ? 'LEFT/RIGHT ADJUST  ENTER SETS  C COPY JSON  R RESET ALL  T ESC CLOSE'
-    : 'ARROWS PICK FIELD  ENTER EDITS  TAB FIELD  C COPY JSON  R RESET ALL  T ESC CLOSE',
+  text(ctx, skillEditor.field === 0 ? 'UP/DOWN SKILL  ENTER SELECT  C COPY JSON  R RESET ALL  T ESC CLOSE'
+    : skillEditor.field === 3 ? 'UP/DOWN LINK  ENTER TOGGLE  ESC BACK  C COPY JSON  R RESET ALL'
+    : 'UP/DOWN FIELD  LEFT/RIGHT ADJUST  ESC BACK  C COPY JSON  R RESET ALL',
     w / 2, h - 8, 1, '#5d708f', 'center');
 }

@@ -2,7 +2,6 @@ import type { JobDef, SkillDef, SkillKey, SkillRank, StatKey } from './types';
 import { SKILLS } from './config';
 import { player } from './state';
 import { dev } from './dev';
-import { fmtNum } from './util';
 
 /* ============================================================
    EXPERIENCE
@@ -37,7 +36,8 @@ export const expToNext = (l: number): number => Math.round(killsToLevel(l) * mob
 export const expBar = (): { text: string; pct: number } =>
   player.level >= MAX_LEVEL
     ? { text: `LV.${player.level}`, pct: 1 }
-    : { text: `${fmtNum(player.exp)}/${fmtNum(player.expNext)}`, pct: player.exp / player.expNext };
+    // a percentage, floored to a tenth (so it never reads 100.0% short of a level)
+    : { text: `${(Math.floor(1000 * player.exp / player.expNext) / 10).toFixed(1)}%`, pct: player.exp / player.expNext };
 
 /* ---------------- job advancement ----------------
    Archer is created already wielding her 1st Job skills, so the tree opens

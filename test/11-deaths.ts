@@ -157,7 +157,9 @@ import { seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES
   // EXP bar at max level: reads LV.100 and stays full
   arena(20);
   player.level = 99; player.exp = 500; player.expNext = 1000;
-  check('below max level the bar shows exp/expNext', expBar().text === '500/1K' || expBar().text.includes('/'), expBar().text);
+  check('below max level the bar shows a percentage', expBar().text === '50.0%', expBar().text);
+  player.exp = 999;
+  check('...floored, so it never reads 100% short of the level', expBar().text === '99.9%', expBar().text);
   player.level = MAX_LEVEL;
   check('at max level the bar reads LV.100', expBar().text === `LV.${MAX_LEVEL}`, expBar().text);
   check('...and the bar stays full', expBar().pct === 1);
