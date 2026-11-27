@@ -1,3 +1,4 @@
+import { cheer, loadCheer } from './cheer';
 import { CARRY_MAX, resetWallet, START_POTIONS, wallet } from './economy';
 import { cleanPlace, lastTown, START, type Place } from './world';
 import { loadQuests, quests } from './quests';
@@ -49,6 +50,8 @@ export interface SaveData {
   petCustoms?: PetCustoms;
   /** The pet upgrades you've bought. */
   petBought?: (keyof PetCustoms)[];
+  /** cheers held and recharging, and any cheer buff on you (see cheer.ts) */
+  cheer?: { n: number; since: number; until: number; from: string };
   /** The equipped weapon and armor (absent in older saves: nothing worn). */
   gear?: { weapon: GearItem | null; armor: GearItem | null };
   /** Spare gear (absent in older saves: an empty bag). */
@@ -71,6 +74,7 @@ export function snapshot(): SaveData {
     pets: [...pet.owned], petKind: pet.kind, petCustoms: pet.customs, petBought: [...pet.bought],
     gear: { weapon: gear.weapon, armor: gear.armor },
     bag: bag.map((i) => ({ ...i })),
+    cheer: { ...cheer },
   };
 }
 
@@ -131,6 +135,7 @@ export function apply(d: unknown): Place | null {
   wallet.mp = int(s.potions?.mp, 0, CARRY_MAX, START_POTIONS);
   loadQuests(s.quests);
   loadPets(s.pets, s.petKind, s.petCustoms, s.petBought);
+  loadCheer(s.cheer);
   gear.weapon = cleanGear(s.gear?.weapon, 'weapon');
   gear.armor = cleanGear(s.gear?.armor, 'armor');
   bag.length = 0;
@@ -167,6 +172,7 @@ export function clearSave(): void {
   try { store()?.removeItem(KEY); } catch { /* ignore */ }
   resetWallet(); // gold and potions start over with the character
   clearPets(); // ...and so do the pets
+  loadCheer(null); // ...and the cheers
 }
 
 let since = 0;

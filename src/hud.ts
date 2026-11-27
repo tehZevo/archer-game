@@ -1,3 +1,4 @@
+import { CHEER, cheerLeftMs, minutes } from './cheer';
 import { shop, trainer } from './economy';
 import { petShop } from './pets';
 import { drawPetShop } from './petdraw';
@@ -178,6 +179,9 @@ function drawTopLeft(pad: number): void {
   if (mod) { text(ctx, mod, pad, ly, 1, '#8fd8ff', 'left'); ly += 9; }
   // other players' kills are speeding up our waves
   if (boost.level >= 0.05) { text(ctx, `Waves x${waveRate().toFixed(1)}`, pad, ly, 1, '#ff9f6b', 'left'); ly += 9; }
+  // someone cheered us: +10% EXP for a while
+  const cheerMs = cheerLeftMs();
+  if (cheerMs) { text(ctx, `Cheer +${CHEER.EXP * 100}% EXP ${minutes(cheerMs)}`, pad, ly, 1, '#ffb3e6', 'left'); ly += 9; }
   // coins and potions
   text(ctx, walletLine(), pad, ly, 1, '#ffd166', 'left'); ly += 9;
   // active quests and their progress
@@ -306,7 +310,7 @@ function drawChatLog(barsY: number): void {
   // each message wraps to fit; the newest few rows show
   const rows: { s: string; col: string }[] = [];
   for (const l of logLines(now)) {
-    wrapChat(`${l.name}: ${l.text}`, LOG_CHARS).forEach((s, i) => rows.push({ s, col: i === 0 ? l.col : '#dbe6f5' }));
+    wrapChat(l.name ? `${l.name}: ${l.text}` : l.text, LOG_CHARS).forEach((s, i) => rows.push({ s, col: i === 0 ? l.col : '#dbe6f5' }));
   }
   const show = rows.slice(-6);
   if (!show.length) return;

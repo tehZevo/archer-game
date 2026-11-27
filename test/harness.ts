@@ -91,7 +91,8 @@ export { clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS } from '../src
 export { openStylist, STYLIST_ROWS } from '../src/stylist';
 export { devInput, windowOpen } from '../src/windows';
 export { addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap } from '../src/chat';
-export { say } from '../src/net';
+export { cheerPlayer, gotCheer, peerNamed, roster, say } from '../src/net';
+export { CHEER, cheer, cheered, cheerLeftMs, cheersLeft, cheerTarget, expMult, loadCheer, nextCheerMs, spendCheer } from '../src/cheer';
 export { archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle } from '../src/archer';
 export { ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet } from '../src/ghost';
 export { keysKey, keysUi, KEY_ROWS } from '../src/keys';

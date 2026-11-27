@@ -1,3 +1,4 @@
+import { expMult } from './cheer';
 import { bump } from './achievements';
 import { pressed } from './input';
 import { gainExp } from './state';
@@ -62,7 +63,7 @@ export function turnIn(i: number): boolean {
   const q = quests[i];
   if (!q || !isDone(q)) return false;
   quests.splice(i, 1);
-  gainExp(q.exp);
+  gainExp(Math.round(q.exp * expMult()));
   wallet.coins += q.coins;
   bump('coins', q.coins);
   return true;

@@ -1,3 +1,4 @@
+import { expMult } from './cheer';
 import { bump } from './achievements';
 import { sfx } from './audio';
 import { ELITE, P } from './config';
@@ -155,7 +156,7 @@ export function killMob(m: Mob): void {
   localKill(); // shared with the instance: speeds up other players' waves
   addCorpse(m, m.boss ? BOSS.SCALE : m.elite ? ELITE.SCALE : 1); // it dies its own way (deaths.ts)
   sfx.mobDeath(m.name, !!(m.boss || m.elite)); // ...and sounds its own way (mobvoices.ts)
-  gainExp(m.exp);
+  gainExp(Math.round(m.exp * expMult()));
   dropCoins(m);
   dropGear(m); // a rare piece of gear, scaled to the enemy's level
   if (m.elite) for (let i = 1; i < ELITE.COINS; i++) dropCoins({ ...m, x: m.x + (i % 2 ? 6 : -6) * Math.ceil(i / 2) });

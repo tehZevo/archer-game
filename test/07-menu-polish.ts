@@ -1,3 +1,4 @@
+import { CHEER, cheer, cheerLeftMs, cheerPlayer, cheersLeft, cheerTarget, expMult, gotCheer, loadCheer, nextCheerMs, roster, spendCheer } from './harness';
 import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanEmote, clearEmotes, EMOTE_ART, EMOTE_MS, EMOTE_PAL, EMOTES, emoteFor, setEmote, buy, NPC_R, COIN_LIFE, coinValue, drops, FLY_T, flying, PRICES, RESPEC_PRICES, shop, shopStock, START_POTIONS, trainer, TRAINER_ITEMS, wallet, areaOf, isPathEnd, isTown, lastTown, MAP_AREAS, mobLevel, nextPlace, PATHS, pathsFrom, pathsInto, placeKey, placeName, samePlace, START, TOWNS, townDepth, placeTier, type Place, ELITE, FX_DUR, MOB_TYPES, P, SKILLS, VARIANT_CHANCE, mobHp, game, gotoPlace, player, spawnMob, spawnWave, SPAWN_SPREAD, USE_FLASH, confirmInput, confirmUi, cleanName, clearShots, dueShots, ghostFx, NAME_MAX, queueShot, randomName, SHOT_GAP, tintFor, FONT_CHARS, textWidth, fontPng, ACTIONS, actionFor, binds, bindKey, capture, cleanBinds, resetBinds, clearPressed, keyName, normalize, REPEAT_DELAY, REPEAT_RATE, setKey, setLayout, update, advance, tick, CHASE_TURN, activeSkill, expBar, MAX_LEVEL, passiveBonus, rank, recalcStats, shotCount, skillRows, spendSkill, STAT_GAIN, surfaceYAt, areaMobs, floorMobs, groupSize, pickVariant, LAYOUTS, type Layout, makeShape, SHAPES, TOWN_MIN_H, DRAWN, hasMobArt, HURT, MOB_ART, paintMob, VARIANT_ART, miniRect, MINI_SCALE, toMini, CAM, TILE, WORLD, ANIM_RATE, BREATH, mobFrame, BAR_SHOW, critChance, critMult, critOverflowPoints, damage, MISS_IFRAMES, missChance, DYING_MAX, HITSTUN, killMob, NUM_GAP, NUM_LINE, passiveDmg, barrageTargets, cast, cdSlot, delayTime, rushHolding, useTime, CASTS, MOB_SOUNDS, GHOST_RISE_T, ghostRise, getPlayerDeath, PLAYER_DEATH_T, TOMB_DROP_T, tombDrop, fmtNum, BOSS, bossAlive, minions, summon, bossName, bossType, hurtPlayer, quakes, cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook, stylist, stylistKey, stylistTap, stylistBox, ST_ROWS_W, ST_TOP, shownLook, styleChanged, STYLE_FEE, stylistRows, lookLocked, styled, DECOR_FRAMES, paintDecor, paintSmoke, SMOKE, TOWN_PALS, type DecorKind, NPC_FRAMES, npcFrame, npcRows, board, boardOffers, boardRows, loadQuests, QUEST_MAX, questKill, quests, apply, clearSave, hasSave, load, save, snapshot, boost, BOOST, remoteKills, resetBoost, takeBatch, waveRate, canConnect, hourStamp, net, newCode, parseCode, roomId, activate, disabled, autoChannel, channelChoices, initMenu, items, menu, menuKey, menuTap, menuText, MENU_ROW, MENU_TOP, MENU_W, MENU_X, BLOCK_VARIANTS, hash, tilesetFor, TILESETS, TOP_H, TOP_W, BOT_H, variantAt, PROP_H, PROP_W, propAt, PROPS, BACKDROPS, particlesAt, expToNext, killsToLevel, mobExp, dev, devStops, BASIC, clearUnlocks, isBasic, isUnlocked, offeredAt, TOWN_LOOKS, openStylist, STYLIST_ROWS, devInput, windowOpen, addChat, bubbleFor, bubbleMs, chat, CHAT_MAX, cleanChat, clearBubbles, LOG_SHOW_MS, logLines, SELF, wrap, say, archerFrame, climbPhase, DIVE_PITCH, GRIDS, pitch, POSE_FPS, poseCycle, ingest, INTERP_MS, newTrack, POSES, Recorder, SEND_MS, view, type Packet, keysKey, keysUi, KEY_ROWS, pet, PET, achKey, achUi, ACHIEVEMENTS, bump, clearAchievements, cleanRecord, GOLD_OUTFIT, isDone, record, runBonus, visitArea, startRun, DEFS, startsLearned, clearGear, equip, gear, gearDmg, gearFor, gearSoak, gearDrops, READY_FLASH, cameraTarget, mobBounds, coinMult, FLOOR_MODS, grip, ICE_GRIP, modLine, rollMods, bag, BAG_SIZE, unequip, wear, STAT_KEYS, generateFloor, TOWN_PLANS, corpses, DEATH_T, DEATHS, deathOf, deathPose, closeLinks, linkable, linkHeld, bakeDeathSheet, DEATH_FRAMES, deathFrame, localPose, applyStatus, areaStatus, CHILL_SLOW, DOT, MAX_STACKS, slowFactor, STATUS, updateStatus, cleanSettings, DEFAULT_SETTINGS, openSettings, settings, settingsBox, settingsKey, settingsTap, settingsUi, SET_ROW, SET_TOP, SET_W, SETTING_ROWS, VOLUME_MAX, type Mob, type PauseMenu, type Platform, type SkillKey, skillScreen, skillStatus, tabLabel, tabSkills, JOBS, climb, check, release, step, tap, landLeap, ground, arena, dummy } from './harness';
 // --- menu polish: key repeat, local-only rows, a steady caret ---
 {
@@ -498,5 +499,51 @@ import { isLearned, openSkillScreen, closeSkillScreen, statLines, seeded, cleanE
   boss.level = BOSS.ELITE_LVL; summon(boss);
   check('the hardest bosses summon elites', minions(boss).length === BOSS.SUMMON_N && minions(boss).every((m) => m.elite));
   player.invuln = 0;
+  gotoPlace(START);
+}
+
+// --- cheers: /cheer <player> gives them +10% EXP; you hold 3, one back an hour ---
+{
+  check('/cheer lines are read as cheers, anything else is chat', cheerTarget('/cheer Robin') === 'Robin' && cheerTarget('  /CHEER  ') === ''
+    && cheerTarget('/cheerful') === null && cheerTarget('cheer robin') === null);
+  loadCheer(null);
+  const t0 = 1_000_000_000_000;
+  const spent = [spendCheer(t0), spendCheer(t0 + 1), spendCheer(t0 + 2), spendCheer(t0 + 3)];
+  check('you hold three cheers', spent.join() === 'true,true,true,false' && cheersLeft(t0 + 3) === 0);
+  check('...and one comes back an hour after you first spend from a full stock',
+    nextCheerMs(t0 + 60_000) === CHEER.RECHARGE_MS - 60_000 && cheersLeft(t0 + CHEER.RECHARGE_MS - 1) === 0
+    && cheersLeft(t0 + CHEER.RECHARGE_MS) === 1 && cheersLeft(t0 + 2.5 * CHEER.RECHARGE_MS) === 2 && cheersLeft(t0 + 9 * CHEER.RECHARGE_MS) === 3);
+
+  // cheering: an exact name or the only one it starts, only players in your channel
+  loadCheer(null); chat.log.length = 0;
+  cheerPlayer('robin');
+  check('cheering someone not here says so and costs nothing', cheersLeft() === 3 && chat.log.at(-1)?.text.startsWith('NO PLAYER ROBIN') === true);
+  roster.names.set('p1', 'ROBIN'); roster.tracks.set('p1', newTrack()); roster.names.set('p2', 'ROBERT'); roster.tracks.set('p2', newTrack());
+  cheerPlayer('rob');
+  check('...a name two players start is not a match', cheersLeft() === 3);
+  cheerPlayer('robi');
+  check('...the only one it starts is', cheersLeft() === 2 && chat.log.at(-1)?.text === 'YOU CHEERED ROBIN! 2 LEFT');
+  cheerPlayer('ROBERT'); cheerPlayer('robin'); cheerPlayer('robin');
+  check('...and with none left, you hear when the next comes back', cheersLeft() === 0 && /^NO CHEERS LEFT · NEXT IN 60M$/.test(chat.log.at(-1)?.text ?? ''));
+  chat.log.length = 0;
+  say('/cheer robin');
+  check('a /cheer line is never said aloud', chat.log.every((l) => l.id !== SELF) && !bubbleFor(SELF, performance.now()));
+  roster.clear();
+
+  // the buff
+  loadCheer(null);
+  const was = { level: player.level, exp: player.exp, expNext: player.expNext };
+  release(); gotoPlace(climb(2)); player.level = 10; player.expNext = 1e9;
+  const gain = (): number => { const m = game.mobs.find((x) => !x.training)!; const e0 = player.exp; killMob(m); return player.exp - e0; };
+  const plain = gain();
+  check('no cheer, no EXP bonus', expMult() === 1 && cheerLeftMs() === 0);
+  gotCheer('robin');
+  const boosted = gain();
+  check('being cheered gives +10% EXP on kills, and says who', boosted === Math.round(plain * 1.1) && boosted > plain
+    && chat.log.at(-1)?.text === 'ROBIN CHEERED YOU! +10% EXP FOR 30M' && cheer.from === 'ROBIN');
+  check('...for half an hour', cheerLeftMs() > CHEER.BUFF_MS - 1000 && expMult(Date.now() + CHEER.BUFF_MS + 1) === 1);
+  const saved = snapshot().cheer; loadCheer(null);
+  check('cheers and the buff are saved', !!saved && saved.until > Date.now() && cheerLeftMs() === 0 && (loadCheer(saved), cheerLeftMs() > 0));
+  loadCheer(null); Object.assign(player, was);
   gotoPlace(START);
 }

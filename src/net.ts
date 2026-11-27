@@ -1,13 +1,14 @@
 import { cleanEmote, clearEmotes, EMOTES, setEmote, type Emote } from './emotes';
 import { joinRoom } from 'trystero';
-import type { UserState } from '@trystero-p2p/core';
+import type { SendOptions, UserState } from '@trystero-p2p/core';
 import { game, player } from './state';
 import { isTownId, placeKey, START_TOWN } from './world';
 import { devTag } from './dev';
 import { remoteKills, resetBoost, takeBatch } from './boost';
 import { ingest, newTrack, Recorder, type GhostTrack, type Packet, type Pose } from './ghost';
 import { cleanName, clearShots, myName, queueShot, tintFor, type ShotMsg } from './presence';
-import { addChat, cleanChat, clearBubbles, SELF } from './chat';
+import { addChat, addNote, cleanChat, clearBubbles, SELF } from './chat';
+import { cheered, cheersLeft, cheerTarget, CHEER, minutes, nextCheerMs, spendCheer } from './cheer';
 import { cleanLook, myLook, watchLook, type Look } from './look';
 
 /** Players per channel; a full channel spills into the next one. */
@@ -164,6 +165,8 @@ interface Sends {
   chat: string;
   /** an index into EMOTES (see emotes.ts) */
   emote: number;
+  /** a cheer, sent only to the player cheered (see cheer.ts) */
+  cheer: 1;
 }
 /** The live connection to our current room. */
 interface Link {
@@ -172,7 +175,7 @@ interface Link {
   pos: UserState<Packet>;
   /** Our name and look, in their own store, so they don't ride every motion packet. */
   who: UserState<Who>;
-  send: { [K in keyof Sends]: (v: Sends[K]) => Promise<void> };
+  send: { [K in keyof Sends]: (v: Sends[K], o?: SendOptions) => Promise<void> };
 }
 let link: Link | null = null;
 const rec = new Recorder();
@@ -225,7 +228,9 @@ function makeSends(room: Room): Link['send'] {
     addChat(ctx.userId, roster.names.get(ctx.userId) ?? '?', cleanChat(s), tintFor(ctx.userId), performance.now()));
   const emote = room.makeAction<number>('emote');
   emote.onMessage((n, ctx) => { const k = cleanEmote(n); if (k) setEmote(ctx.userId, k, performance.now()); });
-  return { kills: kills.send, shot: shot.send, chat: chat.send, emote: emote.send };
+  const cheer = room.makeAction<1>('cheer');
+  cheer.onMessage((_, ctx) => gotCheer(roster.names.get(ctx.userId) ?? '?'));
+  return { kills: kills.send, shot: shot.send, chat: chat.send, emote: emote.send, cheer: cheer.send };
 }
 
 function connect(channel: number): void {
@@ -262,10 +267,42 @@ function connect(channel: number): void {
 
 /** Say something: it shows in our own log and bubble, and goes to the room. */
 export function say(raw: string): void {
+  const who = cheerTarget(raw);
+  if (who !== null) { cheerPlayer(who); return; }
   const text = cleanChat(raw);
   if (!text) return;
   addChat(SELF, myName(), text, '#ffffff', performance.now());
   toRoom('chat', text);
+}
+
+const CHEER_COL = '#ffb3e6';
+const note = (text: string): void => addNote(cleanChat(text), CHEER_COL, performance.now());
+
+/** The peer in our room going by `name`: an exact match, else the only one it starts. */
+export function peerNamed(name: string): string | null {
+  const want = cleanName(name);
+  if (!want) return null;
+  const all = [...roster.names.entries()].filter(([id]) => roster.tracks.has(id));
+  const exact = all.find(([, n]) => n === want);
+  if (exact) return exact[0];
+  const starts = all.filter(([, n]) => n.startsWith(want));
+  return starts.length === 1 ? starts[0][0] : null;
+}
+
+/** `/cheer <name>`: spend a cheer on a player in our channel. */
+export function cheerPlayer(name: string): void {
+  if (!name) { note(`/CHEER <PLAYER>: +${CHEER.EXP * 100}% EXP FOR THEM · ${cheersLeft()} LEFT`); return; }
+  const id = peerNamed(name);
+  if (!id) { note(`NO PLAYER ${cleanName(name) || name} HERE`); return; }
+  if (!spendCheer()) { note(`NO CHEERS LEFT · NEXT IN ${minutes(nextCheerMs())}`); return; }
+  link?.send.cheer(1, { target: id }).catch(() => {});
+  note(`YOU CHEERED ${roster.names.get(id)}! ${cheersLeft()} LEFT`);
+}
+
+/** A peer cheered us. */
+export function gotCheer(by: string): void {
+  cheered(cleanName(by) || '?');
+  note(`${cleanName(by) || '?'} CHEERED YOU! +${CHEER.EXP * 100}% EXP FOR ${minutes(CHEER.BUFF_MS)}`);
 }
 
 /** Tell the channel we released a shot (muzzle at x,y; tracer len px). */
