@@ -3,6 +3,7 @@ import { arena, dummy, release, step, tap } from './helpers';
 import { P } from '../src/config';
 import { setKey } from '../src/input';
 import { game, player } from '../src/state';
+import { localPose } from '../src/net';
 
 // Gale Stream: holding Z after a Double Shot streams arrows into the closest enemy.
 
@@ -93,6 +94,12 @@ describe('Gale Stream', () => {
 });
 
 describe('the dodge roll (a Jump while streaming)', () => {
+  it('shows the roll pose', () => {
+    startStream();
+    jump();
+    expect(localPose()).toBe('roll');
+  });
+
   it('is invulnerable, in its dive pose', () => {
     startStream();
     jump();
