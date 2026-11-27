@@ -7,7 +7,7 @@ The game renders pixel perfect: every visible element is a 16×16 (or 16-multipl
 - All sprites are authored on a 16×16 grid (the tile unit), built procedurally once at boot as tiny canvases with 1px blocks and drawn with `drawImage`.
 - Tiles (grass/dirt, slope tops) are 16×16; each slope tile is one half of a 2:1 ramp, a full 16×16 cell whose surface rises half a tile.
 - Ropes and ladders are 16×16 sprites tiled vertically between their endpoints; the sprite is centred on its tile (x at the tile centre, snapped to the 16px grid).
-- Skill icons have one canonical size (`ICON`, 12×12) and are never scaled: every screen (skill bar, skills screen, link help, menus) draws them 1:1 at that size, and layouts are built around it.
+- Skill icons have one canonical size (`ICON`, 10×10: the glyph itself over a dark tile, no frame) and are never scaled: every screen (skill bar, skills screen, link help, menus) draws them 1:1 at that size, and layouts are built around it.
 - The player is 16×24; mobs are sized to the grid (e.g. snail 17×14, hog 26×21) and drawn centred on integer positions. Every body's collision box matches its sprite.
 
 ## Attack effects

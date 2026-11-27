@@ -106,7 +106,7 @@ function skillSlot(k: SkillKey, cs: string, x: number, y: number): void {
   // the recharge shows like a cooldown
   if (s.key === 'eb' && player.blitz.charges <= 0) frac = 1 - player.blitz.t / P.BLITZ_CHARGE_T;
   ctx.globalAlpha = learned ? 1 : 0.4;
-  ctx.drawImage(skillIcon(s.key), x, y);
+  ctx.drawImage(skillIcon(s.key), x, y); // 1:1, the one icon size
   ctx.globalAlpha = 1;
   if (!learned) return;
   if (frac > 0) { ctx.fillStyle = '#000a'; ctx.fillRect(x, y, ICON, Math.ceil(ICON * frac)); }

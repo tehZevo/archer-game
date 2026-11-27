@@ -46,15 +46,15 @@ export function drawLinkHelp(): void {
     const y = TOP + vi * ROW, sel = top + vi === linkHelp.sel;
     if (sel) { ctx.fillStyle = '#16223a'; ctx.fillRect(6, y - 4, w - 12, ROW - 1); ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(6.5, y - 3.5, w - 13, ROW - 2); }
     // the skill: its icon and name on the left
-    ctx.drawImage(skillIcon(k), 8, y - 4, 10, 10);
+    ctx.drawImage(skillIcon(k), 8, y - 4);
     text(ctx, SKILLS[k].name.toUpperCase(), 21, y, 1, sel ? gold : dim, 'left');
     // ...and the skills it links into, as icons, on the right
     const links = SKILLS[k].linksInto ?? [];
     let lx = w - 10;
     for (let i = links.length - 1; i >= 0; i--) {
-      ctx.drawImage(skillIcon(links[i]), lx - 10, y - 4, 10, 10);
-      lx -= ICON - 2;
+      ctx.drawImage(skillIcon(links[i]), lx - ICON, y - 4);
+      lx -= ICON + 1;
     }
-    text(ctx, '→', w - 10 - links.length * (ICON - 2) - 6, y, 1, gold, 'right');
+    text(ctx, '→', w - 10 - links.length * (ICON + 1) - 5, y, 1, gold, 'right');
   });
 }

@@ -1,4 +1,4 @@
-import type { JobDef, PauseMenu, SkillDef, SkillKey, SkillRank, StatKey } from './types';
+import type { JobDef, SkillDef, SkillKey, SkillRank, StatKey } from './types';
 import { SKILLS } from './config';
 import { player } from './state';
 import { dev } from './dev';
@@ -280,18 +280,3 @@ export function spendSkill(key: SkillKey): boolean {
   return true;
 }
 
-/** Skill rows the Esc menu shows at once (more scroll; see pauseScroll). */
-export const PAUSE_ROWS = 10;
-
-/** First skill row to show so the selected one stays in view: the window
- *  only moves when the cursor walks off its top or bottom. */
-export function pauseScroll(m: PauseMenu, n: number): number {
-  let s = m.scroll ?? 0;
-  if (m.col === 1) {
-    if (m.row < s) s = m.row;
-    if (m.row >= s + PAUSE_ROWS) s = m.row - PAUSE_ROWS + 1;
-  }
-  s = Math.max(0, Math.min(s, n - PAUSE_ROWS));
-  m.scroll = s;
-  return s;
-}

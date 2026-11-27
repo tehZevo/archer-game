@@ -2,6 +2,7 @@ import { ctx } from './canvas';
 import { SKILLS } from './config';
 import { game, player } from './state';
 import { text } from './font';
+import { dev } from './dev';
 import { ICON, skillIcon } from './icons';
 import { branchLocked, canSpendSp, JOBS, skillRows, spendSkill, upgradesOf } from './progress';
 import type { SkillKey } from './types';
@@ -9,7 +10,8 @@ import type { SkillKey } from './types';
 /* ============================================================
    SKILLS SCREEN
    A menu screen with a subtab per job tier (Lv.1-10, 10-30, 30-60,
-   60-100). The left side lists that tier's skills; the highlighted
+   60-100), showing only the tiers your job has opened (the Sage opens
+   the next; dev mode shows them all). The left side lists that tier's skills; the highlighted
    one's details (status, cost, damage, cooldown, links, description)
    show on the right. Z spends SP on it. Opened with K.
    ============================================================ */
@@ -23,6 +25,9 @@ export const openSkillScreen = (): void => {
   skillScreen.sel = 0;
 };
 export const closeSkillScreen = (): void => { skillScreen.open = false; };
+
+/** The tabs you can see (indexes into JOBS): your job's tier and the ones before it (all in dev mode). */
+export const visibleTabs = (): number[] => JOBS.map((_, i) => i).filter((i) => dev.on || JOBS[i].job <= player.job.job);
 
 /** A tab's level range label: from its job's level to the next job's. */
 export const tabLabel = (i: number): string => `${JOBS[i].level}-${JOBS[i + 1]?.level ?? 100}`;
@@ -48,7 +53,8 @@ export function skillStatus(k: SkillKey): { label: string; col: string; action: 
 export function skillScreenKey(k: 'up' | 'down' | 'left' | 'right' | 'enter' | 'escape'): void {
   const n = tabSkills(skillScreen.tab).length;
   if (k === 'left' || k === 'right') {
-    skillScreen.tab = (skillScreen.tab + (k === 'left' ? JOBS.length - 1 : 1)) % JOBS.length;
+    const tabs = visibleTabs(), at = Math.max(0, tabs.indexOf(skillScreen.tab));
+    skillScreen.tab = tabs[(at + (k === 'left' ? tabs.length - 1 : 1)) % tabs.length];
     skillScreen.sel = 0;
   }
   if (k === 'up' && n) skillScreen.sel = (skillScreen.sel + n - 1) % n;
@@ -89,9 +95,9 @@ export function drawSkillScreen(): void {
   text(ctx, 'SKILLS', 6, 5, 1, GOLD, 'left');
   text(ctx, `SP ${player.sp}`, w - 6, 5, 1, player.sp ? GOLD : DIM, 'right');
   // the tier tabs
-  const tw = Math.floor((w - 12) / JOBS.length);
-  JOBS.forEach((_, i) => {
-    const x = 6 + i * tw, on = i === skillScreen.tab;
+  const tabs = visibleTabs(), tw = Math.floor((w - 12) / JOBS.length);
+  tabs.forEach((i, ti) => {
+    const x = 6 + ti * tw, on = i === skillScreen.tab;
     ctx.fillStyle = on ? '#16223a' : '#0d1526'; ctx.fillRect(x, TAB_Y - 3, tw - 2, 12);
     ctx.strokeStyle = on ? GOLD : '#4a5c7a'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, TAB_Y - 2.5, tw - 3, 11);
     text(ctx, `LV ${tabLabel(i)}`, x + (tw - 2) / 2, TAB_Y, 1, on ? GOLD : DIM, 'center');
@@ -101,7 +107,7 @@ export function drawSkillScreen(): void {
   keys.forEach((k, i) => {
     const y = LIST_TOP + i * ROW, sel = i === skillScreen.sel, learned = player.ranks[k];
     if (sel) { ctx.fillStyle = '#16223a'; ctx.fillRect(6, y - 3, LIST_W, ROW - 1); ctx.strokeStyle = GOLD; ctx.strokeRect(6.5, y - 2.5, LIST_W - 1, ROW - 2); }
-    ctx.drawImage(skillIcon(k), 8, y - 2, ICON - 2, ICON - 2);
+    ctx.drawImage(skillIcon(k), 8, y - 2);
     text(ctx, SKILLS[k].name.toUpperCase(), 21, y, 1, sel ? GOLD : learned ? HI : DIM, 'left');
   });
   if (!keys.length) text(ctx, 'NO SKILLS', 8, LIST_TOP, 1, FAINT, 'left');
@@ -113,7 +119,7 @@ export function drawSkillScreen(): void {
     const s = SKILLS[k], st = skillStatus(k);
     let y = LIST_TOP;
     const line = (str: string, col: string): void => { text(ctx, str.toUpperCase(), dx, y, 1, col, 'left'); y += 9; };
-    ctx.drawImage(skillIcon(k), dx, y - 2, ICON, ICON);
+    ctx.drawImage(skillIcon(k), dx, y - 2);
     text(ctx, s.name.toUpperCase(), dx + ICON + 3, y, 1, GOLD, 'left');
     y += 13;
     line(`${s.tag}  LV.${s.minLevel}`, DIM);
@@ -127,7 +133,7 @@ export function drawSkillScreen(): void {
     if (links.length) {
       y += 2;
       text(ctx, 'LINKS', dx, y + 1, 1, FAINT, 'left');
-      links.forEach((t, i) => ctx.drawImage(skillIcon(t), dx + 34 + i * (ICON - 1), y - 1, ICON - 2, ICON - 2));
+      links.forEach((t, i) => ctx.drawImage(skillIcon(t), dx + 34 + i * (ICON + 1), y - 1));
     }
   }
   text(ctx, 'LEFT/RIGHT TIER  Z LEARN  K ESC CLOSE', w / 2, h - 8, 1, FAINT, 'center');
