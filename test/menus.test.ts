@@ -7,6 +7,7 @@ import { fmtNum } from '../src/util';
 import { P, SKILLS } from '../src/config';
 import { clearPressed, REPEAT_DELAY, REPEAT_RATE, setKey } from '../src/input';
 import { textWidth } from '../src/font';
+import { tinyable, tinyWidth } from '../src/tinyfont';
 import { tick } from '../src/loop';
 import { expBar, isLearned, JOBS, MAX_LEVEL } from '../src/progress';
 import {
@@ -279,6 +280,26 @@ describe('main menu', () => {
 describe('HUD numbers', () => {
   it('are plain below 1000, then shortened to K and M', () => {
     expect([999, 1000, 1299, 12345, 1234567].map(fmtNum)).toEqual(['999', '1K', '1.2K', '12.3K', '1.2M']);
+  });
+
+  it('the tiny font draws the bar labels', () => {
+    expect(tinyable('HP MP EXP')).toBe(true);
+  });
+
+  it('the tiny font draws shortened numbers', () => {
+    expect(tinyable(fmtNum(1234567))).toBe(true);
+  });
+
+  it('the tiny font draws the level line', () => {
+    expect(tinyable(`Lv.${MAX_LEVEL}`)).toBe(true);
+  });
+
+  it('the tiny font draws the EXP percentage', () => {
+    expect(tinyable('45.2%')).toBe(true);
+  });
+
+  it('a tiny "1.5K" is 19px wide (5px glyphs, a 1px dot, 1px gaps)', () => {
+    expect(tinyWidth('1.5K')).toBe(19);
   });
 });
 
