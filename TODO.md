@@ -9,3 +9,4 @@
 - When you reach Lv.10, 30, and 60, show on-screen text prompting you to visit the Sage to advance to the next job.
 - Bug: the "S" in "FOES" and some skill icons in the link line on the skills screen overflow the border — wrap them to a new line or reflow/reword so they fit.
 - Bug: Tempest (R) only hits once — `tempest()` (skillcasts.ts:188) fires a single `damage()` per target and ignores `hits1: 8`. Wrap the hit in `eachShot(shotCount(r), …)` like Cyclone Sweep / Downpour so all 8 hits (×2 with Twin Echoes) land.
+- Increase the time Z must be held before rapid fire (Gale Stream) kicks in — it should wait for the full use time before starting.
