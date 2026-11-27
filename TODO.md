@@ -34,3 +34,4 @@
   - Holding nothing: jumps RIGHT, keeps shooting LEFT.
   - Holding left: jumps LEFT, switches to shooting RIGHT.
   - Holding right: jumps RIGHT, keeps shooting LEFT.
+- Make Twin Echoes (`es`) cut your damage to 60% while it's learned. Since it doubles your hits, the trade is a net gain of about 20% (e.g. Double Shot: 2 × 120% = 240% → 4 × 72% = 288%).
