@@ -242,8 +242,6 @@ const ASSAULT_RISE_LEAD = 16;
 function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
   sfx.assaultRise();
-  hitbox(player.x + player.face * 30, player.y - 60, 110, 200)
-    .slice(0, r.targets).forEach((m) => damage(m, r.dmg, { fx: 'skyHit', first: true }));
   const from = player.y + player.h / 2;
   // always the same rise (scaling it with the launched enemies' height sent
   // you ~3x higher off the top of their arc)

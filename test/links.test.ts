@@ -233,13 +233,21 @@ describe('Skyward Assault', () => {
       expect(player.linkFrom).toBe('air-e');
     });
 
-    it('Meteor Dive fires straight out of the hover', () => {
+    it('Meteor Dive waits out the whole hover, then fires', () => {
       learn('ground-q', 'ground-w', 'ab', 'air-q');
       dummy(130);
       intoAssaultHover();
       expect(linkable('air-q')).toBe(true);
-      expect(linkHeld('air-q')).toBe(false);
+      expect(linkHeld('air-q')).toBe(true);
       tap('q');
+      expect(player.casting.queued).not.toBe(null);
+      let hoverFrames = 0;
+      while (player.hang.t > 0 && hoverFrames < 60) {
+        step(1);
+        hoverFrames++;
+      }
+      step(1);
+      expect(hoverFrames).toBeGreaterThan(10);
       expect(player.cast).toBe('dive');
       expect(player.linkFrom).toBe('air-q');
     });
@@ -254,9 +262,15 @@ describe('Skyward Assault', () => {
       expect(player.hang.t).toBeGreaterThan(0);
       expect(player.cast).toBe('barrage');
       expect(linkable('air-w')).toBe(true);
-      expect(linkHeld('air-w')).toBe(false);
+      expect(linkHeld('air-w')).toBe(true);
       const fervor = player.fervor;
       tap('w');
+      expect(player.casting.queued).not.toBe(null);
+      let hoverFrames = 0;
+      while (player.hang.t > 0 && hoverFrames < 60) {
+        step(1);
+        hoverFrames++;
+      }
       step(12); // the sweep's four hits stagger out
       expect(player.cast).toBe('shoot');
       expect(player.linkFrom).toBe('air-w');
@@ -265,7 +279,7 @@ describe('Skyward Assault', () => {
       expect(player.fervor).toBe(fervor + 1);
     });
 
-    it('a W pressed during the assault\'s own leap is buffered, and fires once the leap is underway', () => {
+    it('a W pressed during the assault\'s own leap is buffered, and fires once the hover ends', () => {
       learn('ground-q', 'ground-w', 'ab', 'air-w');
       dummy(130);
       tap('q');
@@ -274,7 +288,13 @@ describe('Skyward Assault', () => {
       expect(player.cast).toBe('barrage');
       expect(player.castT).toBeGreaterThan(0);
       tap('w');
-      step(3);
+      expect(player.casting.queued).not.toBe(null);
+      let hoverFrames = 0;
+      while (player.hang.t > 0 && hoverFrames < 60) {
+        step(1);
+        hoverFrames++;
+      }
+      step(1);
       expect(player.cast).toBe('shoot');
       expect(player.casting.queued).toBe(null);
     });
