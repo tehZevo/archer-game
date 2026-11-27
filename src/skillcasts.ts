@@ -274,8 +274,11 @@ function skyAssault(r: SkillRank): void {
 
 /** Bolt Flurry: a volley of 4 green bolts, flown as one animated sprite;
  *  every target takes all 4 hits, and each hit stuns. Twin Echoes doubles the volley (a second one follows
- *  the first), so the burst reads heavier while every hit still lands. */
+ *  the first), so the burst reads heavier while every hit still lands. Like
+ *  Double Shot (whose slot it takes), off a Skyward Assault hover it's a
+ *  ground link, so it drops you. */
 function shellBarrage(r: SkillRank): void {
+  endHover();
   pose('shoot', 's');
   sfx.flurry();
   const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
