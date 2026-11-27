@@ -35,6 +35,20 @@ describe('looks: hair style, hair colour, skin and outfit', () => {
 
 });
 
+describe('body types', () => {
+  /** Hair pixels below the chin (row 10 down) of the standing frame. */
+  const hairDownTheBack = (body: number): number =>
+    styled(GRIDS.idle[0], 'idle', 0, body).slice(10).join('').replace(/[^hH]/g, '').length;
+
+  it('in the default style, her hair falls down her back', () => {
+    expect(hairDownTheBack(0)).toBeGreaterThan(0);
+  });
+
+  it('in the default style, his hair is cut short', () => {
+    expect(hairDownTheBack(1)).toBe(0);
+  });
+});
+
 describe('town extras (each town\'s stylist offers its own, which seeing unlocks everywhere)', () => {
   const extras = Object.values(TOWN_LOOKS).flat();
 
