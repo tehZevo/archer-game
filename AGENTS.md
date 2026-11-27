@@ -39,6 +39,8 @@ Work is tracked in GitHub issues (https://github.com/tehZevo/archer-game/issues)
 
 Check the labels before picking up an item; plain issues are straight-ahead engineering.
 
+Before starting an issue, assign yourself to it (`gh issue edit <n> --add-assignee <you>`) so parallel work is visible to everyone. Skip issues that already have an assignee — pick an unassigned one instead.
+
 Do not create new labels without human approval — if a third category seems useful, ask the human first rather than inventing one.
 
 When an issue is picked up, link the PR to it (`Fixes #<n>` / `Closes #<n>` in the PR body, or `gh pr create --closes-issue <n>`) so the issue closes automatically when the PR merges. One PR per issue; if a PR only covers part of an issue, say so in the PR body and leave the issue open.
