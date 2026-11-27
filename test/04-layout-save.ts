@@ -132,6 +132,18 @@ check('HUD numbers: plain below 1000, then 1.2K / 1.2M', [999, 1000, 1299, 12345
   check('every path\'s range fits its floors, starting where the way into its town left off',
     PATHS.every((p) => p.lvl[0] <= p.lvl[1] && p.floors >= 1 && pathsInto(p.from).every((q) => q.lvl[1] < p.lvl[0])));
   {
+    // seven tiers (a path's tier is its start town's depth + 1), each one higher-level than the last
+    const byTier = new Map<number, typeof PATHS[number][]>();
+    for (const p of PATHS) { const t = townDepth(p.from) + 1; byTier.set(t, [...(byTier.get(t) ?? []), p]); }
+    const tiers = [...byTier.keys()].sort((x, y) => x - y);
+    check('the map has seven tiers', tiers.join() === '1,2,3,4,5,6,7', tiers.join());
+    check('each tier\'s levels start above where the tier below tops out',
+      tiers.every((t, i) => !i || Math.min(...byTier.get(t)!.map((p) => p.lvl[0])) > Math.max(...byTier.get(tiers[i - 1])!.map((p) => p.lvl[1]))));
+    check('tiers 4 and 5 are thinned out (no more than four paths each)', byTier.get(4)!.length <= 4 && byTier.get(5)!.length <= 4,
+      `${byTier.get(4)!.length} / ${byTier.get(5)!.length}`);
+    check('tier 7 tops out above Lv.40', Math.max(...byTier.get(7)!.map((p) => p.lvl[1])) > 40);
+  }
+  {
     // EXP: ~10 same-level kills per level at Lv.1, ~100 at Lv.99 (vs level-100 enemies), smooth between
     const kills = (lv: number, mob: number) => Math.ceil(expToNext(lv) / mobExp(mob));
     check('Lv.1 takes about 10 kills of level-1 enemies', kills(1, 1) === 10, `${kills(1, 1)}`);

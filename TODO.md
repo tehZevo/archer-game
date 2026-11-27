@@ -1,5 +1,4 @@
 # TODOs
-- Move some maps up from tiers 4 and 5 to thin them out, creating new tiers 6 and 7. The purpose is to add more levels to the game: the new tiers extend the level curve past where tier 5 ends now (each tier higher-level than the last), so mobs and level ranges keep climbing rather than tiers 4-5 being split across their current range.
 - Bug: the tombstone effect doesn't show on player death — you instantly respawn at the current floor (the tombstone/ghost animation is skipped).
 - Spec: never rotate or scale in-game objects, effects, or decor sprites (exceptions: non-skill-icon HUD elements).
 - Dodge roll during held-Z should not have a rush effect.

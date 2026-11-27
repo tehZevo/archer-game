@@ -75,31 +75,33 @@ export const TOWNS: readonly Town[] = [
   { id: 'ashengate', name: 'Ashen Gate Fort' },
 ];
 
-// A town's ways up are its paths in this order, left to right.
+// A town's ways up are its paths in this order, left to right. A path's tier is
+// its start town's depth + 1, and every tier climbs past the last: T1 Lv.1-3,
+// T2 4-8, T3 9-13, T4 14-19, T5 20-26, T6 27-34, T7 35-43.
 export const PATHS: readonly Path[] = [
   { id: 'shore', name: 'Sunlit Shore', from: 'saltwick', to: 'driftwood', floors: 3, lvl: [1, 3], layouts: { stack: 3, open: 2 } },
   { id: 'woods', name: 'Whispering Woods', from: 'driftwood', to: 'mossgate', floors: 5, lvl: [4, 8], layouts: { stack: 5, zigzag: 3, open: 1 } },
   { id: 'caves', name: 'Echoing Caves', from: 'mossgate', to: 'fernwick', floors: 5, lvl: [9, 13], layouts: { stack: 3, zigzag: 5 } },
   { id: 'grotto', name: 'Mushroom Grotto', from: 'fernwick', to: 'sporehollow', floors: 6, lvl: [14, 19], layouts: { stack: 4, zigzag: 3, open: 1 } },
-  { id: 'crystal', name: 'Crystal Caverns', from: 'fernwick', to: 'glimmerdeep', floors: 6, lvl: [14, 19], layouts: { stack: 2, zigzag: 5 } },
-  { id: 'clockwork', name: 'Clockwork Spire', from: 'glimmerdeep', to: 'gearholm', floors: 7, lvl: [20, 26], layouts: { stack: 2, zigzag: 6 } },
+  { id: 'crystal', name: 'Crystal Caverns', from: 'sporehollow', to: 'glimmerdeep', floors: 7, lvl: [20, 26], layouts: { stack: 2, zigzag: 5 } },
+  { id: 'clockwork', name: 'Clockwork Spire', from: 'glimmerdeep', to: 'gearholm', floors: 8, lvl: [27, 34], layouts: { stack: 2, zigzag: 6 } },
   { id: 'riverbank', name: 'Misty Riverbank', from: 'mossgate', to: 'reedmouth', floors: 5, lvl: [9, 13], layouts: { stack: 3, open: 4 } },
   { id: 'ruins', name: 'Sunken Ruins', from: 'reedmouth', to: 'tidewatch', floors: 6, lvl: [14, 19], layouts: { stack: 5, zigzag: 2, open: 2 } },
   { id: 'tidepools', name: 'Tide Pools', from: 'tidewatch', to: 'wrackhaven', floors: 7, lvl: [20, 26], layouts: { stack: 2, open: 5 } },
-  { id: 'mirror', name: 'Mirror Lake', from: 'reedmouth', to: 'stillwater', floors: 6, lvl: [14, 19], layouts: { stack: 2, open: 5 } },
-  { id: 'starfall', name: 'Starfall Observatory', from: 'stillwater', to: 'thistledown', floors: 7, lvl: [20, 26], layouts: { stack: 3, zigzag: 4 } },
+  { id: 'mirror', name: 'Mirror Lake', from: 'wrackhaven', to: 'stillwater', floors: 8, lvl: [27, 34], layouts: { stack: 2, open: 5 } },
+  { id: 'starfall', name: 'Starfall Observatory', from: 'stillwater', to: 'thistledown', floors: 9, lvl: [35, 43], layouts: { stack: 3, zigzag: 4 } },
   { id: 'meadows', name: 'Sunny Meadows', from: 'driftwood', to: 'lanternhollow', floors: 5, lvl: [4, 8], layouts: { stack: 3, open: 5 } },
   { id: 'hills', name: 'Rolling Hills', from: 'lanternhollow', to: 'emberfold', floors: 5, lvl: [9, 13], layouts: { stack: 5, open: 3 } },
   { id: 'crags', name: 'Craggy Mountains', from: 'emberfold', to: 'highcrag', floors: 6, lvl: [14, 19], layouts: { stack: 4, zigzag: 4 } },
   { id: 'sky', name: 'Endless Sky', from: 'highcrag', to: 'cloudharbor', floors: 7, lvl: [20, 26], layouts: { zigzag: 4, open: 3 } },
   { id: 'reef', name: 'Sky Reef', from: 'cloudharbor', to: 'windrest', floors: 8, lvl: [27, 34], layouts: { stack: 2, zigzag: 3, open: 3 } },
-  { id: 'summit', name: 'Frozen Summit', from: 'cloudharbor', to: 'summitlodge', floors: 8, lvl: [27, 34], layouts: { stack: 3, zigzag: 5 } },
-  { id: 'keep', name: 'Old Keep', from: 'emberfold', to: 'hollowmere', floors: 6, lvl: [14, 19], layouts: { stack: 6, zigzag: 2 } },
-  { id: 'chapel', name: 'Chapel Spire', from: 'hollowmere', to: 'bellcourt', floors: 7, lvl: [20, 26], layouts: { stack: 2, zigzag: 6 } },
+  { id: 'summit', name: 'Frozen Summit', from: 'windrest', to: 'summitlodge', floors: 9, lvl: [35, 43], layouts: { stack: 3, zigzag: 5 } },
+  { id: 'keep', name: 'Old Keep', from: 'cloudharbor', to: 'hollowmere', floors: 8, lvl: [27, 34], layouts: { stack: 6, zigzag: 2 } },
+  { id: 'chapel', name: 'Chapel Spire', from: 'hollowmere', to: 'bellcourt', floors: 9, lvl: [35, 43], layouts: { stack: 2, zigzag: 6 } },
   { id: 'swamp', name: 'Murky Swamp', from: 'lanternhollow', to: 'willowmere', floors: 5, lvl: [9, 13], layouts: { stack: 3, open: 4 } },
   { id: 'dreamwood', name: 'Dreamwood', from: 'willowmere', to: 'duskmeadow', floors: 6, lvl: [14, 19], layouts: { stack: 4, zigzag: 2, open: 2 } },
   { id: 'void', name: 'Void Garden', from: 'duskmeadow', to: 'nullhaven', floors: 7, lvl: [20, 26], layouts: { stack: 3, zigzag: 3, open: 3 } },
-  { id: 'wastes', name: 'Ember Wastes', from: 'willowmere', to: 'ashengate', floors: 6, lvl: [14, 19], layouts: { stack: 3, open: 5 } },
+  { id: 'wastes', name: 'Ember Wastes', from: 'nullhaven', to: 'ashengate', floors: 8, lvl: [27, 34], layouts: { stack: 3, open: 5 } },
 ];
 
 const TOWN_BY_ID = new Map(TOWNS.map((t) => [t.id, t]));
