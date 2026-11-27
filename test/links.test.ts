@@ -217,6 +217,20 @@ describe('Skyward Assault', () => {
       expect(player.hang.t).toBeGreaterThan(0);
     });
 
+    it('Bolt Flurry linked off it brings you back down, like Double Shot', () => {
+      learn('ground-q', 'ground-w', 'ab', 's');
+      dummy(130);
+      intoAssaultHover();
+      tap('z');
+      const hoverY = player.y;
+      while (player.hang.t > 0) step(1);
+      step(1);
+      expect(player.linkFrom).toBe('s');
+      step(40);
+      expect(player.onGround).toBe(true);
+      expect(player.y).toBeGreaterThan(hoverY);
+    });
+
     it('Ember Rain waits out the whole hover, then fires', () => {
       learn('ground-q', 'ground-w', 'ab', 'air-e');
       dummy(130);
