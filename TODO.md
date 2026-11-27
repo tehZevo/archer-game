@@ -11,3 +11,4 @@
 - Keep big on-screen text (e.g. Sage prompts and similar banners) visible longer.
 - (art) Create art for the Bubble skill.
 - Set Glide to 0.2 use / 0.1 delay.
+- Make `r` in the skill editor reset all skills (not just the currently selected one).
