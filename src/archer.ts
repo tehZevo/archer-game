@@ -241,7 +241,7 @@ const PRONE = [
   '..ooo.ooooooooooooooooo.',
 ];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'barrage' | 'prone' | 'spin' | 'dive' | 'vanish' | 'fall' | 'roll';
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'prone' | 'spin' | 'dive' | 'vanish' | 'fall' | 'roll';
 
 const RUSH = ['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY];
 // walk: the body sinks a pixel on the long stride and the cape's hem swings
@@ -261,7 +261,6 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   // draw → release → follow-through, picked by time since the shot (shootFrame)
   shoot: [withRows(IDLE, 12, DRAW_BODY), withRows(IDLE, 12, SHOOT_BODY), withRows(IDLE, 12, FOLLOW_BODY)],
   rush: [RUSH, poke(RUSH, RUSH_FLUTTER)],
-  barrage: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, JUMP_LEGS)],
   prone: [PRONE],
   spin: [withRows(withRows(IDLE, 12, SHOOT_BODY), 18, SPIN_LOWER)],
   dive: [DIVE, poke(DIVE, DIVE_FLUTTER)],
@@ -274,7 +273,7 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, barrage: 1, prone: 1, spin: 1, dive: 10, vanish: 20, fall: 7, roll: 12,
+  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, prone: 1, spin: 1, dive: 10, vanish: 20, fall: 7, roll: 12,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;

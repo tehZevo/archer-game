@@ -334,7 +334,9 @@ export function localPose(): Pose {
   // the dive's coil holds the plunge pose; its landing roll slides like a rush
   if (player.cast === 'dive' && player.castT > 0) return player.onGround ? 'rush' : 'dive';
   if (player.skillPose && player.castT > 0) return player.skillPose;
-  if (player.cast === 'shoot' || player.cast === 'rush' || player.cast === 'barrage') return player.cast;
+  if (player.cast === 'rush') return 'rush';
+  // the Piercing Leap / Ember Rain / Skyward Assault casts show the shoot pose too
+  if (player.cast === 'shoot' || player.cast === 'barrage') return 'shoot';
   return player.animState;
 }
 
