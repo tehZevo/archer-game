@@ -123,7 +123,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders' },
   d: { key: 'd', linksInto: ['air-q', 'air-e', 'z', 's'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, learn: true,
-       cd: 0, use: 0.2, delay: 0.4, mp1: 2, dmg1: 0,
+       cd: 0, use: 0.2, delay: 0.1, mp1: 2, dmg1: 0,
        desc: 'Mid-air acrobatic tumble' },
   'ground-q': { key: 'ground-q', linksInto: [...LAUNCHER_LINKS.filter((k) => k !== 'ground-q'), 'z', 's'], keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
        cd: 3, use: 0.6, delay: 0.35, mp1: 6, dmg1: 400, targets1: 6,

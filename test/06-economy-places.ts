@@ -126,6 +126,8 @@ import { JOBS, skillStatus, advanceJob, canAdvance, nextJob, visitSage, seeded, 
   check('a new archer has Double Shot free, Glide not yet', DEFS.d.learn === true && startsLearned('z') && !startsLearned('d'));
   arena(1); player.ranks.d = false; player.sp = 1;
   check('Glide can take SP from Lv.1', skillRows().some((r) => r.key === 'd' && !r.learned && !!r.action) && spendSkill('d') && player.ranks.d === true);
+  check('Glide is a quick 0.2s tumble with a 0.1s recovery',
+    SKILLS.d.use === 0.2 && SKILLS.d.delay === 0.1, `${SKILLS.d.use}/${SKILLS.d.delay}`);
   check('Acrobatics opens at Lv.10', DEFS.ac.minLevel === 10 && !skillRows().some((r) => r.key === 'ac'));
   const onRope = (): void => {
     const c = [...game.floor.ropes, ...game.floor.ladders][0];
