@@ -41,6 +41,13 @@ export function addChat(id: string, name: string, text: string, col: string, now
   chat.bubbles.set(id, { text, at: now });
 }
 
+/** A note from the game to you, in the log only (no speaker, no bubble). */
+export function addNote(text: string, col: string, now: number): void {
+  if (!text) return;
+  chat.log.push({ id: '', name: '', text, col, at: now });
+  if (chat.log.length > LOG_KEEP) chat.log.splice(0, chat.log.length - LOG_KEEP);
+}
+
 /** The bubble over a sender's head right now, as wrapped lines (null once it's expired). */
 export function bubbleFor(id: string, now: number): string[] | null {
   const b = chat.bubbles.get(id);
