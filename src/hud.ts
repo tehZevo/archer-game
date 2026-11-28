@@ -1,6 +1,8 @@
 import { CHEER, cheerLeftMs, minutes } from './cheer';
 import { shop, trainer } from './economy';
 import { petShop } from './pets';
+import { chairShop } from './chairs';
+import { drawChairShop } from './chairdraw';
 import { drawPetShop } from './petdraw';
 import { confirmUi, drawConfirm } from './confirm';
 import { deathUi, drawDeath } from './deathui';
@@ -256,6 +258,7 @@ function drawOverlays(w: number, h: number): void {
   if (shop.open) { drawShop(); return; }
   if (trainer.open) { drawTrainer(); return; }
   if (petShop.open) { drawPetShop(); return; }
+  if (chairShop.open) { drawChairShop(); return; }
   if (stylist.open) { drawStylist(w, h); return; }
   if (board.open) { drawBoard(); return; }
   if (linkHelp.open) { drawLinkHelp(); return; }
@@ -281,7 +284,7 @@ function drawHUDItems(): void {
   drawMinimap(); // under the skill bar
   const ey = drawStatusEffects(pad, drawBottomBars(pad));
   drawChatLog(ey);
-  if (dev.open || game.pause || shop.open || trainer.open || petShop.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
+  if (dev.open || game.pause || shop.open || trainer.open || petShop.open || chairShop.open || stylist.open || board.open || confirmUi.open) hudShadow(false); // full-screen panels have their own backdrops
   drawOverlays(w, h);
 }
 

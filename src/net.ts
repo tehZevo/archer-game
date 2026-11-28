@@ -10,6 +10,7 @@ import { cleanName, clearShots, myName, queueShot, tintFor, type ShotMsg } from 
 import { addChat, addNote, cleanChat, clearBubbles, SELF } from './chat';
 import { cheered, cheersLeft, cheerTarget, CHEER, minutes, nextCheerMs, spendCheer } from './cheer';
 import { cleanLook, myLook, watchLook, type Look } from './look';
+import { chair, CHAIR_LIST, type ChairKind } from './chairs';
 
 /** Players per channel; a full channel spills into the next one. */
 export const MAX_PER_CHANNEL = 20;
@@ -66,14 +67,16 @@ export const roster = {
   names: new Map<string, string>(),
   /** How each player looks (absent for players on older versions). */
   looks: new Map<string, Look>(),
+  /** The chair each player carries, shown under them when they sit (absent: none sent). */
+  chairs: new Map<string, ChairKind>(),
   /** Drop a player who left (their bubbles and emotes too). */
   forget(id: string): void {
-    roster.tracks.delete(id); roster.names.delete(id); roster.looks.delete(id);
+    roster.tracks.delete(id); roster.names.delete(id); roster.looks.delete(id); roster.chairs.delete(id);
     clearBubbles(id); clearEmotes(id);
   },
   /** Empty the roster when we change rooms. */
   clear(): void {
-    roster.tracks.clear(); roster.names.clear(); roster.looks.clear();
+    roster.tracks.clear(); roster.names.clear(); roster.looks.clear(); roster.chairs.clear();
     clearShots(); clearBubbles(); clearEmotes(); resetBoost();
   },
 };
@@ -153,8 +156,12 @@ function postLobby(): void {
   const key = `${at.p}:${at.c}`;
   if (key !== posted && lobbyAt) { posted = key; lobbyAt.set(at); }
 }
-/** Our side of a name tag: set once, and again whenever your look changes. */
-interface Who { n: string; l?: Look }
+/** Our side of a name tag: set once, and again whenever your look or chair changes. */
+interface Who { n: string; l?: Look; c?: ChairKind | null }
+/** Our name tag as it stands now. */
+const whoNow = (): Who => ({ n: myName(), l: myLook(), c: chair.kind });
+/** The chair our name tag last carried (re-sent when you buy another). */
+let sentChair: ChairKind | null = null;
 /** What we can send to the room. */
 interface Sends {
   /** kill counts, in batches; each peer's waves speed up (see boost.ts) */
@@ -192,6 +199,7 @@ function receive(id: string, p: Packet): void {
 function meet(id: string, val: Who): void {
   roster.names.set(id, cleanName(val.n));
   if (val.l) roster.looks.set(id, cleanLook(val.l)); else roster.looks.delete(id);
+  if (val.c && CHAIR_LIST.includes(val.c)) roster.chairs.set(id, val.c); else roster.chairs.delete(id);
 }
 
 /** Send to the room, if anyone's there to hear it. */
@@ -207,13 +215,14 @@ function makeStates(room: Room): Pick<Link, 'pos' | 'who'> {
     if (meta.removed || !val) roster.tracks.delete(meta.userId);
     else receive(meta.userId, val);
   });
-  const who = room.makeUserState<Who>('who', { n: myName(), l: myLook() });
+  const who = room.makeUserState<Who>('who', whoNow());
+  sentChair = chair.kind;
   who.onChange((val, meta) => {
     if (meta.self) return;
-    if (meta.removed || !val) { roster.names.delete(meta.userId); roster.looks.delete(meta.userId); }
+    if (meta.removed || !val) { roster.names.delete(meta.userId); roster.looks.delete(meta.userId); roster.chairs.delete(meta.userId); }
     else meet(meta.userId, val);
   });
-  watchLook((l) => who.set({ n: myName(), l }));
+  watchLook((l) => who.set({ ...whoNow(), l }));
   return { pos, who };
 }
 
@@ -329,6 +338,7 @@ export function netStatus(): Record<string, unknown> {
 
 /** The pose peers should see: an active skill animation wins over movement. */
 export function localPose(): Pose {
+  if (chair.sitting) return 'sit';
   if (player.rolling) return 'roll';
   if (player.diving) return 'dive';
   // the dive's coil holds the plunge pose; its landing roll slides like a rush
@@ -347,6 +357,7 @@ export function sync(): void {
   if (!net.started || !canConnect()) return;
   if (!link || placeKey(game.floor.place) !== net.place) connect(net.channel);
   postLobby();
+  if (link && chair.kind !== sentChair) { sentChair = chair.kind; link.who.set(whoNow()); }
   const p = rec.tick(performance.now(), player.x, player.y, player.vx, player.vy, localPose(), player.face);
   if (p) link?.pos.set(p);
   const k = takeBatch(performance.now());

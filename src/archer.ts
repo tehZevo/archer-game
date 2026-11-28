@@ -65,6 +65,10 @@ const WALK_LEGS = [
   ['.....olloollo...', '.....ollolloo...', '.....ollo.llo...', '.....obbo.obbo..', '....obbbo.obbbo.', '....oooo..oooo..'],
 ];
 
+/** Sitting on a chair (rows 18-23): thighs out level along the seat, the
+ *  shins hanging down off its front edge (drawn lifted onto the seat, see chairs.ts). */
+const SIT_LEGS = ['.....ollllllloo.', '.....olllllllllo', '......ooooooollo', '............ollo', '...........obbbo', '...........oooo.'];
+
 const JUMP_LEGS = ['.....ollllo.....', '....ollo.ollo...', '...ollo...obbo..', '...obbo...obbbo.', '...obbbo..oooo..', '...oooo.........'];
 
 // Drawing the bow: arm out front, bow vertical ahead, string pulled back.
@@ -237,7 +241,7 @@ const PRONE = [
   '..ooo.ooooooooooooooooo.',
 ];
 
-export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'prone' | 'spin' | 'dive' | 'fall' | 'roll';
+export type ArcherPose = 'idle' | 'walk' | 'jump' | 'climb' | 'shoot' | 'rush' | 'prone' | 'spin' | 'dive' | 'fall' | 'roll' | 'sit';
 
 const RUSH = ['................', '................', ...HEAD.slice(0, 10), ...RUSH_BODY];
 // walk: the body sinks a pixel on the long stride and the cape's hem swings
@@ -264,11 +268,13 @@ export const GRIDS: Record<ArcherPose, string[][]> = {
   fall: [poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE), poke(withRows(IDLE, 18, FALL_LEGS), FALL_CAPE2)],
   // rolling backward (away from your facing): the ball turns anticlockwise
   roll: [ROLL, quarterTurn(ROLL), quarterTurn(quarterTurn(ROLL)), quarterTurn(quarterTurn(quarterTurn(ROLL)))],
+  // seated: breathing slowly, like standing idle
+  sit: [withRows(IDLE, 18, SIT_LEGS), sink(withRows(IDLE, 18, SIT_LEGS))],
 };
 
 /** Frames per second of each pose's cycle. */
 export const POSE_FPS: Record<ArcherPose, number> = {
-  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, prone: 1, spin: 1, dive: 10, fall: 7, roll: 12,
+  idle: 2.4, walk: 9, jump: 1, climb: 4, shoot: 1, rush: 8, prone: 1, spin: 1, dive: 10, fall: 7, roll: 12, sit: 1.2,
 };
 
 export const ARCHER_W = 16, ARCHER_H = 24;

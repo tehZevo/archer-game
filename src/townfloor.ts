@@ -67,6 +67,7 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
     npc('board', at(5) + T / 2, G); npc('stylist', at(30) - T / 2, G); npc('pets', at(18), G);
     deco('house', at(18) + T / 2, G); deco('lamp', at(6) - T / 2, G); deco('lamp', at(31) + T / 2, G);
     deco('bench', at(24), G); deco('crate', at(12) + 4, G);
+    npc('chairs', at(13), west.top);
     if (plan === 'loft') return { x: at(14), y: loftTop };
     // the plaza's own 2nd storey: a balcony over the west deck's left columns,
     // and the way down on the east deck between its ladder and rope
@@ -86,6 +87,7 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
     deco('awning', at(10) + 4, left.top); deco('awning', at(30) - 4, right.top, true);
     deco('crate', at(13) - 4, left.top); deco('barrel', at(27) + 4, right.top);
     deco('lamp', at(17) + 4, bridge.top); deco('lamp', at(23) - 4, bridge.top);
+    npc('chairs', at(22), G);
     deco('well', at(19) + T / 2, G); deco('house', at(10) + 4, left.top); deco('house', at(30) - 4, right.top, true);
     deco('flowers', at(16) - 2, G); deco('flowers', at(26) + 2, G);
     return { x: at(19) + T / 2, y: bridge.top };
@@ -98,10 +100,14 @@ function buildPlan(plan: TownPlan, k: TownKit): { x: number; y: number } {
   npc('board', at(7) + 4, G); npc('stylist', at(13), G); npc('pets', at(28) + 4, ledge.top); npc('sage', at(22) - 4, high.top);
   deco('awning', at(7) + 4, low.top); deco('flowers', at(24) - 2, high.top); deco('flowers', at(30), ledge.top);
   deco('tower', at(22) + T / 2, high.top); deco('house', at(10), low.top);
+  npc('chairs', at(22) + 4, G);
   deco('lamp', at(20), G); deco('bench', at(23) + 4, G); deco('fence', at(30) - 4, G); deco('flowers', at(12) - 4, low.top);
   return { x: at(22), y: high.top };
 }
 
+
+/** The chair merchant keeps shop in every third town, starting from the second. */
+export const hasChairs = (town: string): boolean => townIndex(town) % 3 === 1;
 
 /** Columns across the world, and the training dummy's perch against the right wall. */
 const COLS = WORLD.w / TILE, PERCH_W = 3;
@@ -133,8 +139,10 @@ export function townFloor(town: string, rng: Rng): Floor {
   const ladder = (col: number, top: number, bottom: number): void => { ladders.push({ x: at(col), y1: top, y2: bottom }); };
   const rope = (col: number, top: number, bottom: number): void => { ropes.push({ x: at(col), y1: top, y2: bottom }); };
   const npc = (kind: Npc['kind'], x: number, y: number): void => {
-    const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS', pets: 'PETS', sage: 'SAGE' }[kind];
-    if (kind !== 'trainer' || townDepth(town) >= 2) npcs.push({ x, y, kind, name }); // trainers from the third town up
+    const name = { shop: 'SHOP', trainer: 'TRAINER', stylist: 'STYLIST', board: 'QUESTS', pets: 'PETS', sage: 'SAGE', chairs: 'CHAIRS' }[kind];
+    if (kind === 'trainer' && townDepth(town) < 2) return; // trainers from the third town up
+    if (kind === 'chairs' && !hasChairs(town)) return;
+    npcs.push({ x, y, kind, name });
   };
   const deco = (kind: DecorKind, x: number, y: number, flip = false): void => { decor.push({ x, y, kind, ...(flip ? { flip } : {}) }); };
 

@@ -21,6 +21,8 @@ import { BOSS, windingUp } from './boss';
 import { text, textWidth } from './font';
 import { bubbleFor, SELF } from './chat';
 import { STATUS, stacksOf } from './status';
+import { chair, type ChairKind } from './chairs';
+import { drawChair, sitLift } from './chairdraw';
 import type { Mob } from './types';
 
 /* Everyone in the world: enemies (and their corpses), the archer sprite,
@@ -188,6 +190,14 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   ctx.drawImage(img, -img.width / 2, -ARCHER_H / 2 - img.height / 2);
   ctx.restore();
 }
+/** Sitting: the chair under an archer standing at (x, feet), and where her
+ *  feet are drawn, lifted onto its seat. Any other pose: just her feet. */
+function seated(pose: Pose, kind: ChairKind, x: number, feet: number, face: number): number {
+  if (pose !== 'sit') return feet;
+  drawChair(kind, x, feet, face);
+  return feet - sitLift(kind);
+}
+
 /** Talon Dive's colour: its afterimages wash yellow. */
 const DIVE_TINT = '#ffe14d';
 
@@ -230,7 +240,8 @@ export function drawGhosts(): void {
     // is washed in their colour instead
     const look = roster.looks.get(id);
     if (g.pose === 'dive') drawDiveTrail(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, now / 1000, 0.85, look ? undefined : col);
-    drawArcher(look ?? DEFAULT_LOOK, g.x, g.y + 24, g.face, g.pose, now / 1000, 0.85, g.since,
+    const feet = seated(g.pose, roster.chairs.get(id) ?? 'stool', g.x, g.y + 24, g.face);
+    drawArcher(look ?? DEFAULT_LOOK, g.x, feet, g.face, g.pose, now / 1000, 0.85, g.since,
       look ? undefined : col, false);
     const name = roster.names.get(id);
     if (name) {
@@ -299,8 +310,9 @@ export function drawPlayer(): void {
   if (player.rush.t > 0 && player.rush.look) {
     drawLoop(player.rush.look, player.x, player.y + player.h, performance.now() / 1000, 16, Math.sign(player.vx) || player.face);
   }
-  drawArcher(myLook(), player.x, player.y + player.h, player.face, localPose(), performance.now() / 1000,
-    invulnAlpha(), player.castTotal - player.castT);
+  const pose = localPose();
+  drawArcher(myLook(), player.x, seated(pose, chair.kind ?? 'stool', player.x, player.y + player.h, player.face), player.face, pose,
+    performance.now() / 1000, invulnAlpha(), player.castTotal - player.castT);
   // Bubble: the shield bubble surrounds her for as long as the passive is learned
   if (isLearned('bu')) drawLoop('bubble', player.x, player.y + player.h, performance.now() / 1000, 6);
   drawBubble(SELF, player.x, player.y + player.h - ARCHER_H - 2, performance.now()); // over the sprite's head
