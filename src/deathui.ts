@@ -3,7 +3,7 @@ import { game } from './state';
 import { pressed } from './input';
 import { text } from './font';
 import { dev } from './dev';
-import { placeName } from './world';
+import { lastTown, townById } from './world';
 import { revive, reviveInPlace } from './combat';
 
 /* ============================================================
@@ -43,7 +43,7 @@ export function drawDeath(): void {
   const { w, h } = game.view;
   ctx.save();
   ctx.fillStyle = '#050a14e0'; ctx.fillRect(0, 0, w, h);
-  const rows: string[] = [`Return to ${placeName(game.floor.place)}`];
+  const rows: string[] = [`Return to ${townById(lastTown(game.floor.place)).name}`];
   if (dev.on) rows.push('Revive in place');
   const bw = 260, bh = 34 + rows.length * 20, x = (w - bw) / 2, y = (h - bh) / 2;
   ctx.fillStyle = '#101c30'; ctx.fillRect(x, y, bw, bh);
