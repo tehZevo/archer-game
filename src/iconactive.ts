@@ -120,7 +120,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     'DDDDDDDDDD',
     '.D.D..D.D.',
   ],
-  // Meteor Dive: an arrow diving down-right, with a speed streak
+  // Talon Dive: an arrow diving down-right, with a speed streak
   'air-q': [
     'yy........',
     'yyy....YY.',

@@ -15,7 +15,7 @@ export function clearRushStrike(): void {
   rushStrike = null;
 }
 
-/** Start a slide (or the Meteor Dive's plunge) that scoops up enemies for `t` seconds. */
+/** Start a slide (or the Talon Dive's plunge) that scoops up enemies for `t` seconds. */
 export function startSlide(t: number, goal = 0, look: RushLook | null = null, key: SkillKey = 'ground-q'): void {
   player.rush.t = t;
   player.rush.dist = 0;
@@ -154,7 +154,7 @@ function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void
   });
 }
 
-/** The Meteor Dive's plunge moved `d` px (on the fixed step, after the move).
+/** The Talon Dive's plunge moved `d` px (on the fixed step, after the move).
  *  The dive covers P.RUSH_DIST in all, Rush Toss's own distance: still in
  *  the air as it runs out, it eases off over the last P.DIVE_EASE px, then
  *  the plunge ends and you just drop, with no roll and no toss. */
@@ -170,7 +170,7 @@ export function travelDive(d: number): void {
   if (left < P.DIVE_EASE) { player.vx *= 0.8; player.vy *= 0.8; }
 }
 
-/** The Meteor Dive touched down: roll out of it with no pause, a slide of its
+/** The Talon Dive touched down: roll out of it with no pause, a slide of its
  *  own (DIVE_ROLL_*, tuned apart from Rush Toss's) that scoops up and strikes
  *  like the rush, for whatever's left of the dive's P.RUSH_DIST. Its links
  *  fire off the landing roll's strike, not off the coil. */

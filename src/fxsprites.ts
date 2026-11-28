@@ -376,7 +376,7 @@ function bubbleAnim(): FxSheet {
 }
 
 /** Rush Toss: a spiral horn of light erupting from the ground, dust at its base. Origin at the base.
- *  `hue`/`rim` colour the horn and its wings (the Meteor Dive's landing is yellow). */
+ *  `hue`/`rim` colour the horn and its wings (the Talon Dive's landing is yellow). */
 function rushAnim(hue: RampName = 'cyan', rim: RampName = 'teal'): FxSheet {
   const W = 30, H = 52, bx = W / 2, by = H - 4;
   return anim(W, H, bx, by, 8, (L, f) => {
@@ -777,39 +777,41 @@ function climbRiseAnim(): FxSheet {
   }, 0.35);
 }
 
-/** Meteor Dive windup: three yellow arrows streak along curved paths diagonally
- *  down and forward, leading the dive. Faces right; origin at the player's middle. */
+/** Talon Dive: gold crescents flare open behind you like a single wingbeat
+ *  as you coil, then three thick parallel talon streaks rake down and forward
+ *  along the dive, each tapering to a white-hot point, with glints scattering
+ *  off them. One sprite for the coil and the plunge, left where the dive
+ *  starts (you plunge down through it). Faces right; origin at your middle. */
 function diveWindupAnim(): FxSheet {
-  const W = 56, H = 48, ox = 12, oy = 10, n = 6;
-  // each arrow bows up, then sweeps down-right: a quadratic curve start -> end
-  const paths = [
-    { x0: -10, y0: -8, cx: 14, cy: -10, x1: 34, y1: 30 },
-    { x0: -6, y0: 2, cx: 16, cy: 0, x1: 40, y1: 34 },
-    { x0: -12, y0: 10, cx: 8, cy: 10, x1: 28, y1: 37 },
-  ];
-  const at = (p: typeof paths[number], t: number): [number, number] => {
-    const u = 1 - t;
-    return [ox + u * u * p.x0 + 2 * u * t * p.cx + t * t * p.x1, oy + u * u * p.y0 + 2 * u * t * p.cy + t * t * p.y1];
-  };
-  return anim(W, H, ox, oy, n, (L, f) => {
-    const fade = 1 - f / n;
-    paths.forEach((p, i) => {
-      const head = Math.min(1, 0.3 + f * 0.16 + i * 0.05), tail = Math.max(0, head - 0.4);
-      // the shaft: short tapered segments along the curve, brightest at the head
-      const steps = 6;
-      for (let k = 0; k < steps; k++) {
-        const t0 = tail + (head - tail) * (k / steps), t1 = tail + (head - tail) * ((k + 1) / steps);
-        const [ax, ay] = at(p, t0), [bx, by] = at(p, t1);
-        L.line('yellow', ax, ay, bx, by, 0.4 + 0.15 * k, 0.55 + 0.15 * k, (0.55 + 0.08 * k) * fade);
-      }
-      // the arrowhead: two barbs swept back from the tip along the flight line
-      const [hx, hy] = at(p, head), [px, py] = at(p, Math.max(0, head - 0.06));
-      const dx = hx - px, dy = hy - py, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
-      for (const side of [-1, 1]) {
-        L.line('yellow', hx, hy, hx - ux * 4 - uy * 3 * side, hy - uy * 4 + ux * 3 * side, 1.1, 0.5, 1.05 * fade);
-      }
-      L.spark('yellow', hx, hy, 0.9 * fade, f < 2);
-    });
+  const W = 92, H = 96, OX = 26, OY = 18, n = 8;
+  // the dive's line, down and forward (DIVE_VX : DIVE_VY), and how far it goes
+  const len = Math.hypot(P.DIVE_VX, P.DIVE_VY), UX = P.DIVE_VX / len, UY = P.DIVE_VY / len, D = P.RUSH_DIST;
+  const along = (d: number, side = 0): [number, number] => [OX + UX * d - UY * side, OY + UY * d + UX * side];
+  return anim(W, H, OX, OY, n, (L, f) => {
+    const R = rng(461 + f);
+    // the coil: the wingbeat crescents opening behind you
+    if (f < 3) {
+      const open = 0.6 + f * 0.35;
+      arc(L, 'yellow', OX - 2, OY, 10 * open, 12 * open, 3.0, 1.3, Math.PI * 0.55, Math.PI * 1.25);
+      arc(L, 'gold', OX - 2, OY, 15 * open, 17 * open, 2.2, 1.0, Math.PI * 0.6, Math.PI * 1.2);
+      L.spark('gold', OX + 2, OY - 2, 1.2, true);
+      return;
+    }
+    // the plunge: three talon streaks racing down the line, the outer two a
+    // little behind the middle one
+    const k = (f - 3) / (n - 4), fade = f < 6 ? 1 : 1 - (f - 5) / 3;
+    const head = Math.min(D + 8, 20 + k * 76), tail = Math.max(-4, head - 50);
+    for (const s of [-1, 0, 1]) {
+      const lag = Math.abs(s) * 6, [x0, y0] = along(tail - lag, s * 9), [x1, y1] = along(head - lag, s * 9);
+      L.line('yellow', x0, y0, x1, y1, 0.6, 4.8 - Math.abs(s) * 0.8, 1.05 * fade); // the streak
+      L.line('yellow', x0, y0, x1, y1, 0.3, 2.0, 1.45 * fade);                     // its white-hot core
+      const [hx, hy] = along(head - lag + 5, s * 9);
+      L.line('gold', x1, y1, hx, hy, 3.0, 0.4, 1.35 * fade);                       // the talon's point
+    }
+    for (let i = 0; i < 5; i++) {
+      const [x, y] = along(tail + R() * (head - tail), (R() * 2 - 1) * 16);
+      L.spark(i % 2 ? 'gold' : 'yellow', x, y, 0.95 * fade, i < 2);
+    }
   }, 0.4);
 }
 

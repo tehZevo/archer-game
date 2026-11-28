@@ -15,13 +15,13 @@ export const delayTime = (kind: SkillKey): number => (SKILLS[kind].delay ?? P.DE
  *  rather than only locking out movement input. */
 export const FREEZE_CAST = new Set<SkillKey>(['r']);
 
-/** Whether a rush (or the Meteor Dive that borrows its pose) is still in its
+/** Whether a rush (or the Talon Dive that borrows its pose) is still in its
  *  slide-and-strike phase, holding back links pressed during it. This is a
  *  gameplay window, not the animation: the rush pose plays on for the whole
  *  use time, but a link fires once the strike has landed. */
 export const rushHolding = (): boolean => {
   if (player.castT <= 0) return false;
-  // the Meteor Dive holds them through the coil, the plunge and the landing
+  // the Talon Dive holds them through the coil, the plunge and the landing
   // roll: a follow-up pressed during it fires once the roll's strike lands
   if (player.cast === 'dive') return player.diving || player.rush.t > 0 || !player.onGround;
   return player.cast === 'rush' && player.castTotal - player.castT < P.RUSH_HOLD;
@@ -39,7 +39,7 @@ export const grabCancels = (): boolean =>
   player.casting.useT <= 0 || (player.casting.key !== null && GRAB_THROUGH.has(player.casting.key));
 
 /** Keys with an air form that is its own skill (its own row, rank and
- *  cooldown): Q (Meteor Dive), W (Cyclone Sweep), E (Ember Rain). */
+ *  cooldown): Q (Talon Dive), W (Cyclone Sweep), E (Ember Rain). */
 export const AIR_FORM: Partial<Record<SkillKey, SkillKey>> = { 'ground-q': 'air-q', 'ground-w': 'air-w', 'ground-e': 'air-e' };
 
 /** The cooldown slot a key uses right now: its air form's ("E.air") in the

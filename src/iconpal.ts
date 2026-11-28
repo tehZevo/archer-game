@@ -18,7 +18,7 @@ export const PAL: Record<string, string> = {
   s: '#f2d0a9', // skin (boot cuff)
   b: '#7a5232', // boot leather
   // skill colours: each attack reads by its hue (effects use the same, fxsprites.ts)
-  y: '#ffe14d', Y: '#d9a400', // Meteor Dive yellow
+  y: '#ffe14d', Y: '#d9a400', // Talon Dive yellow
   P: '#9b5cff', D: '#4a2390', // Piercing Leap / Trefoil Tempest purple
   k: '#ff8ad8', // Trefoil Tempest pink
   i: '#bfeeff', I: '#6cc8f5', // Skyward Assault light blue

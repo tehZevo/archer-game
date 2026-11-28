@@ -34,7 +34,7 @@ interface Fire { linked: boolean; chained: boolean }
  */
 export function cast(key: SkillKey, chained = false): void {
   const airborne = !player.onGround && !player.climb;
-  // In the air the key fires its own skill (Meteor Dive, Cyclone Sweep, Plunging
+  // In the air the key fires its own skill (Talon Dive, Cyclone Sweep, Plunging
   // Volley), with its own rank, MP cost and use time. Skyward Assault is W's
   // ground-only upgrade: W in the air is always Cyclone Sweep.
   const airKey = airborne ? AIR_FORM[key] : undefined;
@@ -42,7 +42,7 @@ export function cast(key: SkillKey, chained = false): void {
   if (!isLearned(kind)) return;
   // no Glide out of a dodge roll: the roll is its own evasive move
   if (kind === 'd' && player.rolling) return;
-  // Meteor Dive, Cyclone Sweep and Ember Rain want you properly airborne:
+  // Talon Dive, Cyclone Sweep and Ember Rain want you properly airborne:
   // at least ~2/3 of a full jump's peak above the platform under your feet,
   // not the map's ground slab (a high deck is as good a launch pad).
   if (airKey && heightBelow() < AIR_MIN_H) return;

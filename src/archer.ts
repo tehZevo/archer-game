@@ -135,7 +135,7 @@ const SPIN_LOWER = [
   '................',
 ];
 
-// Meteor Dive: plunging head-first, crown leading and face to the ground,
+// Talon Dive: plunging head-first, crown leading and face to the ground,
 // legs trailing, the cape along the back and the bow held down under the
 // chin. A bigger frame (30x21), centred on the body's middle like every
 // frame; the second flutters the feet.

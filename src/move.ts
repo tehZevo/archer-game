@@ -136,7 +136,7 @@ function walk(dt: number, locked: boolean): void {
   player.x = clamp(player.x, player.w / 2, WORLD.w - player.w / 2);
   player.y = clamp(player.y, 0, WORLD.h - player.h);
   collideGround(player, prevFeet, prevX);
-  // a Meteor Dive counts its diagonal travel; touching down rolls into the rush this same frame
+  // a Talon Dive counts its diagonal travel; touching down rolls into the rush this same frame
   if (player.diving && !player.rolling) travelDive(Math.hypot(player.x - prevX, player.y + player.h - prevFeet));
   landDive();
   // grab a rope/ladder first, so a rope hanging from the platform you're
