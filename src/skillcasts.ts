@@ -88,14 +88,15 @@ function glide(): void {
   game.fx.push({ type: 'spirit', x: player.x + dir * 10, y: player.y + player.h / 2, t: 0.3, face: -dir });
 }
 
-/** Meteor Dive (Q's air form): plunge diagonally down, carrying the enemies
+/** Talon Dive (Q's air form): plunge diagonally down, carrying the enemies
  *  under and in front of you, and roll into the ground rush on landing
  *  (see landDive). */
 function airDive(r: SkillRank): void {
   endHover(); // the dive's own momentum takes over at once, no stuck dive pose
   sfx.meteorDive();
-  // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP, the yellow
-  // arrows leading the way, and the pose covers the coil as well as the plunge.
+  // The windup is the dive's coil: she hangs frozen for DIVE_WINDUP while the
+  // golden talons flare, then rake down ahead of her (one sprite, coil and
+  // plunge), and the pose covers the coil as well as the plunge.
   pose('dive', 'air-q');
   player.vx = player.vy = 0;
   game.fx.push({ type: 'diveWindup', x: player.x, y: player.y + player.h / 2, t: FX_DUR.diveWindup, face: player.face });

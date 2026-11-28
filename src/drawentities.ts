@@ -188,10 +188,10 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   ctx.drawImage(img, -img.width / 2, -ARCHER_H / 2 - img.height / 2);
   ctx.restore();
 }
-/** Meteor Dive's colour: its afterimages wash yellow. */
+/** Talon Dive's colour: its afterimages wash yellow. */
 const DIVE_TINT = '#ffe14d';
 
-/** Afterimages trailing a Meteor Dive, back along the line of the dive. */
+/** Afterimages trailing a Talon Dive, back along the line of the dive. */
 function drawDiveTrail(look: Look, x: number, feet: number, face: number, t: number, alpha: number, tint?: string): void {
   const len = Math.hypot(P.DIVE_VX, P.DIVE_VY), ux = (face * P.DIVE_VX) / len, uy = P.DIVE_VY / len;
   for (const [d, a] of [[14, 0.3], [7, 0.5]] as const) drawArcher(look, x - ux * d, feet - uy * d, face, 'dive', t, alpha * a, undefined, tint);

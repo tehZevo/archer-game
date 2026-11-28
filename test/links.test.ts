@@ -115,7 +115,7 @@ describe('Electric Blitz', () => {
     expect(player.castT).toBeGreaterThan(0.3);
   });
 
-  it('Meteor Dive links into it once the landing rush\'s use time ends', () => {
+  it('Talon Dive links into it once the landing rush\'s use time ends', () => {
     jump();
     tap('q');
     step(10); // the windup and the plunge, as the landing rush starts
@@ -249,7 +249,7 @@ describe('Skyward Assault', () => {
       expect(player.linkFrom).toBe('air-e');
     });
 
-    it('Meteor Dive waits out the whole hover, then fires', () => {
+    it('Talon Dive waits out the whole hover, then fires', () => {
       learn('ground-q', 'ground-w', 'ab', 'air-q');
       dummy(130);
       intoAssaultHover();
@@ -318,9 +318,9 @@ describe('Skyward Assault', () => {
 });
 
 describe('Trefoil Tempest', () => {
-  it('links into Meteor Dive, which fires out of the storm as it ends', () => {
+  it('links into Talon Dive, which fires out of the storm as it ends', () => {
     learn('r', 'ground-q', 'air-q');
-    jump(7); // airborne, where Q is the Meteor Dive
+    jump(7); // airborne, where Q is the Talon Dive
     tap('r');
     expect(linkable('air-q')).toBe(true);
     expect(player.cast).toBe('shoot');
@@ -380,7 +380,7 @@ describe('more links', () => {
     expect(player.cast).toBe('jump');
   });
 
-  it('Glide links into Meteor Dive, which fires as the Glide ends', () => {
+  it('Glide links into Talon Dive, which fires as the Glide ends', () => {
     learn('ground-q', 'air-q');
     jump(4);
     tap('d');

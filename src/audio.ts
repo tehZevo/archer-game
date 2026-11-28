@@ -74,7 +74,7 @@ export const sfx = {
     osc({ type: 'sawtooth', f: 1400, to: 400, dur: 0.18, vol: 0.14, filter: { type: 'highpass', f: 800 } });
     noise({ dur: 0.12, vol: 0.2, filter: { type: 'highpass', f: 4000 } });
   },
-  /** Meteor Dive: a falling whistle that lands with a weight. */
+  /** Talon Dive: a falling whistle that lands with a weight. */
   meteorDive: (): void => {
     osc({ type: 'sawtooth', f: 900, to: 200, dur: 0.3, vol: 0.18, filter: { type: 'lowpass', f: 3000 } });
     noise({ dur: 0.25, vol: 0.2, filter: { type: 'bandpass', f: 3000, to: 600, q: 2 } });

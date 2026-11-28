@@ -57,7 +57,7 @@ export const P = {
   RUSH_HOLD: 0.34,    // s a rush's slide and strike: movement stays locked through it (links off it wait out the whole use time)
   BLITZ_SLIDE_V: 420,  // px/s (a faster, longer rush than Rush Toss)
   BLITZ_DIST: 96,      // px the blitz travels
-  // Meteor Dive: Q's air form. A diagonal plunge that carries enemies with you.
+  // Talon Dive: Q's air form. A diagonal plunge that carries enemies with you.
   DIVE_WINDUP: 0.1,    // s she coils before the plunge starts (the windup)
   DIVE_VX: 260,        // px/s forward
   DIVE_VY: 420,        // px/s down
@@ -115,7 +115,7 @@ export const TILE = 16;
    Five active buttons. The main attack (Z) is available from Lv.1 and a new
    skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
 /** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Ember Rain, the
- *  Meteor Dive's landing) links into: the link skills, the Q slot (Meteor
+ *  Talon Dive's landing) links into: the link skills, the Q slot (Talon
  *  Dive in the air) and W's air form, the Cyclone Sweep. */
 const LAUNCHER_LINKS: SkillKey[] = ['ground-w', 'ab', 'ground-q', 'eb', 'air-q', 'air-w'];
 
@@ -143,9 +143,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        desc: 'Ground: spikes erupt around you, launching enemies ahead' },
   // The air forms of Q, W and E: their own rows and unlock levels, each with
   // no cooldown (use time only) and chaining into its ground form.
-  'air-q': { key: 'air-q', linksInto: [...LAUNCHER_LINKS, 'd', 'ground-e', 'z', 's'], name: 'Meteor Dive', tag: 'Aerial', job: 3, minLevel: 30,
+  'air-q': { key: 'air-q', linksInto: [...LAUNCHER_LINKS, 'd', 'ground-e', 'z', 's'], name: 'Talon Dive', tag: 'Aerial', job: 3, minLevel: 30,
        cd: 0, use: 0.5, delay: 0.5, mp1: 160, dmg1: 400, hits1: 1, requires: 'ground-q',
-       desc: 'Mid-air Q: plunge down, then roll into the ground rush' },
+       desc: 'Mid-air Q: rake down on golden talons, then roll into the ground rush' },
   'air-w': { key: 'air-w', linksInto: ['d', 'air-e', 'z', 's'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
        cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 280, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
        desc: 'Mid-air W: a 360-degree sweep around you' },
@@ -322,7 +322,7 @@ export const FX_DUR: Record<Fx['type'], number> = {
   muzzle: 0.18, hit: 0.24, crit: 0.28, rush: 0.4, swoosh: 0.2,
   rain: 0.4, rainHit: 0.24, stunHit: 0.3, spirit: 0.3,
   skySwoosh: 0.2, diveHit: 0.24, spikeHit: 0.24, tempestHit: 0.24, skyHit: 0.24, spinHit: 0.24,
-  emberHalo: 0.4, emberFan: 0.4, emberFlare: 0.3, burning: 0.5, climbRise: 0.3, diveWindup: 0.2, diveLand: 0.4,
+  emberHalo: 0.4, emberFan: 0.4, emberFlare: 0.3, burning: 0.5, climbRise: 0.3, diveWindup: 0.4, diveLand: 0.4,
   tossTrail: 0.3, blitzTrail: 0.35,
   galeMuzzle: 0.15, galeShot: 0.12, galeHit: 0.24,
   assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.4, assaultHit: 0.24,

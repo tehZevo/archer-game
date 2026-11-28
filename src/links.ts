@@ -15,7 +15,7 @@ import type { SkillKey } from './types';
    "Recovery begins" is the end of A's animation (its use time), except
    where A waits on an event:
      Rush Toss / Electric Blitz   the end of the use time, after the slide's strike
-     Meteor Dive                  the end of the use time, after the landing roll
+     Talon Dive                  the end of the use time, after the landing roll
      Skyward Assault              the leap's peak for the Cyclone Sweep,
                                   the hover's end for Trefoil Tempest and Ember Rain
    ============================================================ */

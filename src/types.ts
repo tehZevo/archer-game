@@ -317,12 +317,12 @@ export interface Player extends Body {
   readyT: Record<string, number>;
   /** Per-slot countdown of the flash that confirms a cast (see hud.skillSlot). */
   usedT: Record<string, number>;
-  /** True while a Meteor Dive is in flight; the landing rolls into the rush. */
+  /** True while a Talon Dive is in flight; the landing rolls into the rush. */
   diving: boolean;
   /** True for the duration of a Gale Stream dive roll (see move.jumpRoll). The
    *  roll keeps the dive pose and its landing slide, but shows no speed trail. */
   rolling: boolean;
-  /** px the Meteor Dive has travelled so far (plunge plus landing roll: P.RUSH_DIST in all). */
+  /** px the Talon Dive has travelled so far (plunge plus landing roll: P.RUSH_DIST in all). */
   diveDist: number;
   /** Gale Stream (see rapid.ts): `armed` once a Z shot fires with Z held,
    *  `on` while the stream runs, `t` s to its next shot, `face` the way it

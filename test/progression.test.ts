@@ -47,7 +47,7 @@ describe('the skill tree', () => {
   const row = (key: string) => skillRows().find((r) => r.key === key);
 
 
-  it('locks Meteor Dive until Rush Toss is mastered', () => {
+  it('locks Talon Dive until Rush Toss is mastered', () => {
     arena(60);
     player.ranks['ground-q'] = false;
     expect(row('air-q')?.action).toBe('');

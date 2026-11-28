@@ -273,8 +273,8 @@ describe('Rush Toss and W', () => {
   });
 });
 
-describe('Meteor Dive (Q in the air)', () => {
-  /** Level 20 with Rush Toss and Meteor Dive learned. */
+describe('Talon Dive (Q in the air)', () => {
+  /** Level 20 with Rush Toss and Talon Dive learned. */
   function setup(): void {
     arena(20);
     player.ranks['ground-q'] = true;
@@ -598,7 +598,7 @@ describe('E: Piercing Leap on the ground, Ember Rain in the air', () => {
 
 
 
-describe('Meteor Dive follow-ups', () => {
+describe('Talon Dive follow-ups', () => {
   it('fire off its landing, not its coil, and a Double Shot pressed mid-plunge waits out the landing roll', () => {
     arena(20);
     player.ranks['ground-q'] = true;
@@ -1094,7 +1094,7 @@ describe('the aerial kit plants you (momentum from a run or jump is dropped)', (
     expect(Math.abs(player.x - x)).toBeLessThan(1);
   });
 
-  it('Meteor Dive hangs frozen through its coil, then plunges down and forward at 45 degrees', () => {
+  it('Talon Dive hangs frozen through its coil, then plunges down and forward at 45 degrees', () => {
     arena(20);
     player.ranks['ground-q'] = true;
     player.ranks['air-q'] = true;
