@@ -149,7 +149,7 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   'air-w': { key: 'air-w', linksInto: ['d', 'air-e', 'z', 's'], name: 'Cyclone Sweep', tag: 'Link', job: 4, minLevel: 60,
        cd: P.SPIN_CD, use: 0.6, delay: 0.4, mp1: 280, dmg1: 200, hits1: 4, targets1: 8, requires: 'ab',
        desc: 'Mid-air W: a 360-degree sweep around you' },
-  'air-e': { key: 'air-e', linksInto: ['air-w', 'air-q', 'r', 'air-e', 'z', 's'], name: 'Ember Rain', tag: 'Aerial', job: 3, minLevel: 30,
+  'air-e': { key: 'air-e', linksInto: ['air-w', 'air-q', 'r', 'air-e'], name: 'Ember Rain', tag: 'Aerial', job: 3, minLevel: 30,
        cd: 0, use: 0.4, delay: 0.2, mp1: 140, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain burning bolts down onto enemies beneath you, setting them alight' },
   r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e', 'z', 's'], keyed: true, bar: true, name: 'Trefoil Tempest', tag: 'Finisher', job: 4, minLevel: 60,
