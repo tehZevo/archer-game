@@ -13,6 +13,7 @@ import type { SkillKey } from './types';
    [  level up
    ]  warp to the next place (the next floor, or the path's town)
    /  toggle 1 damage mode (every hit you deal does exactly 1)
+   .  toggle the hitbox overlay
    ============================================================ */
 export const dev = {
   on: typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev'),
@@ -21,6 +22,8 @@ export const dev = {
   sel: 0,
   /** / toggles 1 damage mode: every hit you deal does exactly 1 damage */
   oneDamage: false,
+  /** . toggles the hitbox overlay (see hitboxes.ts) */
+  hitboxes: false,
 };
 
 /** The dev menu's rows: a single flat list of every town (marked "(town)") and

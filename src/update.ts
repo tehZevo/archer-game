@@ -106,6 +106,7 @@ function keyInput(): boolean {
   if (pressed(']')) { gotoPlace(nextPlace(game.floor.place)); return true; }
   if (pressed('\\')) maxOut();
   if (pressed('/')) dev.oneDamage = !dev.oneDamage;
+  if (pressed('.')) dev.hitboxes = !dev.hitboxes;
   return false;
 }
 
