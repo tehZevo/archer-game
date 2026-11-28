@@ -153,6 +153,7 @@ describe('links after Rush Toss', () => {
     const m = dummy(125);
     rushToss();
     linksOpen();
+    step(30); // let the tossed enemy land: the box is a short band around her
     const hp = m.hp;
     tap('z');
     step(15);

@@ -149,7 +149,6 @@ function strike(inPlace: boolean, face: number, fx: FxKind, key: SkillKey): void
   eachShot(shotCount(r), 0, (more, h) => {
     alive(tg).forEach((m) => {
       damage(m, r.dmg, { more, launch: h === 0, first: h === 0 }); // only the first hit pops it up
-      if (!inPlace && h === 0) m.vx = face * 80; // a little follow-through drift
     });
   });
 }

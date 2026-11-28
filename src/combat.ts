@@ -67,7 +67,9 @@ export const BAR_SHOW = 4;
 export const HITSTUN = 0.35, DYING_MAX = 0.6;
 /** px/s a midair enemy pops up when struck: it cancels the fall and keeps the
  *  enemy in the air for the aerial follow-up. */
-export const HIT_FLOAT_VY = -120;
+export const HIT_FLOAT_VY = -60;
+/** px/s a launcher pops the enemy up at. */
+export const LAUNCH_VY = -304;
 /** Brief i-frames a missed attack grants (see the miss branch of damage). */
 export const MISS_IFRAMES = 0.35;
 
@@ -111,11 +113,13 @@ export function damage(target: Mob, mult: number, opts: DamageOpts = {}): void {
   game.dmgNums.push(stackedNum(target, dmg, crit, undefined, opts.more, opts.first, opts.line));
   if (opts.stun) target.stun = Math.max(target.stun, 2.0);
   // A launcher pops the enemy straight up: cancel its horizontal drift so it
-  // rises in place (and is there for the aerial follow-up).
-  if (opts.launch) { target.airTime = 1.1; target.vx = 0; target.vy = -304; target.y -= 4; }
-  // Struck midair (and not relaunched): cancel the fall with a small pop, so
-  // the exchange keeps the enemy airborne rather than beating it earthward.
-  else if (target.airTime > 0) target.vy = HIT_FLOAT_VY;
+  // rises in place (and is there for the aerial follow-up). The enemy stays
+  // airborne until it lands, so airTime is a flag rather than a countdown.
+  if (opts.launch) { target.airTime = Infinity; target.vx = 0; target.vy = LAUNCH_VY; }
+  // Struck midair (and not relaunched): cancel the fall and its drift with a
+  // small pop, so the exchange keeps the enemy in place rather than beating it
+  // earthward.
+  else if (target.airTime > 0) { target.vx = 0; target.vy = HIT_FLOAT_VY; }
   if (target.hp <= 0) {
     // overkill from a multi-hit attack: the rest of its hits still land (and
     // show their numbers) before it dies
