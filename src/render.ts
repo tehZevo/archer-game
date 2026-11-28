@@ -10,7 +10,7 @@ import { drawPet } from './petdraw';
 import { settings } from './settings';
 import { drawBackground, drawPortal, tileset } from './drawworld';
 import { dev } from './dev';
-import { drawHitboxes } from './hitboxes';
+import { drawBoxes } from './hitboxes';
 import { drawCorpse, drawGhosts, drawMob, drawPlayer, drawPlayerDeath } from './drawentities';
 import { drawDmg, drawFx, drawQuake, drawShot } from './drawfx';
 
@@ -57,7 +57,7 @@ export function render(): void {
   game.fx.forEach(drawFx);
   if (settings.dmgNums) game.dmgNums.forEach(drawDmg);
   drawPlayerDeath(); // the tombstone and ghost sit above the action
-  if (dev.hitboxes) drawHitboxes();
+  if (dev.hitboxes) drawBoxes();
   ctx.restore();
   drawHUD();
 }

@@ -2,29 +2,42 @@ import { ctx } from './canvas';
 import { game, player } from './state';
 
 /* ============================================================
-   HITBOX OVERLAY
-   The `.` dev key toggles it: every body's collision box, a translucent
-   red fill with a solid border, drawn over the world. A body's x is its
-   centre and y its top, so the box straddles x and hangs below it.
+   BOX OVERLAY
+   The `.` dev key toggles it. Two kinds of box show at once: the bodies'
+   own collision boxes (green) and the skills' damage areas (red), which
+   hang around for a moment after the hit so you can see what a cast
+   covered. A body's x is its centre and y its top; a damage area is
+   centred on its x and y.
    ============================================================ */
 
-interface Boxed { x: number; y: number; w: number; h: number }
+/** A skill's damage area, kept on screen for a beat after it fires. */
+interface Hurtbox { x: number; y: number; w: number; h: number; t: number }
 
-const box = (b: Boxed): [number, number, number, number] =>
-  [Math.round(b.x - b.w / 2), Math.round(b.y), b.w, b.h];
+export const HURT_T = 0.5; // s a damage area stays visible
+const live: Hurtbox[] = [];
 
-function drawBox(b: Boxed): void {
-  const [x, y, w, h] = box(b);
-  ctx.fillStyle = '#ff0000';
+/** Record a damage area (see combat.hitbox): centred on (cx, cy). */
+export function showHurtbox(cx: number, cy: number, w: number, h: number): void {
+  live.push({ x: cx - w / 2, y: cy - h / 2, w, h, t: HURT_T });
+}
+
+/** Age out the damage areas, one fixed step. */
+export function tickBoxes(dt: number): void {
+  for (let i = live.length - 1; i >= 0; i--) if ((live[i].t -= dt) <= 0) live.splice(i, 1);
+}
+
+const rect = (x: number, y: number, w: number, h: number, col: string): void => {
+  ctx.fillStyle = col;
   ctx.globalAlpha = 0.1;
   ctx.fillRect(x, y, w, h);
   ctx.globalAlpha = 1;
-  ctx.strokeStyle = '#ff0000';
+  ctx.strokeStyle = col;
   ctx.lineWidth = 1;
   ctx.strokeRect(x + 0.5, y + 0.5, w, h); // the half pixel keeps the line crisp
-}
+};
 
-export function drawHitboxes(): void {
-  for (const m of game.mobs) drawBox(m);
-  drawBox(player);
+export function drawBoxes(): void {
+  for (const b of live) rect(b.x, b.y, b.w, b.h, '#ff0000');
+  for (const m of game.mobs) rect(m.x - m.w / 2, m.y, m.w, m.h, '#00ff00');
+  rect(player.x - player.w / 2, player.y, player.w, player.h, '#00ff00');
 }

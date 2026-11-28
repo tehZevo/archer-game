@@ -15,6 +15,7 @@ import { questKill } from './quests';
 import { clearStatus } from './status';
 import type { DamageOpts, DmgNum, Mob } from './types';
 import { closeLinks } from './links';
+import { showHurtbox } from './hitboxes';
 
 const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
@@ -181,6 +182,7 @@ export function killMob(m: Mob): void {
  * every mob inside it takes damage on that frame. The arrow is a pure visual.
  */
 export function hitbox(cx: number, cy: number, w: number, h: number): Mob[] {
+  showHurtbox(cx, cy, w, h); // the `.` dev overlay shows what a cast covered
   return game.mobs.filter((m) =>
     m.x + m.w / 2 > cx - w / 2 && m.x - m.w / 2 < cx + w / 2 &&
     m.y + m.h > cy - h / 2 && m.y < cy + h / 2);

@@ -18,6 +18,7 @@ import { decayBoost, waveRate } from './boost';
 import { talk, updateEconomy } from './economy';
 import { updateGear } from './gear';
 import { dev, maxOut } from './dev';
+import { tickBoxes } from './hitboxes';
 import { bossAlive, portalOpen, updateQuakes } from './boss';
 import { updatePet } from './pets';
 import { updateStatus } from './status';
@@ -45,6 +46,7 @@ export function update(dt: number): void {
   if (usePortal()) return;
   tickWorld(dt);
   tickEffects(dt);
+  tickBoxes(dt); // ages out the `.` overlay's damage areas
   // knocked out: a tombstone drops where she fell and her ghost rises out of
   // it; she revives once that has played (see knockedOut)
   if (player.hp <= 0) setPlayerDeath(player.x, player.y + player.h);
