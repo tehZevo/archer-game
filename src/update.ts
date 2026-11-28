@@ -21,6 +21,7 @@ import { dev, maxOut } from './dev';
 import { tickBoxes } from './hitboxes';
 import { bossAlive, portalOpen, updateQuakes } from './boss';
 import { updatePet } from './pets';
+import { updateChair } from './chairs';
 import { updateStatus } from './status';
 import { linkable, linkHeld, tickLinks } from './links';
 import { windowInput } from './windows';
@@ -200,6 +201,7 @@ function tickWorld(dt: number): void {
   updateCorpses(dt); // enemies dying their own ways
   updateGear(dt);    // gear on the floor fades, and walking over it puts it on
   updatePet(dt);     // fetches piles lying near you
+  updateChair(dt);   // F sits on your chair; a hit this step (the enemies moved first) stands you up
   updateRush(dt);    // after the mobs move, so the ones being pushed stay in front
 }
 

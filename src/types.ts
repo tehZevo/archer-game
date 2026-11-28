@@ -461,7 +461,7 @@ export interface Portal {
 export interface Decor { x: number; y: number; kind: DecorKind; flip?: boolean }
 export type DecorKind = 'house' | 'tower' | 'lamp' | 'bench' | 'crate' | 'barrel' | 'flowers' | 'well' | 'sign' | 'awning' | 'fence';
 
-export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board' | 'pets' | 'sage'; name: string }
+export interface Npc { x: number; y: number; kind: 'shop' | 'trainer' | 'stylist' | 'board' | 'pets' | 'sage' | 'chairs'; name: string }
 
 /** A floor modifier (see floormods.ts). */
 export type FloorMod = 'icy';

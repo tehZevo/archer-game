@@ -37,7 +37,8 @@ describe('archer sprite sheet', () => {
     expect(POSES[0]).toBe('idle');
     expect(POSES.indexOf('prone')).toBe(6);
     expect(POSES.indexOf('fall')).toBe(9);
-    expect(POSES.indexOf('roll')).toBe(POSES.length - 1);
+    expect(POSES.indexOf('roll')).toBe(10);
+    expect(POSES.indexOf('sit')).toBe(POSES.length - 1);
   });
 });
 

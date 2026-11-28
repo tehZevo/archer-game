@@ -29,7 +29,8 @@ export const P = {
   GLIDE_VY_MAX: 162,   // max upward speed after Glide (10% under 180)
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
-  COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen
+  COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen (and no sitting down)
+  SIT_REGEN: 0.05,     // share of max HP and of max MP restored per second while seated on a chair
   BARRAGE_UP: 43,      // px Skyward Assault warps straight up: a fixed rise (~2/3 of the old 64, so the strike lands sooner; a launched enemy peaks ~90px up, so it stays in the strike box)
   ARROW_V: 600,        // arrow speed (px/s)
   BOLT_V: 420,         // Bolt Flurry bolt speed (px/s)

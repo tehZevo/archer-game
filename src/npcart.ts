@@ -2,7 +2,7 @@ import { fillRect, newGrid, type Grid } from './grid';
 
 /* ============================================================
    TOWN NPC ART
-   The shopkeeper, the stylist and the trainer: 16 x 24 figures (the
+   The shopkeeper, the stylist, the trainer and the rest: 16 x 24 figures (the
    archer's size), each its own build, facing the viewer. Every NPC has
    four frames: standing, breathing (head and shoulders sunk a pixel),
    blinking, and waving at you when you're close enough to talk (see
@@ -10,7 +10,7 @@ import { fillRect, newGrid, type Grid } from './grid';
    rest of the scenery (artsheets.ts: npc/<kind>/<frame>).
    ============================================================ */
 
-export type NpcLook = 'shop' | 'stylist' | 'trainer' | 'pets' | 'sage';
+export type NpcLook = 'shop' | 'stylist' | 'trainer' | 'pets' | 'sage' | 'chairs';
 export const NPC_W = 16, NPC_H = 24;
 /** Frames: 0 standing, 1 breathing in, 2 blinking, 3 waving. */
 export const NPC_FRAMES = 4;
@@ -211,12 +211,53 @@ const SAGE_WAVE: [number, number, string][] = [
   [14, 7, 'o'], [15, 7, 'o'], [14, 8, 's'], [15, 8, 'o'], [14, 9, 'C'], [15, 9, 'o'], [14, 10, 'C'], [15, 10, 'o'],
 ];
 
+/* The chair merchant: a carpenter in a red bandana, a bushy brown beard,
+   a tan work shirt under a leather apron with a pocket for his tools. */
+const CHAIRS = [
+  '................',
+  '.....oooooo.....',
+  '....orrrrrro....',
+  '...orrrrrrrRo...',
+  '...oRRRRRRRRo...',
+  '...ohsssssssho..',
+  '...ohsssssssho..',
+  '...osessssseso..',
+  '...ossssSsssso..',
+  '...osbbbbbbbso..',
+  '....obbbbbbbo...',
+  '.....obbbbbo....',
+  '...oottttttoo...',
+  '..otttttttttto..',
+  '..otaaaaaaaaato.',
+  '..otaaaaaaaaato.',
+  '..osaaaaAaaaaso.',
+  '...oaaaaaaaaao..',
+  '...oaaaaAAAaao..',
+  '...ooooooooooo..',
+  '....olll.lllo...',
+  '....olll.lllo...',
+  '...oBBBo.oBBBo..',
+  '...oooo...oooo..',
+];
+const CHAIRS_PAL: Record<string, string> = {
+  r: '#c8443a', R: '#8f2a22', h: '#6a4024', s: '#f2d0a9', S: '#d9a47c', e: OUT, b: '#8a5a34',
+  t: '#d9c08a', a: '#7a4a2a', A: '#5a3420', l: '#3d4f6e', B: '#4a2f1a',
+};
+/** The carpenter lifts his right hand off the apron. */
+const CHAIRS_WAVE: [number, number, string][] = [
+  [14, 7, 'o'], [13, 8, 'o'], [14, 8, 's'], [15, 8, 'o'], [14, 9, 't'], [15, 9, 'o'],
+  [13, 10, 'o'], [14, 10, 't'], [15, 10, 'o'], [13, 11, 'o'], [14, 11, 't'], [15, 11, 'o'],
+  [13, 12, 't'], [14, 12, 't'], [15, 12, 'o'],
+  [13, 14, 'o'], [14, 14, '.'], [13, 15, 'o'], [14, 15, '.'], [13, 16, 'o'], [14, 16, '.'],
+];
+
 const ART: Record<NpcLook, { rows: string[]; pal: Record<string, string>; wave: [number, number, string][]; eyes: number }> = {
   shop: { rows: SHOP, pal: SHOP_PAL, wave: SHOP_WAVE, eyes: 8 },
   stylist: { rows: STYLIST, pal: STYLIST_PAL, wave: STYLIST_WAVE, eyes: 7 },
   trainer: { rows: TRAINER, pal: TRAINER_PAL, wave: TRAINER_WAVE, eyes: 5 },
   pets: { rows: PETS, pal: PETS_PAL, wave: PETS_WAVE, eyes: 8 },
   sage: { rows: SAGE, pal: SAGE_PAL, wave: SAGE_WAVE, eyes: 7 },
+  chairs: { rows: CHAIRS, pal: CHAIRS_PAL, wave: CHAIRS_WAVE, eyes: 7 },
 };
 
 /** The rows of an NPC's frame (see NPC_FRAMES). */

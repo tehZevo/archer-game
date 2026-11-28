@@ -9,6 +9,7 @@ import { openBoard } from './quests';
 import { lastTown, placeName } from './world';
 import { coinMult } from './floormods';
 import { openPetShop } from './pets';
+import { openChairShop } from './chairs';
 import { visitSage } from './sage';
 import { equip, gearFor, weaponBonus, armorSoak } from './gear';
 import type { GearItem } from './gear';
@@ -244,6 +245,7 @@ export function talk(): boolean {
   if (n.kind === 'stylist') openStylist(placeName(game.floor.place));
   if (n.kind === 'board') openBoard(lastTown(game.floor.place));
   if (n.kind === 'sage') visitSage();
+  if (n.kind === 'chairs') openChairShop();
   return true;
 }
 
