@@ -49,10 +49,6 @@ export function drawMinimap(): void {
   ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
 
   ctx.drawImage(miniLayer(), r.x - s.x, r.y - s.y); // the floor's layout, baked once
-  // the screen's view of the floor
-  const [vx, vy] = toMini(game.cam.x, game.cam.y);
-  ctx.strokeStyle = '#ffffff40';
-  ctx.strokeRect(vx + 0.5, vy + 0.5, Math.round(game.view.w * MINI_SCALE) - 1, Math.round(game.view.h * MINI_SCALE) - 1);
 
   for (const pt of game.floor.portals) dot(pt.x, pt.y - 4, pt.down ? '#8fe3c4' : '#c9a6ff', 2);
   for (const m of game.mobs) dot(m.x, m.y + m.h / 2, '#ff6b6b');
