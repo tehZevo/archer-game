@@ -506,10 +506,31 @@ export const climbPhase = (feet: number): number => Math.floor(feet / CLIMB_STEP
 export const shootFrame = (since: number): number =>
   since < P.Z_WINDUP ? 0 : since < P.Z_WINDUP + 0.12 ? 1 : 2;
 
-/** Pick the frame of a pose at cycle time t (seconds); a shot plays its
- *  draw/release/follow sequence by time since it began instead. */
+/** Which frame of a pose's `n` shows at cycle time t (seconds); a shot plays
+ *  its draw/release/follow sequence by time since it began instead. */
+export function archerFrameIndex(pose: ArcherPose, n: number, t: number, since?: number): number {
+  if (pose === 'shoot' && since !== undefined) return Math.min(n - 1, shootFrame(since));
+  return Math.floor(t * POSE_FPS[pose]) % n;
+}
+
+/** Pick the frame of a pose at cycle time t (seconds): see archerFrameIndex. */
 export function archerFrame(frames: Record<ArcherPose, HTMLCanvasElement[]>, pose: ArcherPose, t: number, since?: number): HTMLCanvasElement {
   const f = frames[pose] ?? frames.idle;
-  if (pose === 'shoot' && since !== undefined) return f[Math.min(f.length - 1, shootFrame(since))];
-  return f[Math.floor(t * POSE_FPS[pose]) % f.length];
+  return f[archerFrameIndex(pose, f.length, t, since)];
 }
+
+/** Where the gold circlet (the run of 5 'g' across the brow) sits in each
+ *  frame, by pose: the anchor a hat is drawn from (see hatdraw.ts). Null where
+ *  the head is turned (diving, rolling, the whirl) and has no hat. Hair styles never
+ *  move it, so the plain grids are enough. Climb's mirrored step is included. */
+const TURNED: ArcherPose[] = ['dive', 'roll', 'spin'];
+export const HAT_AT: Record<ArcherPose, ({ x: number; y: number } | null)[]> = Object.fromEntries(
+  (Object.keys(GRIDS) as ArcherPose[]).map((p) => {
+    const at = GRIDS[p].map((g) => {
+      if (TURNED.includes(p)) return null;
+      const y = g.findIndex((r) => r.includes('ggggg'));
+      return y < 0 ? null : { x: g[y].indexOf('ggggg'), y };
+    });
+    if (p === 'climb') at.push(at[0] && { x: ARCHER_W - at[0].x - 5, y: at[0].y });
+    return [p, at];
+  })) as Record<ArcherPose, ({ x: number; y: number } | null)[]>;
