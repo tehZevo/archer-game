@@ -5,6 +5,7 @@ import { canvasGrid, fillRect, flipGrid, gridCanvas, newGrid, type Grid } from '
 import { PORTAL_FRAMES, portalGrid } from './portalart';
 import { boardGrid, NPC_FRAMES, npcGrid, type NpcLook } from './npcart';
 import { CHAIR_LIST, chairGrid } from './chairart';
+import { HATS, hatGrid } from './hatart';
 import { PET_FRAMES, PET_LIST, petGrid } from './petart';
 import { BAKED_ART } from './baked';
 import { panelGrid } from './hudart';
@@ -19,6 +20,7 @@ import type { DecorKind } from './types';
      portal/<frame>           the warp pad (portalart.ts)
      npc/<kind>/<frame>       town NPCs (npcart.ts), and npc/board
      pet/<kind>/<frame>       the pets (petart.ts)
+     hat/<n>                  the hats (hatart.ts)
      chair/<kind>             the chairs you sit on (chairart.ts)
      hud/panel                the panel behind the bottom bars (hudart.ts)
    baked from those painters by `npm run bake`. art(key) is the loaded
@@ -42,6 +44,7 @@ export const ART_GEN: Record<string, () => Grid> = {
   ...Object.fromEntries((['shop', 'stylist', 'trainer', 'pets', 'sage', 'chairs'] as NpcLook[]).flatMap((k) =>
     Array.from({ length: NPC_FRAMES }, (_, f) => [`npc/${k}/${f}`, () => npcGrid(k, f)]))),
   ...Object.fromEntries(CHAIR_LIST.map((k) => [`chair/${k}`, () => chairGrid(k)])),
+  ...Object.fromEntries(HATS.map((_, i) => [`hat/${i + 1}`, () => hatGrid(i + 1)])),
   ...Object.fromEntries(PET_LIST.flatMap((k) =>
     Array.from({ length: PET_FRAMES }, (_, f) => [`pet/${k}/${f}`, () => petGrid(k, f)]))),
   ...Object.fromEntries(Object.entries(PROPS).flatMap(([area, ps]) =>

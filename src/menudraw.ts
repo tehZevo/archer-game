@@ -6,6 +6,7 @@ import { CODE_LEN, lobbyCounts, MAX_PER_CHANNEL, net } from './net';
 import { hasSave } from './save';
 import { placeKey, placeName } from './world';
 import { archerFrame, archerFrames, ARCHER_W } from './archer';
+import { hatOn } from './hatdraw';
 import { myLook } from './look';
 import { stylist } from './stylist';
 import { drawStylist } from './stylistdraw';
@@ -84,8 +85,15 @@ export function drawMenu(): void {
       case 'look': {
         text(ctx, 'LOOK', L, y, 1, DIM, 'left');
         // a small you on the right of the row
-        const f = archerFrame(archerFrames(myLook()), 'idle', 0);
+        const f = archerFrame(archerFrames(myLook()), 'idle', 0), hat = hatOn(myLook(), 'idle', 0);
         ctx.drawImage(f, 0, 0, ARCHER_W, 12, R - ARCHER_W, y - 3, ARCHER_W, 12);
+        // the hat over it, cut off at the same line as the head
+        if (hat) {
+          ctx.save();
+          ctx.beginPath(); ctx.rect(R - ARCHER_W - 8, y - 3 - 8, ARCHER_W + 16, 20); ctx.clip();
+          ctx.drawImage(hat.img, R - ARCHER_W + hat.x, y - 3 + hat.y);
+          ctx.restore();
+        }
         text(ctx, lookLocked() ? 'SEE A STYLIST' : 'EDIT', R - ARCHER_W - 4, y, 1, HI, 'right');
         break;
       }

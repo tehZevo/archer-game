@@ -1,14 +1,17 @@
 /* ============================================================
    LOOK
    How your archer looks: a body type, hair style, hair colour, skin
-   tone and outfit, each a plain index into the lists below. The first
+   tone, outfit and hat, each a plain index into the lists below.
+   Hats (hatart.ts) are bought from a town stylist, never at creation. The first
    BASIC styles and colours are open to everyone; the rest are each
    offered by one town's stylist (see townlooks.ts). It's kept on this
    device (like your name) and sent to the other players in the room
    along with your name, so they see you as you made yourself.
    ============================================================ */
 
-export interface Look { body: number; style: number; hair: number; skin: number; outfit: number }
+import { HATS } from './hatart';
+
+export interface Look { body: number; style: number; hair: number; skin: number; outfit: number; hat: number }
 
 export const BODY_NAMES = ['FEMALE', 'MALE'] as const;
 
@@ -71,12 +74,15 @@ export const STYLE_NAMES = ['SWEPT', 'SHORT', 'LONG', 'CROP', 'SPIKY', 'SLICKED'
 /** How many styles and hair colours everyone has; the rest come from town stylists. */
 export const BASIC: Partial<Record<keyof Look, number>> = { style: 4, hair: 7 };
 
-export const LOOK_KEYS = ['style', 'hair', 'skin', 'outfit'] as const;
+/** Hat names, by look.hat (0: none). */
+export const HAT_NAMES = ['NONE', ...HATS.map((h) => h.name)];
+
+export const LOOK_KEYS = ['style', 'hair', 'skin', 'outfit', 'hat'] as const;
 export const LOOK_COUNTS: Record<keyof Look, number> = {
-  body: BODY_NAMES.length, style: STYLE_NAMES.length, hair: HAIR_COLS.length, skin: SKINS.length, outfit: OUTFITS.length,
+  body: BODY_NAMES.length, style: STYLE_NAMES.length, hair: HAIR_COLS.length, skin: SKINS.length, outfit: OUTFITS.length, hat: HAT_NAMES.length,
 };
 
-export const DEFAULT_LOOK: Look = { body: 0, style: 0, hair: 0, skin: 0, outfit: 0 };
+export const DEFAULT_LOOK: Look = { body: 0, style: 0, hair: 0, skin: 0, outfit: 0, hat: 0 };
 
 /** A look with every field a whole number in range (bad or missing → 0). */
 export function cleanLook(v: unknown): Look {
@@ -102,7 +108,7 @@ export function stepLook(l: Look, k: keyof Look, d: number, offered?: (k: keyof 
 }
 
 /** A short key for caching baked frames. */
-export const lookKey = (l: Look): string => `${l.body}.${l.style}.${l.hair}.${l.skin}.${l.outfit}`;
+export const lookKey = (l: Look): string => `${l.body}.${l.style}.${l.hair}.${l.skin}.${l.outfit}.${l.hat}`;
 
 /** Palette overrides for a look (the archer's palette letters). */
 export function lookPalette(l: Look): Record<string, string> {

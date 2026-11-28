@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { arena, memoryStorage, release, tap } from './helpers';
-import { archerFrame, GRIDS, poseCycle, styled } from '../src/archer';
+import { archerFrame, GRIDS, HAT_AT, poseCycle, styled } from '../src/archer';
+import { HATS } from '../src/hatart';
 import { NPC_R, wallet } from '../src/economy';
 import { BASIC, cleanLook, DEFAULT_LOOK, LOOK_COUNTS, lookPalette, myLook, setMyLook, stepLook } from '../src/look';
 import { disabled, initMenu, items, lookLocked, menu, menuKey } from '../src/menu';
@@ -221,6 +222,56 @@ describe('the stylist', () => {
       expect(myLook().style).toBe(1);
       expect(myLook().body).toBe(1); // unchanged
       expect(wallet.coins).toBe(5);
+    });
+
+    describe('hats', () => {
+      /** Step the HAT row to hat `n` and press DONE. */
+      function buyHat(n: number): void {
+        stylist.sel = stylistRows().indexOf('HAT');
+        for (let i = 0; i < n; i++) tap('right');
+        stylist.sel = stylistRows().indexOf('DONE');
+        tap('z');
+      }
+
+      it('making your archer has no HAT row', () => {
+        openStylist(null);
+        expect(stylistRows()).not.toContain('HAT');
+      });
+
+      it('putting a hat on costs its price plus the fee', () => {
+        visitStylist();
+        wallet.coins = HATS[0].price + STYLE_FEE + 5;
+        buyHat(1);
+        expect(myLook().hat).toBe(1);
+        expect(wallet.coins).toBe(5);
+      });
+
+      it('without the gold for the hat, nothing changes', () => {
+        visitStylist();
+        wallet.coins = HATS[1].price;
+        buyHat(2);
+        expect(myLook().hat).toBe(0);
+        expect(wallet.coins).toBe(HATS[1].price);
+      });
+
+      it('taking a hat off costs just the fee', () => {
+        setMyLook({ ...DEFAULT_LOOK, hat: 3 });
+        visitStylist();
+        wallet.coins = STYLE_FEE;
+        buyHat(LOOK_COUNTS.hat - 3); // wraps round to NONE
+        expect(myLook().hat).toBe(0);
+        expect(wallet.coins).toBe(0);
+      });
+
+      it('a hat sits on the circlet in every pose with the head upright, and none while diving', () => {
+        for (const pose of POSE_NAMES) {
+          for (const [i, g] of GRIDS[pose].entries()) {
+            const at = HAT_AT[pose][i];
+            if (pose === 'dive' || pose === 'roll' || pose === 'spin') expect(at, pose).toBe(null);
+            else expect(g[at!.y].slice(at!.x, at!.x + 5), pose).toBe('ggggg');
+          }
+        }
+      });
     });
 
     describe('its own extra', () => {

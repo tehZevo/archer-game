@@ -15,7 +15,8 @@ import { DEFAULT_LOOK, myLook, type Look } from './look';
 import { dueShots, ghostFx, tintFor } from './presence';
 import { isLearned } from './progress';
 import { view, type Pose } from './ghost';
-import { ARCHER_H, ARCHER_W, archerFrame, archerFrames, poseCycle } from './archer';
+import { ARCHER_H, ARCHER_W, archerFrameIndex, archerFrames, poseCycle } from './archer';
+import { hatOn } from './hatdraw';
 import { clamp } from './util';
 import { BOSS, windingUp } from './boss';
 import { text, textWidth } from './font';
@@ -171,8 +172,9 @@ export function drawMob(m: Mob): void {
 export function drawArcher(look: Look, x: number, feet: number, face: number, pose: Pose, t: number, alpha = 1, since?: number, tint?: string, breathe = true): void {
   // Climbing steps hand over hand with distance climbed, not time, so it
   // holds still while hanging on the rope.
-  const frame = archerFrame(archerFrames(look), pose, poseCycle(pose, feet, t, breathe), since);
-  const img = tint ? tinted(frame, tint) : frame;
+  const frames = archerFrames(look)[pose];
+  const i = archerFrameIndex(pose, frames.length, poseCycle(pose, feet, t, breathe), since);
+  const img = tint ? tinted(frames[i], tint) : frames[i];
   ctx.save();
   ctx.globalAlpha = alpha;
   if (pose === 'spin') {
@@ -187,7 +189,11 @@ export function drawArcher(look: Look, x: number, feet: number, face: number, po
   if (pose !== 'climb') ctx.scale(face, 1); // climbing is seen from behind
   // every frame is centred on the middle of the body (a 24px frame sits on
   // the feet; the dive's and prone's bigger frames sit on the middle)
-  ctx.drawImage(img, -img.width / 2, -ARCHER_H / 2 - img.height / 2);
+  const left = -img.width / 2, top = -ARCHER_H / 2 - img.height / 2;
+  ctx.drawImage(img, left, top);
+  // the hat, a layer of its own over the head (washed like the body when tinted)
+  const hat = hatOn(look, pose, i);
+  if (hat) ctx.drawImage(tint ? tinted(hat.img, tint) : hat.img, left + hat.x, top + hat.y);
   ctx.restore();
 }
 /** Sitting: the chair under an archer standing at (x, feet), and where her
