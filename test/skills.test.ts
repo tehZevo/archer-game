@@ -33,15 +33,46 @@ describe('Skyward Assault', () => {
     const order: string[] = []; // each effect type, in the order it first appears
     let bangs = 0;
     for (let i = 0; i < 46; i++) {
-      const bangsBefore = game.fx.filter((f) => f.type === 'assaultBang').length;
+      const bangsBefore = game.fx.filter((f) => f.type === 'assaultStrike').length;
       if (i > 0) step();
       for (const f of game.fx) if (!order.includes(f.type)) order.push(f.type);
-      bangs += Math.max(0, game.fx.filter((f) => f.type === 'assaultBang').length - bangsBefore);
+      bangs += Math.max(0, game.fx.filter((f) => f.type === 'assaultStrike').length - bangsBefore);
     }
 
     expect(order).toContain('assaultRise');
     expect(bangs).toBeGreaterThanOrEqual(2);
-    expect(order.indexOf('assaultDrop')).toBeGreaterThan(order.indexOf('assaultBang'));
+    expect(order.indexOf('assaultDrop')).toBeGreaterThan(order.indexOf('assaultStrike'));
+    expect(order).not.toContain('assaultBang'); // enemies get the smaller strike, not the full bang
+  });
+
+  it('bangs full size in the air ahead when a strike finds nobody', () => {
+    arena(20);
+    player.ranks['ground-w'] = true;
+    player.ranks.ab = true;
+    rushToss(); // no enemy anywhere this time
+    step(12);
+    game.fx = [];
+
+    tap('w');
+    const seen = new Set<string>();
+    for (let i = 0; i < 46; i++) { step(); for (const f of game.fx) seen.add(f.type); }
+
+    expect(seen.has('assaultBang')).toBe(true);
+  });
+
+  it('never plays the small strike when a strike finds nobody', () => {
+    arena(20);
+    player.ranks['ground-w'] = true;
+    player.ranks.ab = true;
+    rushToss();
+    step(12);
+    game.fx = [];
+
+    tap('w');
+    const seen = new Set<string>();
+    for (let i = 0; i < 46; i++) { step(); for (const f of game.fx) seen.add(f.type); }
+
+    expect(seen.has('assaultStrike')).toBe(false);
   });
 });
 
@@ -1164,3 +1195,4 @@ describe('Jump is movement, not a skill', () => {
     expect(player.vy).toBeLessThan(0);
   });
 });
+

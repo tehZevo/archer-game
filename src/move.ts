@@ -100,10 +100,11 @@ function hover(dt: number): void {
     player.hang.hits--;
     const more = player.hang.hits > 0;
     const tg = barrageTargets().slice(0, player.hang.targets);
-    // each strike bangs on the enemies in the air (or the air in front of
-    // her); the last one slashes back down through them
-    const at = tg.length ? tg.map((m) => [m.x, m.y + m.h / 2]) : [[player.x, player.y + player.h / 2]];
-    for (const [x, y] of at) game.fx.push({ type: 'assaultBang', x, y, t: FX_DUR.assaultBang });
+    // each strike bangs on each enemy in the air with a smaller bang of its
+    // own (or one full bang in the air in front of her, finding nobody); the
+    // last one slashes back down through them
+    if (tg.length) for (const m of tg) game.fx.push({ type: 'assaultStrike', x: m.x, y: m.y + m.h / 2, t: FX_DUR.assaultStrike });
+    else game.fx.push({ type: 'assaultBang', x: player.x, y: player.y + player.h / 2, t: FX_DUR.assaultBang });
     if (more) sfx.assaultBang();
     else {
       // the lances land on the ground ahead, where she rose from

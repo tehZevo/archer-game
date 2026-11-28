@@ -325,5 +325,5 @@ export const FX_DUR: Record<Fx['type'], number> = {
   emberHalo: 0.4, emberFan: 0.4, emberFlare: 0.3, burning: 0.5, climbRise: 0.3, diveWindup: 0.4, diveLand: 0.4,
   tossTrail: 0.3, blitzTrail: 0.35,
   galeMuzzle: 0.15, galeShot: 0.12, galeHit: 0.24,
-  assaultRise: 0.35, assaultBang: 0.3, assaultDrop: 0.4, assaultHit: 0.24,
+  assaultRise: 0.35, assaultBang: 0.3, assaultStrike: 0.3, assaultDrop: 0.4, assaultHit: 0.24,
 };

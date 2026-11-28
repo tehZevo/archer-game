@@ -37,6 +37,7 @@
     "spirit": {"file":"fx/spirit.png","w":44,"h":34,"frames":7,"x":10,"y":17},
     "assaultRise": {"file":"fx/assaultRise.png","w":72,"h":128,"frames":7,"x":24,"y":118},
     "assaultBang": {"file":"fx/assaultBang.png","w":96,"h":72,"frames":6,"x":48,"y":36},
+    "assaultStrike": {"file":"fx/assaultStrike.png","w":48,"h":36,"frames":6,"x":24,"y":18},
     "assaultDrop": {"file":"fx/assaultDrop.png","w":84,"h":92,"frames":8,"x":30,"y":82},
     "assaultHit": {"file":"fx/assaultHit.png","w":44,"h":44,"frames":6,"x":22,"y":22},
     "galeMuzzle": {"file":"fx/galeMuzzle.png","w":20,"h":18,"frames":4,"x":1,"y":9},
