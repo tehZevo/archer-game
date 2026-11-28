@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { arena, release, step } from './helpers';
 import { P } from '../src/config';
-import { dev, devStops } from '../src/dev';
+import { dev, devStops, maxOut } from '../src/dev';
 import { clearPressed, setKey } from '../src/input';
 import { roomId } from '../src/net';
 import { spendSkill } from '../src/progress';
@@ -105,5 +105,33 @@ describe('dev mode (?dev)', () => {
     spendSkill('pp');
     expect(player.ranks.pp).toBe(false);
     expect(player.sp).toBe(0);
+  });
+});
+
+describe('the dev max-out key (\\)', () => {
+  beforeEach(() => arena());
+
+  it('resets a cooldown that was running', () => {
+    player.cd.E = 7;
+    maxOut();
+    expect(player.cd.E).toBe(0);
+  });
+
+  it("resets an air form's own cooldown", () => {
+    player.cd['E.air'] = 3;
+    maxOut();
+    expect(player.cd['E.air']).toBe(0);
+  });
+
+  it('restores every Electric Blitz charge', () => {
+    player.blitz.charges = 0;
+    maxOut();
+    expect(player.blitz.charges).toBe(P.BLITZ_MAX);
+  });
+
+  it('starts the Blitz refill timer over', () => {
+    player.blitz.t = 2;
+    maxOut();
+    expect(player.blitz.t).toBe(0);
   });
 });

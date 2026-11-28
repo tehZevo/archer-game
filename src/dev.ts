@@ -1,7 +1,7 @@
 import { mobLevel, PATHS, placeTier, TOWNS, townDepth, type Path, type Place, type Town } from './world';
 import { bannerMsg, player } from './state';
 import { AP_PER_LEVEL, expToNext, jobForLevel, MAX_LEVEL, recalcStats } from './progress';
-import { SKILLS } from './config';
+import { P, SKILLS } from './config';
 import type { SkillKey } from './types';
 
 /* ============================================================
@@ -45,7 +45,8 @@ export const DEV_ROWS = 12;
 export const devTag = (): string => (dev.on ? '-dev' : '');
 
 /** Max the player out for testing: level 100 (with its job and a stack of
- *  ability points) and every skill learned, except Haste. Bound to the `\` key. */
+ *  ability points), every skill learned except Haste, every cooldown reset
+ *  and every charge restored. Bound to the `\` key. */
 export const maxOut = (): void => {
   player.level = MAX_LEVEL;
   player.exp = 0;
@@ -58,5 +59,8 @@ export const maxOut = (): void => {
   for (const k of Object.keys(SKILLS) as SkillKey[]) {
     if (k !== 'ha') player.ranks[k] = true;
   }
+  for (const k of Object.keys(player.cd)) player.cd[k] = 0;
+  player.blitz.charges = P.BLITZ_MAX;
+  player.blitz.t = 0;
   bannerMsg('MAXED', 'LEVEL 100 - SKILL BAR MAXED');
 };
