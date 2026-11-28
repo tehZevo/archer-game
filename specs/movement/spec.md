@@ -6,4 +6,4 @@ Jumping keeps running momentum; holding Jump re-jumps on every landing. In the a
 
 Climbing: holding Up catches a rope or ladder within a small grab radius (from below it or mid-air); holding Down grabs one whose top is just under the feet. While climbing, x locks to the climbable and gravity is suspended. Jump with Left/Right held leaves in that direction (even with Up held); Jump with no direction does nothing. Up + Jump rushes up the climbable at high speed and pops off the top with a small jump. A just-left rope can't be re-caught until the player moves out of its range or lands; any other rope can be caught immediately.
 
-Glide (D) launches the player forward in the facing direction with a capped upward boost. It can be used repeatedly in the air.
+Feather Step (D) launches the player forward in the facing direction with a capped upward boost. It can be used repeatedly in the air.

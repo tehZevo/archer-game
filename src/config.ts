@@ -25,8 +25,8 @@ export const P = {
   CLIMB_RUSH_POP: 0.8, // ...then hop off the top at this fraction of JUMP_V
   CLIMB: 90,           // rope/ladder climb speed, px/s (was 140)
   DROP_HOP_V: 110,     // Down+Jump hop before falling through (v²/2g ≈ 6px)
-  GLIDE_VX: 190,       // Glide forward launch speed, px/s (was 160; ×1-1.3 with rank)
-  GLIDE_VY_MAX: 162,   // max upward speed after Glide (10% under 180)
+  GLIDE_VX: 190,       // Feather Step forward launch speed, px/s (was 160; ×1-1.3 with rank)
+  GLIDE_VY_MAX: 162,   // max upward speed after Feather Step (10% under 180)
   REGEN_EVERY: 5,      // s between HP/MP regen ticks
   REGEN_FRAC: 0.05,    // fraction of max HP/MP restored per tick
   COMBAT_TIME: 5,      // s after attacking or being hit with no HP regen (and no sitting down)
@@ -112,7 +112,7 @@ export const TILE = 16;
 
 /* ---------------- skills ----------------
    Five active buttons. The main attack (Z) is available from Lv.1 and a new
-   skill unlocks every 5 levels. Jump (C) and Glide (D) are movement. */
+   skill unlocks every 5 levels. Jump (C) and Feather Step (D) are movement. */
 /** What a launcher (Rush Toss, Electric Blitz, Piercing Leap, Ember Rain, the
  *  Talon Dive's landing) links into: the link skills, the Q slot (Talon
  *  Dive in the air) and W's air form, the Cyclone Sweep. */
@@ -128,9 +128,9 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
   ac: { key: 'ac', name: 'Acrobatics', tag: 'Passive', job: 2, minLevel: 10, passive: true,
         cd: 0, mp1: 0, dmg1: 0, bonus1: 0.6,
         desc: 'Up + Jump rushes up ropes and ladders' },
-  d: { key: 'd', linksInto: ['air-q', 'air-e', 'z', 's'], keyed: true, name: 'Glide', tag: 'Movement', job: 1, minLevel: 1, learn: true,
+  d: { key: 'd', linksInto: ['air-q', 'air-e', 'z', 's'], keyed: true, name: 'Feather Step', tag: 'Movement', job: 1, minLevel: 1, learn: true,
        cd: 0, use: 0.2, delay: 0.1, mp1: 10, dmg1: 0,
-       desc: 'Mid-air acrobatic tumble' },
+       desc: 'A mid-air second jump that launches you forward' },
   'ground-q': { key: 'ground-q', linksInto: [...LAUNCHER_LINKS.filter((k) => k !== 'ground-q'), 'z', 's'], keyed: true, bar: true, name: 'Rush Toss', tag: 'Launcher', job: 2, minLevel: 10,
        cd: 3, use: 0.5, delay: 0.5, mp1: 80, dmg1: 400, targets1: 6,
        desc: 'Launch enemies airborne, linking into the aerial kit' },

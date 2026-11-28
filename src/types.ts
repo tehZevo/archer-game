@@ -270,7 +270,7 @@ export interface Hover {
 
 export interface Player extends Body {
   face: 1 | -1;
-  /** Glide (double jump) charge; refilled on landing. */
+  /** Feather Step (double jump) charge; refilled on landing. */
   climb: Climbable | null;
   /** x of the climbable just jumped off: climbables there can't be caught
    *  until the player leaves its grab range or lands (others catch instantly). */

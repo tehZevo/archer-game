@@ -1,7 +1,7 @@
 import type { SkillKey } from './types';
 
 /** Glyphs for the active skills: the keyed attacks, their upgrades, their air
- *  forms, and Glide. 10x10, in iconpal.ts's colours (see icons.ts). */
+ *  forms, and Feather Step. 10x10, in iconpal.ts's colours (see icons.ts). */
 export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
   // Double Shot: two arrows side by side
   z: [
@@ -42,7 +42,7 @@ export const ACTIVE_GLYPHS: Partial<Record<SkillKey, string[]>> = {
     '..........',
     '..........',
   ],
-  // Glide: a feather with a swoosh
+  // Feather Step: a feather with a swoosh
   d: [
     '.......xx.',
     '......xaax',

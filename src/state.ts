@@ -67,7 +67,7 @@ export const player: Player = {
   level: 1,
   exp: 0,
   expNext: expToNext(1),
-  sp: 1, // one to start: Glide is bought with SP from Lv.1
+  sp: 1, // one to start: Feather Step is bought with SP from Lv.1
   ap: 0,
   stats: { dex: 0, vit: 0, spi: 0, luk: 0 },
   dex: start.dex,
