@@ -137,7 +137,7 @@ describe('damage numbers (a bubble font)', () => {
   });
 
   it('a crit leads with a bang', () => {
-    expect(dmgLabel(1234, true)).toBe('!1234');
+    expect(dmgLabel(1234, true)).toBe('✸1234');
   });
 
   it('a normal hit has no bang', () => {
@@ -145,7 +145,7 @@ describe('damage numbers (a bubble font)', () => {
   });
 
   it('the bang has a glyph', () => {
-    expect(bubbleable('!')).toBe(true);
+    expect(bubbleable('✸')).toBe(true);
   });
 
 });
