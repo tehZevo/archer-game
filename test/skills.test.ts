@@ -160,7 +160,7 @@ describe('links after Rush Toss', () => {
     expect(player.linkFrom).toBe('z');
   });
 
-  it('Skyward Assault warps straight up a fixed height, hits, hovers most of a second, then lands', () => {
+  it('Skyward Assault warps straight up a fixed height, hits, hovers its use time, then lands', () => {
     arena(20);
     player.ranks['ground-w'] = true;
     player.ranks.ab = true;
@@ -179,8 +179,8 @@ describe('links after Rush Toss', () => {
       step();
       if (player.y === before && !player.onGround) hoverFrames++;
     }
-    expect(hoverFrames).toBeGreaterThanOrEqual(20);
-    expect(hoverFrames).toBeLessThanOrEqual(28);
+    expect(hoverFrames).toBeGreaterThanOrEqual(10);
+    expect(hoverFrames).toBeLessThanOrEqual(14);
     expect(player.onGround).toBe(true);
     expect(m.hp).toBeLessThan(hp);
   });

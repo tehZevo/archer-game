@@ -11,7 +11,7 @@ import { getPlayerDeath, setPlayerDeath, updateCorpses, updatePlayerDeath } from
 import { cast } from './skills';
 import { updateRush } from './rush';
 import { updateRapid } from './rapid';
-import { AIR_FORM, assaultLeaping, rushHolding } from './castrules';
+import { AIR_FORM, rushHolding } from './castrules';
 import { activeSkill } from './progress';
 import { sfx } from './audio';
 import { decayBoost, waveRate } from './boost';
@@ -147,8 +147,8 @@ function bufferHeld(): boolean {
   // a link waits for the cast it links off to reach its recovery
   const kind = skillFor(queued);
   if (linkable(kind)) return linkHeld(kind);
-  // anything else waits out the whole cast (and Rush Toss's strike, the Assault's leap)
-  if (rushHolding() || assaultLeaping()) return true;
+  // anything else waits out the whole cast (and Rush Toss's strike)
+  if (rushHolding()) return true;
   return player.castT > 0 || player.casting.recoverT > 0;
 }
 

@@ -45,7 +45,7 @@ export const player: Player = {
   climbRush: false,
   casting: { useT: 0, recoverT: 0, queued: null, queuedFace: 0, freeze: false, key: null },
   rush: { t: 0, dist: 0, goal: P.RUSH_DIST, carry: [] },
-  hang: { t: 0, hits: 0, hitT: 0, dmg: 0, targets: 0 },
+  hang: { t: 0 },
   liftT: 0, liftTop: 0,
   regenT: 0,
   combatT: 0,
@@ -234,7 +234,7 @@ export function gotoPlace(place: Place): void {
   player.casting.queued = null;
   player.casting.queuedFace = 0;
   player.casting.key = null;
-  player.hang.t = 0; player.liftT = 0; player.hang.hits = 0;
+  player.hang.t = 0; player.liftT = 0;
   player.rapid.armed = player.rapid.on = false;
   player.rush.t = 0; player.rush.dist = 0; player.rush.carry = []; player.rush.look = null;
   player.effects.length = 0; // effects don't follow you to another floor

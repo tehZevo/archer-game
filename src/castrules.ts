@@ -53,8 +53,3 @@ export function cdSlot(key: SkillKey, airborne = !player.onGround && !player.cli
  *  jump's peak (v²/2g ≈ 35px), so shallow jumps don't trigger the full
  *  aerial combo. */
 export const AIR_MIN_H = 1.1 * (2 / 3) * (P.JUMP_V * P.JUMP_V) / (2 * P.GRAVITY);
-
-/** Skyward Assault's opening leap is still playing (a Cyclone Sweep pressed now is
- *  buffered; once it's done the sweep fires straight out of the hover). */
-export const assaultLeaping = (): boolean =>
-  player.cast === 'barrage' && player.hang.t > 0 && player.castTotal - player.castT < P.ASSAULT_LEAP;

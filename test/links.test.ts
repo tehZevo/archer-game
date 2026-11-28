@@ -244,7 +244,7 @@ describe('Skyward Assault', () => {
         hoverFrames++;
       }
       step(1);
-      expect(hoverFrames).toBeGreaterThan(10);
+      expect(hoverFrames * P.STEP).toBeLessThan(useTime('ab'));
       expect(player.cast).toBe('barrage');
       expect(player.linkFrom).toBe('air-e');
     });
@@ -263,7 +263,7 @@ describe('Skyward Assault', () => {
         hoverFrames++;
       }
       step(1);
-      expect(hoverFrames).toBeGreaterThan(10);
+      expect(hoverFrames * P.STEP).toBeLessThan(useTime('ab'));
       expect(player.cast).toBe('dive');
       expect(player.linkFrom).toBe('air-q');
     });

@@ -2,17 +2,14 @@ import { FX_DUR, P, WORLD } from './config';
 import { game, player } from './state';
 import { held, pressed } from './input';
 import { catchClimbable, collideGround, integrate, surfaceAt, surfaceBetween } from './physics';
-import { damage } from './combat';
 import { nimbleJump, nimbleSpeed, passiveBonus } from './progress';
 import { sfx } from './audio';
 import { grip } from './floormods';
 import { slowFactor } from './status';
 import { clamp } from './util';
-import { barrageTargets } from './skills';
 import { landDive, travelDive } from './rush';
 import { setPose } from './skillfx';
 import { streaming } from './rapid';
-import { DROP_BACK } from './fxsprites';
 
 /** Countdown to Acrobatics's next rising-streak effect. */
 let climbFxT = 0;
@@ -88,31 +85,14 @@ function jumpOffClimb(dir: -1 | 1 | 0): void {
   player.leftClimbX = player.x;
 }
 
-/** Skyward Assault: hover in place, striking airborne enemies at intervals. */
+/** Skyward Assault: hover in place for the cast's use time. All its damage
+ *  lands as one application when the cast begins (see skillcasts), so this
+ *  only holds her up. */
 function hover(dt: number): void {
   player.hang.t -= dt;
   // (a Trefoil Tempest pressed during the hover fires as it ends: the finisher on
   // the Q -> W -> AB chain, see links.linkHeld)
   player.vx = 0; player.vy = 0;
-  player.hang.hitT -= dt;
-  if (player.hang.hits > 0 && player.hang.hitT <= 0) {
-    player.hang.hitT = P.BARRAGE_HANG / 7; // 6 strikes spread through the hover
-    player.hang.hits--;
-    const more = player.hang.hits > 0;
-    const tg = barrageTargets().slice(0, player.hang.targets);
-    // each strike bangs on each enemy in the air with a smaller bang of its
-    // own (or one full bang in the air in front of her, finding nobody); the
-    // last one slashes back down through them
-    if (tg.length) for (const m of tg) game.fx.push({ type: 'assaultStrike', x: m.x, y: m.y + m.h / 2, t: FX_DUR.assaultStrike });
-    else game.fx.push({ type: 'assaultBang', x: player.x, y: player.y + player.h / 2, t: FX_DUR.assaultBang });
-    if (more) sfx.assaultBang();
-    else {
-      // the lances land on the ground ahead, where she rose from
-      game.fx.push({ type: 'assaultDrop', x: player.x + player.face * DROP_BACK, y: player.y + player.h + P.BARRAGE_UP, t: FX_DUR.assaultDrop, face: player.face });
-      sfx.assaultSlam();
-    }
-    tg.forEach((m) => damage(m, player.hang.dmg, { airborne: true, fx: 'assaultHit', more }));
-  }
   player.animState = 'jump';
 }
 

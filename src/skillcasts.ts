@@ -11,6 +11,8 @@ import { endHover } from './links';
 import { clearRushStrike, groundRush, startSlide } from './rush';
 import { useTime } from './castrules';
 import { applyStatus } from './status';
+import { barrageTargets } from './skills';
+import { DROP_BACK } from './fxsprites';
 import { alive, eachShot, fxUnder, nearest, pose, setPose, tracers } from './skillfx';
 
 import type { Mob, SkillKey, SkillRank } from './types';
@@ -257,9 +259,8 @@ function skyfallVolley(r: SkillRank): void {
 const ASSAULT_RISE_LEAD = 16;
 
 /** Skyward Assault: knock the enemies ahead into the air and warp straight up
- *  with them (no horizontal movement), hovering to strike every airborne
- *  enemy in reach for a moment before dropping with normal gravity. The
- *  strikes run on the fixed step in update (see the hang block). */
+ *  with them (no horizontal movement), hovering for the cast's use time before
+ *  dropping with normal gravity. All the hits land as a single application. */
 function skyAssault(r: SkillRank): void {
   pose('barrage', 'ab');
   sfx.assaultRise();
@@ -271,9 +272,24 @@ function skyAssault(r: SkillRank): void {
   // a tall blue slash carving up from where she left to where she hangs
   // (the sheet's crescent sits ~16px ahead of its origin: centre it on her)
   game.fx.push({ type: 'assaultRise', x: player.x - player.face * ASSAULT_RISE_LEAD, y: from, t: FX_DUR.assaultRise, face: player.face });
-  // hold in the air for a fixed hover (its use/delay timings set the cast lock)
-  player.hang.t = P.BARRAGE_HANG; player.hang.hits = r.hits; player.hang.hitT = 0;
-  player.hang.dmg = r.dmg; player.hang.targets = r.targets;
+  // the hover is the cast's use time: one number for the whole move
+  player.hang.t = useTime('ab');
+  // every hit lands now, stacking its number one line above the last
+  const tg = barrageTargets().slice(0, r.targets);
+  eachShot(shotCount(r), 0, (more, h) => {
+    // each strike bangs on each enemy in the air with a smaller bang of its
+    // own (or one full bang in the air in front of her, finding nobody); the
+    // last one slashes back down through them
+    const hit = alive(tg);
+    if (hit.length) for (const m of hit) game.fx.push({ type: 'assaultStrike', x: m.x, y: m.y + m.h / 2, t: FX_DUR.assaultStrike });
+    else game.fx.push({ type: 'assaultBang', x: player.x, y: player.y + player.h / 2, t: FX_DUR.assaultBang });
+    if (more) sfx.assaultBang();
+    else {
+      game.fx.push({ type: 'assaultDrop', x: player.x + player.face * DROP_BACK, y: player.y + player.h + P.BARRAGE_UP, t: FX_DUR.assaultDrop, face: player.face });
+      sfx.assaultSlam();
+    }
+    hit.forEach((m) => damage(m, r.dmg, { airborne: true, fx: 'assaultHit', more, first: h === 0 }));
+  });
 }
 
 /** Bolt Flurry: a volley of 4 green bolts, flown as one animated sprite;

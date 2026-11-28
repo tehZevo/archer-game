@@ -263,13 +263,9 @@ export interface RushState {
 }
 
 export interface Hover {
-  /** s left hovering (no gravity) while striking airborne enemies. */
+  /** s left hovering (no gravity): the Skyward Assault's use time, which its
+   *  single application of damage lands inside. */
   t: number;
-  /** Strikes left, s to the next one, and each strike's damage and target cap. */
-  hits: number;
-  hitT: number;
-  dmg: number;
-  targets: number;
 }
 
 export interface Player extends Body {

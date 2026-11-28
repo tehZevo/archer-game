@@ -36,8 +36,6 @@ export function linkHeld(_kind: SkillKey): boolean {
   if (from === null) return false;
   // a rush waits out its strike (or the Dive its landing roll) and then the rest of its use time
   if (RUSHES.has(from)) return rushHolding() || player.casting.useT > 0;
-  // every skill linked out of the Assault fires at the end of the hover
-  if (from === 'ab') return player.hang.t > 0;
   return player.casting.useT > 0;
 }
 
@@ -54,4 +52,4 @@ export function closeLinks(): void { player.linkFrom = null; }
 export function tickLinks(): void { if (!castLive()) player.linkFrom = null; }
 
 /** End a Skyward Assault hover (a dive, glide, spin or volley cutting it short). */
-export function endHover(): void { player.hang.t = 0; player.hang.hits = 0; }
+export function endHover(): void { player.hang.t = 0; }
