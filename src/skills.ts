@@ -28,6 +28,11 @@ function heightBelow(): number {
  *  recovery) and/or chained off a Q rush. */
 interface Fire { linked: boolean; chained: boolean }
 
+/** A press of `kind` that links off the cast you're in and waits for its
+ *  recovery to begin. The buffer stores the key, so it fires re-resolved as
+ *  the ground skill (a low mid-air W queued off a Dive is the Assault). */
+const linkQueued = (kind: SkillKey): boolean => linkable(kind) && linkHeld(kind);
+
 /**
  * Press a skill key. `chained`: fired off the end of a Q rush (see gate), so
  * the rush's use time doesn't hold it.
@@ -44,8 +49,10 @@ export function cast(key: SkillKey, chained = false): void {
   if (kind === 'd' && player.rolling) return;
   // Talon Dive, Cyclone Sweep and Ember Rain want you properly airborne:
   // at least ~2/3 of a full jump's peak above the platform under your feet,
-  // not the map's ground slab (a high deck is as good a launch pad).
-  if (airKey && heightBelow() < AIR_MIN_H) return;
+  // not the map's ground slab (a high deck is as good a launch pad). A press
+  // that's only being queued doesn't: it re-resolves once it fires.
+  const queued = linkQueued(kind);
+  if (airKey && !queued && heightBelow() < AIR_MIN_H) return;
   const r = rank(kind);
   const fire = gate(key, kind, airborne, chained, r);
   if (!fire) return;
@@ -72,7 +79,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   if (LINKED_SKILLS.includes(kind) && !linked) return null;
   // A link waits for the cast it links off to reach its recovery, then fires
   // at once (Rush Toss's strike, the Assault's peak, the end of an animation).
-  if (linked && linkHeld(kind)) return buffer(key);
+  if (linkQueued(kind)) return buffer(key);
   // Q rushes chain into Double Shot: Z pressed during the rush fires the moment
   // it ends, and right after it at once. The chain skips the rush's ending lag
   // once: one quick shot, not repeated uses.
