@@ -9,7 +9,8 @@ import { newGrid, type Grid } from './grid';
    on top and shaded underneath, in the number's own colour.
    ============================================================ */
 
-/** The fill of each glyph, '#' on (8 rows; widths vary). */
+/** The fill of each glyph, '#' on in the number's colour, 'o' on in orange
+ *  and 'y' in yellow (8 rows; widths vary). */
 const GLYPHS: Record<string, string[]> = {
   0: ['.####.', '##..##', '##..##', '##..##', '##..##', '##..##', '##..##', '.####.'],
   1: ['.##.', '###.', '.##.', '.##.', '.##.', '.##.', '.##.', '####'],
@@ -24,15 +25,19 @@ const GLYPHS: Record<string, string[]> = {
   M: ['##...##', '###.###', '#######', '##.#.##', '##...##', '##...##', '##...##', '##...##'],
   I: ['####', '.##.', '.##.', '.##.', '.##.', '.##.', '.##.', '####'],
   S: ['.####.', '##..##', '##....', '.####.', '....##', '....##', '##..##', '.####.'],
-  '!': ['##', '##', '##', '##', '##', '..', '##', '##'], // the bang ahead of a crit
+  // the bang ahead of a crit: a comic-style starburst, hot from the inside
+  // out: a yellow core, an orange ring, and eight rays in the number's colour
+  '✸': ['#...#...#', '.#.###.#.', '..#oyo#..', '##oyyyo##', '..#oyo#..', '.#.###.#.', '#...#...#', '.........'],
 };
 
 /** Glyph height (fill), and the whole number's height with its outline. */
 export const DMG_GLYPH_H = 8, DMG_H = DMG_GLYPH_H + 2;
 const OUTLINE: [number, number, number] = [0x14, 0x10, 0x18];
+/** The fixed tones a glyph can use besides the number's own colour. */
+const TONES: Record<string, string> = { o: '#ff9a3c', y: '#ffe14d' };
 
-/** A damage number's text: a crit leads with a bang (!1234). */
-export const dmgLabel = (v: number, crit: boolean): string => (crit ? '!' : '') + v;
+/** A damage number's text: a crit leads with a bang, a starburst (✸1234). */
+export const dmgLabel = (v: number, crit: boolean): string => (crit ? '✸' : '') + v;
 
 /** Can this string be drawn in the bubble font? */
 export const bubbleable = (s: string): boolean => [...s].every((ch) => GLYPHS[ch]);
@@ -47,12 +52,13 @@ const mix = (a: [number, number, number], b: number, k: number): [number, number
 /** A string in the bubble font, in colour `col` ('#rrggbb'). */
 export function bubbleText(s: string, col: string): Grid {
   const W = bubbleWidth(s), g = newGrid(W, DMG_H);
-  const fill = new Uint8Array(W * DMG_H), base = rgb(col);
+  // fill: 0 off, 1 the number's colour, 2+ a fixed tone
+  const fill = new Uint8Array(W * DMG_H), keys = Object.keys(TONES), tone = [rgb(col), rgb(col), ...keys.map((k) => rgb(TONES[k]))];
   // each letter's fill, one outline column apart from the last
   let x0 = 1;
   for (const ch of s) {
     const rows = GLYPHS[ch];
-    rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === '#') fill[(y + 1) * W + x0 + x] = 1; }));
+    rows.forEach((row, y) => [...row].forEach((c, x) => { if (c !== '.') fill[(y + 1) * W + x0 + x] = c === '#' ? 1 : 2 + keys.indexOf(c); }));
     x0 += rows[0].length + 1;
   }
   const on = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < W && y < DMG_H && !!fill[y * W + x];
@@ -63,6 +69,7 @@ export function bubbleText(s: string, col: string): Grid {
   for (let y = 0; y < DMG_H; y++) for (let x = 0; x < W; x++) {
     if (on(x, y)) {
       // lit along the top of each stroke, shaded along the bottom
+      const base = tone[fill[y * W + x]];
       put(x, y, !on(x, y - 1) ? mix(base, 255, 0.45) : !on(x, y + 1) ? mix(base, 0, 0.35) : base);
       continue;
     }
