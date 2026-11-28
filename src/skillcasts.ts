@@ -274,21 +274,23 @@ function skyAssault(r: SkillRank): void {
   game.fx.push({ type: 'assaultRise', x: player.x - player.face * ASSAULT_RISE_LEAD, y: from, t: FX_DUR.assaultRise, face: player.face });
   // the hover is the cast's use time: one number for the whole move
   player.hang.t = useTime('ab');
-  // every hit lands now, stacking its number one line above the last
+  // Twin Echoes adds arrows, not beats: the animation is the skill's own
+  // `r.hits` strikes, one per 1/8s beat, and the extra hits only add numbers
+  const shots = shotCount(r);
   const tg = barrageTargets().slice(0, r.targets);
-  eachShot(shotCount(r), 0, (more, h) => {
-    // each strike bangs on each enemy in the air with a smaller bang of its
-    // own (or one full bang in the air in front of her, finding nobody); the
-    // last one slashes back down through them
+  eachShot(shots, 0, (more, h) => {
     const hit = alive(tg);
-    if (hit.length) for (const m of hit) game.fx.push({ type: 'assaultStrike', x: m.x, y: m.y + m.h / 2, t: FX_DUR.assaultStrike });
-    else game.fx.push({ type: 'assaultBang', x: player.x, y: player.y + player.h / 2, t: FX_DUR.assaultBang });
-    if (more) sfx.assaultBang();
-    else {
-      game.fx.push({ type: 'assaultDrop', x: player.x + player.face * DROP_BACK, y: player.y + player.h + P.BARRAGE_UP, t: FX_DUR.assaultDrop, face: player.face });
-      sfx.assaultSlam();
+    // the animation is the skill's own strikes: Twin Echoes' extra arrows add a
+    // damage number, not another bang. The last strike slashes back down.
+    if (h < r.hits) {
+      if (hit.length) for (const m of hit) game.fx.push({ type: 'assaultStrike', x: m.x, y: m.y + m.h / 2, t: FX_DUR.assaultStrike });
+      else game.fx.push({ type: 'assaultBang', x: player.x, y: player.y + player.h / 2, t: FX_DUR.assaultBang });
+      if (h === r.hits - 1) {
+        game.fx.push({ type: 'assaultDrop', x: player.x + player.face * DROP_BACK, y: player.y + player.h + P.BARRAGE_UP, t: FX_DUR.assaultDrop, face: player.face });
+        sfx.assaultSlam();
+      } else sfx.assaultBang();
     }
-    hit.forEach((m) => damage(m, r.dmg, { airborne: true, fx: 'assaultHit', more, first: h === 0 }));
+    hit.forEach((m) => damage(m, r.dmg, { airborne: true, fx: 'assaultHit', more, first: h === 0, line: h }));
   });
 }
 

@@ -151,13 +151,13 @@ export const SKILLS: Record<SkillKey, SkillDef> = {
        cd: 0, use: 0.4, delay: 0.2, mp1: 140, dmg1: 240, hits1: 2, targets1: 10, requires: 'ground-e',
        desc: 'Mid-air E: rain burning bolts down onto enemies beneath you, setting them alight' },
   r: { key: 'r', linksInto: ['ground-q', 'eb', 'air-q', 'air-e', 'z', 's'], keyed: true, bar: true, name: 'Trefoil Tempest', tag: 'Finisher', job: 4, minLevel: 60,
-       cd: 10.0, use: 0.7, mp1: 400, dmg1: 300, hits1: 6, targets1: 12,
+       cd: 10.0, use: 0.6, mp1: 400, dmg1: 300, hits1: 6, targets1: 12,
        desc: 'A storm sweeps up and around you, striking every enemy it passes' },
   eb: { key: 'eb', linksInto: [...LAUNCHER_LINKS, 'z', 's'], upgrades: 'ground-q', name: 'Electric Blitz', tag: 'Launcher', job: 4, minLevel: 60,
        cd: 0, use: 0.5, delay: 0.5, mp1: 320, dmg1: 460, hits1: 2, targets1: 10, rushHits: 2,
        desc: 'A charged rush that carries enemies with you (2 charges)' },
   ab: { key: 'ab', linksInto: ['air-w', 'air-q', 'r', 'z', 's', 'ground-q', 'air-e'], upgrades: 'ground-w', name: 'Skyward Assault', tag: 'Link', job: 3, minLevel: 30,
-       cd: 0, use: 0.4, delay: 0.2, mp1: 130, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
+       cd: 0, use: 0.6, delay: 0.2, mp1: 130, dmg1: 140, hits1: 4, targets1: 6, requires: 'ground-w',
        desc: 'After Rush Toss: leap up to launched enemies' },
   // Fired by holding Z: after a Double Shot / Bolt Flurry, keep Z held to stream
   // arrows into the closest enemy ahead (see rapid.ts). mp1 is per shot.

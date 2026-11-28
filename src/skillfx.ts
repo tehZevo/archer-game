@@ -24,10 +24,12 @@ export function nearest(cx: number, cy: number, w: number, h: number, n: number)
     .slice(0, n);
 }
 
-/** A multi-hit skill: `fn` runs once per shot, `NUM_GAP` apart from `start`,
- *  on the targets still alive; `more` is set on every shot but the last. */
-export function eachShot(shots: number, start: number, fn: (more: boolean, h: number) => void): void {
-  for (let h = 0; h < shots; h++) later(start + h * NUM_GAP, () => fn(h < shots - 1, h));
+/** A multi-hit skill: `fn` runs once per shot `gap` apart from `start` (the
+ *  default cadence, `NUM_GAP`), on the targets still alive; `more` is set on
+ *  every shot but the last. Pass a `gap` when the volley should fit a fixed
+ *  window rather than stretch with the hit count. */
+export function eachShot(shots: number, start: number, fn: (more: boolean, h: number) => void, gap = NUM_GAP): void {
+  for (let h = 0; h < shots; h++) later(start + h * gap, () => fn(h < shots - 1, h));
 }
 
 /** An effect at each target's feet, or at (x, y) when there are none. */

@@ -139,7 +139,9 @@ export function stackedNum(m: Mob, v: number, crit: boolean, txt?: string, more 
   const fresh = first || m.numK === undefined;
   // the line the cast names for this hit, else the one the mob's last hit left open
   const k = line ?? (fresh ? 0 : m.numK!);
-  const at = fresh ? now : Math.max(now, (m.numAt ?? now) + NUM_GAP);
+  // a cast that names its line paces its own numbers, so they land with the
+  // hits rather than on the stack's default cadence
+  const at = fresh || line !== undefined ? now : Math.max(now, (m.numAt ?? now) + NUM_GAP);
   m.numAt = at;
   m.numK = more ? k + 1 : undefined;
   // a hash, not Math.random: cosmetic wobble mustn't consume the gameplay RNG

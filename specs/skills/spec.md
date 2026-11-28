@@ -18,6 +18,14 @@ Attack skills have a short use time during which no other skill or movement inpu
 
 A skill's use time is the **whole time it commits the player**: every phase of the move — the leap, the hover, the slide, the arrows flying out and landing — fits inside it, and a skill linked off it fires at the end of it. One number per skill, so raising it slows the entire move and lowering it speeds the entire move up.
 
+## Timing layers
+
+Three clocks decide how a skill feels. They are independent: changing one must not change the others.
+
+1. **The lock** — how long the player can't act: the skill's use time plus its recovery (`use` + `delay`), or the use time alone for a link. A 0.4s use with a 0.2s delay commits 0.6s. Exceptions are rare and belong in the skill's own spec.
+2. **The numbers** — every hit's damage number comes out at the same cadence, one every 1/8s, whatever the skill and whatever the hit count. They may outlast the lock.
+3. **The animation** — the skill's own animation, fixed, and unaffected by any passive. Twin Echoes doubling a skill's arrows adds more numbers, not a longer or busier animation.
+
 Every active skill costs MP, scaled by job tier: **1st Job 10–50 MP, 2nd Job 50–100 MP, 3rd Job 100–200 MP, 4th Job 200–400 MP**. Within a tier's band, cost scales with impact: longer cooldown and more power/damage cost more MP (Trefoil Tempest's 10s cooldown and 6-hit sweep sits near the top of its band, the no-cooldown main attacks near the bottom). Passives cost no MP.
 
 Using a skill doesn't announce its name on screen.

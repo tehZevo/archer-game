@@ -179,8 +179,8 @@ describe('links after Rush Toss', () => {
       step();
       if (player.y === before && !player.onGround) hoverFrames++;
     }
-    expect(hoverFrames).toBeGreaterThanOrEqual(10);
-    expect(hoverFrames).toBeLessThanOrEqual(14);
+    expect(hoverFrames).toBeGreaterThanOrEqual(16);
+    expect(hoverFrames).toBeLessThanOrEqual(20);
     expect(player.onGround).toBe(true);
     expect(m.hp).toBeLessThan(hp);
   });
