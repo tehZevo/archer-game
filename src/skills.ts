@@ -45,7 +45,7 @@ export function cast(key: SkillKey, chained = false): void {
   const airKey = airborne ? AIR_FORM[key] : undefined;
   const kind = airKey ?? activeSkill(key).key;
   if (!isLearned(kind)) return;
-  // no Glide out of a dodge roll: the roll is its own evasive move
+  // no Feather Step out of a dodge roll: the roll is its own evasive move
   if (kind === 'd' && player.rolling) return;
   // Talon Dive, Cyclone Sweep and Ember Rain want you properly airborne:
   // at least ~2/3 of a full jump's peak above the platform under your feet,
@@ -97,7 +97,7 @@ function gate(key: SkillKey, kind: SkillKey, airborne: boolean, chained: boolean
   const busy = player.casting.useT > 0 || player.casting.recoverT > 0;
   if (busy && !linked && !chained) return null;
 
-  // Attack skills need both hands on the bow: on a ladder only Glide works.
+  // Attack skills need both hands on the bow: on a ladder only Feather Step works.
   if (player.climb && kind !== 'd') return null;
   if (kind === 'd' && !airborne) return null;
   return { linked, chained };

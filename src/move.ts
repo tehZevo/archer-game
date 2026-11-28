@@ -135,7 +135,7 @@ function steer(dt: number, locked: boolean): void {
   // it stays put (you can't turn mid-skill), and the buffered skill carries the
   // direction you press it with. A Gale Stream holds its facing: walking
   // backward keeps it firing ahead.
-  // A Glide's commitment is the exception: in the air you can turn round in
+  // A Feather Step's commitment is the exception: in the air you can turn round in
   // its use and recovery (the tumble keeps its momentum; only facing turns).
   const turn = !streaming() && (!locked || (!player.onGround && player.casting.key === 'd'));
   if (turn && held('left')) player.face = -1;
@@ -244,7 +244,7 @@ function grabClimbable(): boolean {
   player.dropBlock = null;
   player.liftT = 0;
   // Grabbing the climb ends a movement skill's commitment: the rope takes
-  // over from the Glide's tumble rather than waiting it out.
+  // over from the Feather Step's tumble rather than waiting it out.
   player.casting.useT = 0;
   player.casting.recoverT = 0;
   player.casting.key = null;

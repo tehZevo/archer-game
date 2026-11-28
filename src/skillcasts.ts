@@ -75,7 +75,7 @@ function galeShot(r: SkillRank): void {
   eachShot(shots, 0, (more, h) => { if (alive([m]).length) damage(m, r.dmg, { more, first: h === 0, line: h, fx: 'galeHit' }); });
 }
 
-/** Glide: acrobatic forward tumble; usable repeatedly in the air. Off a Sky
+/** Feather Step: acrobatic forward tumble; usable repeatedly in the air. Off a Sky
  *  Assault hover it ends the hover, so the tumble carries you (the hover's
  *  own per-frame vx/vy reset would otherwise eat it). */
 function glide(): void {

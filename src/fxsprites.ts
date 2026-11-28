@@ -644,7 +644,7 @@ function stunHitAnim(): FxSheet {
   });
 }
 
-/** Glide launch: concentric green rings (a portal seen side-on) with
+/** Feather Step launch: concentric green rings (a portal seen side-on) with
  *  streaks extending to the right of them. Drawn mirrored so the rings are
  *  ahead of the player and the streaks trail behind. */
 function spiritAnim(): FxSheet {

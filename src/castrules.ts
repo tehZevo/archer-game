@@ -29,7 +29,7 @@ export const rushHolding = (): boolean => {
 
 
 /** Movement skills a rope/ladder grab cuts short: grabbing the climb is the
- *  next move, so it doesn't wait out the Glide's use time the way an attack's
+ *  next move, so it doesn't wait out the Feather Step's use time the way an attack's
  *  animation would. (Jump already frees you — see move.climb.) */
 export const GRAB_THROUGH = new Set<SkillKey>(['d']);
 
