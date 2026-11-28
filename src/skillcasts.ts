@@ -32,7 +32,7 @@ function twinShot(r: SkillRank): void {
   endHover();
   pose('shoot', 'z');
   const face = player.face;
-  const tg = nearest(player.x + face * 64, player.y - 60, 128, 200, r.targets);
+  const tg = nearest(player.x + face * 64, player.y + player.h / 2 + 9, 128, 54, r.targets);
   later(P.Z_WINDUP, () => {
     sfx.shoot();
     const mx = player.x + face * 8, my = player.y + 13;
@@ -174,8 +174,9 @@ function plungingVolley(r: SkillRank): void {
   pose('barrage', 'air-e');
   sfx.emberRain();
   const feet = player.y + player.h;
-  const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 2, P.PLUNGE_W, P.PLUNGE_DEPTH)
-    .filter((m) => m.y + m.h > feet) // beneath you, not beside you
+  // the column keeps its bottom 3/4: the top quarter is cut off, so it reaches
+  // less far above your feet
+  const tg = hitbox(player.x, feet + P.PLUNGE_DEPTH / 8, P.PLUNGE_W, P.PLUNGE_DEPTH * 0.75)
     .sort((a, b) => a.y - b.y)
     .slice(0, r.targets);
   // leave a faster existing upward speed untouched; otherwise add the hop, capped at -PLUNGE_MAX
@@ -210,7 +211,8 @@ function tempest(r: SkillRank): void {
   player.invuln = player.castT; // you're untouchable while the storm sweeps out
   sfx.tempest();
   const mx = player.x + player.face * 8, my = player.y + 13;
-  const tg = nearest(player.x, player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
+  // the sweep leans 1/4 of its width into where she's facing
+  const tg = nearest(player.x + player.face * (P.TEMPEST_R / 2), player.y + player.h / 2, P.TEMPEST_R * 2, P.TEMPEST_R * 2, r.targets);
   // one skill, two looks: cast in midair, the knot floats free of the floor
   const look = player.onGround ? 'tempest' : 'tempestAir';
   game.fx.push({ type: look, x: player.x, y: player.y + player.h, t: FX_DUR[look], face: player.face, follow: true });
@@ -303,7 +305,9 @@ function shellBarrage(r: SkillRank): void {
   endHover();
   pose('shoot', 's');
   sfx.flurry();
-  const tg = hitbox(player.x + player.face * 72, player.y + player.h / 2, 144, 72).slice(0, r.targets);
+  // the box starts at the player and reaches 128px out in front of her (no gap);
+  // it keeps its bottom 3/4, so the top quarter is cut off
+  const tg = hitbox(player.x + player.face * 64, player.y + player.h / 2 + 9, 128, 54).slice(0, r.targets);
   const x0 = player.x + player.face * 8, y0 = player.y + 13;
   const shots = shotCount(r), perVolley = r.hits, volleys = Math.ceil(shots / perVolley);
   const aim = tg.length ? tg[0].x : x0 + player.face * 200;

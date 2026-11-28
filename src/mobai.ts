@@ -37,7 +37,7 @@ export function updateMobs(dt: number): void {
     m.anim += dt * ANIM_RATE;
     if (m.boss) { m.stun = 0; m.airTime = 0; } // bosses shrug off stuns and launches
     if (m.stun > 0) { m.stun -= dt; m.vx *= 0.8; }
-    else if (m.airTime > 0) { m.airTime -= dt; m.vx *= 0.9; }
+    else if (m.airTime > 0) m.vx *= 0.9; // airborne: it stays up until it lands
     else if ((m.hurt ?? 0) > 0 && !m.boss) m.vx *= 0.7; // hitstun: flinch in place (bosses only flash)
     else { think(m, dt); contact(m, dt); }
     if (m.airTime > 0 || !m.fly) fall(m, dt);
@@ -122,5 +122,5 @@ function fall(m: Mob, dt: number): void {
     ? drop === undefined || surfaceYAt(p, m.x) >= drop - 4
     : p.block === m.spawn?.block;
   const s = m.vy < 0 ? null : surfaceBetween(m.x, m.w, prevFeet - STICK, m.y + m.h + STICK, null, home);
-  if (s) { m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; m.airTime = Math.min(m.airTime, 0.35); }
+  if (s) { m.y = surfaceYAt(s, m.x) - m.h; m.vy = 0; m.airTime = 0; }
 }
