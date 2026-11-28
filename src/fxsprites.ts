@@ -446,32 +446,35 @@ function assaultRiseAnim(): FxSheet {
 }
 
 /** One of Skyward Assault's strikes in the air: lances of light crossing
- *  ahead of her, a big star glint where they meet with a long streak
- *  through it, then a crescent whipping round the glint. Faces right;
- *  origin at the strike point. */
-function assaultBangAnim(): FxSheet {
-  const W = 96, H = 72, c = 48, m = 36, N = 6;
+ *  at the strike point, a big star glint where they meet with a long streak
+ *  through it, then a crescent whipping round the glint. `k` scales it: the
+ *  full bang (1) plays in the air ahead when a strike finds nobody, and a
+ *  smaller one (0.5) on each enemy it strikes, so a crowd doesn't drown in
+ *  overlapping bangs. Faces right; origin at the strike point. */
+function assaultBangAnim(k = 1): FxSheet {
+  const W = Math.round(96 * k), H = Math.round(72 * k), c = W / 2, m = H / 2, N = 6;
+  const w = Math.max(0.6, k); // strokes thin less than the shape shrinks, so the small one stays bold
   return anim(W, H, c, m, N, (L, f) => {
     const R = rng(171 + f), fade = f < 3 ? 1 : 1 - (f - 2) / 4;
     // two lances crossing at the strike, stabbing in from up-back and down-back
     if (f < 3) {
-      const k = Math.min(1, (f + 1) / 2);
-      lance(L, 'sky', c - 34 * k, m - 24 * k, c + 30 * k, m + 18 * k, 2.6, 1.2);
-      lance(L, 'cyan', c - 30 * k, m + 20 * k, c + 28 * k, m - 22 * k, 2.0, 1.0);
+      const g = Math.min(1, (f + 1) / 2) * k;
+      lance(L, 'sky', c - 34 * g, m - 24 * g, c + 30 * g, m + 18 * g, 2.6 * w, 1.2);
+      lance(L, 'cyan', c - 30 * g, m + 20 * g, c + 28 * g, m - 22 * g, 2.0 * w, 1.0);
     }
     // the bang: a long horizontal streak and a star glint
     if (f >= 1 && f < 4) {
       const g = f === 1 ? 1 : f === 2 ? 0.8 : 0.45;
-      lance(L, 'sky', c - 46 * g, m, c + 46 * g, m, 2.4, 1.2 * g);
-      glint(L, 'sky', c, m, 16 * g, 12 * g, 1.2);
+      lance(L, 'sky', c - 46 * g * k, m, c + 46 * g * k, m, 2.4 * w, 1.2 * g);
+      glint(L, 'sky', c, m, 16 * g * k, 12 * g * k, 1.2);
     }
     // a crescent whipping round the glint
     if (f >= 2) {
       const t = (f - 2) / 3;
-      crescent(L, 'sky', 'cyan', c, m, 20, 13, -0.4 + t * 2.4, 1.6, 1, fade, 3);
+      crescent(L, 'sky', 'cyan', c, m, 20 * k, 13 * k, -0.4 + t * 2.4, 1.6 * w, 1, fade, 3);
     }
     for (let i = 0; i < 7; i++) {
-      const a = R() * Math.PI * 2, d = 8 + f * 4 + R() * 8;
+      const a = R() * Math.PI * 2, d = (8 + f * 4 + R() * 8) * k;
       L.spark(i % 3 ? 'sky' : 'cyan', c + Math.cos(a) * d * 1.4, m + Math.sin(a) * d, 0.9 * fade, i < 2);
     }
   });
@@ -865,6 +868,7 @@ export const FX_GEN: Record<string, () => FxSheet> = {
   spirit: () => spiritAnim(),
   assaultRise: () => assaultRiseAnim(),
   assaultBang: () => assaultBangAnim(),
+  assaultStrike: () => assaultBangAnim(0.5),
   assaultDrop: () => assaultDropAnim(),
   assaultHit: () => assaultHitAnim(),
   galeMuzzle: () => galeMuzzleAnim(),
